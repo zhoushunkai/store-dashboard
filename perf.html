@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026年 门店分级管理绩效（全年版）</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+.data-loading-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255,255,255,0.95); z-index: 99999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: -apple-system, sans-serif;
+}
+.data-loading-overlay .spinner {
+  width: 40px; height: 40px;
+  border: 3px solid #e0e0e0; border-top-color: #1890ff;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.data-loading-overlay .msg { margin-top: 16px; color: #666; font-size: 14px; }
+.data-loading-overlay .error-msg { color: #e74c3c; margin-top: 8px; font-size: 13px; }
+</style>
+
+</head>
+<body>
+
+<div id="dataLoadingOverlay" class="data-loading-overlay">
+  <div class="spinner"></div>
+  <div class="msg">正在加载数据...</div>
+  <div class="error-msg" id="dataErrorMsg" style="display:none"></div>
+</div>
+
+<style>
+
+:root {
+  --bg: #F6F5EF;
+  --brand: #8C2A2A;
+  --S: #1A7A3A;
+  --A: #2E8B57;
+  --B: #2563EB;
+  --C: #D97706;
+  --D: #DC2626;
+  --text1: #1a1a1a;
+  --text2: #666;
+  --text3: #aaa;
+  --warnTxt: #DC2626;
+  --cardBg: #fff;
+  --border: #e0ddd6;
+  --shadow: 0 1px 3px rgba(0,0,0,.06);
+  --radius: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text1);
+  line-height:1.5;
+  min-height:100vh;
+}
+
+/* ===== Top Bar ===== */
+.top-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 20px; background:var(--brand); color:#fff;
+  position:sticky; top:0; z-index:100;
+}
+.top-bar #dataInfo { font-size:13px; opacity:.9; }
+.toolbar { display:flex; gap:6px; }
+.toolbar button {
+  padding:5px 12px; border:1px solid rgba(255,255,255,.3); border-radius:4px;
+  background:transparent; color:#fff; font-size:12px; cursor:pointer;
+  transition: background .15s;
+}
+.toolbar button:hover { background:rgba(255,255,255,.15); }
+
+/* ===== Month Tabs ===== */
+#monthTabs {
+  display:flex; gap:4px; padding:10px 20px; background:#fff;
+  border-bottom:1px solid var(--border); position:sticky; top:40px;
+  z-index:99; overflow-x:auto;
+}
+.month-tab {
+  padding:5px 14px; border-radius:4px; font-size:13px; cursor:pointer;
+  color:var(--text2); background:var(--bg); border:1px solid var(--border);
+  white-space:nowrap; transition: all .15s; user-select:none;
+}
+.month-tab:hover { color:var(--brand); border-color:var(--brand); }
+.month-tab.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+.month-tab.has-data { font-weight:600; }
+.month-tab.annual { font-weight:700; border-style:dashed; }
+
+/* ===== Main Layout ===== */
+.main-layout { display:flex; gap:16px; padding:16px 20px; }
+
+/* ===== Left Panel ===== */
+#leftPanel {
+  width:300px; min-width:300px; display:flex; flex-direction:column; gap:12px;
+}
+
+/* Grade Cards */
+#gradeGrid { display:flex; gap:6px; flex-wrap:wrap; }
+.gcard {
+  padding:8px 12px; border-radius:var(--radius); background:var(--cardBg);
+  border:2px solid var(--border); cursor:pointer; text-align:center;
+  flex:1; min-width:52px; transition:all .15s; user-select:none;
+}
+.gcard:hover { border-color:var(--brand); }
+.gcard.active { border-color:var(--brand); background:#fdf2f2; }
+.gcard .g { font-size:16px; font-weight:700; }
+.gcard .cnt { font-size:20px; font-weight:700; margin:2px 0; }
+.gcard .pct { font-size:10px; color:var(--text2); }
+.gcard.all .g { color:var(--brand); }
+.gcard.s .g { color:var(--S); }
+.gcard.a .g { color:var(--A); }
+.gcard.b .g { color:var(--B); }
+.gcard.c .g { color:var(--C); }
+.gcard.d .g { color:var(--D); }
+.gcard.s.active { border-color:var(--S); background:#f0faf3; }
+.gcard.a.active { border-color:var(--A); background:#f0faf3; }
+.gcard.b.active { border-color:var(--B); background:#eef2ff; }
+.gcard.c.active { border-color:var(--C); background:#fffaf0; }
+.gcard.d.active { border-color:var(--D); background:#fef2f2; }
+
+#gradeSummary { font-size:11px; color:var(--text2); padding:0 4px; }
+
+/* Region Chips */
+#regionSection { }
+#regionChips { display:flex; flex-wrap:wrap; gap:4px; }
+.rchip {
+  padding:3px 10px; border-radius:12px; font-size:11px; cursor:pointer;
+  background:var(--cardBg); border:1px solid var(--border);
+  transition:all .15s; user-select:none; display:flex; align-items:center; gap:4px;
+}
+.rchip:hover { border-color:var(--brand); }
+.rchip.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+.rcount {
+  background:rgba(0,0,0,.08); padding:0 5px; border-radius:8px; font-size:10px;
+}
+.rchip.active .rcount { background:rgba(255,255,255,.2); }
+
+/* Stats Row */
+.stats2 {
+  display:flex; gap:16px; font-size:12px; color:var(--text2);
+  background:var(--cardBg); padding:8px 12px; border-radius:var(--radius);
+  border:1px solid var(--border);
+}
+.stats2 span { font-weight:600; color:var(--text1); }
+
+/* Average & Cross Tables */
+#avgPanelWrap, #crossWrap {
+  background:var(--cardBg); border-radius:var(--radius);
+  border:1px solid var(--border); padding:8px 12px;
+}
+#avgPanelWrap h4, #crossWrap h4 {
+  font-size:12px; color:var(--text2); margin-bottom:6px; font-weight:600;
+}
+#avgTable, #crossTable {
+  width:100%; border-collapse:collapse; font-size:11px;
+}
+#avgTable th, #avgTable td { padding:3px 6px; text-align:left; }
+#avgTable th { color:var(--text2); font-weight:500; border-bottom:1px solid var(--border); }
+#avgTable td { border-bottom:1px solid #f5f5f5; }
+
+#crossTable th, #crossTable td {
+  padding:3px 4px; text-align:center; font-size:11px;
+}
+#crossTable th { color:var(--text2); font-weight:500; border-bottom:1px solid var(--border); font-size:10px; }
+#crossTable td { border-bottom:1px solid #f5f5f5; }
+.cell-S { color:var(--S); font-weight:600; }
+.cell-A { color:var(--A); }
+.cell-B { color:var(--B); }
+.cell-C { color:var(--C); }
+.cell-D { color:var(--D); }
+.cell-S.warn { background:#ffeaea; }
+.cell-D.warn { background:#ffeaea; }
+.total-col { font-weight:600; }
+
+/* ===== Right Panel ===== */
+.right-panel { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+
+.panel-header {
+  display:flex; align-items:center; gap:12px;
+  background:var(--cardBg); padding:8px 12px; border-radius:var(--radius);
+  border:1px solid var(--border);
+}
+
+/* View Toggle */
+#viewToggle { display:flex; gap:4px; }
+#viewToggle button {
+  padding:4px 12px; border:1px solid var(--border); border-radius:4px;
+  background:var(--bg); font-size:12px; cursor:pointer; transition:all .15s;
+}
+#viewToggle button:hover { border-color:var(--brand); color:var(--brand); }
+#viewToggle button.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+
+/* Search */
+#searchInput {
+  flex:1; padding:6px 12px; border:1px solid var(--border); border-radius:4px;
+  font-size:13px; outline:none; transition:border .15s;
+}
+#searchInput:focus { border-color:var(--brand); }
+
+/* Table Title & Meta */
+#tableTitle { font-size:15px; font-weight:600; margin:0; line-height:1.3; }
+#tableMeta { font-size:11px; color:var(--text2); margin-top:-4px; }
+#editHint { font-size:10px; color:var(--text3); margin-top:-4px; }
+
+/* Table Wrap */
+#tableWrap {
+  background:var(--cardBg); border-radius:var(--radius);
+  border:1px solid var(--border); overflow:auto;
+  max-height:calc(100vh - 260px);
+}
+#tableWrap table { width:100%; border-collapse:collapse; font-size:12px; }
+#tableWrap thead { position:sticky; top:0; z-index:2; background:#faf9f5; }
+#tableWrap th {
+  padding:8px 6px; border-bottom:2px solid var(--border); text-align:center;
+  font-size:11px; font-weight:600; color:var(--text2); white-space:nowrap;
+}
+#tableWrap th .avg {
+  display:block; font-size:9px; font-weight:400; color:var(--text3); margin-top:2px;
+}
+#tableWrap td {
+  padding:5px 6px; border-bottom:1px solid #f5f5f5; white-space:nowrap;
+}
+#tableWrap tbody tr:hover { background:#fdf9f0; }
+.number-cell { text-align:right; font-variant-numeric:tabular-nums; }
+.number-cell.below { color:var(--warnTxt); background:#fff5f5; }
+
+/* Grade Badge */
+.grade-badge {
+  display:inline-block; padding:1px 8px; border-radius:10px;
+  font-size:11px; font-weight:700; text-align:center; min-width:28px;
+}
+.gbadge-S { background:#d4edda; color:var(--S); }
+.gbadge-A { background:#d4edda; color:var(--A); }
+.gbadge-B { background:#dbeafe; color:var(--B); }
+.gbadge-C { background:#fef3c7; color:var(--C); }
+.gbadge-D { background:#fee2e2; color:var(--D); }
+
+/* Annual View Badges */
+.ab-S { color:var(--S); font-weight:700; }
+.ab-A { color:var(--A); font-weight:700; }
+.ab-B { color:var(--B); font-weight:700; }
+.ab-C { color:var(--C); font-weight:700; }
+.ab-D { color:var(--D); font-weight:700; }
+
+/* Manager View */
+.mgr-row { cursor:pointer; }
+.mgr-row:hover { background:#fdf9f0 !important; }
+.mgr-row.expanded { background:#faf5e8 !important; }
+.mgr-name { font-weight:600; }
+.mgr-region { font-size:10px; color:var(--text2); margin-left:6px; }
+.mgr-badges { display:flex; justify-content:center; gap:2px; }
+.mgr-badges span {
+  display:inline-block; padding:0 6px; border-radius:8px;
+  min-width:20px; text-align:center; font-size:10px; font-weight:600; color:#fff;
+}
+.store-sub { display:none; }
+.store-sub.show { display:table-row; }
+.store-sub td { background:#fdfcf8; font-size:11px; padding:6px 12px !important; }
+.st-link { color:var(--brand); cursor:pointer; font-weight:500; }
+.st-link:hover { text-decoration:underline; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.35);
+  z-index:200; align-items:center; justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal-content {
+  background:#fff; border-radius:12px; padding:24px; width:420px;
+  box-shadow:0 8px 32px rgba(0,0,0,.12);
+}
+.modal-content h3 { font-size:16px; margin-bottom:16px; }
+.form-row { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.form-row label { font-size:13px; color:var(--text2); min-width:70px; }
+.form-row select, .form-row input[type=file] { flex:1; padding:6px 8px; font-size:13px; }
+#importFileName { font-size:12px; color:var(--S); margin-bottom:12px; }
+.form-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+.form-actions button {
+  padding:6px 18px; border-radius:4px; border:1px solid var(--border);
+  background:var(--bg); cursor:pointer; font-size:13px;
+}
+.form-actions button:last-child { background:var(--brand); color:#fff; border-color:var(--brand); }
+
+/* ===== Toast ===== */
+.save-toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  padding:8px 24px; border-radius:20px; background:#333; color:#fff;
+  font-size:13px; z-index:300; opacity:0; pointer-events:none;
+  transition:opacity .3s;
+}
+.save-toast.show { opacity:1; }
+.save-toast.fail { background:var(--warnTxt); }
+
+</style>
+
+<div class="top-bar">
+  <span id="dataInfo">加载中...</span>
+  <div class="toolbar">
+    <button onclick="exportExcel()">导出 Excel</button>
+    <button onclick="downloadShareFile()">下载离线分享</button>
+    <button onclick="manualSave()">保存</button>
+    <button onclick="restoreDefault()">恢复默认</button>
+    <button onclick="showImportModal()">导入 Excel</button>
+  </div>
+</div>
+
+<div id="monthTabs"></div>
+
+<div class="main-layout">
+  <div id="leftPanel">
+    <div id="gradeGrid"></div>
+    <div id="gradeSummary"></div>
+
+    <div id="regionSection">
+      <div id="regionChips"></div>
+    </div>
+
+    <div class="stats2">
+      <div>门店数: <span id="statCount">--</span></div>
+      <div>弱项: <span id="statWarn">--</span></div>
+    </div>
+
+    <div id="avgPanelWrap">
+      <h4>各项均值</h4>
+      <table id="avgTable">
+        <thead><tr><th>指标</th><th>均值</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="crossWrap">
+      <h4>区域交叉分析</h4>
+      <table id="crossTable">
+        <thead><tr><th>区域</th><th>S</th><th>A</th><th>B</th><th>C</th><th>D</th><th>合计</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-header">
+      <div id="viewToggle">
+        <button id="btnStoreView" class="active" onclick="switchView('store')">门店视图</button>
+        <button id="btnMgrView" onclick="switchView('manager')">店长视图</button>
+      </div>
+      <input type="text" id="searchInput" placeholder="搜索门店/区域/店长/编码..." />
+    </div>
+
+    <h3 id="tableTitle"><span>数据加载中...</span></h3>
+    <span id="tableMeta"></span>
+    <div id="editHint">提示：双击数字单元格可编辑数值</div>
+
+    <div id="tableWrap">
+      <table>
+        <thead id="mainHead"></thead>
+        <tbody id="mainBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="importModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>导入 Excel 数据</h3>
+    <div class="form-row">
+      <label>目标月份：</label>
+      <select id="importMonthSelect"></select>
+    </div>
+    <div class="form-row">
+      <label>选择文件：</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" />
+    </div>
+    <div id="importFileName"></div>
+    <div class="form-actions">
+      <button onclick="closeImportModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="saveToast" class="save-toast"></div>
+
+
+<script>
+<script>
+// 数据外置加载
+var EMBEDDED_DATA = {};
+var PERF_DATA_LOADED = false;
+var PERF_DATA_ERROR = null;
+
+(async function loadPerfData() {
+  try {
+    var ts = new Date().getTime();
+    var resp = await fetch('data_perf.json?t=' + ts);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    EMBEDDED_DATA = await resp.json();
+    PERF_DATA_LOADED = true;
+    console.log('绩效数据加载成功:', Object.keys(EMBEDDED_DATA).length, '个月份');
+    // 触发数据就绪事件
+    if (typeof onPerfDataReady === 'function') onPerfDataReady();
+  } catch(e) {
+    PERF_DATA_ERROR = e.message;
+    console.error('绩效数据加载失败:', e.message);
+  }
+})();
+</script>
+
+var MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
+var MONTH_NAMES = ['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+var STORAGE_KEY = 'store_perf_2026_v2';
+var ALL_MONTHS = {}; // {1: [{...}, ...], 2: [...], ...}
+var currentMonth = 7;  // default to July
+var DATA = [];         // current month's data
+var isAnnual = false;
+
+// Column definition
+var ALL_COLS = [
+  {k:'序号',          n:'序号',           num:false},
+  {k:'区域',          n:'区域',           num:false},
+  {k:'门店',          n:'门店',           num:false},
+  {k:'财务编码',      n:'财务编码',        num:false},
+  {k:'顾客满意得分',  n:'顾客满意<br>得分', num:true, score:true},
+  {k:'月度点评差评数',n:'月度点评<br>差评数', num:true, score:false},
+  {k:'月度堂食(电话投诉、公众号)',n:'月度堂食<br>投诉', num:true, score:false},
+  {k:'大众点评分数',  n:'大众点评<br>分数', num:true, score:true},
+  {k:'美团外卖差评率',n:'美团外卖<br>差评率', num:true, score:false},
+  {k:'饿了么外卖差评率',n:'饿了么<br>差评率', num:true, score:false},
+  {k:'月度堂食差评数倒扣',n:'堂食差评<br>倒扣', num:true, score:false},
+  {k:'外部顾客反馈总分',n:'外部顾客<br>反馈总分', num:true, score:true},
+  {k:'该项分配实际得分',n:'该项分配<br>实际得分', num:true, score:true},
+  {k:'优化部线下检查得分',n:'线下检查<br>得分', num:true, score:true},
+  {k:'优化部线上监控检查得分',n:'线上监控<br>得分', num:true, score:true},
+  {k:'内部顾客反馈总分',n:'内部顾客<br>反馈总分', num:true, score:true},
+  {k:'分级管理得分',  n:'分级管理<br>得分', num:true, score:true},
+  {k:'分级管理月总评级',n:'月总评级',      num:false},
+  {k:'店长',          n:'店长',           num:false},
+  {k:'营业额',        n:'营业额',           num:true,  score:false},
+  {k:'流水',          n:'流水',            num:true,  score:false},
+  {k:'分级管理月总评级（新）',n:'月总评级<br>(新)', num:false},
+];
+
+var NUM_COLS = ALL_COLS.filter(function(c){return c.num});
+var SCORE_COLS = ALL_COLS.filter(function(c){return c.score});
+
+var averages = {};
+var curGrade = 'all';
+var curRegion = 'all';
+var viewMode = 'store';
+
+/* ========== Storage ========== */
+function loadAllMonths(){
+  try {
+    var d = localStorage.getItem(STORAGE_KEY);
+    if(d){
+      var parsed = JSON.parse(d);
+      ALL_MONTHS = parsed.months || {};
+      // Ensure all month keys exist
+      MONTHS.forEach(function(m){ if(!ALL_MONTHS[m]) ALL_MONTHS[m] = []; });
+      return true;
+    }
+  } catch(e){}
+  // Init empty
+  MONTHS.forEach(function(m){ ALL_MONTHS[m] = []; });
+  // Load embedded data for months 1-7
+  if(typeof EMBEDDED_DATA !== 'undefined'){
+    for(var em in EMBEDDED_DATA){
+      if(EMBEDDED_DATA.hasOwnProperty(em)){
+        ALL_MONTHS[parseInt(em)] = JSON.parse(JSON.stringify(EMBEDDED_DATA[em]));
+      }
+    }
+  }
+  return false;
+}
+
+function saveAllMonths(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({months: ALL_MONTHS}));
+    return true;
+  } catch(e){
+    alert('保存失败：存储空间不足，请清理浏览器缓存后重试');
+    return false;
+  }
+}
+
+function loadMonthData(m){
+  var raw = ALL_MONTHS[m] || [];
+  DATA = raw.map(function(r,i){
+    var d = {};
+    ALL_COLS.forEach(function(c){
+      var v = r[c.k];
+      if(v === null || v === undefined) v = '';
+      d[c.k] = v;
+    });
+    d._id = i;
+    return d;
+  });
+  // Compute averages
+  averages = {};
+  SCORE_COLS.forEach(function(c){
+    var vals = DATA.map(function(d){ return typeof d[c.k]==='number' ? d[c.k] : NaN; })
+      .filter(function(v){ return !isNaN(v); });
+    averages[c.k] = vals.length ? vals.reduce(function(a,b){return a+b},0)/vals.length : 0;
+  });
+}
+
+function syncDataBack(){
+  // Write DATA back to ALL_MONTHS
+  ALL_MONTHS[currentMonth] = DATA.map(function(d){
+    var r = {};
+    ALL_COLS.forEach(function(c){ r[c.k] = d[c.k]; });
+    return r;
+  });
+}
+
+/* ========== Toast ========== */
+function showToast(msg, isFail){
+  var el = document.getElementById('saveToast');
+  el.textContent = msg;
+  el.className = 'save-toast' + (isFail?' fail':'');
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(function(){ el.classList.remove('show'); }, 2000);
+}
+
+/* ========== Month Tabs ========== */
+function renderMonthTabs(){
+  var container = document.getElementById('monthTabs');
+  var html = '';
+  MONTHS.forEach(function(m){
+    var hasData = (ALL_MONTHS[m] && ALL_MONTHS[m].length > 0);
+    html += '<div class="month-tab'+(m===currentMonth && !isAnnual?' active':'')+
+      (hasData?' has-data':'')+'" onclick="switchMonth('+m+')">'+MONTH_NAMES[m]+'</div>';
+  });
+  html += '<div class="month-tab annual'+(isAnnual?' active':'')+'" onclick="switchToAnnual()">年度汇总</div>';
+  container.innerHTML = html;
+}
+
+function switchMonth(m){
+  if(currentMonth === m && !isAnnual) return;
+  // Sync current data back first
+  if(!isAnnual) syncDataBack();
+  isAnnual = false;
+  currentMonth = m;
+  loadMonthData(m);
+  curGrade = 'all'; curRegion = 'all';
+  viewMode = 'store';
+  document.getElementById('searchInput').value = '';
+  updateUI();
+  renderAll();
+}
+
+function switchToAnnual(){
+  if(isAnnual) return;
+  if(!isAnnual) syncDataBack();
+  isAnnual = true;
+  curGrade = 'all'; curRegion = 'all';
+  document.getElementById('searchInput').value = '';
+  updateUI();
+  renderAnnualView();
+}
+
+function updateUI(){
+  renderMonthTabs();
+  // Show/hide elements based on isAnnual
+  var leftPanel = document.getElementById('leftPanel');
+  var gradeGrid = document.getElementById('gradeGrid');
+  var stats2 = document.querySelector('.stats2');
+  var avgPanelWrap = document.getElementById('avgPanelWrap');
+  var regionSection = document.getElementById('regionSection');
+  var viewToggle = document.getElementById('viewToggle');
+  var crossWrap = document.getElementById('crossWrap');
+  var editHint = document.getElementById('editHint');
+  var tableWrap = document.getElementById('tableWrap');
+  var toolbar = document.querySelector('.toolbar');
+  var searchInput = document.getElementById('searchInput');
+
+  if(isAnnual){
+    // Hide month-specific panels
+    if(gradeGrid) gradeGrid.style.display = 'none';
+    if(stats2) stats2.style.display = 'none';
+    if(avgPanelWrap) avgPanelWrap.style.display = 'none';
+    if(regionSection) regionSection.style.display = 'none';
+    if(viewToggle) viewToggle.style.display = 'none';
+    if(crossWrap) crossWrap.style.display = 'none';
+    if(editHint) editHint.style.display = 'none';
+    document.getElementById('gradeSummary').textContent = '';
+    document.getElementById('statCount').textContent = '--';
+    document.getElementById('statWarn').textContent = '--';
+    // Show region chips for annual filtering
+    if(regionSection) regionSection.style.display = 'block';
+    renderAnnualRegionChips();
+    // Update title
+    document.getElementById('dataInfo').textContent = '全年数据汇总';
+    document.getElementById('tableTitle').childNodes[0].textContent = '年度汇总视图';
+    document.getElementById('tableMeta').textContent = '';
+    // Adjust table wrap
+    if(tableWrap) tableWrap.style.maxHeight = 'calc(100vh - 200px)';
+  } else {
+    if(gradeGrid) gradeGrid.style.display = '';
+    if(stats2) stats2.style.display = '';
+    if(avgPanelWrap) avgPanelWrap.style.display = '';
+    if(regionSection) regionSection.style.display = '';
+    if(viewToggle) viewToggle.style.display = '';
+    if(crossWrap) crossWrap.style.display = '';
+    if(editHint) editHint.style.display = '';
+    if(tableWrap) tableWrap.style.maxHeight = 'calc(100vh - 260px)';
+    document.getElementById('dataInfo').textContent = MONTH_NAMES[currentMonth]+' · 共 '+DATA.length+' 家门店';
+  }
+}
+
+/* ========== Init ========== */
+function init(){
+  var hadSaved = loadAllMonths();
+  loadMonthData(currentMonth);
+
+  if(hadSaved){
+    document.getElementById('dataInfo').textContent = MONTH_NAMES[currentMonth]+' · 共 '+DATA.length+' 家门店';
+  } else {
+    var cnt = DATA.length;
+    document.getElementById('dataInfo').textContent = MONTH_NAMES[currentMonth]+' · 共 '+cnt+' 家门店（默认数据）';
+  }
+
+  updateUI();
+  if(isAnnual){
+    renderAnnualView();
+  } else {
+    renderAll();
+  }
+}
+
+function renderAll(){
+  renderGradeCards();
+  renderRegionChips();
+  renderStats();
+  renderAvgTable();
+  renderCrossTable();
+  renderTable();
+}
+
+/* ========== Grade Cards ========== */
+function renderGradeCards(){
+  if(isAnnual) return;
+  var grades = {S:[],A:[],B:[],C:[],D:[]};
+  DATA.forEach(function(d){ var g = d['分级管理月总评级']; if(grades[g]) grades[g].push(d); });
+
+  var grid = document.getElementById('gradeGrid');
+  if(!grid) return;
+  var total = DATA.length;
+  var html = '<div class="gcard all'+(curGrade==='all'?' active':'')+'" onclick="setGrade(\'all\')"><div class="g">全部</div><div class="cnt">'+total+'</div><div class="pct">100%</div></div>';
+
+  var order = ['S','A','B','C','D'];
+  order.forEach(function(g){
+    var cnt = grades[g] ? grades[g].length : 0;
+    var pct = total ? (cnt/total*100).toFixed(0) : '0';
+    html += '<div class="gcard '+g.toLowerCase()+(curGrade===g?' active':'')+'" onclick="setGrade(\''+g+'\')">'+
+      '<div class="g">'+g+'</div><div class="cnt">'+cnt+'</div><div class="pct">'+pct+'%</div></div>';
+  });
+  grid.innerHTML = html;
+  var gs = grades.S.length+' A:'+grades.A.length+' B:'+grades.B.length+' C:'+grades.C.length+' D:'+grades.D.length;
+  document.getElementById('gradeSummary').textContent = 'S:'+gs;
+}
+
+function renderStats(){
+  if(isAnnual) return;
+  var filtered = getFiltered();
+  document.getElementById('statCount').textContent = filtered.length;
+  var warnTotal = 0;
+  filtered.forEach(function(d){
+    SCORE_COLS.forEach(function(c){
+      var v = d[c.k], a = averages[c.k];
+      if(typeof v==='number' && a && v < a) warnTotal++;
+    });
+  });
+  document.getElementById('statWarn').textContent = warnTotal;
+}
+
+function renderAvgTable(){
+  if(isAnnual) return;
+  var tb = document.querySelector('#avgTable tbody');
+  if(!tb) return;
+  tb.innerHTML = '';
+  SCORE_COLS.forEach(function(c){
+    var a = averages[c.k];
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+c.k+'</td><td style="text-align:right;font-weight:500">'+(a ? a.toFixed(2) : '--')+'</td>';
+    tb.appendChild(tr);
+  });
+}
+
+/* ========== Cross Table ========== */
+function renderCrossTable(){
+  if(isAnnual) return;
+  var regionMap = {};
+  var gradeOrder = ['S','A','B','C','D'];
+  DATA.forEach(function(d){
+    var reg = d['区域']; if(!reg) reg='(未知)';
+    var g = d['分级管理月总评级'];
+    if(!regionMap[reg]) regionMap[reg] = {S:0,A:0,B:0,C:0,D:0};
+    if(regionMap[reg][g] !== undefined) regionMap[reg][g]++;
+  });
+
+  var regions = Object.keys(regionMap).sort(function(a,b){
+    var ta = gradeOrder.reduce(function(s,g){return s+regionMap[a][g]},0);
+    var tb = gradeOrder.reduce(function(s,g){return s+regionMap[b][g]},0);
+    return tb - ta;
+  });
+
+  var totals = {S:0,A:0,B:0,C:0,D:0,total:0};
+  var tbody = document.querySelector('#crossTable tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+
+  var allD = regions.map(function(r){ return regionMap[r].D||0; });
+  var dAvg = allD.length ? allD.reduce(function(a,b){return a+b},0)/allD.length : 0;
+
+  regions.forEach(function(reg){
+    var d = regionMap[reg];
+    var total = gradeOrder.reduce(function(s,g){return s+(d[g]||0)},0);
+    var tr = document.createElement('tr');
+    var cells = '<td>'+reg+'</td>';
+    gradeOrder.forEach(function(g){
+      var v = d[g]||0;
+      var cls = 'cell-'+g;
+      if(g==='S' && v===0) cls += ' warn';
+      if(g==='D' && v > dAvg) cls += ' warn';
+      cells += '<td class="'+cls+'">'+v+'</td>';
+      totals[g] += v;
+    });
+    cells += '<td class="total-col">'+total+'</td>';
+    totals.total += total;
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+
+  var tf = document.createElement('tr');
+  var fc = '<td>合计</td>';
+  gradeOrder.forEach(function(g){ fc += '<td>'+totals[g]+'</td>'; });
+  fc += '<td>'+totals.total+'</td>';
+  tf.innerHTML = fc;
+  tbody.appendChild(tf);
+}
+
+function fmt(v){
+  if(typeof v==='number') return v.toFixed(2);
+  return v;
+}
+
+function switchView(mode){
+  if(isAnnual) return;
+  viewMode = mode;
+  document.getElementById('btnStoreView').className = mode==='store' ? 'active' : '';
+  document.getElementById('btnMgrView').className = mode==='manager' ? 'active' : '';
+  renderTable();
+}
+
+function renderTable(){
+  if(isAnnual){ renderAnnualView(); return; }
+  if(viewMode==='manager'){ renderManagerView(); return; }
+  renderStoreView();
+}
+
+function renderStoreView(){
+  if(isAnnual) return;
+  var filtered = getFiltered();
+  var titleParts = [];
+  if(curGrade==='all' && curRegion==='all') titleParts.push('全部门店');
+  else {
+    if(curRegion!=='all') titleParts.push(curRegion);
+    if(curGrade!=='all') titleParts.push(curGrade+' 级');
+    if(!titleParts.length) titleParts.push('全部门店');
+  }
+  document.getElementById('tableTitle').childNodes[0].textContent = MONTH_NAMES[currentMonth]+' · '+titleParts.join(' · ');
+  document.getElementById('tableMeta').textContent = '共 '+filtered.length+' 家';
+
+  // Header
+  var thead = document.getElementById('mainHead');
+  thead.innerHTML = '<tr>'+ALL_COLS.map(function(c){
+    var lbl = c.n;
+    if(c.score){
+      var a = averages[c.k];
+      lbl += '<span class="avg">均值 '+(a?a.toFixed(2):'--')+'</span>';
+    }
+    return '<th>'+lbl+'</th>';
+  }).join('')+'</tr>';
+
+  // Body
+  var tb = document.getElementById('mainBody');
+  var srch = (document.getElementById('searchInput').value||'').trim().toLowerCase();
+  if(srch){
+    filtered = filtered.filter(function(d){
+      return (d['门店']+'').toLowerCase().includes(srch) ||
+             (d['区域']+'').toLowerCase().includes(srch) ||
+             (d['店长']+'').toLowerCase().includes(srch) ||
+             (d['财务编码']+'').toLowerCase().includes(srch);
+    });
+  }
+
+  tb.innerHTML = '';
+  if(!filtered.length){ tb.innerHTML='<tr><td colspan="'+ALL_COLS.length+'" style="text-align:center;padding:40px;color:var(--text3)">无匹配结果</td></tr>'; return; }
+
+  filtered.forEach(function(d, rowIdx){
+    var tr = document.createElement('tr');
+    ALL_COLS.forEach(function(c, colIdx){
+      var td = document.createElement('td');
+      var v = d[c.k];
+      if(c.k === '分级管理月总评级'){
+        td.innerHTML = '<span class="grade-badge gbadge-'+v+'">'+v+'</span>';
+      } else if(c.score && typeof v === 'number'){
+        var a = averages[c.k];
+        td.textContent = fmt(v);
+        td.className = 'number-cell';
+        td.setAttribute('data-row', rowIdx);
+        td.setAttribute('data-col', c.k);
+        if(a && v < a){
+          td.classList.add('below');
+          td.title = c.k+'：'+fmt(v)+' 低于均值 '+a.toFixed(2);
+        }
+      } else if(c.num && typeof v === 'number'){
+        td.textContent = fmt(v);
+        td.className = 'number-cell';
+        td.setAttribute('data-row', rowIdx);
+        td.setAttribute('data-col', c.k);
+      } else {
+        td.textContent = v !== undefined && v !== null ? v : '';
+      }
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+
+  // Attach double-click handlers
+  attachEditHandlers();
+}
+
+function attachEditHandlers(){
+  var cells = document.querySelectorAll('#mainBody td.number-cell');
+  cells.forEach(function(cell){
+    cell.ondblclick = function(e){
+      startEdit(cell);
+    };
+  });
+}
+
+function startEdit(cell){
+  if(cell.getAttribute('contenteditable')==='true') return;
+  var original = cell.textContent;
+  cell.setAttribute('contenteditable', 'true');
+  cell.setAttribute('data-original', original);
+  cell.focus();
+  // Select all text
+  var range = document.createRange();
+  range.selectNodeContents(cell);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  cell.onblur = function(){
+    finishEdit(cell);
+  };
+  cell.onkeydown = function(e){
+    if(e.key==='Enter'){
+      e.preventDefault();
+      cell.blur();
+    }
+    if(e.key==='Escape'){
+      cell.textContent = cell.getAttribute('data-original');
+      cell.blur();
+    }
+  };
+}
+
+function finishEdit(cell){
+  cell.removeAttribute('contenteditable');
+  cell.onblur = null;
+  cell.onkeydown = null;
+  var newVal = cell.textContent.trim();
+  var col = cell.getAttribute('data-col');
+  var original = cell.getAttribute('data-original');
+
+  if(newVal === original) return;
+
+  // Try to parse as number
+  var numVal = parseFloat(newVal);
+  if(isNaN(numVal)){
+    cell.textContent = original;
+    showToast('请输入有效数字', true);
+    return;
+  }
+
+  // Update DATA
+  var filtered = getFilteredWithSearch();
+  var rowIdx = parseInt(cell.getAttribute('data-row'));
+  if(rowIdx < filtered.length){
+    filtered[rowIdx][col] = numVal;
+    // Round to 2 decimals for display
+    cell.textContent = numVal.toFixed(2);
+    // Re-check below
+    var a = averages[col];
+    if(a && numVal < a){
+      cell.classList.add('below');
+    } else {
+      cell.classList.remove('below');
+    }
+    // Sync back
+    syncDataBack();
+    saveAllMonths();
+    // Recompute averages and re-render affected parts
+    loadMonthData(currentMonth);
+    renderGradeCards();
+    renderStats();
+    renderAvgTable();
+    renderCrossTable();
+    showToast('已更新 '+col);
+  }
+}
+
+function getFilteredWithSearch(){
+  var filtered = getFiltered();
+  var srch = (document.getElementById('searchInput').value||'').trim().toLowerCase();
+  if(srch){
+    filtered = filtered.filter(function(d){
+      return (d['门店']+'').toLowerCase().includes(srch) ||
+             (d['区域']+'').toLowerCase().includes(srch) ||
+             (d['店长']+'').toLowerCase().includes(srch) ||
+             (d['财务编码']+'').toLowerCase().includes(srch);
+    });
+  }
+  return filtered;
+}
+
+/* ========== Manager View ========== */
+function renderManagerView(){
+  if(isAnnual) return;
+  var filtered = getFiltered();
+  var srch = (document.getElementById('searchInput').value||'').trim().toLowerCase();
+  if(srch){
+    filtered = filtered.filter(function(d){
+      return (d['门店']+'').toLowerCase().includes(srch) ||
+             (d['区域']+'').toLowerCase().includes(srch) ||
+             (d['店长']+'').toLowerCase().includes(srch) ||
+             (d['财务编码']+'').toLowerCase().includes(srch);
+    });
+  }
+
+  var mgrs = {};
+  filtered.forEach(function(d){
+    var m = d['店长'] || '(未知)';
+    if(!mgrs[m]) mgrs[m] = {name:m, region:d['区域'], stores:[], grades:{S:0,A:0,B:0,C:0,D:0}};
+    mgrs[m].stores.push(d);
+    var g = d['分级管理月总评级'];
+    if(mgrs[m].grades[g] !== undefined) mgrs[m].grades[g]++;
+  });
+
+  var mlist = Object.values(mgrs).sort(function(a,b){ return b.stores.length - a.stores.length; });
+
+  var titleParts = [];
+  if(curRegion!=='all') titleParts.push(curRegion);
+  if(curGrade!=='all') titleParts.push(curGrade+' 级');
+  document.getElementById('tableTitle').childNodes[0].textContent = MONTH_NAMES[currentMonth]+' · '+(titleParts.length?titleParts.join(' · '):'全部门店')+'（店长视图）';
+  document.getElementById('tableMeta').textContent = '共 '+mlist.length+' 位店长 · '+filtered.length+' 家门店';
+
+  var thead = document.getElementById('mainHead');
+  thead.innerHTML = '<tr>'+
+    '<th>店长</th><th>区域</th><th>管辖门店</th>'+
+    '<th style="text-align:center">S</th><th style="text-align:center">A</th><th style="text-align:center">B</th><th style="text-align:center">C</th><th style="text-align:center">D</th>'+
+    '<th>分级管理得分(均)</th><th>弱项(低于均值)</th>'+
+    '</tr>';
+
+  var tb = document.getElementById('mainBody');
+  tb.innerHTML = '';
+  if(!mlist.length){ tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3)">无匹配结果</td></tr>'; return; }
+
+  mlist.forEach(function(m, mi){
+    var tr = document.createElement('tr');
+    tr.className = 'mgr-row';
+    tr.setAttribute('data-midx', mi);
+    tr.onclick = function(){ toggleMgr(mi); };
+
+    var avgScore = m.stores.reduce(function(s,d){ return s+(typeof d['分级管理得分']==='number'?d['分级管理得分']:0); },0) / m.stores.length;
+
+    var weakCount = 0;
+    m.stores.forEach(function(d){
+      SCORE_COLS.forEach(function(c){
+        var v = d[c.k], a = averages[c.k];
+        if(typeof v==='number' && a && v < a) weakCount++;
+      });
+    });
+
+    var cells = [
+      '<span class="mgr-name">'+m.name+'</span>',
+      '<span class="mgr-region">'+m.region+'</span>',
+      m.stores.length+' 家',
+    ];
+    ['S','A','B','C','D'].forEach(function(g){
+      cells.push('<div class="mgr-badges"><span style="background:var(--'+g+')">'+m.grades[g]+'</span></div>');
+    });
+    cells.push(avgScore.toFixed(2));
+    cells.push('<span style="color:var(--warnTxt);font-weight:500">'+weakCount+' 项</span>');
+
+    cells.forEach(function(cell){
+      var td = document.createElement('td');
+      td.innerHTML = cell;
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+
+    m.stores.forEach(function(d){
+      var sub = document.createElement('tr');
+      sub.className = 'store-sub';
+      sub.setAttribute('data-midx', mi);
+      var subTd = document.createElement('td');
+      subTd.colSpan = 10;
+      subTd.style.padding = '4px 8px';
+
+      var parts = [];
+      var sname = (d['门店']+'').replace(/'/g, "\\'");
+      parts.push('<span class="st-link" onclick="event.stopPropagation();goToStore(\''+sname+'\')">'+d['门店']+'</span>');
+      parts.push('<span class="grade-badge gbadge-'+d['分级管理月总评级']+'" style="margin-left:6px">'+d['分级管理月总评级']+'</span>');
+      parts.push('<span style="margin-left:8px;color:var(--text2);font-size:10px">'+d['区域']+'</span>');
+      parts.push('<span style="margin-left:8px;color:var(--text2);font-size:10px">编码:'+d['财务编码']+'</span>');
+
+      SCORE_COLS.forEach(function(c){
+        var v = d[c.k], a = averages[c.k];
+        if(typeof v==='number'){
+          var red = a && v < a;
+          parts.push('<span style="margin-left:6px;font-size:10px;'+(red?'color:var(--warnTxt);font-weight:600':'color:var(--text2)')+'">'+c.k+':'+fmt(v)+(red?' ↓':'')+'</span>');
+        }
+      });
+
+      subTd.innerHTML = parts.join('');
+      sub.appendChild(subTd);
+      tb.appendChild(sub);
+    });
+  });
+}
+
+function toggleMgr(mi){
+  var row = document.querySelector('.mgr-row[data-midx="'+mi+'"]');
+  var subs = document.querySelectorAll('.store-sub[data-midx="'+mi+'"]');
+  var show = !row.classList.contains('expanded');
+  if(show){ row.classList.add('expanded'); } else { row.classList.remove('expanded'); }
+  subs.forEach(function(s){ if(show) s.classList.add('show'); else s.classList.remove('show'); });
+}
+
+function goToStore(name){
+  switchView('store');
+  curGrade = 'all'; curRegion = 'all';
+  renderGradeCards(); renderRegionChips(); renderStats(); renderAvgTable();
+  setTimeout(function(){
+    document.getElementById('searchInput').value = name;
+    renderStoreView();
+  }, 50);
+}
+
+function getFiltered(){
+  if(isAnnual) return [];
+  var result = DATA;
+  if(curGrade !== 'all') result = result.filter(function(d){ return d['分级管理月总评级'] === curGrade; });
+  if(curRegion !== 'all') result = result.filter(function(d){ return d['区域'] === curRegion; });
+  return result;
+}
+
+function renderRegionChips(){
+  var regions = {};
+  DATA.forEach(function(d){ var r = d['区域']; if(r) regions[r] = (regions[r]||0)+1; });
+  var sorted = Object.keys(regions).sort(function(a,b){ return regions[b] - regions[a]; });
+
+  var html = '';
+  sorted.forEach(function(reg){
+    html += '<div class="rchip'+(curRegion===reg?' active':'')+'" onclick="setRegion(\''+reg+'\')">'+
+      reg+'<span class="rcount">'+regions[reg]+'</span></div>';
+  });
+  document.getElementById('regionChips').innerHTML = html;
+}
+
+function renderAnnualRegionChips(){
+  // Build region set from all months
+  var allRegions = {};
+  MONTHS.forEach(function(m){
+    var d = ALL_MONTHS[m] || [];
+    d.forEach(function(r){
+      var reg = r['区域']; if(reg) allRegions[reg] = (allRegions[reg]||0)+1;
+    });
+  });
+  var sorted = Object.keys(allRegions).sort(function(a,b){ return allRegions[b] - allRegions[a]; });
+
+  var html = '';
+  sorted.forEach(function(reg){
+    html += '<div class="rchip'+(curRegion===reg?' active':'')+'" onclick="if(isAnnual){curRegion=reg;renderAnnualView();}else{setRegion(reg);}">'+
+      reg+'<span class="rcount">'+allRegions[reg]+'</span></div>';
+  });
+  document.getElementById('regionChips').innerHTML = html;
+}
+
+function setRegion(reg){
+  curRegion = reg;
+  if(isAnnual){ renderAnnualView(); return; }
+  renderAll();
+}
+
+function setGrade(g){
+  curGrade = g;
+  renderAll();
+}
+
+function resetFilter(){
+  curGrade = 'all';
+  curRegion = 'all';
+  document.getElementById('searchInput').value = '';
+  if(isAnnual){ renderAnnualView(); return; }
+  renderAll();
+}
+
+/* ========== Annual Summary View ========== */
+function renderAnnualView(){
+  // Build store master list from all months
+  var storeMap = {};
+  MONTHS.forEach(function(m){
+    var raw = ALL_MONTHS[m] || [];
+    raw.forEach(function(r){
+      var key = r['门店'] || '';
+      if(!key) return;
+      if(!storeMap[key]){
+        storeMap[key] = {
+          门店: r['门店'],
+          区域: r['区域'],
+          财务编码: r['财务编码'],
+          店长: r['店长'],
+          months: {} // {1: {score, rating}, 2: {...}, ...}
+        };
+      }
+      // Use latest 店长
+      if(r['店长']) storeMap[key]['店长'] = r['店长'];
+      if(r['区域']) storeMap[key]['区域'] = r['区域'];
+      if(r['财务编码']) storeMap[key]['财务编码'] = r['财务编码'];
+      storeMap[key].months[m] = {
+        score: typeof r['分级管理得分'] === 'number' ? r['分级管理得分'] : null,
+        rating: r['分级管理月总评级'] || ''
+      };
+    });
+  });
+
+  var stores = Object.values(storeMap);
+
+  // Apply region filter
+  var srch = (document.getElementById('searchInput').value||'').trim().toLowerCase();
+  if(curRegion !== 'all'){
+    stores = stores.filter(function(s){ return s['区域'] === curRegion; });
+  }
+  if(srch){
+    stores = stores.filter(function(s){
+      return (s['门店']+'').toLowerCase().includes(srch) ||
+             (s['区域']+'').toLowerCase().includes(srch) ||
+             (s['店长']+'').toLowerCase().includes(srch) ||
+             (s['财务编码']+'').toLowerCase().includes(srch);
+    });
+  }
+
+  // Compute annual average and rating
+  stores.forEach(function(s){
+    var scores = [];
+    var ratingCounts = {S:0,A:0,B:0,C:0,D:0};
+    MONTHS.forEach(function(m){
+      var md = s.months[m];
+      if(md && md.score !== null){
+        scores.push(md.score);
+        if(md.rating && ratingCounts[md.rating] !== undefined) ratingCounts[md.rating]++;
+      }
+    });
+    s.annualAvg = scores.length ? scores.reduce(function(a,b){return a+b},0)/scores.length : 0;
+    // Determine annual rating: most frequent rating, tie-break by worst
+    var maxCnt = 0;
+    var annualRating = '';
+    ['D','C','B','A','S'].forEach(function(g){
+      if(ratingCounts[g] >= maxCnt){
+        maxCnt = ratingCounts[g];
+        annualRating = g;
+      }
+    });
+    s.annualRating = annualRating;
+    s.monthCount = scores.length;
+  });
+
+  // Sort by annual avg descending
+  stores.sort(function(a,b){ return b.annualAvg - a.annualAvg; });
+
+  // Render
+  document.getElementById('tableTitle').childNodes[0].textContent = '年度汇总视图';
+  document.getElementById('tableMeta').textContent = '共 '+stores.length+' 家门店';
+
+  // Header
+  var thead = document.getElementById('mainHead');
+  var hhtml = '<tr>';
+  hhtml += '<th>序号</th><th>区域</th><th>门店</th><th>财务编码</th><th>店长</th>';
+  MONTHS.forEach(function(m){
+    hhtml += '<th style="text-align:center">'+m+'月<br><small>评级 / 得分</small></th>';
+  });
+  hhtml += '<th style="text-align:center">年度平均<br>得分</th><th style="text-align:center">年度<br>总评级</th>';
+  hhtml += '</tr>';
+  thead.innerHTML = hhtml;
+
+  // Body
+  var tb = document.getElementById('mainBody');
+  tb.innerHTML = '';
+  if(!stores.length){ tb.innerHTML='<tr><td colspan="'+(7+MONTHS.length)+'" style="text-align:center;padding:40px;color:var(--text3)">无匹配结果</td></tr>'; return; }
+
+  stores.forEach(function(s, idx){
+    var tr = document.createElement('tr');
+    var cells = '';
+    cells += '<td>'+(idx+1)+'</td>';
+    cells += '<td>'+s['区域']+'</td>';
+    cells += '<td>'+s['门店']+'</td>';
+    cells += '<td>'+s['财务编码']+'</td>';
+    cells += '<td>'+s['店长']+'</td>';
+
+    MONTHS.forEach(function(m){
+      var md = s.months[m];
+      if(md && md.rating){
+        cells += '<td style="text-align:center"><span class="ab-'+md.rating+'">'+md.rating+'</span> '+
+          (md.score!==null ? md.score.toFixed(2) : '--')+'</td>';
+      } else if(md && md.score !== null){
+        cells += '<td style="text-align:center;color:var(--text3)">-- '+md.score.toFixed(2)+'</td>';
+      } else {
+        cells += '<td style="text-align:center;color:var(--text3)">--</td>';
+      }
+    });
+
+    cells += '<td style="text-align:center;font-weight:600">'+s.annualAvg.toFixed(2)+'</td>';
+    cells += '<td style="text-align:center"><span class="grade-badge gbadge-'+s.annualRating+'">'+s.annualRating+'</span></td>';
+
+    tr.innerHTML = cells;
+    tb.appendChild(tr);
+  });
+}
+
+/* ========== Import Modal ========== */
+function showImportModal(){
+  var sel = document.getElementById('importMonthSelect');
+  sel.innerHTML = '';
+  MONTHS.forEach(function(m){
+    sel.innerHTML += '<option value="'+m+'"'+(m===currentMonth?' selected':'')+'>'+MONTH_NAMES[m]+'</option>';
+  });
+  document.getElementById('importFileName').textContent = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('importModal').classList.add('show');
+}
+
+function closeImportModal(){
+  document.getElementById('importModal').classList.remove('show');
+}
+
+/* ========== Search ========== */
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('searchInput').addEventListener('input', function(){
+    if(isAnnual){ renderAnnualView(); }
+    else { renderTable(); }
+  });
+  document.getElementById('fileInput').addEventListener('change', handleFileImport);
+  
+  // 等待绩效数据加载完成后初始化
+  (function waitAndInit() {
+    if (PERF_DATA_LOADED) {
+      init();
+      var el = document.getElementById('dataLoadingOverlay');
+      if (el) el.style.display = 'none';
+    } else if (PERF_DATA_ERROR) {
+      var el = document.getElementById('dataLoadingOverlay');
+      var errEl = document.getElementById('dataErrorMsg');
+      if (el && errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = '数据加载失败: ' + PERF_DATA_ERROR + ' - 请刷新页面重试';
+      }
+    } else {
+      setTimeout(waitAndInit, 200);
+    }
+  })();
+});
+
+/* ========== Manual Save ========== */
+function manualSave(){
+  syncDataBack();
+  if(saveAllMonths()){
+    var totalCnt = 0;
+    MONTHS.forEach(function(m){ totalCnt += (ALL_MONTHS[m]||[]).length; });
+    showToast('已保存全部 '+totalCnt+' 条记录');
+  }
+}
+
+/* ========== Restore Default ========== */
+function restoreDefault(){
+  if(!confirm('确认恢复为默认数据？仅7月数据保留为初始版本，其他月份数据将被清空。')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  MONTHS.forEach(function(m){ ALL_MONTHS[m] = []; });
+  if(typeof EMBEDDED_DATA !== 'undefined'){
+    for(var em in EMBEDDED_DATA){
+      if(EMBEDDED_DATA.hasOwnProperty(em)){
+        ALL_MONTHS[parseInt(em)] = JSON.parse(JSON.stringify(EMBEDDED_DATA[em]));
+      }
+    }
+  }
+  saveAllMonths();
+  isAnnual = false;
+  currentMonth = 7;
+  curGrade = 'all'; curRegion = 'all';
+  viewMode = 'store';
+  document.getElementById('searchInput').value = '';
+  loadMonthData(7);
+  updateUI();
+  renderAll();
+}
+
+/* ========== Excel Import ========== */
+function handleFileImport(e){
+  var f = e.target.files[0]; if(!f) return;
+  document.getElementById('importFileName').textContent = f.name;
+  var reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      var wb = XLSX.read(evt.target.result, {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      if(!rows.length){ alert('Excel 为空'); return; }
+
+      var mapped = rows.map(function(r, i){
+        var d = {};
+        ALL_COLS.forEach(function(c){
+          var v = r[c.k];
+          // Handle "加分项" prefix for 美团/饿了么 columns
+          if(v === undefined || v === ''){
+            v = r['加分项'+c.k] || r['加分项美团外卖差评率'] || r['加分项饿了么外卖差评率'] || '';
+            // More specific mapping
+            if(c.k === '美团外卖差评率') v = r['加分项美团外卖差评率'] || r['加分项美团外卖 差评率'] || v;
+            if(c.k === '饿了么外卖差评率') v = r['加分项饿了么外卖差评率'] || r['加分项饿了么外卖 差评率'] || v;
+          }
+          if(v === undefined || v === '') v = '';
+          d[c.k] = v;
+        });
+        return d;
+      }).filter(function(d){ return d['门店']; });
+
+      if(!mapped.length){ alert('未识别到有效数据'); return; }
+
+      var targetMonth = parseInt(document.getElementById('importMonthSelect').value);
+      if(!confirm('识别到 '+mapped.length+' 家门店，导入到 '+MONTH_NAMES[targetMonth]+'？')) return;
+
+      ALL_MONTHS[targetMonth] = mapped;
+      saveAllMonths();
+
+      if(isAnnual){
+        switchMonth(targetMonth);
+      } else if(targetMonth === currentMonth){
+        loadMonthData(currentMonth);
+        renderAll();
+      } else {
+        switchMonth(targetMonth);
+      }
+      closeImportModal();
+      showToast('已导入 '+mapped.length+' 家门店到 '+MONTH_NAMES[targetMonth]);
+    } catch(err){ alert('导入失败：'+err.message); }
+  };
+  reader.readAsArrayBuffer(f);
+  // Don't clear value yet - we need it for the modal flow
+}
+
+/* ========== Excel Export ========== */
+function exportExcel(){
+  if(isAnnual){
+    exportAnnualExcel();
+    return;
+  }
+  var data = getFiltered();
+  if(!data.length){ alert('没有可导出的数据'); return; }
+  var rows = data.map(function(d){
+    var r = {};
+    ALL_COLS.forEach(function(c){ r[c.k] = d[c.k]; });
+    return r;
+  });
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, MONTH_NAMES[currentMonth]+'绩效');
+  XLSX.writeFile(wb, '门店绩效_2026-'+currentMonth.toString().padStart(2,'0')+'.xlsx');
+}
+
+function exportAnnualExcel(){
+  // Build annual data similar to renderAnnualView
+  var storeMap = {};
+  MONTHS.forEach(function(m){
+    var raw = ALL_MONTHS[m] || [];
+    raw.forEach(function(r){
+      var key = r['门店'] || '';
+      if(!key) return;
+      if(!storeMap[key]){
+        storeMap[key] = {
+          门店: r['门店'], 区域: r['区域'], 财务编码: r['财务编码'], 店长: r['店长']
+        };
+      }
+      storeMap[key]['店长'] = r['店长'] || storeMap[key]['店长'];
+      storeMap[key]['区域'] = r['区域'] || storeMap[key]['区域'];
+      storeMap[key]['财务编码'] = r['财务编码'] || storeMap[key]['财务编码'];
+      storeMap[key][m+'月评级'] = r['分级管理月总评级'] || '';
+      storeMap[key][m+'月得分'] = typeof r['分级管理得分'] === 'number' ? r['分级管理得分'] : '';
+    });
+  });
+
+  var rows = Object.values(storeMap);
+  rows.forEach(function(r){
+    var scores = [];
+    MONTHS.forEach(function(m){
+      if(r[m+'月得分'] !== '') scores.push(r[m+'月得分']);
+    });
+    r['年度平均得分'] = scores.length ? (scores.reduce(function(a,b){return a+b},0)/scores.length).toFixed(2) : '';
+  });
+
+  var ws = XLSX.utils.json_to_sheet(rows);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '年度汇总');
+  XLSX.writeFile(wb, '门店绩效_2026年全年汇总.xlsx');
+}
+
+/* ========== Share File Export ========== */
+function downloadShareFile(){
+  if(!isAnnual) syncDataBack();
+
+  // Build complete standalone HTML
+  var allMonthsJson = JSON.stringify({months: ALL_MONTHS});
+
+  // Get the HTML of this page, but replace data
+  var pageHtml = document.documentElement.outerHTML;
+
+  // Find and replace the inline data
+  // We need to embed ALL_MONTHS data and remove localStorage dependency
+  var inlineData = '\n<script>var SHARE_DATA = ' + allMonthsJson + ';<\/script>';
+
+  // Build the share file content manually for reliability
+  var shareHtml = buildShareFile(allMonthsJson);
+
+  var blob = new Blob([shareHtml], {type: 'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '门店绩效排名_2026年全年版.html';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  var totalCnt = 0;
+  MONTHS.forEach(function(m){ totalCnt += (ALL_MONTHS[m]||[]).length; });
+  showToast('已下载全年版离线文件（含 '+MONTHS.filter(function(m){return (ALL_MONTHS[m]||[]).length>0;}).length+' 个月数据，共 '+totalCnt+' 条），可直接分享');
+}
+
+function buildShareFile(allMonthsJson){
+  // We copy the current DOM and replace the script
+  var html = document.documentElement.outerHTML;
+  // Remove existing EMBEDDED_DATA script
+  html = html.replace(/<script>\nvar EMBEDDED_DATA[\s\S]*?<\/script>/, '');
+  // Insert SHARE_DATA before </head>
+  html = html.replace('</head>', '\n<script>var SHARE_DATA = ' + allMonthsJson + ';<\/script>\n</head>');
+  // Replace init() to use SHARE_DATA
+  html = html.replace(
+    'function loadAllMonths(){',
+    'function loadAllMonths(){\n'+
+    '  if(typeof SHARE_DATA !== "undefined"){\n'+
+    '    ALL_MONTHS = SHARE_DATA.months || {};\n'+
+    '    MONTHS.forEach(function(m){ if(!ALL_MONTHS[m]) ALL_MONTHS[m] = []; });\n'+
+    '    return true;\n'+
+    '  }\n'
+  );
+  // Disable save for share files
+  html = html.replace(
+    'function saveAllMonths(){',
+    'function saveAllMonths(){ return false; /* read-only share file */ } function _saveAllMonthsOrig(){'
+  );
+  html = html.replace(
+    'function manualSave(){',
+    'function manualSave(){ showToast("此为离线可分享文件，不支持保存", true); return; } function _manualSaveOrig(){'
+  );
+  html = html.replace(
+    'function restoreDefault(){',
+    'function restoreDefault(){ showToast("此为离线可分享文件，不支持恢复默认", true); return; } function _restoreDefaultOrig(){'
+  );
+
+  return '<!DOCTYPE html>\n' + html;
+}
+
+/* Start */
+</script>
+
+
+
+</body>
+</html>
