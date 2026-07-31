@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>浜哄憳缁╂晥</title>
+<title>人员绩效</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; min-height: 100vh; }
@@ -119,15 +119,15 @@ tr:hover td { background: #f9fafb; }
 
 <div id="loading">
   <div class="spinner"></div>
-  <p>鍔犺浇浜哄憳缁╂晥鏁版嵁...</p>
+  <p>加载人员绩效数据...</p>
 </div>
 
-<div class="header"><h1>浜哄憳缁╂晥</h1></div>
+<div class="header"><h1>人员绩效</h1></div>
 
 <div class="view-tabs" id="viewTabs" style="display:none;">
-  <button class="view-tab active" data-view="month">鍗曟湀瑙嗗浘</button>
-  <button class="view-tab" data-view="year">骞村害姹囨€?/button>
-  <button class="view-tab" data-view="person">涓汉</button>
+  <button class="view-tab active" data-view="month">单月视图</button>
+  <button class="view-tab" data-view="year">年度汇总</button>
+  <button class="view-tab" data-view="person">个人</button>
 </div>
 
 <div class="controls" id="controls" style="display:none;"></div>
@@ -136,8 +136,8 @@ tr:hover td { background: #f9fafb; }
 
 <script>
 const GRADE_ORDER = { 'S':5, 'A':4, 'B':3, 'C':2, 'D':1 };
-const GRADE_LABEL = { 'S':'S 鍗撹秺', 'A':'A 浼樼', 'B':'B 鑹ソ', 'C':'C 涓€鑸?, 'D':'D 寰呮敼杩? };
-const ACTIVE_MONTHS = ['1鏈?,'2鏈?,'3鏈?,'4鏈?,'5鏈?,'6鏈?,'7鏈?];
+const GRADE_LABEL = { 'S':'S 卓越', 'A':'A 优秀', 'B':'B 良好', 'C':'C 一般', 'D':'D 待改进' };
+const ACTIVE_MONTHS = ['1月','2月','3月','4月','5月','6月','7月'];
 
 let allData = [];
 let currentView = 'month';
@@ -154,7 +154,7 @@ function avgGrade(ratings) {
 
 function renderMonth() {
   const sel = document.getElementById('selMonth');
-  const month = sel ? sel.value : '7鏈?;
+  const month = sel ? sel.value : '7月';
   const gFilter = document.getElementById('selGrade') ? document.getElementById('selGrade').value : 'all';
 
   let groups = { S:[], A:[], B:[], C:[], D:[], '-':[] };
@@ -168,7 +168,7 @@ function renderMonth() {
   // Stats
   let total = 0;
   Object.keys(groups).forEach(k => total += groups[k].length);
-  let statsHtml = `<span>${month} 鍏?<b>${total}</b> 浜?/span>`;
+  let statsHtml = `<span>${month} 共 <b>${total}</b> 人</span>`;
   ['S','A','B','C','D'].forEach(g => {
     statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${groups[g].length}</span>`;
   });
@@ -178,12 +178,12 @@ function renderMonth() {
   let ctrlHtml = `
     <select id="selMonth" onchange="renderMonth()">${ACTIVE_MONTHS.map(m=>`<option value="${m}" ${m===month?'selected':''}>${m}</option>`).join('')}</select>
     <select id="selGrade" onchange="renderMonth()">
-      <option value="all" ${gFilter==='all'?'selected':''}>鍏ㄩ儴璇勭骇</option>
-      <option value="S" ${gFilter==='S'?'selected':''}>S 绾?/option>
-      <option value="A" ${gFilter==='A'?'selected':''}>A 绾?/option>
-      <option value="B" ${gFilter==='B'?'selected':''}>B 绾?/option>
-      <option value="C" ${gFilter==='C'?'selected':''}>C 绾?/option>
-      <option value="D" ${gFilter==='D'?'selected':''}>D 绾?/option>
+      <option value="all" ${gFilter==='all'?'selected':''}>全部评级</option>
+      <option value="S" ${gFilter==='S'?'selected':''}>S 级</option>
+      <option value="A" ${gFilter==='A'?'selected':''}>A 级</option>
+      <option value="B" ${gFilter==='B'?'selected':''}>B 级</option>
+      <option value="C" ${gFilter==='C'?'selected':''}>C 级</option>
+      <option value="D" ${gFilter==='D'?'selected':''}>D 级</option>
     </select>
   `;
   document.getElementById('controls').innerHTML = ctrlHtml;
@@ -193,7 +193,7 @@ function renderMonth() {
   let html = '<div class="month-grid">';
   ['S','A','B','C','D'].forEach(g => {
     if (groups[g].length === 0) return;
-    html += `<div class="grade-group"><div class="grade-group-header ${g.toLowerCase()}">${GRADE_LABEL[g]} (${groups[g].length}浜?</div><div class="grade-group-body">`;
+    html += `<div class="grade-group"><div class="grade-group-header ${g.toLowerCase()}">${GRADE_LABEL[g]} (${groups[g].length}人)</div><div class="grade-group-body">`;
     groups[g].sort((a,b)=> (a.store_num||0)-(b.store_num||0)).forEach(r => {
       html += `<div class="row"><span>#${r.store_num} ${r.person}</span><span class="grade ${g.toLowerCase()}">${r.ratings[month]}</span></div>`;
     });
@@ -218,35 +218,35 @@ function renderYear() {
   // Stats
   const counts = { S:0,A:0,B:0,C:0,D:0 };
   filtered.forEach(r => { const g = avgGrade(r.ratings); if(g) counts[g]++; });
-  let statsHtml = `<span>鍏?<b>${filtered.length}</b> 浜?/span>`;
+  let statsHtml = `<span>共 <b>${filtered.length}</b> 人</span>`;
   'SABCD'.split('').forEach(g => { statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${counts[g]}</span>`; });
 
   let ctrlHtml = `
-    <input type="text" id="searchYear" placeholder="鎼滅储濮撳悕 / 闂ㄥ簵缂栧彿" value="${search||''}" oninput="renderYear()">
+    <input type="text" id="searchYear" placeholder="搜索姓名 / 门店编号" value="${search||''}" oninput="renderYear()">
     <select id="sortYear" onchange="renderYear()">
-      <option value="store" ${sortBy==='store'?'selected':''}>鎸夐棬搴楃紪鍙?/option>
-      <option value="name" ${sortBy==='name'?'selected':''}>鎸夊鍚?/option>
+      <option value="store" ${sortBy==='store'?'selected':''}>按门店编号</option>
+      <option value="name" ${sortBy==='name'?'selected':''}>按姓名</option>
     </select>
     <select id="gFilterYear" onchange="renderYear()">
-      <option value="all" ${gFilter==='all'?'selected':''}>鍏ㄩ儴璇勭骇</option>
-      <option value="S" ${gFilter==='S'?'selected':''}>S 绾?/option>
-      <option value="A" ${gFilter==='A'?'selected':''}>A 绾?/option>
-      <option value="B" ${gFilter==='B'?'selected':''}>B 绾?/option>
-      <option value="C" ${gFilter==='C'?'selected':''}>C 绾?/option>
-      <option value="D" ${gFilter==='D'?'selected':''}>D 绾?/option>
+      <option value="all" ${gFilter==='all'?'selected':''}>全部评级</option>
+      <option value="S" ${gFilter==='S'?'selected':''}>S 级</option>
+      <option value="A" ${gFilter==='A'?'selected':''}>A 级</option>
+      <option value="B" ${gFilter==='B'?'selected':''}>B 级</option>
+      <option value="C" ${gFilter==='C'?'selected':''}>C 级</option>
+      <option value="D" ${gFilter==='D'?'selected':''}>D 级</option>
     </select>
   `;
   document.getElementById('controls').innerHTML = ctrlHtml;
   document.getElementById('stats').innerHTML = statsHtml;
 
   if (filtered.length === 0) {
-    document.getElementById('content').innerHTML = '<div class="no-data">鏃犲尮閰嶆暟鎹?/div>';
+    document.getElementById('content').innerHTML = '<div class="no-data">无匹配数据</div>';
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr><th>闂ㄥ簵</th><th>璐熻矗浜?/th>';
+  let html = '<div class="table-wrap"><table><thead><tr><th>门店</th><th>负责人</th>';
   ACTIVE_MONTHS.forEach(m => html += `<th>${m}</th>`);
-  html += '<th>鍧囪瘎绾?/th><th>瓒嬪娍</th></tr></thead><tbody>';
+  html += '<th>均评级</th><th>趋势</th></tr></thead><tbody>';
 
   filtered.forEach(row => {
     html += `<tr><td>${row.store_num}</td><td>${row.person}</td>`;
@@ -271,7 +271,7 @@ function renderYear() {
 
 function renderPerson() {
   let html = '';
-  let ctrlHtml = `<input type="text" id="searchPerson" placeholder="杈撳叆濮撳悕鎼滅储..." oninput="renderPerson()" autofocus>`;
+  let ctrlHtml = `<input type="text" id="searchPerson" placeholder="输入姓名搜索..." oninput="renderPerson()" autofocus>`;
   document.getElementById('controls').innerHTML = ctrlHtml;
   document.getElementById('stats').style.display = 'none';
 
@@ -281,10 +281,10 @@ function renderPerson() {
     const latest = ACTIVE_MONTHS[ACTIVE_MONTHS.length-1];
     const top = allData.filter(r => r.ratings[latest] && r.ratings[latest].startsWith('S')).slice(0,6);
     const worst = allData.filter(r => r.ratings[latest] && r.ratings[latest].startsWith('D')).sort((a,b)=>(a.store_num||0)-(b.store_num||0)).slice(0,6);
-    html += '<div style="padding:16px 24px;font-size:13px;color:#9ca3af;">璇疯緭鍏ュ鍚嶆悳绱紝鎴栫偣鍑诲父鐢ㄦ爣绛撅細</div>';
+    html += '<div style="padding:16px 24px;font-size:13px;color:#9ca3af;">请输入姓名搜索，或点击常用标签：</div>';
     html += '<div style="padding:0 24px 16px;" class="chips">';
-    if (top.length) html += `<span style="font-size:12px;color:#10b981;margin-right:4px;">S绾?</span>` + top.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
-    if (worst.length) html += `<span style="font-size:12px;color:#ef4444;margin-left:12px;margin-right:4px;">D绾?</span>` + worst.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
+    if (top.length) html += `<span style="font-size:12px;color:#10b981;margin-right:4px;">S级:</span>` + top.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
+    if (worst.length) html += `<span style="font-size:12px;color:#ef4444;margin-left:12px;margin-right:4px;">D级:</span>` + worst.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
     html += '</div>';
     document.getElementById('content').innerHTML = html;
     return;
@@ -292,7 +292,7 @@ function renderPerson() {
 
   const matched = allData.filter(r => r.person.toLowerCase().includes(search) || String(r.store_num).includes(search));
   if (matched.length === 0) {
-    document.getElementById('content').innerHTML = '<div class="no-data">鏈壘鍒板尮閰?'+search+'"鐨勪汉鍛?/div>';
+    document.getElementById('content').innerHTML = '<div class="no-data">未找到匹配"'+search+'"的人员</div>';
     return;
   }
 
@@ -305,9 +305,9 @@ function renderPerson() {
     let trendBadge = '';
     if (scores.filter(s=>s).length >= 2) {
       const valid = scores.filter(s=>s);
-      if (valid[valid.length-1] > valid[0]) trendBadge = '<span class="badge up">涓婂崌</span>';
-      else if (valid[valid.length-1] < valid[0]) trendBadge = '<span class="badge down">涓嬮檷</span>';
-      else if (valid.every(v=>v===valid[0])) trendBadge = '<span class="badge same">鎸佸钩</span>';
+      if (valid[valid.length-1] > valid[0]) trendBadge = '<span class="badge up">上升</span>';
+      else if (valid[valid.length-1] < valid[0]) trendBadge = '<span class="badge down">下降</span>';
+      else if (valid.every(v=>v===valid[0])) trendBadge = '<span class="badge same">持平</span>';
     }
 
     // Count each grade
@@ -317,7 +317,7 @@ function renderPerson() {
     html += `<div class="person-card">
       <div class="person-card-head">
         <div><span class="name">${row.person}</span>${trendBadge}</div>
-        <div class="store">闂ㄥ簵 #${row.store_num}銆€鍧囪瘎绾?<span class="grade ${avg?avg.toLowerCase():'empty'}">${avg||'-'}</span></div>
+        <div class="store">门店 #${row.store_num}　均评级 <span class="grade ${avg?avg.toLowerCase():'empty'}">${avg||'-'}</span></div>
       </div>
       <div class="person-card-body">
         <div class="person-months">`;
@@ -329,7 +329,7 @@ function renderPerson() {
     html += `</div>
         <div class="person-stats">`;
     ['S','A','B','C','D'].forEach(g => {
-      if (gCount[g] > 0) html += `<div class="person-stat"><div class="val" style="color:var(--${g.toLowerCase()}-color)">${gCount[g]}</div><div class="lbl">${g}绾ф湀</div></div>`;
+      if (gCount[g] > 0) html += `<div class="person-stat"><div class="val" style="color:var(--${g.toLowerCase()}-color)">${gCount[g]}</div><div class="lbl">${g}级月</div></div>`;
     });
     html += `</div></div></div>`;
   });
@@ -356,13 +356,13 @@ async function init() {
     const resp = await fetch('data_person.json?t=' + Date.now());
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     allData = await resp.json();
-    if (!Array.isArray(allData) || allData.length === 0) throw new Error('鏁版嵁涓虹┖');
+    if (!Array.isArray(allData) || allData.length === 0) throw new Error('数据为空');
     document.getElementById('viewTabs').style.display = '';
     document.getElementById('controls').style.display = '';
     document.getElementById('stats').style.display = '';
     switchView('month');
   } catch (e) {
-    document.getElementById('content').innerHTML = `<div class="no-data">鏁版嵁鍔犺浇澶辫触锛?{e.message}</div>`;
+    document.getElementById('content').innerHTML = `<div class="no-data">数据加载失败：${e.message}</div>`;
   } finally {
     document.getElementById('loading').style.display = 'none';
   }
