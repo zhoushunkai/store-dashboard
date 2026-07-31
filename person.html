@@ -131,6 +131,9 @@ tr:hover td { background: #f9fafb; }
 </div>
 
 <div class="controls" id="controls" style="display:none;"></div>
+<div class="controls" id="personBar" style="display:none;">
+  <input type="text" id="searchPerson" placeholder="输入姓名搜索..." oninput="renderPerson()">
+</div>
 <div class="stats" id="stats" style="display:none;"></div>
 <div id="content"></div>
 
@@ -270,12 +273,9 @@ function renderYear() {
 }
 
 function renderPerson() {
-  // Read search BEFORE replacing controls (old element still alive)
   const search = (document.getElementById('searchPerson')?.value || '').toLowerCase().trim();
 
   let html = '';
-  let ctrlHtml = `<input type="text" id="searchPerson" placeholder="输入姓名搜索..." value="${search}" oninput="renderPerson()" autofocus>`;
-  document.getElementById('controls').innerHTML = ctrlHtml;
   document.getElementById('stats').style.display = 'none';
   if (!search || search.length < 1) {
     // Show quick access: top people by latest month grade
@@ -345,9 +345,9 @@ function switchView(view) {
   document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.view-tab[data-view="${view}"]`).classList.add('active');
 
-  if (view === 'month') renderMonth();
-  else if (view === 'year') renderYear();
-  else if (view === 'person') renderPerson();
+  if (view === 'month') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; renderMonth(); }
+  else if (view === 'year') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; renderYear(); }
+  else if (view === 'person') { document.getElementById('controls').style.display='none'; document.getElementById('personBar').style.display=''; document.getElementById('stats').style.display='none'; renderPerson(); }
 }
 
 // --- Init ---
