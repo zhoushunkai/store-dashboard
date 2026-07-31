@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浜哄憳缁╂晥</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; min-height: 100vh; }
+:root {
+  --s-color: #10b981; --s-bg: #ecfdf5;
+  --a-color: #3b82f6; --a-bg: #eff6ff;
+  --b-color: #f59e0b; --b-bg: #fffbeb;
+  --c-color: #f97316; --c-bg: #fff7ed;
+  --d-color: #ef4444; --d-bg: #fef2f2;
+}
+
+/* Loading */
+#loading { position: fixed; inset:0; background: #f5f7fa; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; }
+.spinner { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#loading p { margin-top: 16px; color: #9ca3af; font-size: 14px; }
+
+/* Header */
+.header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 14px 24px; position: sticky; top: 0; z-index: 100; }
+.header h1 { font-size: 18px; color: #1f2937; }
+
+/* View tabs */
+.view-tabs { display: flex; gap: 0; padding: 0 24px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+.view-tab { padding: 10px 20px; border: none; background: none; font-size: 14px; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; }
+.view-tab:hover { color: #1890ff; }
+.view-tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 600; }
+
+/* Controls bar */
+.controls { display: flex; gap: 12px; padding: 10px 24px; background: #fff; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; align-items: center; min-height: 44px; }
+.controls select, .controls input { padding: 5px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; background: #fff; }
+.controls select:focus, .controls input:focus { border-color: #1890ff; }
+.controls input { width: 180px; }
+
+/* Shortcut chips */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { padding: 2px 10px; border-radius: 12px; font-size: 12px; cursor: pointer; border: 1px solid #e5e7eb; background: #fff; color: #6b7280; transition: all .15s; }
+.chip:hover { border-color: #1890ff; color: #1890ff; }
+.chip.active { background: #1890ff; color: #fff; border-color: #1890ff; }
+
+/* Stats bar */
+.stats { display: flex; gap: 16px; padding: 10px 24px; font-size: 13px; color: #6b7280; background: #fff; border-bottom: 1px solid #f0f0f0; align-items: center; flex-wrap: wrap; }
+.stat-item { display: flex; align-items: center; gap: 5px; }
+.stat-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.stat-dot.s { background: var(--s-color); } .stat-dot.a { background: var(--a-color); }
+.stat-dot.b { background: var(--b-color); } .stat-dot.c { background: var(--c-color); }
+.stat-dot.d { background: var(--d-color); }
+
+/* Table */
+.table-wrap { padding: 12px 24px 24px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+th { background: #f9fafb; padding: 8px 8px; text-align: center; font-weight: 600; color: #374151; border-bottom: 2px solid #e5e7eb; white-space: nowrap; }
+td { padding: 7px 8px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+tr:hover td { background: #f9fafb; }
+.grade { display: inline-block; min-width: 26px; height: 22px; line-height: 22px; border-radius: 4px; font-weight: 700; font-size: 12px; text-align: center; padding: 0 4px; }
+.grade.s { background: var(--s-bg); color: var(--s-color); }
+.grade.a { background: var(--a-bg); color: var(--a-color); }
+.grade.b { background: var(--b-bg); color: var(--b-color); }
+.grade.c { background: var(--c-bg); color: var(--c-color); }
+.grade.d { background: var(--d-bg); color: var(--d-color); }
+.grade.empty { background: #f3f4f6; color: #d1d5db; }
+
+/* Trend mini */
+.trend { display: flex; gap: 2px; justify-content: center; align-items: flex-end; height: 20px; }
+.trend-bar { width: 4px; border-radius: 2px 2px 0 0; }
+.trend-bar.s { background: var(--s-color); height: 20px; }
+.trend-bar.a { background: var(--a-color); height: 16px; }
+.trend-bar.b { background: var(--b-color); height: 12px; }
+.trend-bar.c { background: var(--c-color); height: 8px; }
+.trend-bar.d { background: var(--d-color); height: 5px; }
+
+/* Single month grid */
+.month-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 12px 24px 24px; }
+.grade-group { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); overflow: hidden; }
+.grade-group-header { padding: 10px 14px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.grade-group-header.s { background: var(--s-bg); color: var(--s-color); }
+.grade-group-header.a { background: var(--a-bg); color: var(--a-color); }
+.grade-group-header.b { background: var(--b-bg); color: var(--b-color); }
+.grade-group-header.c { background: var(--c-bg); color: var(--c-color); }
+.grade-group-header.d { background: var(--d-bg); color: var(--d-color); }
+.grade-group-body { padding: 6px 14px 12px; max-height: 400px; overflow-y: auto; }
+.grade-group-body .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; border-bottom: 1px solid #f9fafb; }
+.grade-group-body .row:last-child { border-bottom: none; }
+
+/* Person card */
+.person-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); margin: 16px 24px; overflow: hidden; }
+.person-card-head { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+.person-card-head .name { font-size: 18px; font-weight: 700; }
+.person-card-head .store { font-size: 13px; color: #9ca3af; }
+.person-card-body { padding: 16px 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.person-months { display: flex; gap: 8px; align-items: flex-end; }
+.person-month-item { text-align: center; }
+.person-month-item .g { display: block; min-width: 34px; height: 28px; line-height: 28px; border-radius: 5px; font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+.person-month-item .g.s { background: var(--s-bg); color: var(--s-color); }
+.person-month-item .g.a { background: var(--a-bg); color: var(--a-color); }
+.person-month-item .g.b { background: var(--b-bg); color: var(--b-color); }
+.person-month-item .g.c { background: var(--c-bg); color: var(--c-color); }
+.person-month-item .g.d { background: var(--d-bg); color: var(--d-color); }
+.person-month-item .g.empty { background: #f3f4f6; color: #d1d5db; }
+.person-month-item .label { font-size: 11px; color: #9ca3af; }
+.person-stats { display: flex; gap: 16px; align-items: center; }
+.person-stat { text-align: center; }
+.person-stat .val { font-size: 22px; font-weight: 700; }
+.person-stat .lbl { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+.no-data { text-align: center; padding: 40px; color: #9ca3af; font-size: 14px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; margin-left: 6px; }
+.badge.up { background: #ecfdf5; color: #10b981; }
+.badge.down { background: #fef2f2; color: #ef4444; }
+.badge.same { background: #f3f4f6; color: #6b7280; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>鍔犺浇浜哄憳缁╂晥鏁版嵁...</p>
+</div>
+
+<div class="header"><h1>浜哄憳缁╂晥</h1></div>
+
+<div class="view-tabs" id="viewTabs" style="display:none;">
+  <button class="view-tab active" data-view="month">鍗曟湀瑙嗗浘</button>
+  <button class="view-tab" data-view="year">骞村害姹囨€?/button>
+  <button class="view-tab" data-view="person">涓汉</button>
+</div>
+
+<div class="controls" id="controls" style="display:none;"></div>
+<div class="stats" id="stats" style="display:none;"></div>
+<div id="content"></div>
+
+<script>
+const GRADE_ORDER = { 'S':5, 'A':4, 'B':3, 'C':2, 'D':1 };
+const GRADE_LABEL = { 'S':'S 鍗撹秺', 'A':'A 浼樼', 'B':'B 鑹ソ', 'C':'C 涓€鑸?, 'D':'D 寰呮敼杩? };
+const ACTIVE_MONTHS = ['1鏈?,'2鏈?,'3鏈?,'4鏈?,'5鏈?,'6鏈?,'7鏈?];
+
+let allData = [];
+let currentView = 'month';
+
+function gradeScore(g) { const m = String(g||'').match(/^[SABCD]/); return m ? GRADE_ORDER[m[0]] : 0; }
+function avgGrade(ratings) {
+  let sum=0,cnt=0; ACTIVE_MONTHS.forEach(m=>{const s=gradeScore(ratings[m]);if(s){sum+=s;cnt++;}});
+  if(!cnt) return null;
+  const avg=sum/cnt;
+  if(avg>=4.5) return 'S'; if(avg>=3.5) return 'A'; if(avg>=2.5) return 'B'; if(avg>=1.5) return 'C'; return 'D';
+}
+
+// --- VIEW RENDERERS ---
+
+function renderMonth() {
+  const sel = document.getElementById('selMonth');
+  const month = sel ? sel.value : '7鏈?;
+  const gFilter = document.getElementById('selGrade') ? document.getElementById('selGrade').value : 'all';
+
+  let groups = { S:[], A:[], B:[], C:[], D:[], '-':[] };
+  allData.forEach(row => {
+    const g = row.ratings[month];
+    const letter = (g && g[0] && GRADE_ORDER[g[0]]) ? g[0] : '-';
+    if (gFilter !== 'all' && letter !== gFilter) return;
+    groups[letter].push(row);
+  });
+
+  // Stats
+  let total = 0;
+  Object.keys(groups).forEach(k => total += groups[k].length);
+  let statsHtml = `<span>${month} 鍏?<b>${total}</b> 浜?/span>`;
+  ['S','A','B','C','D'].forEach(g => {
+    statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${groups[g].length}</span>`;
+  });
+  document.getElementById('stats').style.display = '';
+
+  // Controls
+  let ctrlHtml = `
+    <select id="selMonth" onchange="renderMonth()">${ACTIVE_MONTHS.map(m=>`<option value="${m}" ${m===month?'selected':''}>${m}</option>`).join('')}</select>
+    <select id="selGrade" onchange="renderMonth()">
+      <option value="all" ${gFilter==='all'?'selected':''}>鍏ㄩ儴璇勭骇</option>
+      <option value="S" ${gFilter==='S'?'selected':''}>S 绾?/option>
+      <option value="A" ${gFilter==='A'?'selected':''}>A 绾?/option>
+      <option value="B" ${gFilter==='B'?'selected':''}>B 绾?/option>
+      <option value="C" ${gFilter==='C'?'selected':''}>C 绾?/option>
+      <option value="D" ${gFilter==='D'?'selected':''}>D 绾?/option>
+    </select>
+  `;
+  document.getElementById('controls').innerHTML = ctrlHtml;
+  document.getElementById('stats').innerHTML = statsHtml;
+
+  // Grid
+  let html = '<div class="month-grid">';
+  ['S','A','B','C','D'].forEach(g => {
+    if (groups[g].length === 0) return;
+    html += `<div class="grade-group"><div class="grade-group-header ${g.toLowerCase()}">${GRADE_LABEL[g]} (${groups[g].length}浜?</div><div class="grade-group-body">`;
+    groups[g].sort((a,b)=> (a.store_num||0)-(b.store_num||0)).forEach(r => {
+      html += `<div class="row"><span>#${r.store_num} ${r.person}</span><span class="grade ${g.toLowerCase()}">${r.ratings[month]}</span></div>`;
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderYear() {
+  const search = (document.getElementById('searchYear')?.value || '').toLowerCase();
+  const sortBy = document.getElementById('sortYear') ? document.getElementById('sortYear').value : 'store';
+  const gFilter = document.getElementById('gFilterYear') ? document.getElementById('gFilterYear').value : 'all';
+
+  let filtered = allData.slice();
+
+  if (search) filtered = filtered.filter(r => r.person.toLowerCase().includes(search) || String(r.store_num).includes(search));
+  if (gFilter !== 'all') filtered = filtered.filter(r => ACTIVE_MONTHS.some(m => r.ratings[m] && r.ratings[m].startsWith(gFilter)));
+  if (sortBy === 'name') filtered.sort((a,b) => a.person.localeCompare(b.person,'zh'));
+  else filtered.sort((a,b) => (a.store_num||0)-(b.store_num||0));
+
+  // Stats
+  const counts = { S:0,A:0,B:0,C:0,D:0 };
+  filtered.forEach(r => { const g = avgGrade(r.ratings); if(g) counts[g]++; });
+  let statsHtml = `<span>鍏?<b>${filtered.length}</b> 浜?/span>`;
+  'SABCD'.split('').forEach(g => { statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${counts[g]}</span>`; });
+
+  let ctrlHtml = `
+    <input type="text" id="searchYear" placeholder="鎼滅储濮撳悕 / 闂ㄥ簵缂栧彿" value="${search||''}" oninput="renderYear()">
+    <select id="sortYear" onchange="renderYear()">
+      <option value="store" ${sortBy==='store'?'selected':''}>鎸夐棬搴楃紪鍙?/option>
+      <option value="name" ${sortBy==='name'?'selected':''}>鎸夊鍚?/option>
+    </select>
+    <select id="gFilterYear" onchange="renderYear()">
+      <option value="all" ${gFilter==='all'?'selected':''}>鍏ㄩ儴璇勭骇</option>
+      <option value="S" ${gFilter==='S'?'selected':''}>S 绾?/option>
+      <option value="A" ${gFilter==='A'?'selected':''}>A 绾?/option>
+      <option value="B" ${gFilter==='B'?'selected':''}>B 绾?/option>
+      <option value="C" ${gFilter==='C'?'selected':''}>C 绾?/option>
+      <option value="D" ${gFilter==='D'?'selected':''}>D 绾?/option>
+    </select>
+  `;
+  document.getElementById('controls').innerHTML = ctrlHtml;
+  document.getElementById('stats').innerHTML = statsHtml;
+
+  if (filtered.length === 0) {
+    document.getElementById('content').innerHTML = '<div class="no-data">鏃犲尮閰嶆暟鎹?/div>';
+    return;
+  }
+
+  let html = '<div class="table-wrap"><table><thead><tr><th>闂ㄥ簵</th><th>璐熻矗浜?/th>';
+  ACTIVE_MONTHS.forEach(m => html += `<th>${m}</th>`);
+  html += '<th>鍧囪瘎绾?/th><th>瓒嬪娍</th></tr></thead><tbody>';
+
+  filtered.forEach(row => {
+    html += `<tr><td>${row.store_num}</td><td>${row.person}</td>`;
+    ACTIVE_MONTHS.forEach(m => {
+      const g = row.ratings[m];
+      const cls = g && g[0] ? g[0].toLowerCase() : 'empty';
+      html += `<td><span class="grade ${cls}">${g||'-'}</span></td>`;
+    });
+    const avg = avgGrade(row.ratings);
+    html += `<td><span class="grade ${avg?avg.toLowerCase():'empty'}">${avg||'-'}</span></td>`;
+    html += '<td><div class="trend">';
+    ACTIVE_MONTHS.forEach(m => {
+      const g = row.ratings[m];
+      const cls = g && g[0] ? g[0].toLowerCase() : '';
+      html += `<div class="trend-bar ${cls}"></div>`;
+    });
+    html += '</div></td></tr>';
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+function renderPerson() {
+  let html = '';
+  let ctrlHtml = `<input type="text" id="searchPerson" placeholder="杈撳叆濮撳悕鎼滅储..." oninput="renderPerson()" autofocus>`;
+  document.getElementById('controls').innerHTML = ctrlHtml;
+  document.getElementById('stats').style.display = 'none';
+
+  const search = (document.getElementById('searchPerson')?.value || '').toLowerCase().trim();
+  if (!search || search.length < 1) {
+    // Show quick access: top people by latest month grade
+    const latest = ACTIVE_MONTHS[ACTIVE_MONTHS.length-1];
+    const top = allData.filter(r => r.ratings[latest] && r.ratings[latest].startsWith('S')).slice(0,6);
+    const worst = allData.filter(r => r.ratings[latest] && r.ratings[latest].startsWith('D')).sort((a,b)=>(a.store_num||0)-(b.store_num||0)).slice(0,6);
+    html += '<div style="padding:16px 24px;font-size:13px;color:#9ca3af;">璇疯緭鍏ュ鍚嶆悳绱紝鎴栫偣鍑诲父鐢ㄦ爣绛撅細</div>';
+    html += '<div style="padding:0 24px 16px;" class="chips">';
+    if (top.length) html += `<span style="font-size:12px;color:#10b981;margin-right:4px;">S绾?</span>` + top.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
+    if (worst.length) html += `<span style="font-size:12px;color:#ef4444;margin-left:12px;margin-right:4px;">D绾?</span>` + worst.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+    return;
+  }
+
+  const matched = allData.filter(r => r.person.toLowerCase().includes(search) || String(r.store_num).includes(search));
+  if (matched.length === 0) {
+    document.getElementById('content').innerHTML = '<div class="no-data">鏈壘鍒板尮閰?'+search+'"鐨勪汉鍛?/div>';
+    return;
+  }
+
+  // Show each matched person as a card
+  matched.forEach(row => {
+    const avg = avgGrade(row.ratings);
+    const scores = ACTIVE_MONTHS.map(m => gradeScore(row.ratings[m]));
+    
+    // Determine trend
+    let trendBadge = '';
+    if (scores.filter(s=>s).length >= 2) {
+      const valid = scores.filter(s=>s);
+      if (valid[valid.length-1] > valid[0]) trendBadge = '<span class="badge up">涓婂崌</span>';
+      else if (valid[valid.length-1] < valid[0]) trendBadge = '<span class="badge down">涓嬮檷</span>';
+      else if (valid.every(v=>v===valid[0])) trendBadge = '<span class="badge same">鎸佸钩</span>';
+    }
+
+    // Count each grade
+    const gCount = { S:0,A:0,B:0,C:0,D:0 };
+    ACTIVE_MONTHS.forEach(m => { const l = row.ratings[m] && row.ratings[m][0]; if(l && gCount[l]!==undefined) gCount[l]++; });
+
+    html += `<div class="person-card">
+      <div class="person-card-head">
+        <div><span class="name">${row.person}</span>${trendBadge}</div>
+        <div class="store">闂ㄥ簵 #${row.store_num}銆€鍧囪瘎绾?<span class="grade ${avg?avg.toLowerCase():'empty'}">${avg||'-'}</span></div>
+      </div>
+      <div class="person-card-body">
+        <div class="person-months">`;
+    ACTIVE_MONTHS.forEach(m => {
+      const g = row.ratings[m];
+      const cls = g && g[0] ? g[0].toLowerCase() : 'empty';
+      html += `<div class="person-month-item"><span class="g ${cls}">${g||'-'}</span><span class="label">${m}</span></div>`;
+    });
+    html += `</div>
+        <div class="person-stats">`;
+    ['S','A','B','C','D'].forEach(g => {
+      if (gCount[g] > 0) html += `<div class="person-stat"><div class="val" style="color:var(--${g.toLowerCase()}-color)">${gCount[g]}</div><div class="lbl">${g}绾ф湀</div></div>`;
+    });
+    html += `</div></div></div>`;
+  });
+
+  document.getElementById('content').innerHTML = html;
+}
+
+// --- View switch ---
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.view-tab[data-view="${view}"]`).classList.add('active');
+
+  if (view === 'month') renderMonth();
+  else if (view === 'year') renderYear();
+  else if (view === 'person') renderPerson();
+}
+
+// --- Init ---
+
+async function init() {
+  try {
+    const resp = await fetch('data_person.json?t=' + Date.now());
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    allData = await resp.json();
+    if (!Array.isArray(allData) || allData.length === 0) throw new Error('鏁版嵁涓虹┖');
+    document.getElementById('viewTabs').style.display = '';
+    document.getElementById('controls').style.display = '';
+    document.getElementById('stats').style.display = '';
+    switchView('month');
+  } catch (e) {
+    document.getElementById('content').innerHTML = `<div class="no-data">鏁版嵁鍔犺浇澶辫触锛?{e.message}</div>`;
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+document.getElementById('viewTabs').addEventListener('click', function(e) {
+  if (e.target.classList.contains('view-tab')) switchView(e.target.dataset.view);
+});
+
+init();
+</script>
+</body>
+</html>
