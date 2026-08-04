@@ -153,6 +153,39 @@ function avgGrade(ratings) {
   if(avg>=4.5) return 'S'; if(avg>=3.5) return 'A'; if(avg>=2.5) return 'B'; if(avg>=1.5) return 'C'; return 'D';
 }
 
+function buildMonthControls() {
+  document.getElementById('controls').innerHTML = `
+    <select id="selMonth" onchange="renderMonth()">${ACTIVE_MONTHS.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
+    <select id="selGrade" onchange="renderMonth()">
+      <option value="all">全部评级</option>
+      <option value="S">S 级</option>
+      <option value="A">A 级</option>
+      <option value="B">B 级</option>
+      <option value="C">C 级</option>
+      <option value="D">D 级</option>
+    </select>
+  `;
+  document.getElementById('selMonth').value = ACTIVE_MONTHS[ACTIVE_MONTHS.length-1];
+}
+
+function buildYearControls() {
+  document.getElementById('controls').innerHTML = `
+    <input type="text" id="searchYear" placeholder="搜索姓名 / 门店编号" oninput="renderYear()">
+    <select id="sortYear" onchange="renderYear()">
+      <option value="store">按门店编号</option>
+      <option value="name">按姓名</option>
+    </select>
+    <select id="gFilterYear" onchange="renderYear()">
+      <option value="all">全部评级</option>
+      <option value="S">S 级</option>
+      <option value="A">A 级</option>
+      <option value="B">B 级</option>
+      <option value="C">C 级</option>
+      <option value="D">D 级</option>
+    </select>
+  `;
+}
+
 // --- VIEW RENDERERS ---
 
 function renderMonth() {
@@ -176,20 +209,6 @@ function renderMonth() {
     statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${groups[g].length}</span>`;
   });
   document.getElementById('stats').style.display = '';
-
-  // Controls
-  let ctrlHtml = `
-    <select id="selMonth" onchange="renderMonth()">${ACTIVE_MONTHS.map(m=>`<option value="${m}" ${m===month?'selected':''}>${m}</option>`).join('')}</select>
-    <select id="selGrade" onchange="renderMonth()">
-      <option value="all" ${gFilter==='all'?'selected':''}>全部评级</option>
-      <option value="S" ${gFilter==='S'?'selected':''}>S 级</option>
-      <option value="A" ${gFilter==='A'?'selected':''}>A 级</option>
-      <option value="B" ${gFilter==='B'?'selected':''}>B 级</option>
-      <option value="C" ${gFilter==='C'?'selected':''}>C 级</option>
-      <option value="D" ${gFilter==='D'?'selected':''}>D 级</option>
-    </select>
-  `;
-  document.getElementById('controls').innerHTML = ctrlHtml;
   document.getElementById('stats').innerHTML = statsHtml;
 
   // Grid
@@ -224,22 +243,6 @@ function renderYear() {
   let statsHtml = `<span>共 <b>${filtered.length}</b> 人</span>`;
   'SABCD'.split('').forEach(g => { statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${counts[g]}</span>`; });
 
-  let ctrlHtml = `
-    <input type="text" id="searchYear" placeholder="搜索姓名 / 门店编号" value="${search||''}" oninput="renderYear()">
-    <select id="sortYear" onchange="renderYear()">
-      <option value="store" ${sortBy==='store'?'selected':''}>按门店编号</option>
-      <option value="name" ${sortBy==='name'?'selected':''}>按姓名</option>
-    </select>
-    <select id="gFilterYear" onchange="renderYear()">
-      <option value="all" ${gFilter==='all'?'selected':''}>全部评级</option>
-      <option value="S" ${gFilter==='S'?'selected':''}>S 级</option>
-      <option value="A" ${gFilter==='A'?'selected':''}>A 级</option>
-      <option value="B" ${gFilter==='B'?'selected':''}>B 级</option>
-      <option value="C" ${gFilter==='C'?'selected':''}>C 级</option>
-      <option value="D" ${gFilter==='D'?'selected':''}>D 级</option>
-    </select>
-  `;
-  document.getElementById('controls').innerHTML = ctrlHtml;
   document.getElementById('stats').innerHTML = statsHtml;
 
   if (filtered.length === 0) {
@@ -345,8 +348,8 @@ function switchView(view) {
   document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.view-tab[data-view="${view}"]`).classList.add('active');
 
-  if (view === 'month') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; renderMonth(); }
-  else if (view === 'year') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; renderYear(); }
+  if (view === 'month') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; buildMonthControls(); renderMonth(); }
+  else if (view === 'year') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; buildYearControls(); renderYear(); }
   else if (view === 'person') { document.getElementById('controls').style.display='none'; document.getElementById('personBar').style.display=''; document.getElementById('stats').style.display='none'; renderPerson(); }
 }
 
