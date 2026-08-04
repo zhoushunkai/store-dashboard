@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>用户管理 - 门店看板</title>
+<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif; background: #f5f7fa; min-height: 100vh; }
+
+/* Login */
+#adminLogin {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  display: flex; align-items: center; justify-content: center; z-index: 999;
+}
+.login-card { background: #fff; border-radius: 12px; padding: 40px 36px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+.login-card h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 4px; }
+.login-card .sub { font-size: 13px; color: #999; margin-bottom: 28px; }
+.login-card input { width: 100%; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 15px; outline: none; }
+.login-card input:focus { border-color: #1890ff; }
+.login-card button { width: 100%; padding: 12px; background: #1890ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+.login-card button:hover { background: #1677cc; }
+.login-card button:disabled { background: #91caff; cursor: not-allowed; }
+#loginError { color: #ff4d4f; font-size: 13px; margin-top: 12px; min-height: 20px; }
+
+/* Admin Panel */
+#adminPanel { display: none; max-width: 1100px; margin: 0 auto; padding: 24px; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.header h1 { font-size: 20px; color: #1a1a2e; }
+.header .right { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #666; }
+.header .logout { background: none; border: 1px solid #ddd; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #666; }
+.header .logout:hover { color: #ff4d4f; border-color: #ff4d4f; }
+
+/* Add Form */
+.add-form { background: #fff; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.add-form h3 { font-size: 15px; color: #333; margin-bottom: 14px; }
+.add-form .fields { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+.add-form input, .add-form select { padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; outline: none; }
+.add-form input:focus { border-color: #1890ff; }
+.add-form .btn-add { padding: 10px 24px; background: #1890ff; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.add-form .btn-add:hover { background: #1677cc; }
+.add-form .btn-add:disabled { background: #91caff; cursor: not-allowed; }
+.add-form .add-msg { grid-column: 1 / -1; font-size: 13px; min-height: 18px; }
+
+/* User Table */
+.table-wrap { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); overflow: hidden; }
+.table-wrap .tbar { padding: 14px 24px; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #999; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 12px 24px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+th { background: #fafafa; color: #666; font-weight: 600; white-space: nowrap; }
+td .badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+td .badge.admin { background: #fff1f0; color: #ff4d4f; }
+td .badge.user { background: #f6ffed; color: #52c41a; }
+td .actions { display: flex; gap: 8px; }
+td .actions button { padding: 4px 12px; border: 1px solid #e0e0e0; border-radius: 4px; background: #fff; font-size: 12px; cursor: pointer; color: #666; }
+td .actions button:hover { border-color: #1890ff; color: #1890ff; }
+td .actions button.danger:hover { border-color: #ff4d4f; color: #ff4d4f; }
+.empty { text-align: center; color: #ccc; padding: 40px; font-size: 14px; }
+/* Toast */
+.toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); padding: 10px 24px; background: #333; color: #fff; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; }
+.toast.show { opacity: 1; }
+.toast.success { background: #52c41a; }
+.toast.error { background: #ff4d4f; }
+</style>
+</head>
+<body>
+
+<!-- Admin Login -->
+<div id="adminLogin">
+  <div class="login-card">
+    <h1>管理员登录</h1>
+    <p class="sub">仅限管理员访问</p>
+    <input type="tel" id="phone" placeholder="手机号" maxlength="11" autocomplete="tel">
+    <input type="password" id="password" placeholder="密码" autocomplete="current-password">
+    <button id="loginBtn" onclick="doAdminLogin()">管理员登录</button>
+    <p id="loginError"></p>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div id="adminPanel">
+  <div class="header">
+    <h1>用户管理</h1>
+    <div class="right">
+      管理员：<strong id="adminName">--</strong>
+      <button class="logout" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+
+  <!-- Add User -->
+  <div class="add-form">
+    <h3>添加用户</h3>
+    <div class="fields">
+      <input type="text" id="newName" placeholder="姓名">
+      <input type="tel" id="newPhone" placeholder="手机号" maxlength="11">
+      <input type="password" id="newPassword" placeholder="密码">
+      <button class="btn-add" id="addBtn" onclick="addUser()">添加</button>
+      <span class="add-msg" id="addMsg"></span>
+    </div>
+  </div>
+
+  <!-- User Table -->
+  <div class="table-wrap">
+    <div class="tbar">共 <strong id="userCount">0</strong> 个用户</div>
+    <table>
+      <thead><tr><th>姓名</th><th>手机号</th><th>角色</th><th>创建时间</th><th style="width:200px">操作</th></tr></thead>
+      <tbody id="userTableBody"><tr><td colspan="5" class="empty">加载中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const URL = 'https://txgjldozaeyvfqrzkyuc.supabase.co';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4Z2psZG96YWV5dmZxcnpreXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4Mjk5MzIsImV4cCI6MjEwMTQwNTkzMn0.MnWbtcUISVvDSkUBGaEK3y80PLfYBSFU1HUf6Z8xijI';
+const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4Z2psZG96YWV5dmZxcnpreXVjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTgyOTkzMiwiZXhwIjoyMTAxNDA1OTMyfQ.aRfhHpCN9Z7uifefQVNl9josMBh_P8G0fSEoftrX2ts';
+
+var currentAdmin = null;
+
+// Toast
+function showToast(msg, type) {
+  var t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + (type || '') + ' show';
+  setTimeout(function() { t.className = 'toast'; }, 2500);
+}
+
+// Login
+document.getElementById('password').addEventListener('keydown', function(e) { if (e.key === 'Enter') doAdminLogin(); });
+
+async function doAdminLogin() {
+  var phone = document.getElementById('phone').value.trim();
+  var pw = document.getElementById('password').value;
+  var err = document.getElementById('loginError');
+  var btn = document.getElementById('loginBtn');
+  if (!phone || !pw) { err.textContent = '请输入手机号和密码'; return; }
+  btn.disabled = true; btn.textContent = '验证中...'; err.textContent = '';
+
+  try {
+    var r = await fetch(URL + '/rest/v1/users?phone=eq.' + phone + '&select=phone,name,password_hash,is_admin',
+      { headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY } });
+    var users = await r.json();
+    if (!users.length) { err.textContent = '账号不存在'; btn.disabled = false; btn.textContent = '管理员登录'; return; }
+    var u = users[0];
+    if (!u.is_admin) { err.textContent = '非管理员账号，无权访问'; btn.disabled = false; btn.textContent = '管理员登录'; return; }
+    if (!dcodeIO.bcrypt.compareSync(pw, u.password_hash)) { err.textContent = '密码错误'; btn.disabled = false; btn.textContent = '管理员登录'; return; }
+
+    currentAdmin = u;
+    document.getElementById('adminLogin').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    document.getElementById('adminName').textContent = u.name;
+    loadUsers();
+  } catch(e) { err.textContent = '登录失败，请检查网络'; btn.disabled = false; btn.textContent = '管理员登录'; }
+}
+
+function doLogout() {
+  currentAdmin = null;
+  document.getElementById('adminLogin').style.display = 'flex';
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('phone').value = '';
+  document.getElementById('password').value = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = '管理员登录';
+}
+
+// Load users (public API)
+async function loadUsers() {
+  try {
+    var r = await fetch(URL + '/rest/v1/users?select=phone,name,is_admin,created_at&order=id',
+      { headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY } });
+    var users = await r.json();
+    document.getElementById('userCount').textContent = users.length;
+    var html = '';
+    users.forEach(function(u) {
+      html += '<tr><td>' + u.name + '</td><td>' + u.phone + '</td><td>'
+        + (u.is_admin ? '<span class="badge admin">管理员</span>' : '<span class="badge user">普通用户</span>')
+        + '</td><td>' + (u.created_at ? new Date(u.created_at).toLocaleDateString('zh-CN') : '-') + '</td>'
+        + '<td><div class="actions">'
+        + '<button onclick="resetPassword(\'' + u.phone + '\')">重置密码</button>'
+        + (u.is_admin ? '' : '<button class="danger" onclick="deleteUser(\'' + u.phone + '\',\'' + u.name + '\')">删除</button>')
+        + '</div></td></tr>';
+    });
+    document.getElementById('userTableBody').innerHTML = html || '<tr><td colspan="5" class="empty">暂无用户</td></tr>';
+  } catch(e) { showToast('加载用户列表失败', 'error'); }
+}
+
+// Add user (service_role API)
+async function addUser() {
+  var name = document.getElementById('newName').value.trim();
+  var phone = document.getElementById('newPhone').value.trim();
+  var pw = document.getElementById('newPassword').value.trim();
+  var msg = document.getElementById('addMsg');
+  var btn = document.getElementById('addBtn');
+
+  if (!name || !phone || !pw) { msg.textContent = '请填写姓名、手机号和密码'; msg.style.color = '#ff4d4f'; return; }
+  if (!/^1\d{10}$/.test(phone)) { msg.textContent = '请输入正确的手机号'; msg.style.color = '#ff4d4f'; return; }
+
+  btn.disabled = true; msg.textContent = ''; msg.style.color = '#999';
+
+  try {
+    var hash = dcodeIO.bcrypt.hashSync(pw, 10);
+    var r = await fetch(URL + '/rest/v1/users', {
+      method: 'POST',
+      headers: { 'apikey': SERVICE_KEY, 'Authorization': 'Bearer ' + SERVICE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ phone: phone, name: name, password_hash: hash, is_admin: false })
+    });
+    if (!r.ok) {
+      var e = await r.text();
+      if (e.indexOf('duplicate') > -1) { msg.textContent = '该手机号已存在'; msg.style.color = '#ff4d4f'; }
+      else { msg.textContent = '添加失败'; msg.style.color = '#ff4d4f'; }
+      btn.disabled = false; return;
+    }
+    showToast('用户 ' + name + ' 添加成功', 'success');
+    document.getElementById('newName').value = '';
+    document.getElementById('newPhone').value = '';
+    document.getElementById('newPassword').value = '';
+    msg.textContent = '';
+    btn.disabled = false;
+    loadUsers();
+  } catch(ex) { msg.textContent = '网络错误'; msg.style.color = '#ff4d4f'; btn.disabled = false; }
+}
+
+// Reset password (service_role API)
+async function resetPassword(phone) {
+  if (!confirm('确认将 ' + phone + ' 的密码重置为 123456？')) return;
+  try {
+    var hash = dcodeIO.bcrypt.hashSync('123456', 10);
+    await fetch(URL + '/rest/v1/users?phone=eq.' + phone, {
+      method: 'PATCH',
+      headers: { 'apikey': SERVICE_KEY, 'Authorization': 'Bearer ' + SERVICE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password_hash: hash })
+    });
+    showToast(phone + ' 密码已重置为 123456', 'success');
+  } catch(e) { showToast('重置失败', 'error'); }
+}
+
+// Delete user (service_role API)
+async function deleteUser(phone, name) {
+  if (!confirm('确认删除用户 ' + name + '（' + phone + '）？\n此操作不可恢复！')) return;
+  try {
+    await fetch(URL + '/rest/v1/users?phone=eq.' + phone, {
+      method: 'DELETE',
+      headers: { 'apikey': SERVICE_KEY, 'Authorization': 'Bearer ' + SERVICE_KEY }
+    });
+    showToast('已删除 ' + name, 'success');
+    loadUsers();
+  } catch(e) { showToast('删除失败', 'error'); }
+}
+</script>
+</body>
+</html>
