@@ -15,6 +15,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 
 .container{max-width:1400px;margin:0 auto;padding:20px 24px}
 
+/* Year Tabs */
+.year-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.year-tab{padding:8px 24px;border-radius:20px;font-size:14px;font-weight:500;cursor:pointer;border:2px solid #e0e0e0;background:#fff;color:#666;transition:all .2s;user-select:none}
+.year-tab:hover{border-color:#16213e;color:#16213e}
+.year-tab.active{background:#16213e;color:#fff;border-color:#16213e}
+
 /* Month Tabs */
 .month-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
 .month-tab{padding:10px 28px;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;border:2px solid #e0e0e0;background:#fff;color:#666;transition:all .2s;user-select:none}
@@ -102,12 +108,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 </div>
 
 <div class="container">
-  <!-- Month Tabs -->
-  <div class="month-tabs" id="monthTabs">
-    <div class="month-tab active" data-month="6月">6月</div>
-    <div class="month-tab" data-month="7月">7月</div>
-    <div class="month-tab" data-month="all">年度汇总</div>
+  <!-- Year Tabs -->
+  <div class="year-tabs" id="yearTabs">
+    <div class="year-tab" data-year="2025">2025年</div>
+    <div class="year-tab active" data-year="2026">2026年</div>
   </div>
+
+  <!-- Month Tabs (dynamic, driven by year) -->
+  <div class="month-tabs" id="monthTabs"></div>
 
   <!-- Summary Cards -->
   <div class="summary-row" id="summaryCards"></div>
@@ -159,6 +167,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 <script>
 // ─── Data Loading ───
 let ALL_DATA = null;
+let currentYear = '2026';
 let currentMonth = '6月';
 let currentPage = 1;
 const PAGE_SIZE = 25;
@@ -169,40 +178,111 @@ async function loadData() {
     const resp = await fetch('data_punish.json');
     ALL_DATA = await resp.json();
     initFilters();
-    switchMonth('6月');
+    switchYear('2026');
   } catch(e) {
     document.getElementById('personGrid').innerHTML = '<div class="empty-state">数据加载失败：' + e.message + '</div>';
   }
 }
 
-// ─── Month Switching ───
-function switchMonth(month) {
-  currentMonth = month;
+// ─── Derive Year from date ───
+function getYear(record) {
+  if (!record.date) return '';
+  const y = record.date.substring(0, 4);
+  return y;
+}
+
+// ─── Year Switching ───
+function switchYear(year) {
+  currentYear = year;
   currentPage = 1;
-  
-  document.querySelectorAll('.month-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.month === month);
+
+  // Highlight year tab
+  document.querySelectorAll('.year-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.year === year);
   });
-  
-  let data;
-  if (month === 'all') {
-    data = ALL_DATA.punishments;
-  } else {
-    data = ALL_DATA.punishments.filter(r => r.month === month);
+
+  // Build month tabs based on available months for this year
+  const yearData = ALL_DATA.punishments.filter(r => getYear(r) === year);
+  const monthsInYear = [...new Set(yearData.map(r => r.month).filter(Boolean))].sort((a, b) => {
+    return parseInt(a) - parseInt(b);
+  });
+
+  const monthTabsEl = document.getElementById('monthTabs');
+  if (monthsInYear.length === 0) {
+    // No data for this year → show empty state
+    monthTabsEl.innerHTML = '';
+    currentMonth = 'all';
+    filteredData = [];
+    renderEmptyState(year);
+    return;
   }
-  
-  // Apply filters
+
+  // Build month tabs HTML
+  let tabsHTML = monthsInYear.map(m => 
+    `<div class="month-tab" data-month="${m}">${m}</div>`
+  ).join('');
+  // Add "累计汇总" tab
+  tabsHTML += `<div class="month-tab" data-month="all">累计汇总</div>`;
+  monthTabsEl.innerHTML = tabsHTML;
+
+  // Auto-select first month or keep current if valid
+  const availableMonths = monthsInYear.concat(['all']);
+  if (!availableMonths.includes(currentMonth)) {
+    currentMonth = monthsInYear[0];
+  }
+
+  // Highlight correct month tab
+  document.querySelectorAll('.month-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.month === currentMonth);
+  });
+
+  // Apply current view
+  applyMonthFilter();
+}
+
+function renderEmptyState(year) {
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="summary-card"><div class="label">总处罚记录</div><div class="value">0<span class="unit">条</span></div></div>
+    <div class="summary-card"><div class="label">总罚款金额</div><div class="value">0<span class="unit">元</span></div></div>
+    <div class="summary-card"><div class="label">三级-降职降薪</div><div class="value">0<span class="unit">条</span></div></div>
+    <div class="summary-card"><div class="label">二级-书面警告</div><div class="value">0<span class="unit">条</span></div></div>
+    <div class="summary-card"><div class="label">一级-批评教育</div><div class="value">0<span class="unit">条</span></div></div>
+    <div class="summary-card"><div class="label">经济处罚</div><div class="value">0<span class="unit">条</span></div></div>
+  `;
+
+  if (chartClassInst) chartClassInst.destroy();
+  if (chartPosInst) chartPosInst.destroy();
+  chartClassInst = null; chartPosInst = null;
+
+  document.getElementById('personGrid').innerHTML = `<div class="empty-state">${year}年暂无处罚数据</div>`;
+  document.getElementById('detailBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#999">暂无数据</td></tr>';
+  document.getElementById('pagination').innerHTML = '';
+  document.getElementById('personTitle').textContent = `员工处罚汇总 (${year}年)`;
+}
+
+function applyMonthFilter() {
+  // Get year-filtered base data
+  const yearData = ALL_DATA.punishments.filter(r => getYear(r) === currentYear);
+
+  let data;
+  if (currentMonth === 'all') {
+    data = yearData;
+  } else {
+    data = yearData.filter(r => r.month === currentMonth);
+  }
+
+  // Apply user filters
   const searchText = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
   const filterClass = document.getElementById('filterClass')?.value || '';
   const filterPosition = document.getElementById('filterPosition')?.value || '';
-  
+
   filteredData = data.filter(r => {
     if (searchText && !r.name.toLowerCase().includes(searchText) && !r.employeeId.includes(searchText)) return false;
     if (filterClass && r.classification !== filterClass) return false;
     if (filterPosition && r.position !== filterPosition) return false;
     return true;
   });
-  
+
   renderSummary();
   renderCharts();
   renderPersonGrid();
@@ -210,22 +290,34 @@ function switchMonth(month) {
   updatePersonTitle();
 }
 
+// ─── Month Switching (called from month tab clicks) ───
+function switchMonth(month) {
+  currentMonth = month;
+  currentPage = 1;
+
+  document.querySelectorAll('.month-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.month === month);
+  });
+
+  applyMonthFilter();
+}
+
 // ─── Initialize Filters ───
 function initFilters() {
   const allPunish = ALL_DATA.punishments;
-  
-  // Classification filter
+
   const classes = [...new Set(allPunish.map(r => r.classification))].sort();
   const classSelect = document.getElementById('filterClass');
+  classSelect.innerHTML = '<option value="">全部</option>';
   classes.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c;
     classSelect.appendChild(opt);
   });
-  
-  // Position filter
+
   const positions = [...new Set(allPunish.map(r => r.position))].sort();
   const posSelect = document.getElementById('filterPosition');
+  posSelect.innerHTML = '<option value="">全部</option>';
   positions.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p; opt.textContent = p;
@@ -241,7 +333,7 @@ function renderSummary() {
   const level2Count = filteredData.filter(r => r.classification === '二级书面警告').length;
   const level1Count = filteredData.filter(r => r.classification === '一级批评教育').length;
   const fineCount = filteredData.filter(r => r.classification === '经济处罚').length;
-  
+
   document.getElementById('summaryCards').innerHTML = `
     <div class="summary-card warn"><div class="label">总处罚记录</div><div class="value">${total}<span class="unit">条</span></div></div>
     <div class="summary-card warn"><div class="label">总罚款金额</div><div class="value">${totalAmount.toLocaleString()}<span class="unit">元</span></div></div>
@@ -256,12 +348,18 @@ function renderSummary() {
 let chartClassInst = null, chartPosInst = null;
 
 function renderCharts() {
+  if (filteredData.length === 0) {
+    if (chartClassInst) { chartClassInst.destroy(); chartClassInst = null; }
+    if (chartPosInst) { chartPosInst.destroy(); chartPosInst = null; }
+    return;
+  }
+
   // Classification chart
   const classMap = {};
   filteredData.forEach(r => {
     classMap[r.classification] = (classMap[r.classification] || 0) + 1;
   });
-  
+
   const classLabels = Object.keys(classMap);
   const classValues = Object.values(classMap);
   const classColors = classLabels.map(l => {
@@ -270,7 +368,7 @@ function renderCharts() {
     if (l.includes('一级')) return '#3498db';
     return '#95a5a6';
   });
-  
+
   if (chartClassInst) chartClassInst.destroy();
   const ctx1 = document.getElementById('chartClass').getContext('2d');
   chartClassInst = new Chart(ctx1, {
@@ -284,14 +382,14 @@ function renderCharts() {
       plugins: {legend: {position: 'right', labels: {font: {size: 12}, padding: 16}}}
     }
   });
-  
+
   // Position chart - top 15
   const posMap = {};
   filteredData.forEach(r => {
     posMap[r.position] = (posMap[r.position] || 0) + 1;
   });
   const posSorted = Object.entries(posMap).sort((a, b) => b[1] - a[1]).slice(0, 15);
-  
+
   if (chartPosInst) chartPosInst.destroy();
   const ctx2 = document.getElementById('chartPosition').getContext('2d');
   chartPosInst = new Chart(ctx2, {
@@ -325,15 +423,15 @@ function renderPersonGrid() {
     else if (r.classification === '经济处罚') personMap[key].fine++;
     personMap[key].items.push(r);
   });
-  
+
   const persons = Object.values(personMap).sort((a, b) => b.total - a.total);
-  
+
   const grid = document.getElementById('personGrid');
   if (persons.length === 0) {
     grid.innerHTML = '<div class="empty-state">当前筛选条件下无数据</div>';
     return;
   }
-  
+
   grid.innerHTML = persons.map(p => `
     <div class="person-card" onclick="showPersonDetail('${p.employeeId}')" title="点击查看明细">
       <div class="p-name">${p.name} <span style="font-size:12px;color:#888;font-weight:400">工号: ${p.employeeId}</span></div>
@@ -361,7 +459,7 @@ function renderDetailTable() {
   const start = (currentPage - 1) * PAGE_SIZE;
   const pageData = filteredData.slice(start, start + PAGE_SIZE);
   const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
-  
+
   const tbody = document.getElementById('detailBody');
   if (pageData.length === 0) {
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#999">无匹配数据</td></tr>';
@@ -372,7 +470,7 @@ function renderDetailTable() {
       else if (r.classification === '二级书面警告') badgeClass = 'badge-level2';
       else if (r.classification === '一级批评教育') badgeClass = 'badge-level1';
       else badgeClass = 'badge-fine';
-      
+
       return `<tr>
         <td>${start + i + 1}</td>
         <td><strong>${r.name}</strong></td>
@@ -386,20 +484,20 @@ function renderDetailTable() {
       </tr>`;
     }).join('');
   }
-  
+
   // Pagination
   let pagHTML = '';
   pagHTML += `<button onclick="goPage(1)" ${currentPage===1?'disabled':''}>首页</button>`;
   pagHTML += `<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>上一页</button>`;
-  
+
   for (let p = Math.max(1, currentPage-2); p <= Math.min(totalPages, currentPage+2); p++) {
     pagHTML += `<button onclick="goPage(${p})" style="${p===currentPage?'background:#0f3460;color:#fff;border-color:#0f3460':''}">${p}</button>`;
   }
-  
+
   pagHTML += `<button onclick="goPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>下一页</button>`;
   pagHTML += `<button onclick="goPage(${totalPages})" ${currentPage>=totalPages?'disabled':''}>末页</button>`;
   pagHTML += `<span class="page-info">共 ${filteredData.length} 条 / ${totalPages} 页</span>`;
-  
+
   document.getElementById('pagination').innerHTML = pagHTML;
 }
 
@@ -412,13 +510,17 @@ function goPage(p) {
 }
 
 function updatePersonTitle() {
-  document.getElementById('personTitle').textContent = 
-    currentMonth === 'all' ? '员工处罚汇总 (全部月份)' : `员工处罚汇总 (${currentMonth})`;
+  const yearLabel = currentYear + '年';
+  if (currentMonth === 'all') {
+    document.getElementById('personTitle').textContent = `员工处罚汇总 (${yearLabel} 累计汇总)`;
+  } else {
+    document.getElementById('personTitle').textContent = `员工处罚汇总 (${yearLabel} ${currentMonth})`;
+  }
 }
 
 // ─── Filters ───
 function applyFilters() {
-  switchMonth(currentMonth);
+  applyMonthFilter();
 }
 
 // ─── Export CSV ───
@@ -434,12 +536,19 @@ function exportCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `处罚数据_${currentMonth === 'all' ? '年度汇总' : currentMonth}.csv`;
+  const monthLabel = currentMonth === 'all' ? '累计汇总' : currentMonth;
+  a.download = `处罚数据_${currentYear}年_${monthLabel}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 // ─── Event Listeners ───
+document.getElementById('yearTabs').addEventListener('click', e => {
+  if (e.target.classList.contains('year-tab')) {
+    switchYear(e.target.dataset.year);
+  }
+});
+
 document.getElementById('monthTabs').addEventListener('click', e => {
   if (e.target.classList.contains('month-tab')) {
     switchMonth(e.target.dataset.month);
