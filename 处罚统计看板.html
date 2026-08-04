@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7月处罚统计看板（截至7.26）</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: #f5f6fa; color: #333; line-height: 1.6;
+}
+.app { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff; padding: 28px 32px; border-radius: 14px;
+  margin-bottom: 20px; box-shadow: 0 4px 20px rgba(102,126,234,0.25);
+  position: relative;
+}
+.header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.header .subtitle { font-size: 14px; opacity: 0.85; }
+.header .share-btn {
+  background: rgba(255,255,255,0.2); color: #fff;
+  border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+}
+.header .share-btn:hover { background: rgba(255,255,255,0.35); }
+.header-actions {
+  position: absolute; top: 28px; right: 32px;
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+}
+.header-btn {
+  background: rgba(255,255,255,0.15); color: #fff;
+  border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
+  padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.header-btn:hover { background: rgba(255,255,255,0.3); }
+.header .share-btn { margin: 0; }
+
+.summary-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px; margin-bottom: 20px;
+}
+.sum-card {
+  background: #fff; border-radius: 12px; padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: flex; align-items: center; gap: 14px; transition: transform 0.2s;
+}
+.sum-card:hover { transform: translateY(-2px); }
+.sum-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.sum-info .num { font-size: 28px; font-weight: 800; color: #1a1a2e; line-height: 1.1; }
+.sum-info .label { font-size: 13px; color: #888; margin-top: 2px; }
+.bg-blue { background: #e8f0fe; color: #1a73e8; }
+.bg-red { background: #fce8e6; color: #d93025; }
+.bg-green { background: #e6f4ea; color: #137333; }
+.bg-orange { background: #fef7e0; color: #f9ab00; }
+.bg-purple { background: #f3e8fd; color: #9334c6; }
+.bg-teal { background: #e0f5f5; color: #00897b; }
+
+.charts-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 20px;
+}
+.chart-card {
+  background: #fff; border-radius: 12px; padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.chart-card h3 { font-size: 15px; font-weight: 700; color: #555; margin-bottom: 16px; }
+.bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.bar-label { width: 120px; font-size: 13px; text-align: right; flex-shrink: 0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-label:hover { color: #667eea; text-decoration: underline; }
+.bar-track { flex: 1; height: 26px; background: #f0f0f0; border-radius: 6px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 12px; font-weight: 700; color: #fff; transition: width 0.6s ease; min-width: 30px; }
+.bar-count { width: 36px; font-size: 13px; font-weight: 700; text-align: left; flex-shrink: 0; }
+
+.filter-bar {
+  background: #fff; border-radius: 12px; padding: 20px 24px;
+  margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.filter-section { margin-bottom: 14px; }
+.filter-section:last-child { margin-bottom: 0; }
+.filter-title { font-size: 13px; font-weight: 700; color: #666; margin-bottom: 8px; }
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  border: 1.5px solid #e0e0e0; background: #fff; color: #555; cursor: pointer;
+  transition: all 0.2s; user-select: none;
+}
+.chip:hover { border-color: #667eea; }
+.chip.active { background: #667eea; color: #fff; border-color: #667eea; }
+.chip .count { font-size: 11px; opacity: 0.7; margin-left: 4px; }
+.search-row { display: flex; gap: 12px; align-items: center; }
+.search-input {
+  flex: 1; padding: 10px 16px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+  font-size: 14px; outline: none; transition: border-color 0.2s;
+}
+.search-input:focus { border-color: #667eea; }
+.select-input {
+  padding: 10px 16px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+  font-size: 14px; outline: none; background: #fff; cursor: pointer; min-width: 160px;
+}
+.select-input:focus { border-color: #667eea; }
+.btn-reset {
+  padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px;
+  font-weight: 600; cursor: pointer; background: #f0f0f0; color: #666; transition: all 0.2s;
+}
+.btn-reset:hover { background: #e0e0e0; }
+
+.view-tabs {
+  display: flex; gap: 0; margin-bottom: 16px;
+  background: #fff; border-radius: 12px; padding: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.view-tab {
+  flex: 1; text-align: center; padding: 12px 20px; font-size: 14px; font-weight: 600;
+  border-radius: 8px; cursor: pointer; transition: all 0.2s; color: #888;
+}
+.view-tab.active { background: #667eea; color: #fff; }
+.view-tab:hover:not(.active) { background: #f0f0f0; }
+
+/* Topic analysis */
+.topic-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px; margin-bottom: 20px;
+}
+.topic-card {
+  background: #fff; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s;
+}
+.topic-card:hover { transform: translateY(-2px); }
+.topic-header {
+  padding: 20px 24px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: background 0.2s;
+}
+.topic-header:hover { background: #f8f9fc; }
+.topic-header-left { display: flex; align-items: center; gap: 12px; }
+.topic-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.topic-info .tname { font-size: 16px; font-weight: 700; color: #333; }
+.topic-info .tdesc { font-size: 12px; color: #aaa; margin-top: 2px; }
+.topic-count {
+  font-size: 28px; font-weight: 800; color: #667eea;
+}
+.topic-count .unit { font-size: 13px; font-weight: 500; color: #888; margin-left: 4px; }
+.topic-body { padding: 0 24px 20px; }
+.topic-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.topic-row .tlabel { width: 80px; font-size: 12px; color: #888; flex-shrink: 0; text-align: right; }
+.topic-row .tbar { flex: 1; height: 20px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.topic-row .tfill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 11px; font-weight: 700; color: #fff; min-width: 24px; }
+.topic-row .tnum { width: 28px; font-size: 12px; font-weight: 700; text-align: left; flex-shrink: 0; }
+.topic-section-title { font-size: 12px; font-weight: 700; color: #aaa; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.topic-btn {
+  margin-top: 14px; width: 100%; padding: 10px; border: none; border-radius: 8px;
+  background: #667eea; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.topic-btn:hover { background: #5a6fd8; }
+
+.store-summary-wrap {
+  background: #fff; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;
+}
+.store-summary-wrap h3 { padding: 20px 24px 12px; font-size: 15px; font-weight: 700; color: #555; }
+.store-summary-wrap .hint { padding: 0 24px 12px; font-size: 12px; color: #aaa; }
+.store-summary-table { width: 100%; border-collapse: collapse; }
+.store-summary-table thead th {
+  background: #f8f9fc; padding: 10px 12px; text-align: left; font-size: 12px;
+  font-weight: 700; color: #555; border-bottom: 2px solid #e8e8e8; white-space: nowrap;
+  cursor: pointer; user-select: none;
+}
+.store-summary-table thead th:hover { background: #eef0f6; }
+.store-summary-table tbody td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+.store-summary-table tbody tr { cursor: pointer; transition: background 0.15s; }
+.store-summary-table tbody tr:hover { background: #f8f9fc; }
+.store-summary-table tbody tr.selected { background: #eef0f6; }
+.num-cell { text-align: center; font-weight: 700; }
+.mini-badge {
+  display: inline-block; min-width: 20px; padding: 1px 5px; border-radius: 3px;
+  font-size: 11px; font-weight: 700; text-align: center;
+}
+.mb-eco { background: #fef7e0; color: #f9ab00; }
+.mb-1 { background: #e8f0fe; color: #1a73e8; }
+.mb-2 { background: #fce8e6; color: #d93025; }
+.mb-3 { background: #f3e8fd; color: #9334c6; }
+.mb-0 { color: #ccc; }
+
+.table-wrap {
+  background: #fff; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.table-info {
+  padding: 14px 24px; font-size: 14px; color: #888;
+  border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;
+}
+.table-info b { color: #667eea; font-size: 16px; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: #f8f9fc; padding: 12px 16px; text-align: left; font-size: 13px;
+  font-weight: 700; color: #555; border-bottom: 2px solid #e8e8e8; white-space: nowrap;
+  cursor: pointer; user-select: none;
+}
+thead th:hover { background: #eef0f6; }
+thead th .sort-icon { font-size: 10px; opacity: 0.5; margin-left: 4px; }
+tbody td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+tbody tr:hover { background: #f8f9fc; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge-economy { background: #fef7e0; color: #f9ab00; }
+.badge-level1 { background: #e8f0fe; color: #1a73e8; }
+.badge-level2 { background: #fce8e6; color: #d93025; }
+.badge-level3 { background: #f3e8fd; color: #9334c6; }
+.badge-level4 { background: #e0f5f5; color: #00897b; }
+.badge-dismiss { background: #1a1a2e; color: #fff; }
+.badge-none { background: #f0f0f0; color: #999; }
+.vtype-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.vtype-mgmt { background: #e8f0fe; color: #1a73e8; }
+.vtype-safety { background: #fce8e6; color: #d93025; }
+.vtype-op { background: #e6f4ea; color: #137333; }
+.vtype-disc { background: #fef7e0; color: #f9ab00; }
+.vtype-dorm { background: #f3e8fd; color: #9334c6; }
+.event-cell { max-width: 280px; }
+.clause-cell { max-width: 350px; color: #666; font-size: 12px; }
+.truncate { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+.truncate.expanded { -webkit-line-clamp: unset; }
+.empty-row { text-align: center; padding: 40px; color: #999; }
+
+.pagination { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 16px; }
+.page-btn { padding: 6px 12px; border: 1px solid #e0e0e0; border-radius: 6px; background: #fff; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+.page-btn:hover:not(:disabled) { border-color: #667eea; background: #f8f9fc; }
+.page-btn.active { background: #667eea; color: #fff; border-color: #667eea; }
+.page-btn:disabled { opacity: 0.4; cursor: default; }
+
+.color-0 { background: linear-gradient(90deg, #667eea, #764ba2); }
+.color-1 { background: linear-gradient(90deg, #f093fb, #f5576c); }
+.color-2 { background: linear-gradient(90deg, #4facfe, #00f2fe); }
+.color-3 { background: linear-gradient(90deg, #43e97b, #38f9d7); }
+.color-4 { background: linear-gradient(90deg, #fa709a, #fee140); }
+.color-5 { background: linear-gradient(90deg, #30cfd0, #330867); }
+.color-6 { background: linear-gradient(90deg, #a8edea, #fed6e3); }
+.color-7 { background: linear-gradient(90deg, #ff9a9e, #fecfef); }
+.color-8 { background: linear-gradient(90deg, #ffecd2, #fcb69f); }
+.color-9 { background: linear-gradient(90deg, #84fab0, #8fd3f4); }
+.color-10 { background: linear-gradient(90deg, #cfd9df, #e2ebf0); }
+.color-11 { background: linear-gradient(90deg, #f6d365, #fda085); }
+
+@media (max-width: 768px) {
+  .charts-row { grid-template-columns: 1fr; }
+  .summary-row { grid-template-columns: repeat(2, 1fr); }
+  .search-row { flex-direction: column; }
+  .event-cell { max-width: 180px; }
+  .clause-cell { max-width: 200px; }
+  .header .share-btn { position: static; margin-top: 10px; }
+  .header-actions { position: static; margin-top: 10px; justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>7月处罚统计看板</h1>
+    <div class="subtitle" id="subtitle">数据截至 2025年7月26日 | 共 327 条记录 | 涵盖 143 家门店 | 覆盖 12 个区域</div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="document.getElementById('excelInput').click()">&#128229; 导入Excel</button>
+      <button class="header-btn" onclick="exportCSV()">&#128227; 导出CSV</button>
+      <button class="header-btn" onclick="exportJSON()">&#128190; 导出JSON</button>
+      <button class="header-btn" onclick="document.getElementById('jsonInput').click()">&#128229; 导入JSON</button>
+      <button class="share-btn" onclick="copyShareLink()">&#128279; 分享</button>
+    </div>
+  </div>
+  <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelImport(this)">
+  <input type="file" id="jsonInput" accept=".json" style="display:none" onchange="handleJSONImport(this)">
+
+  <div class="summary-row" id="summaryRow"></div>
+
+  <div class="charts-row">
+    <div class="chart-card"><h3>处罚类型分布</h3><div id="penaltyChart"></div></div>
+    <div class="chart-card"><h3>区域处罚数量排名</h3><div id="regionChart"></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-card"><h3>违纪类型分布</h3><div id="vtypeChart"></div></div>
+    <div class="chart-card"><h3>处罚原因 TOP 排行</h3><div id="reasonChart"></div></div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-section"><div class="filter-title">处罚类型</div><div class="chip-group" id="penaltyChips"></div></div>
+    <div class="filter-section"><div class="filter-title">违纪类型</div><div class="chip-group" id="vtypeChips"></div></div>
+    <div class="filter-section"><div class="filter-title">区域</div><div class="chip-group" id="regionChips"></div></div>
+    <div class="filter-section">
+      <div class="search-row">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索门店名称、具体事件、处罚原因...">
+        <select class="select-input" id="storeSelect"><option value="">全部门店</option></select>
+        <button class="btn-reset" onclick="resetFilters()">重置筛选</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view-tabs">
+    <div class="view-tab active" onclick="switchView('detail')">&#128203; 处罚明细</div>
+    <div class="view-tab" onclick="switchView('topic')">&#128269; 大单项分析</div>
+    <div class="view-tab" onclick="switchView('store')">&#127978; 门店汇总</div>
+  </div>
+
+  <div id="topicView" style="display:none">
+    <div class="topic-grid" id="topicGrid"></div>
+  </div>
+
+  <div id="storeView" style="display:none">
+    <div class="store-summary-wrap">
+      <h3>门店处罚汇总</h3>
+      <div class="hint">点击任意行可在下方明细表中查看该门店的全部处罚记录 | 点击表头可排序</div>
+      <table class="store-summary-table">
+        <thead>
+          <tr>
+            <th data-ssort="store">门店</th>
+            <th data-ssort="region">区域</th>
+            <th data-ssort="total" style="text-align:center">处罚总数</th>
+            <th style="text-align:center">经济处罚</th>
+            <th style="text-align:center">一级</th>
+            <th style="text-align:center">二级</th>
+            <th style="text-align:center">三级</th>
+            <th style="text-align:center">解除</th>
+            <th style="text-align:center">未定级</th>
+            <th data-ssort="fine" style="text-align:center">罚款合计</th>
+          </tr>
+        </thead>
+        <tbody id="storeSummaryBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="detailView">
+    <div class="table-wrap">
+      <div class="table-info">
+        <span>共筛选出 <b id="filteredCount">0</b> 条记录</span>
+        <span id="activeFilters"></span>
+      </div>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th data-sort="seq">序号 <span class="sort-icon"></span></th>
+            <th data-sort="region">区域 <span class="sort-icon"></span></th>
+            <th data-sort="store">门店 <span class="sort-icon"></span></th>
+            <th data-sort="date">日期 <span class="sort-icon"></span></th>
+            <th>具体事件</th>
+            <th>处罚原因（条款）</th>
+            <th data-sort="penaltyLevel">处罚类型 <span class="sort-icon"></span></th>
+            <th data-sort="violationType">违纪类型 <span class="sort-icon"></span></th>
+            <th data-sort="fine">罚款 <span class="sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+let RAW_DATA = [{"seq": "1", "region": "经营四区", "store": "土桥店", "manager": "刘琦", "date": "06月27日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "2", "region": "经营八区", "store": "大柳树店", "manager": "沈静婷\n（人事调动前）", "date": "06月27日", "event": "员工不慎将茶叶蛋掉落在地上，捡起来继续使用", "clause": "食品掉落地面未按标准清洗或废弃，还继续使用的", "penaltyLevel": "三级降职降薪", "violationType": "管理失职", "fine": "300", "source": ""}, {"seq": "3", "region": "经营七区", "store": "东铁营店", "manager": "区域直管", "date": "06月27日", "event": "员工不慎将馄饨掉在台面上继续使用", "clause": "食品掉落操作台面未按标准废弃的", "penaltyLevel": "二级书面警告", "violationType": "食品安全类", "fine": "300", "source": ""}, {"seq": "4", "region": "经营九区", "store": "和平里店", "manager": "区域直管", "date": "06月28日", "event": "27日员工使用电饭锅内胆做清洁。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "5", "region": "经营三区", "store": "天桥店", "manager": "林周强", "date": "06月28日", "event": "未完成万店掌燃气检查任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "6", "region": "经营三区", "store": "天桥店", "manager": "林周强", "date": "06月28日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "7", "region": "经营六区", "store": "高米店北店", "manager": "王琴", "date": "06月28日", "event": "6月27日员工踩完台面做清洁后，未清洁彻底台面。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "8", "region": "经营六区", "store": "高米店北店", "manager": "王琴", "date": "06月28日", "event": "6月27日10点16分加热好的口水鸡，于20点49分重新复热。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "9", "region": "经营八区", "store": "青年路店", "manager": "区域直管", "date": "06月28日", "event": "茶叶蛋掉入水池内后，员工直接用手捡起来放回盒子内未废弃，于8点16分又继续加热出餐。", "clause": "食品掉落操作台面未按标准废弃的", "penaltyLevel": "二级书面警告", "violationType": "食品安全类", "fine": "300", "source": ""}, {"seq": "10", "region": "经营七区", "store": "辛房路店", "manager": "叶子瑞", "date": "06月28日", "event": "未完成万店掌燃气检查任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "11", "region": "训练店", "store": "赵公口店", "manager": "胡敬花", "date": "06月28日", "event": "储备店长 潘永帅 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "12", "region": "上海", "store": "汇融天地店", "manager": "区域直管", "date": "06月29日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "13", "region": "上海", "store": "控江路店", "manager": "徐常青", "date": "06月29日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "14", "region": "经营九区", "store": "霍营地铁店", "manager": "晋清源", "date": "06月29日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "15", "region": "经营四区", "store": "石佛营店", "manager": "樊志雄", "date": "06月29日", "event": "门店第一负责人 樊志雄 迟到", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "16", "region": "经营七区", "store": "马驹桥店", "manager": "吝付旺", "date": "06月29日", "event": "未完成万店掌燃气检查任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "17", "region": "上海", "store": "万航渡路店", "manager": "区域直管", "date": "06月30日", "event": "煎饺掉落台面后继续售卖", "clause": "食品掉落操作台面未按标准废弃的", "penaltyLevel": "二级书面警告", "violationType": "食品安全类", "fine": "300", "source": ""}, {"seq": "18", "region": "经营八区", "store": "灯市口地铁店", "manager": "韦世海", "date": "06月30日", "event": "门店第一负责人 韦世海  迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "19", "region": "经营六区", "store": "白纸坊店", "manager": "段小元", "date": "06月30日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "20", "region": "经营七区", "store": "马驹桥店", "manager": "吝付旺", "date": "06月30日", "event": "门店第一负责人 吝付旺  迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "21", "region": "经营十区", "store": "十里堡店", "manager": "董莹莹", "date": "06月30日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "22", "region": "经营十区", "store": "十里堡店", "manager": "董莹莹", "date": "06月30日", "event": "未完成万店掌燃气检查任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "23", "region": "经营十区", "store": "十里堡店", "manager": "董莹莹", "date": "06月30日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "24", "region": "经营九区", "store": "小营西路店", "manager": "关永鑫", "date": "06月30日", "event": "鸡杂直接泡水解冻", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "25", "region": "训练店", "store": "枣园地铁店", "manager": "朱澳洋", "date": "06月30日", "event": "储备店长 张耀民 早退", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "26", "region": "经营一区", "store": "昌平地铁店", "manager": "邹喜尧", "date": "07月01日", "event": "检查人员到店后，往垃圾桶扔过期青菜馄饨八盒", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "27", "region": "经营五区", "store": "七里庄店", "manager": "刘强", "date": "07月01日", "event": "用请小时假方式，避免发起工时异常申请", "clause": "未按要求完成员工排班，致使 2 人（含）以上人员出现补班及考勤未日审情形；或因班次复制操作失误，导致后续有 2 人（含）以上发起班次修改申请；或考勤当日未完成审核，后续有 2 人（含）以上发起班次修改申请的，均属此类违规", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "28", "region": "经营七区", "store": "临泓路店", "manager": "刘佳豪", "date": "07月01日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "29", "region": "经营七区", "store": "木樨园桥西店", "manager": "区域直管", "date": "07月01日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "30", "region": "经营七区", "store": "西马场店", "manager": "区域直管", "date": "07月01日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "31", "region": "经营九区", "store": "丰管路店", "manager": "刘艳鹏", "date": "07月01日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "32", "region": "经营九区", "store": "丰管路店", "manager": "刘艳鹏", "date": "07月01日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "33", "region": "经营九区", "store": "和平里店", "manager": "区域直管", "date": "07月01日", "event": "二副 徐晨晨 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "34", "region": "", "store": "营运总部", "manager": "", "date": "07月01日", "event": "潘永帅 储备店长 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "35", "region": "上海", "store": "汇融天地店", "manager": "区域直管", "date": "07月02日", "event": "储备店长 关晓亮 旷工，上班未打卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "36", "region": "经营四区", "store": "玉桥东里店", "manager": "闫良莹", "date": "07月02日", "event": "昨日焖制黄焖鸡未废弃、柠檬片未废弃", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "37", "region": "经营五区", "store": "富丰桥店", "manager": "董伦", "date": "07月02日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "38", "region": "经营六区", "store": "南站4店", "manager": "赵棋", "date": "07月02日", "event": "员工在馄饨煮台拧抹布，存在食安风险。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "39", "region": "经营七区", "store": "角北店", "manager": "杨磊", "date": "07月02日", "event": "门店第一负责人 杨磊  迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "40", "region": "经营九区", "store": "马家堡店", "manager": "金灿", "date": "07月02日", "event": "储备干部  金灿 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "41", "region": "经营九区", "store": "日坛北路店", "manager": "姜雨含", "date": "07月02日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "42", "region": "经营六区", "store": "南站2店", "manager": "黄华静", "date": "07月03日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "43", "region": "经营八区", "store": "甜水园店", "manager": "郝帅杰", "date": "07月03日", "event": "一袋羊肉块超过最佳售卖期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "44", "region": "经营九区", "store": "嘉园店", "manager": "区域直管", "date": "07月03日", "event": "鲈鱼烧干后员工加汤进行复热出餐", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "45", "region": "经营九区", "store": "嘉园店", "manager": "区域直管", "date": "07月03日", "event": "其他企业员工过来盛米饭，未付费。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "46", "region": "经营九区", "store": "嘉园店", "manager": "区域直管", "date": "07月03日", "event": "员工使用客用餐具品尝豆浆后，未洗碗，直接放回餐具上面，并且后续直接把豆腐脑勺子放在了该碗上。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "47", "region": "经营一区", "store": "回龙观风雅园店", "manager": "任立志", "date": "07月04日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "48", "region": "经营三区", "store": "驼房营店", "manager": "区域直管", "date": "07月04日", "event": "两份辣椒炒肉放三勺半辣椒圈。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "49", "region": "经营四区", "store": "垡头店", "manager": "刘震", "date": "07月04日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "50", "region": "经营四区", "store": "耿庄店", "manager": "何宝金", "date": "07月04日", "event": "用掉落到地面的抹布擦拭浴油器，然后只接回收起来了，与今早直接继续使用。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "51", "region": "经营四区", "store": "耿庄店", "manager": "何宝金", "date": "07月04日", "event": "员工直接用抹布擦拭锅贴机内部。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "52", "region": "经营四区", "store": "耿庄店", "manager": "何宝金", "date": "07月04日", "event": "烤串师用保鲜盒做清洁", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "53", "region": "经营六区", "store": "黄村西大街店", "manager": "吕晓华", "date": "07月04日", "event": "在顾客可视范围内，员工在炒菜池旁清洗双手", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "54", "region": "经营一区", "store": "建新东街店", "manager": "区域直管", "date": "07月05日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "55", "region": "经营三区", "store": "华威桥店", "manager": "周璐", "date": "07月05日", "event": "门店第一负责人周璐早退", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "56", "region": "经营三区", "store": "华威桥店", "manager": "周璐", "date": "07月05日", "event": "员工用亚克力槽做清洁。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "57", "region": "经营四区", "store": "通胡大街店", "manager": "吴亚超", "date": "07月05日", "event": "员工利用本店食材，未按照标准出餐，做炒面。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "58", "region": "经营四区", "store": "通州果园店", "manager": "徐洪亮", "date": "07月05日", "event": "热过的牛奶未废弃放在冰箱", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "59", "region": "经营四区", "store": "周庄嘉园店", "manager": "琚璐瑶", "date": "07月05日", "event": "门店第一负责人琚璐瑶迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "60", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月05日", "event": "鱼豆腐和肉肠解冻的方式错误，直接用热水加热。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "61", "region": "经营七区", "store": "草桥地铁店", "manager": "沈美玲", "date": "07月05日", "event": "筷子掉地上了，店员清洗不彻底只洗了一点，就又继续做餐了", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "62", "region": "经营九区", "store": "嘉园店", "manager": "区域直管", "date": "07月05日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "63", "region": "经营九区", "store": "清河店", "manager": "栾祖全", "date": "07月05日", "event": "一包小炒鸡辅料过期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "64", "region": "经营十区", "store": "定福庄店", "manager": "郭丰瑜", "date": "07月05日", "event": "一包黄瓜片过最佳售卖期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "65", "region": "经营十区", "store": "东中街店", "manager": "周峰", "date": "07月05日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "66", "region": "上海", "store": "江苏路店", "manager": "陈高峰", "date": "07月06日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "67", "region": "经营一区", "store": "昌平地铁店", "manager": "邹喜尧", "date": "07月06日", "event": "门店第一负责人 邹喜尧 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "68", "region": "经营一区", "store": "和平街店", "manager": "刘明花", "date": "07月06日", "event": "见习二副 曾令宇 旷工，迟到18分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "69", "region": "经营二区", "store": "望京西园店", "manager": "王海洋", "date": "07月06日", "event": "值班经理在做酸辣汤时未放生粉，使用的面粉。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "70", "region": "经营二区", "store": "西八里庄店", "manager": "陈玉飞", "date": "07月06日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "71", "region": "经营二区", "store": "远大路店", "manager": "张抗抗", "date": "07月06日", "event": "2个奶皮子酸奶过最佳售卖期。", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "72", "region": "经营四区", "store": "玉桥中路店", "manager": "王新龙", "date": "07月06日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "73", "region": "经营六区", "store": "马连道店", "manager": "董晶晶", "date": "07月06日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "74", "region": "经营六区", "store": "马连道店", "manager": "董晶晶", "date": "07月06日", "event": "未完成万店掌燃气检查任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "75", "region": "经营七区", "store": "丰台大悦春风里店", "manager": "阙丽娜", "date": "07月06日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "76", "region": "经营七区", "store": "暖山生活店", "manager": "李佳豪", "date": "07月06日", "event": "门店第一负责人 李佳豪 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "77", "region": "经营七区", "store": "石榴园店", "manager": "区域直管\n（人事调动前）", "date": "07月06日", "event": "见习二副 纪红涛 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "78", "region": "经营七区", "store": "石榴园店", "manager": "区域直管\n（人事调动前）", "date": "07月06日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "79", "region": "经营八区", "store": "十里堡地铁店", "manager": "尤磊", "date": "07月06日", "event": "二副 汪雨 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "80", "region": "经营九区", "store": "和平里店", "manager": "区域直管", "date": "07月06日", "event": "二副 徐晨晨 迟到6.30/7.5两天迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "一级批评教育", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "81", "region": "经营九区", "store": "七星园店", "manager": "肖本健", "date": "07月06日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "82", "region": "经营九区", "store": "晓月中路店", "manager": "郭杏娟", "date": "07月06日", "event": "员工用手按压食材且将掉落台面的食材捡回继续使用", "clause": "食品掉落操作台面未按标准废弃的", "penaltyLevel": "二级书面警告", "violationType": "食品安全类", "fine": "300", "source": ""}, {"seq": "83", "region": "经营十区", "store": "车公庄店", "manager": "王爱民", "date": "07月06日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "84", "region": "经营二区", "store": "黄寺大街店", "manager": "区域直管", "date": "07月07日", "event": "员工用夹子夹完抹布后，未消毒直接给顾客夹松糕。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "85", "region": "经营三区", "store": "驼房营店", "manager": "区域直管", "date": "07月07日", "event": "一盒羊肉串过期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "86", "region": "经营四区", "store": "玉桥中路店", "manager": "王新龙", "date": "07月07日", "event": "见习二副 古新雨 早退", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "87", "region": "经营五区", "store": "梅市口店", "manager": "李俊辉", "date": "07月07日", "event": "做酸辣汤，少放1枚鸡蛋（放了19枚）", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "88", "region": "经营六区", "store": "拱辰南大街店", "manager": "区域直管", "date": "07月07日", "event": "员工使用5份鱼片肉炒制2份员工餐，存在违规操作", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "89", "region": "经营一区", "store": "顺义站前南街店", "manager": "赵涛", "date": "07月08日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "90", "region": "经营二区", "store": "花园北路店", "manager": "孙正宇", "date": "07月08日", "event": "员工用抹布擦拭锅贴机内部。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "91", "region": "经营二区", "store": "西八里庄店", "manager": "陈玉飞", "date": "07月08日", "event": "员工制作三份辣椒炒肉放了五勺辣椒圈。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "92", "region": "经营五区", "store": "华源一里店", "manager": "闵丹丹", "date": "07月08日", "event": "员工用抹布擦拭锅贴机内部。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "93", "region": "经营五区", "store": "华源一里店", "manager": "闵丹丹", "date": "07月08日", "event": "员工用不锈钢槽洗抹布，做清洁。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "94", "region": "经营六区", "store": "白纸坊店", "manager": "段小元", "date": "07月08日", "event": "利用本店食材，未按照标准出餐，做酸菜金针菇面条。", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "95", "region": "经营六区", "store": "兴丰大街店", "manager": "区域直管", "date": "07月08日", "event": "利用本店食材，未按照标准出餐，做辣椒炒鸡蛋。", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "96", "region": "经营七区", "store": "次渠店", "manager": "裴丙文", "date": "07月08日", "event": "门店第一负责人裴丙文迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "97", "region": "经营七区", "store": "马驹桥店", "manager": "吝付旺", "date": "07月08日", "event": "门店第一负责人吝付旺旷工，上午班次没有记录", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "98", "region": "经营七区", "store": "亦庄店", "manager": "霍志鹏", "date": "07月08日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "99", "region": "经营八区", "store": "太平街店", "manager": "区域直管", "date": "07月08日", "event": "门店第一负责人高云青旷工，迟到41分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "100", "region": "经营九区", "store": "日坛北路店", "manager": "姜雨含", "date": "07月08日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "101", "region": "经营十区", "store": "十里堡店", "manager": "董莹莹", "date": "07月08日", "event": "食材掉落台面又捡回出外卖", "clause": "食品掉落操作台面未按标准废弃的", "penaltyLevel": "二级书面警告", "violationType": "食品安全类", "fine": "300", "source": ""}, {"seq": "102", "region": "经营二区", "store": "新街口店", "manager": "于涛", "date": "07月09日", "event": "两条冰鲜鲈鱼过最佳售卖期。", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "103", "region": "经营二区", "store": "新街口店", "manager": "于涛", "date": "07月09日", "event": "员工利用公司食材，未标准出餐，做蛋炒饭。", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "104", "region": "经营二区", "store": "新街口店", "manager": "于涛", "date": "07月09日", "event": "员工用保鲜盒接油条机废水。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "105", "region": "经营二区", "store": "新街口店", "manager": "于涛", "date": "07月09日", "event": "三份辣椒炒肉放六勺辣椒圈。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "106", "region": "经营三区", "store": "蒲黄榆店", "manager": "余世煜", "date": "07月09日", "event": "管理会议台账提前写一年的，自己签字", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "107", "region": "经营三区", "store": "驼房营店", "manager": "区域直管", "date": "07月09日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "108", "region": "经营六区", "store": "西站店", "manager": "王贵龙", "date": "07月09日", "event": "用炸油条的油，炸茶叶蛋，油未废弃。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "109", "region": "经营七区", "store": "草桥地铁店", "manager": "沈美玲", "date": "07月09日", "event": "见习二副 李永红 旷工，上午班，早退16分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "110", "region": "经营八区", "store": "草房地铁店", "manager": "区域直管", "date": "07月09日", "event": "蒸饺掉落台面后捡回继续使用", "clause": "食品掉落操作台面未按标准废弃的", "penaltyLevel": "二级书面警告", "violationType": "食品安全类", "fine": "300", "source": ""}, {"seq": "111", "region": "经营八区", "store": "东大桥店", "manager": "张志龙", "date": "07月09日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "112", "region": "经营八区", "store": "十里堡地铁店", "manager": "尤磊", "date": "07月09日", "event": "员工用抹布擦锅贴机内部。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "113", "region": "经营八区", "store": "十里堡地铁店", "manager": "尤磊", "date": "07月09日", "event": "员工食用小包装咸菜。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "114", "region": "经营八区", "store": "左安门店", "manager": "秦少霞", "date": "07月09日", "event": "烧麦蒸饺整袋不拆包装，放车里直接热", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "115", "region": "经营一区", "store": "回龙观风雅园店", "manager": "任立志", "date": "07月10日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "116", "region": "经营一区", "store": "西三旗店", "manager": "王俊丽", "date": "07月10日", "event": "用抹布擦拭装有干辣椒的不锈钢槽内部", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "117", "region": "经营三区", "store": "西罗园店", "manager": "季必成", "date": "07月10日", "event": "7月9日18点36分备货的馄饨汤未保温存放，在19点24分员工将馄饨汤直接放进馄饨水中进行加热，于19点30员工使用这份馄饨汤继续出餐。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "118", "region": "经营五区", "store": "莲怡园店", "manager": "区域直管", "date": "07月10日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "119", "region": "经营五区", "store": "莲怡园店", "manager": "区域直管", "date": "07月10日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "120", "region": "经营六区", "store": "南站3店", "manager": "赵棋", "date": "07月10日", "event": "二副张一鸣旷工，少上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "121", "region": "经营九区", "store": "丰管路店", "manager": "刘艳鹏", "date": "07月10日", "event": "门店第一负责人刘艳鹏迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "122", "region": "经营一区", "store": "天通东苑店", "manager": "周孟君", "date": "07月11日", "event": "员工用煮馄饨水浴中的水，在水浴边上冲馄饨汤袋子，水又流到冲汤里面。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "123", "region": "经营一区", "store": "温都水城店", "manager": "刘丽", "date": "07月11日", "event": "二副 张震 早退1分钟", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "124", "region": "经营三区", "store": "北京站店", "manager": "区域直管", "date": "07月11日", "event": "员工未按照标准加热梅菜扣肉，直接放进了保温槽。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "125", "region": "经营三区", "store": "北京站店", "manager": "区域直管", "date": "07月11日", "event": "员工利用公司食材，未标准出餐，做黄焖鸡放的洋葱和金针菇配料。", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "126", "region": "经营四区", "store": "物资学院店", "manager": "区域直管", "date": "07月11日", "event": "二副 李文文 旷工，少一个上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "127", "region": "经营五区", "store": "莲怡园店", "manager": "区域直管", "date": "07月11日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "128", "region": "经营七区", "store": "万源路店", "manager": "金艳鸽", "date": "07月11日", "event": "红烧鲈鱼烧干以后未废弃，添加一勺汤汁加热后出餐。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "129", "region": "经营七区", "store": "万源路店", "manager": "金艳鸽", "date": "07月11日", "event": "加热梅菜扣肉使用塑料袋装着，直接放进煮馄饨的水浴中进行加热。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "130", "region": "经营七区", "store": "万源路店", "manager": "金艳鸽", "date": "07月11日", "event": "员工利用公司食材，未标准出餐，三份牛肉面出两份餐。", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "131", "region": "经营八区", "store": "红庙店", "manager": "王丹丹", "date": "07月11日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "132", "region": "经营八区", "store": "李老新村店", "manager": "区域直管", "date": "07月11日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "133", "region": "经营九区", "store": "霍营地铁店", "manager": "晋清源", "date": "07月11日", "event": "利用公司食材，未标准出餐，做清蒸鲈鱼放未知酱料（非3.0门店没有清蒸鲈鱼售卖）", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "134", "region": "经营九区", "store": "霍营地铁店", "manager": "晋清源", "date": "07月11日", "event": "员工延长工作时长，造成非必要能耗损耗，多次凌晨2点才开始进行打样收尾工作（观察十天基本天天如此）", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "135", "region": "经营九区", "store": "日坛北路店", "manager": "姜雨含", "date": "07月11日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "136", "region": "经营十区", "store": "车公庄店", "manager": "王爱民", "date": "07月11日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "137", "region": "上海", "store": "控江路店", "manager": "徐常青", "date": "07月12日", "event": "门店第一负责人 徐常青 旷工，少上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "138", "region": "经营二区", "store": "远大路店", "manager": "张抗抗", "date": "07月12日", "event": "门店第一负责人 张抗抗 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "139", "region": "经营三区", "store": "崇文门店", "manager": "周磊", "date": "07月12日", "event": "门店第一负责人 周磊 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "140", "region": "经营五区", "store": "华源一里店", "manager": "闵丹丹", "date": "07月12日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "141", "region": "经营九区", "store": "清河店", "manager": "栾祖全", "date": "07月12日", "event": "栾祖全批量调整班次", "clause": "未按要求完成员工排班，致使 2 人（含）以上人员出现补班及考勤未日审情形；或因班次复制操作失误，导致后续有 2 人（含）以上发起班次修改申请；或考勤当日未完成审核，后续有 2 人（含）以上发起班次修改申请的，均属此类违规", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "142", "region": "经营十区", "store": "郁花园店", "manager": "李承兵", "date": "07月12日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "143", "region": "上海", "store": "打浦路店", "manager": "刘中骞", "date": "07月13日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "144", "region": "经营一区", "store": "温都水城店", "manager": "刘丽", "date": "07月13日", "event": "二副 张震 旷工，未打卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "145", "region": "经营二区", "store": "三里河店", "manager": "王芬", "date": "07月13日", "event": "7月12日用煮台加热梅菜扣肉", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "146", "region": "经营二区", "store": "三里河店", "manager": "王芬", "date": "07月13日", "event": "用抹布擦拭烤串刷油的器皿内部。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "147", "region": "经营三区", "store": "洋桥南店", "manager": "宋胜雷", "date": "07月13日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "148", "region": "经营四区", "store": "通州果园店", "manager": "徐洪亮", "date": "07月13日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "149", "region": "经营四区", "store": "通州果园店", "manager": "徐洪亮", "date": "07月13日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "150", "region": "经营四区", "store": "通州果园店", "manager": "徐洪亮", "date": "07月13日", "event": "未完成万店掌燃气检查任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "151", "region": "经营四区", "store": "物资学院店", "manager": "区域直管", "date": "07月13日", "event": "把梅菜扣肉膜撕下来放到红碗里，再放到蒸箱中蒸1小时10分钟。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "152", "region": "经营七区", "store": "东铁营店", "manager": "区域直管", "date": "07月13日", "event": "7月12日，18点03分烤好的羊肉串，18点41分复热出外卖。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "153", "region": "经营七区", "store": "东铁营店", "manager": "区域直管", "date": "07月13日", "event": "7月12日，一边烤串一边做清洁", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "154", "region": "经营八区", "store": "太平街店", "manager": "区域直管", "date": "07月13日", "event": "员工使用葱油煎锅贴", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "155", "region": "经营九区", "store": "北苑中街店", "manager": "汪霞", "date": "07月13日", "event": "门店第一负责人 汪霞 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "156", "region": "经营九区", "store": "金融街店", "manager": "沈静婷", "date": "07月13日", "event": "晚打烊葱花未废弃", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "157", "region": "经营九区", "store": "金融街店", "manager": "沈静婷", "date": "07月13日", "event": "员工餐外带未见付款", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "158", "region": "经营二区", "store": "大钟寺店", "manager": "于黎明", "date": "07月14日", "event": "门店第一负责人 于黎明 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "159", "region": "经营二区", "store": "木偶剧院店", "manager": "柏成", "date": "07月14日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "160", "region": "经营二区", "store": "望京西园店", "manager": "王海洋", "date": "07月14日", "event": "未完成万店掌燃气检查任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "161", "region": "经营三区", "store": "四路通店", "manager": "张红光", "date": "07月14日", "event": "门店第一负责人 张红光 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "162", "region": "经营五区", "store": "富丰桥店", "manager": "董伦", "date": "07月14日", "event": "刘国林未经审批私自脱岗", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "163", "region": "经营五区", "store": "古城北路店", "manager": "区域直管", "date": "07月14日", "event": "员工上班时间拿手机打游戏", "clause": "在工作时间被发现进行与工作无关的活动，如玩手机游戏、看视频、睡觉、浏览与工作无关的网页、播放与工作无关的音乐等", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "164", "region": "经营五区", "store": "金顶北路店", "manager": "赵玉杰", "date": "07月14日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "165", "region": "经营五区", "store": "莲怡园店", "manager": "区域直管", "date": "07月14日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "166", "region": "经营七区", "store": "石榴园店", "manager": "魏好男", "date": "07月14日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "167", "region": "经营八区", "store": "右安门店", "manager": "王嘉烨", "date": "07月14日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "168", "region": "经营九区", "store": "金融街店", "manager": "沈静婷", "date": "07月14日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "169", "region": "经营十区", "store": "定福庄店", "manager": "郭丰瑜", "date": "07月14日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "170", "region": "上海", "store": "控江路店", "manager": "徐常青", "date": "07月15日", "event": "门店第一负责人 徐常青 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "171", "region": "经营一区", "store": "昌平地铁店", "manager": "邹喜尧", "date": "07月15日", "event": "员工使用亚克力槽做清洁。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "172", "region": "经营一区", "store": "昌平地铁店", "manager": "邹喜尧", "date": "07月15日", "event": "员工使用百洁布擦完垃圾桶以后，未废弃，直接擦拭锅具", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "173", "region": "经营一区", "store": "昌平地铁店", "manager": "邹喜尧", "date": "07月15日", "event": "员工利用公司食材，未标准出餐，辣椒炒肉放了半碗圆白菜（圆白菜员工自行焯制，未按照标准放油和盐）。", "clause": "员工餐须严格遵照公司财务核定标准、配餐规格依规执行，严禁私自为员工餐额外加料、超量取用食材、超出用餐标准多食多占、违规加餐等行为；用餐统一在大厅指定区域就餐，禁止在库房等无监控区域\n就餐；", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "100", "source": ""}, {"seq": "174", "region": "经营一区", "store": "小关北里店", "manager": "于静", "date": "07月15日", "event": "员工用抹布擦拭芝麻盒倾倒口", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "175", "region": "经营一区", "store": "小关北里店", "manager": "于静", "date": "07月15日", "event": "清洗完垃圾桶的百洁布没有废弃，第二天又继续清洁茶叶蛋不锈钢槽。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "176", "region": "经营二区", "store": "望京西园店", "manager": "王海洋", "date": "07月15日", "event": "员工使用热水浸泡解冻黄豆", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "177", "region": "经营三区", "store": "东四南大街店", "manager": "朱紫平", "date": "07月15日", "event": "红烧鲈鱼放两勺半汤汁。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "178", "region": "经营三区", "store": "东四南大街店", "manager": "朱紫平", "date": "07月15日", "event": "员工用抹布擦拭装有干辣椒的器皿内部。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "179", "region": "经营五区", "store": "东大街店", "manager": "辛粉粉", "date": "07月15日", "event": "门店第一负责人 辛粉粉 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "180", "region": "经营五区", "store": "金顶北路店", "manager": "赵玉杰", "date": "07月15日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "181", "region": "经营五区", "store": "金顶北路店", "manager": "赵玉杰", "date": "07月15日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "182", "region": "经营六区", "store": "丰台南路店", "manager": "区域直管", "date": "07月15日", "event": "一桶葱油无标签", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "183", "region": "经营六区", "store": "南站4店", "manager": "赵棋", "date": "07月15日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "184", "region": "经营七区", "store": "石榴园店", "manager": "魏好男", "date": "07月15日", "event": "魏好男 在宿舍吸烟", "clause": "在宿舍内吸烟者、出现明火、私拉电线、做饭等行为", "penaltyLevel": "一级批评教育", "violationType": "宿舍公约类", "fine": "100", "source": ""}, {"seq": "185", "region": "经营七区", "store": "石榴园店", "manager": "魏好男", "date": "07月15日", "event": "一袋酸菜过期，一袋白菜过期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "186", "region": "经营八区", "store": "灯市口地铁店", "manager": "韦世海", "date": "07月15日", "event": "门店第一负责人 韦世海 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "一级批评教育", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "187", "region": "经营九区", "store": "金融街店", "manager": "沈静婷", "date": "07月15日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "188", "region": "经营九区", "store": "清河店", "manager": "栾祖全", "date": "07月15日", "event": "员工用抹布捞勺子，抹布垂入汤中", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "189", "region": "经营九区", "store": "小营西路店", "manager": "关永鑫", "date": "07月15日", "event": "门店第一负责人 关永鑫 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "190", "region": "上海", "store": "打浦路店", "manager": "刘中骞", "date": "07月16日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "191", "region": "上海", "store": "控江路店", "manager": "徐常青", "date": "07月16日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "192", "region": "经营五区", "store": "北大地店", "manager": "李宝颖", "date": "07月16日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "193", "region": "经营五区", "store": "金顶北路店", "manager": "赵玉杰", "date": "07月16日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "194", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月16日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "195", "region": "经营七区", "store": "东铁营店", "manager": "区域直管", "date": "07月16日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "196", "region": "经营九区", "store": "和平里店", "manager": "区域直管", "date": "07月16日", "event": "见习二副 叶俊梅 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "197", "region": "经营九区", "store": "金融街店", "manager": "沈静婷", "date": "07月16日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "198", "region": "经营十区", "store": "东中街店", "manager": "周峰", "date": "07月16日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "199", "region": "上海", "store": "万航渡路店", "manager": "区域直管", "date": "07月17日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "200", "region": "经营一区", "store": "回龙观东大街店", "manager": "区域直管", "date": "07月17日", "event": "员工非标操作，导致工器具损坏", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "201", "region": "经营一区", "store": "西二旗店", "manager": "梁书平", "date": "07月17日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "202", "region": "经营五区", "store": "达官营店", "manager": "樊雪晴", "date": "07月17日", "event": "7月16日晚21点，员工将一碗小葱倒回一半到盒子内部，未遵守打样废弃规则", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "203", "region": "经营六区", "store": "陶然亭店", "manager": "屈凡伟", "date": "07月17日", "event": "7月16日，员工使用清理烤箱的铲子，清理地面", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "204", "region": "经营七区", "store": "丰台大悦春风里店", "manager": "阙丽娜", "date": "07月17日", "event": "在煮面机焯制圆白菜", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "205", "region": "经营九区", "store": "金融街店", "manager": "沈静婷", "date": "07月17日", "event": "储备店长刘世杰迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "206", "region": "经营九区", "store": "七星园店", "manager": "肖本健", "date": "07月17日", "event": "储备干部肖本建旷工，迟到21分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "207", "region": "经营十区", "store": "郁花园店", "manager": "李承兵", "date": "07月17日", "event": "李承兵  在宿舍吸烟", "clause": "在宿舍内吸烟者、出现明火、私拉电线、做饭等行为", "penaltyLevel": "一级批评教育", "violationType": "宿舍公约类", "fine": "100", "source": ""}, {"seq": "208", "region": "上海", "store": "打浦路店", "manager": "刘中骞", "date": "07月18日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "209", "region": "训练店", "store": "安慧北里店", "manager": "苏丽莉", "date": "07月18日", "event": "储备干部 陈德隆 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "210", "region": "经营一区", "store": "回龙观东大街店", "manager": "区域直管", "date": "07月18日", "event": "剪刀放在抹布上，未消毒继续修剪烤串并且出餐", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "211", "region": "经营二区", "store": "木偶剧院店", "manager": "柏成", "date": "07月18日", "event": "员工用鲈鱼锅制作完完方便面后，未清洗直接制作麻婆豆腐", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "212", "region": "经营二区", "store": "木偶剧院店", "manager": "柏成", "date": "07月18日", "event": "烤串的盘子直接塞垃圾桶里面，未清洗，拿纸擦拭以后又放回去接着使用", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "213", "region": "经营四区", "store": "耿庄店", "manager": "何宝金", "date": "07月18日", "event": "门店第一负责人 何宝金 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "214", "region": "经营四区", "store": "双井桥东店", "manager": "丁卜军", "date": "07月18日", "event": "见习二副 张敬敏 旷工，早退3小时23分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "215", "region": "经营四区", "store": "塔营北街店", "manager": "关姗姗", "date": "07月18日", "event": "加热后的麻婆豆腐酱，未使用完，回收放进冰箱", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "216", "region": "经营四区", "store": "塔营北街店", "manager": "关姗姗", "date": "07月18日", "event": "辣椒炒肉出品不合格，员工放了半勺辣椒", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "217", "region": "经营六区", "store": "白纸坊店", "manager": "段小元", "date": "07月18日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "218", "region": "经营六区", "store": "丽园路店", "manager": "陈素芳", "date": "07月18日", "event": "员工用抹布擦拭带食物残渣的客用餐具，客用餐具擦拭完后未清洗，直接归置至餐具存放处。同时发现，该员工同一块抹布还擦拭过处理熟制食材的剪刀，使用后均未清洗", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "219", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月18日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "220", "region": "经营七区", "store": "马驹桥店", "manager": "吝付旺", "date": "07月18日", "event": "门店第一负责人 吝付旺 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "一级批评教育", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "221", "region": "经营七区", "store": "石榴园店", "manager": "魏好男", "date": "07月18日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "222", "region": "经营七区", "store": "亦庄店", "manager": "霍志鹏", "date": "07月18日", "event": "员工使用花椒油做辣椒炒肉，非标操作", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "223", "region": "经营七区", "store": "亦庄店", "manager": "霍志鹏", "date": "07月18日", "event": "员工使用不锈钢槽做清洁", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "224", "region": "经营七区", "store": "亦庄店", "manager": "霍志鹏", "date": "07月18日", "event": "肥牛饭外卖备货出堂食", "clause": "高峰期外卖备货产品低峰时仍进行售卖；外卖备货产品进行堂食出餐；提前预制堂食产品出餐的行为；", "penaltyLevel": "三级降职降薪", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "225", "region": "经营七区", "store": "亦庄店", "manager": "霍志鹏", "date": "07月18日", "event": "剪刀接触到了做清洁的洗涤灵水，员工未清洁剪刀，直接修剪肉串出品", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "226", "region": "经营一区", "store": "回龙观东大街店", "manager": "区域直管", "date": "07月19日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "227", "region": "经营四区", "store": "玉桥东里店", "manager": "闫良莹", "date": "07月19日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "228", "region": "经营五区", "store": "金顶北路店", "manager": "赵玉杰", "date": "07月19日", "event": "33个竹签羊肉串15号到期，过期4天", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "229", "region": "经营五区", "store": "莲怡园店", "manager": "区域直管", "date": "07月19日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "230", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月19日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "231", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月19日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "232", "region": "经营七区", "store": "草桥地铁店", "manager": "沈美玲", "date": "07月19日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "233", "region": "经营七区", "store": "木樨园桥西店", "manager": "区域直管", "date": "07月19日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "234", "region": "经营七区", "store": "石榴园店", "manager": "魏好男", "date": "07月19日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "235", "region": "经营八区", "store": "朝丰家园店", "manager": "区域直管", "date": "07月19日", "event": "一桶葱油无标签。（7.16日发生）", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "236", "region": "经营十区", "store": "车公庄店", "manager": "王爱民", "date": "07月19日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "237", "region": "经营一区", "store": "和平街店", "manager": "刘明花", "date": "07月20日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "238", "region": "经营一区", "store": "天通西苑店", "manager": "张然", "date": "07月20日", "event": "员工在煮台卡槽加热牛肉面料包。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "239", "region": "经营一区", "store": "温都水城店", "manager": "刘丽", "date": "07月20日", "event": "门店第一负责人 刘丽 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "240", "region": "经营二区", "store": "望京花家地店", "manager": "杜小玲", "date": "07月20日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "241", "region": "经营三区", "store": "北京站店", "manager": "区域直管", "date": "07月20日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "242", "region": "经营四区", "store": "周庄嘉园店", "manager": "琚璐瑶", "date": "07月20日", "event": "员工制作肥牛过程中，又添加了一勺肥牛汁", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "243", "region": "经营四区", "store": "周庄嘉园店", "manager": "琚璐瑶", "date": "07月20日", "event": "用不锈钢槽清洁浴油器", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "244", "region": "经营五区", "store": "小园地铁店", "manager": "贾建伟", "date": "07月20日", "event": "员工使用量杯做清洁", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "245", "region": "经营六区", "store": "大兴龙湖天街店", "manager": "桂齐涛", "date": "07月20日", "event": "门店第一负责人 桂齐涛 旷工，早班早退27分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "246", "region": "经营七区", "store": "石榴园店", "manager": "魏好男", "date": "07月20日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "247", "region": "经营九区", "store": "航天桥店", "manager": "区域直管", "date": "07月20日", "event": "见习二副 徐树臣 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "248", "region": "经营九区", "store": "七星园店", "manager": "肖本健", "date": "07月20日", "event": "储备干部 肖本健 旷工，迟到17分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "249", "region": "经营十区", "store": "定福庄店", "manager": "郭丰瑜", "date": "07月20日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "250", "region": "经营二区", "store": "五道口店", "manager": "梁烁", "date": "07月21日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "251", "region": "经营三区", "store": "东坝店", "manager": "区域直管", "date": "07月21日", "event": "见习二副 吴康康 旷工，上班卡未打", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "252", "region": "经营七区", "store": "次渠店", "manager": "裴丙文", "date": "07月21日", "event": "门店第一负责人 裴丙文 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "一级批评教育", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "253", "region": "经营七区", "store": "石榴园店", "manager": "魏好男", "date": "07月21日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "254", "region": "经营八区", "store": "草房地铁店", "manager": "区域直管", "date": "07月21日", "event": "二副 张丽 旷工，早班早退29分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "255", "region": "经营九区", "store": "七星园店", "manager": "肖本健", "date": "07月21日", "event": "储备干部 肖本健 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "256", "region": "上海", "store": "万航渡路店", "manager": "区域直管", "date": "07月22日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "257", "region": "训练店", "store": "安慧北里店", "manager": "苏丽莉", "date": "07月22日", "event": "储备干部 陈德隆 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "258", "region": "经营三区", "store": "春秀路店", "manager": "崔彦国", "date": "07月22日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "259", "region": "经营三区", "store": "东坝店", "manager": "区域直管", "date": "07月22日", "event": "见习二副 吴康康 旷工，未打上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "260", "region": "经营四区", "store": "百子湾店", "manager": "金瑞", "date": "07月22日", "event": "门店第一负责人 金瑞 早退", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "261", "region": "经营六区", "store": "拱辰南大街店", "manager": "区域直管", "date": "07月22日", "event": "肉末茄子没有按照标准加热，员工将肉末茄子从冰箱中拿出来，倒进收汁锅中，加了一勺水后，分别出了一份茄子饭，一份三拼。", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "262", "region": "经营六区", "store": "拱辰南大街店", "manager": "区域直管", "date": "07月22日", "event": "圆白菜焯制错误，未过凉水，未拌制，直接出餐", "clause": "未按照产品操作手册规范操作，操作细节的小幅偏差，未影响产品品质、未造成实际损失", "penaltyLevel": "一级批评教育", "violationType": "运营类", "fine": "", "source": ""}, {"seq": "263", "region": "经营七区", "store": "丰台大悦春风里店", "manager": "阙丽娜", "date": "07月22日", "event": "门店第一负责人 阙丽娜 旷工，早班下班未打卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "264", "region": "经营九区", "store": "和平里店", "manager": "区域直管", "date": "07月22日", "event": "二副 徐晨晨 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "265", "region": "上海", "store": "迎春路店", "manager": "区域直管", "date": "07月23日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "266", "region": "上海", "store": "迎春路店", "manager": "区域直管", "date": "07月23日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "267", "region": "上海", "store": "汇融天地店", "manager": "区域直管", "date": "07月23日", "event": "储备店长 关晓亮 旷工，未打上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "268", "region": "上海", "store": "内江路店", "manager": "段琳阁", "date": "07月23日", "event": "内江路店员工在炒锅内洗手，并使用该水刷锅", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "269", "region": "训练店", "store": "安慧北里店", "manager": "苏丽莉", "date": "07月23日", "event": "储备干部 陈德隆 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "270", "region": "训练店", "store": "枣园地铁店", "manager": "朱澳洋", "date": "07月23日", "event": "储备店长 张耀民 旷工，未打卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "271", "region": "经营五区", "store": "七里庄店", "manager": "刘强", "date": "07月23日", "event": "门店第一负责人 刘强 旷工，迟到1小时55分", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "272", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月23日", "event": "陈永亮提议并更换羊肉串标签", "clause": "篡改或伪造工作记录，如更换产品标签、延长产品保质期、编造谎言逃避责任干扰检查等行为", "penaltyLevel": "解除劳动关系", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "273", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月23日", "event": "林娟借用、运输并传递标签", "clause": "篡改或伪造工作记录，如更换产品标签、延长产品保质期、编造谎言逃避责任干扰检查等行为", "penaltyLevel": "解除劳动关系", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "274", "region": "经营六区", "store": "兴丰大街店", "manager": "区域直管", "date": "07月23日", "event": "方城提供标签，造成标签流出门店并被用于其他门店产品", "clause": "篡改或伪造工作记录，如更换产品标签、延长产品保质期、编造谎言逃避责任干扰检查等行为", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "275", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月23日", "event": "束佩佩对门店食品安全、标签管理、员工宣贯及现场检查存在失察责任", "clause": "篡改或伪造工作记录，如更换产品标签、延长产品保质期、编造谎言逃避责任干扰检查等行为", "penaltyLevel": "二级书面警告", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "276", "region": "经营九区", "store": "日坛北路店", "manager": "姜雨含", "date": "07月23日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "277", "region": "经营九区", "store": "日坛北路店", "manager": "姜雨含", "date": "07月23日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "278", "region": "经营九区", "store": "晓月中路店", "manager": "郭杏娟", "date": "07月23日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "279", "region": "经营十区", "store": "太平街店", "manager": "区域直管", "date": "07月24日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "280", "region": "上海", "store": "杨庄地铁店", "manager": "贾士坤", "date": "07月24日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "281", "region": "训练店", "store": "迎春路店", "manager": "区域直管", "date": "07月24日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "282", "region": "经营一区", "store": "迎春路店", "manager": "区域直管", "date": "07月24日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "283", "region": "经营二区", "store": "十里堡地铁店", "manager": "尤磊", "date": "07月24日", "event": "门店第一负责人 尤磊 早退", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "284", "region": "经营九区", "store": "七里庄店", "manager": "刘强", "date": "07月24日", "event": "门店第一负责人 刘强 旷工，未打上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "285", "region": "经营十区", "store": "潘家园店", "manager": "王彩雪", "date": "07月24日", "event": "二副 孙进 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "286", "region": "上海", "store": "和平里店", "manager": "区域直管", "date": "07月24日", "event": "见习二副 叶俊梅 旷工，未打上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "287", "region": "训练店", "store": "打浦路店", "manager": "刘中骞", "date": "07月24日", "event": "晚打烊小葱，洋葱未废弃", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "288", "region": "经营一区", "store": "小马厂店", "manager": "李承东", "date": "07月24日", "event": "一小包姜片炖鸡料包超过最佳售卖期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "289", "region": "经营二区", "store": "科学院南路店", "manager": "李顺", "date": "07月24日", "event": "员工把牛肉面从地面捡起来以后，在炒菜锅内进行冲洗后，未清洗锅，直接进行食品制", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "290", "region": "经营三区", "store": "开阳里店", "manager": "李颖", "date": "07月24日", "event": "员工擦拭灌汤卡槽，用抹布擦拭到了馄饨汤袋口，未废弃，继续使用。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "324", "region": "经营八区", "store": "十里堡地铁店", "manager": "尤磊", "date": "07月24日", "event": "门店第一负责人 尤磊 早退", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "325", "region": "经营八区", "store": "太平街店", "manager": "区域直管", "date": "07月24日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "326", "region": "经营九区", "store": "和平里店", "manager": "区域直管", "date": "07月24日", "event": "见习二副 叶俊梅 旷工，未打上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "327", "region": "经营九区", "store": "杨庄地铁店", "manager": "贾士坤", "date": "07月24日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "328", "region": "经营十区", "store": "小马厂店", "manager": "李承东", "date": "07月24日", "event": "一小包姜片炖鸡料包超过最佳售卖期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "329", "region": "经营三区", "store": "天桥店", "manager": "林周强", "date": "07月25日", "event": "门店第一负责人 林周强 旷工，迟到20分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "330", "region": "经营三区", "store": "洋桥南店", "manager": "宋胜雷", "date": "07月25日", "event": "门店第一负责人 宋胜雷 旷工，未打上班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "331", "region": "经营五区", "store": "金顶北路店", "manager": "赵玉杰", "date": "07月25日", "event": "员工在煮台套着塑料袋加热梅菜扣肉。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "332", "region": "经营五区", "store": "七里庄店", "manager": "刘强", "date": "07月25日", "event": "二副 王豆 早退", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "333", "region": "经营五区", "store": "七里庄店", "manager": "刘强", "date": "07月25日", "event": "米饭掉到了盖子上，员工用手拨回米饭槽内", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "334", "region": "经营五区", "store": "七里庄店", "manager": "刘强", "date": "07月25日", "event": "员工将加热后的鲈鱼汁未废弃，直接放进冰箱", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "335", "region": "经营五区", "store": "七里庄店", "manager": "刘强", "date": "07月25日", "event": "员工使用保鲜盒做清洁。", "clause": "已在门店线上检查中扣除机会点，此项目只做员工绩效评定留存", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "336", "region": "经营六区", "store": "枣园店", "manager": "束佩佩", "date": "07月25日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "338", "region": "经营九区", "store": "广源大厦店", "manager": "何洋", "date": "07月25日", "event": "门店第一负责人 何洋 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "340", "region": "经营九区", "store": "七星园店", "manager": "肖本健", "date": "07月25日", "event": "储备干部 肖本健 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "一级批评教育", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "341", "region": "经营九区", "store": "七星园店", "manager": "肖本健", "date": "07月25日", "event": "见习二副 魏红梅 旷工，下午迟到22分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "342", "region": "经营十区", "store": "古城大街店", "manager": "汪开天", "date": "07月25日", "event": "半桶葱油超过最佳售卖期", "clause": "门店产品有过期 、无标签 ，原材料腐烂变质/早餐产品或者晚打烊产品应该废弃未执行废弃再次售卖使用情形的 ；（针对无标签事件 ，需分析原因 ，若因后端标签脱落或央厨到货问题 ，且证实是后端供应链原因 ，门店第一负责人及时反馈的不予处罚 ，但门店第一负责人未第一时间反馈 ，将给予（一级 I）批评教育加经济处罚 300元 ，不适用降职降薪处理 。）", "penaltyLevel": "三级降职降薪", "violationType": "食品安全类", "fine": "", "source": ""}, {"seq": "343", "region": "上海", "store": "控江路店", "manager": "徐常青", "date": "07月26日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "345", "region": "经营二区", "store": "双榆树店", "manager": "区域直管", "date": "07月26日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "346", "region": "经营四区", "store": "富力又一城店", "manager": "吴少艳", "date": "07月26日", "event": "店长 吴少艳 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "347", "region": "经营五区", "store": "正阳大街店", "manager": "郭杏辉", "date": "07月26日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "348", "region": "经营七区", "store": "丰台大悦春风里店", "manager": "阙丽娜", "date": "07月26日", "event": "未按时订货", "clause": "未按规定时间订货，被公司关联部门及时提醒并更正且未造成任何负面影响的", "penaltyLevel": "一级批评教育", "violationType": "管理失职", "fine": "50", "source": ""}, {"seq": "349", "region": "经营七区", "store": "西马场店", "manager": "李伟", "date": "07月26日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "350", "region": "经营八区", "store": "朝丰家园店", "manager": "区域直管", "date": "07月26日", "event": "店长 刘云龙 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "351", "region": "经营八区", "store": "右安门店", "manager": "王嘉烨", "date": "07月26日", "event": "门店第一负责人 王嘉烨 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "354", "region": "经营九区", "store": "日坛北路店", "manager": "姜雨含", "date": "07月26日", "event": "门店第一负责人 姜雨含 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "355", "region": "上海", "store": "江苏路店", "manager": "陈高峰", "date": "07月27日", "event": "店长 陈高峰 旷工，迟到17分钟", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "356", "region": "经营一区", "store": "小关北里店", "manager": "于静", "date": "07月27日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "357", "region": "经营三区", "store": "蒲黄榆店", "manager": "余世煜", "date": "07月27日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "358", "region": "经营三区", "store": "蒲黄榆店", "manager": "余世煜", "date": "07月27日", "event": "未及时上传日清", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "359", "region": "经营五区", "store": "莲怡园店", "manager": "潘永帅", "date": "07月27日", "event": "店长 潘永帅 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "360", "region": "经营五区", "store": "七里庄店", "manager": "刘强", "date": "07月27日", "event": "店助 刘强 迟到", "clause": "一个月内累计 2 次迟到或早退", "penaltyLevel": "", "violationType": "", "fine": "", "source": ""}, {"seq": "361", "region": "经营七区", "store": "临泓路店", "manager": "刘佳豪", "date": "07月27日", "event": "店助 刘佳豪 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "362", "region": "经营八区", "store": "朝丰家园店", "manager": "区域直管", "date": "07月27日", "event": "店长 刘云龙 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "363", "region": "经营八区", "store": "国展店", "manager": "田凯迪", "date": "07月27日", "event": "未完成万店掌早值班任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}, {"seq": "364", "region": "经营八区", "store": "潘家园桥北店", "manager": "金晶", "date": "07月27日", "event": "门店第一负责人 金晶 旷工，未打下班卡", "clause": "一个月内旷工达 1 天", "penaltyLevel": "二级书面警告", "violationType": "纪律类", "fine": "", "source": ""}, {"seq": "365", "region": "经营九区", "store": "海淀黄庄店", "manager": "刘少增", "date": "07月27日", "event": "未完成万店掌晚打烊任务", "clause": "未按规定完成万店掌任务提交、逾期提交或提交内容不符合要求的", "penaltyLevel": "经济处罚", "violationType": "管理失职", "fine": "", "source": ""}];
+
+const PENALTY_ORDER = ['经济处罚','一级批评教育','二级书面警告','三级降职降薪','解除劳动关系',''];
+const PENALTY_LABELS = {'经济处罚':'经济处罚','一级批评教育':'一级·批评教育','二级书面警告':'二级·书面警告','三级降职降薪':'三级·降职降薪','解除劳动关系':'解除劳动关系','':'未定级/仅记录'};
+const PENALTY_CLASSES = {'经济处罚':'badge-economy','一级批评教育':'badge-level1','二级书面警告':'badge-level2','三级降职降薪':'badge-level3','解除劳动关系':'badge-dismiss','':'badge-none'};
+const VTYPE_LABELS = {'管理失职':'管理失职','食品安全类':'食品安全','运营类':'运营类','纪律类':'纪律类','宿舍公约类':'宿舍公约','':'未分类'};
+const VTYPE_CLASSES = {'管理失职':'vtype-mgmt','食品安全类':'vtype-safety','运营类':'vtype-op','纪律类':'vtype-disc','宿舍公约类':'vtype-dorm','':'vtype-dorm'};
+
+let state = {
+  penaltyLevels: new Set(), violationTypes: new Set(), regions: new Set(),
+  store: '', search: '',
+  sortKey: 'seq', sortDir: 1,
+  page: 1, pageSize: 20,
+  view: 'detail',
+  storeSortKey: 'total', storeSortDir: -1
+};
+
+function calcStats(data) {
+  const total = data.length;
+  const stores = new Set(data.filter(d=>d.store).map(d=>d.store));
+  const regions = new Set(data.filter(d=>d.region).map(d=>d.region));
+  let totalFine = 0;
+  data.forEach(d => { if(d.fine) totalFine += parseInt(d.fine)||0; });
+  const penalized = data.filter(d=>d.penaltyLevel).length;
+  return {total, stores: stores.size, regions: regions.size, totalFine, penalized};
+}
+
+function rebuildAll() {
+  resetFilters();
+  renderSummary();
+  renderCharts();
+  renderChips();
+  renderTable();
+  if(state.view === 'store') renderStoreSummary();
+  if(state.view === 'topic') renderTopics();
+  // Update subtitle
+  const s = calcStats(RAW_DATA);
+  document.getElementById('subtitle').textContent =
+    `共 ${s.total} 条记录 | 涵盖 ${s.stores} 家门店 | 覆盖 ${s.regions} 个区域 | 罚款合计 ¥${s.totalFine}`;
+}
+
+// === Import / Export ===
+function excelSerialToDate(serial) {
+  if(!serial || isNaN(serial)) return '';
+  const base = new Date(Date.UTC(1899, 11, 30));
+  const dt = new Date(base.getTime() + serial * 86400000);
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  const d = String(dt.getDate()).padStart(2,'0');
+  return `${m}月${d}日`;
+}
+
+function normalizePenaltyLevel(raw) {
+  if(!raw) return '';
+  const s = String(raw).trim();
+  if(s.includes('一级') || s.includes('批评教育')) return '一级批评教育';
+  if(s.includes('二级') || s.includes('书面警告')) return '二级书面警告';
+  if(s.includes('三级') || s.includes('降职降薪')) return '三级降职降薪';
+  if(s.includes('四级')) return '四级';
+  if(s.includes('经济')) return '经济处罚';
+  if(s.includes('解除')) return '解除劳动关系';
+  return s;
+}
+
+function normalizeVType(raw) {
+  if(!raw) return '';
+  let s = String(raw).replace(/\n/g,'').replace(/\r/g,'').trim();
+  s = s.replace(/类\n/g,'类').replace(/\n类/g,'类').trim();
+  return s;
+}
+
+function extractFine(raw) {
+  if(!raw) return '';
+  const s = String(raw);
+  const m = s.match(/\d+/);
+  return m ? m[0] : '';
+}
+
+function handleExcelImport(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      // Find the sheet - prefer "处罚" sheet, else first
+      let ws = wb.Sheets['处罚'] || wb.Sheets[wb.SheetNames[0]];
+      if(!ws) { alert('未找到数据表'); return; }
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+      const parsed = [];
+      let seq = 0;
+      // Data starts from row 4 (index 3) - skip 3 header rows
+      for(let i = 3; i < rows.length; i++) {
+        const r = rows[i];
+        if(!r || !r[0]) continue;
+        seq++;
+        parsed.push({
+          seq: String(seq),
+          region: String(r[1]||'').trim(),
+          store: String(r[2]||'').trim(),
+          manager: String(r[3]||'').trim(),
+          date: excelSerialToDate(r[6]),
+          event: String(r[7]||'').trim(),
+          clause: String(r[14]||'').trim(),
+          penaltyLevel: normalizePenaltyLevel(r[16]),
+          violationType: normalizeVType(r[17]),
+          fine: extractFine(r[18]),
+          source: String(r[21]||'').trim(),
+        });
+      }
+      if(parsed.length === 0) { alert('未解析到有效数据行'); return; }
+      RAW_DATA = parsed;
+      rebuildAll();
+      alert(`成功导入 ${parsed.length} 条记录！`);
+    } catch(err) {
+      alert('导入失败：' + err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function exportCSV() {
+  const filtered = getFiltered();
+  const headers = ['序号','区域','门店','负责人','日期','具体事件','处罚原因(条款)','处罚类型','违纪类型','罚款','来源'];
+  const keys = ['seq','region','store','manager','date','event','clause','penaltyLevel','violationType','fine','source'];
+  const rows = [headers.join(',')];
+  filtered.forEach(d => {
+    const vals = keys.map(k => {
+      let v = d[k] || '';
+      v = String(v).replace(/"/g,'""');
+      if(v.includes(',') || v.includes('"') || v.includes('\n')) v = '"' + v + '"';
+      return v;
+    });
+    rows.push(vals.join(','));
+  });
+  const csv = '\uFEFF' + rows.join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `处罚统计_导出_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON() {
+  const json = JSON.stringify(RAW_DATA, null, 2);
+  const blob = new Blob([json], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `处罚统计_数据_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function handleJSONImport(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) { alert('JSON格式不正确：需要数组'); return; }
+      RAW_DATA = data;
+      rebuildAll();
+      alert(`成功导入 ${data.length} 条记录！`);
+    } catch(err) {
+      alert('导入失败：' + err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function renderSummary() {
+  const s = calcStats(RAW_DATA);
+  const cards = [
+    {icon:'📋', cls:'bg-blue', num:s.total, label:'处罚记录总数'},
+    {icon:'🏪', cls:'bg-green', num:s.stores, label:'涉及门店数'},
+    {icon:'🗺️', cls:'bg-orange', num:s.regions, label:'涉及区域数'},
+    {icon:'⚖️', cls:'bg-red', num:s.penalized, label:'已定级处罚'},
+    {icon:'💰', cls:'bg-purple', num:'¥'+s.totalFine, label:'经济罚款合计'},
+  ];
+  document.getElementById('summaryRow').innerHTML = cards.map(c =>
+    `<div class="sum-card"><div class="sum-icon ${c.cls}">${c.icon}</div><div class="sum-info"><div class="num">${c.num}</div><div class="label">${c.label}</div></div></div>`
+  ).join('');
+}
+
+function renderCharts() {
+  const pCounts = {};
+  RAW_DATA.forEach(d => { const k = d.penaltyLevel || ''; pCounts[k] = (pCounts[k]||0)+1; });
+  const pMax = Math.max(...Object.values(pCounts));
+  document.getElementById('penaltyChart').innerHTML = PENALTY_ORDER.map((k,i) => {
+    const count = pCounts[k]||0;
+    const pct = pMax ? (count/pMax*100) : 0;
+    return `<div class="bar-item"><div class="bar-label" onclick="filterByPenalty('${k}')">${PENALTY_LABELS[k]}</div><div class="bar-track"><div class="bar-fill color-${i}" style="width:${pct}%">${count>0?count:''}</div></div><div class="bar-count">${count}</div></div>`;
+  }).join('');
+
+  const rCounts = {};
+  RAW_DATA.forEach(d => { if(d.region) { rCounts[d.region] = (rCounts[d.region]||0)+1; } });
+  const rSorted = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]);
+  const rMax = rSorted[0][1];
+  document.getElementById('regionChart').innerHTML = rSorted.map((r,i) => {
+    const pct = rMax ? (r[1]/rMax*100) : 0;
+    return `<div class="bar-item"><div class="bar-label" onclick="filterByRegion('${r[0]}')">${r[0]}</div><div class="bar-track"><div class="bar-fill color-${i%12}" style="width:${pct}%">${r[1]>0?r[1]:''}</div></div><div class="bar-count">${r[1]}</div></div>`;
+  }).join('');
+
+  const vCounts = {};
+  RAW_DATA.forEach(d => { const k = d.violationType || ''; vCounts[k] = (vCounts[k]||0)+1; });
+  const vSorted = Object.entries(vCounts).sort((a,b)=>b[1]-a[1]);
+  const vMax = vSorted[0][1];
+  document.getElementById('vtypeChart').innerHTML = vSorted.map((v,i) => {
+    const pct = vMax ? (v[1]/vMax*100) : 0;
+    const label = VTYPE_LABELS[v[0]] || v[0];
+    return `<div class="bar-item"><div class="bar-label">${label}</div><div class="bar-track"><div class="bar-fill color-${i}" style="width:${pct}%">${v[1]>0?v[1]:''}</div></div><div class="bar-count">${v[1]}</div></div>`;
+  }).join('');
+
+  const cCounts = {};
+  RAW_DATA.forEach(d => {
+    if(d.clause) {
+      const key = d.clause.length > 40 ? d.clause.substring(0,40)+'...' : d.clause;
+      if(!cCounts[key]) cCounts[key] = {count:0, full:d.clause};
+      cCounts[key].count++;
+    }
+  });
+  const cSorted = Object.entries(cCounts).sort((a,b)=>b[1].count-a[1].count).slice(0,8);
+  const cMax = cSorted[0][1].count;
+  document.getElementById('reasonChart').innerHTML = cSorted.map((c,i) => {
+    const pct = cMax ? (c[1].count/cMax*100) : 0;
+    return `<div class="bar-item"><div class="bar-label" title="${esc(c[1].full)}" style="width:200px;font-size:12px;">${esc(c[0])}</div><div class="bar-track"><div class="bar-fill color-${i}" style="width:${pct}%">${c[1].count>0?c[1].count:''}</div></div><div class="bar-count">${c[1].count}</div></div>`;
+  }).join('');
+}
+
+function renderChips() {
+  const pCounts = {};
+  RAW_DATA.forEach(d => { const k=d.penaltyLevel||''; pCounts[k]=(pCounts[k]||0)+1; });
+  document.getElementById('penaltyChips').innerHTML = PENALTY_ORDER.map(k => {
+    const active = state.penaltyLevels.has(k) ? 'active' : '';
+    return `<div class="chip ${active}" onclick="togglePenalty('${k}')">${PENALTY_LABELS[k]} <span class="count">(${pCounts[k]||0})</span></div>`;
+  }).join('');
+
+  const vCounts = {};
+  RAW_DATA.forEach(d => { const k=d.violationType||''; vCounts[k]=(vCounts[k]||0)+1; });
+  const vKeys = Object.keys(vCounts).sort((a,b)=>vCounts[b]-vCounts[a]);
+  document.getElementById('vtypeChips').innerHTML = vKeys.map(k => {
+    const active = state.violationTypes.has(k) ? 'active' : '';
+    const label = VTYPE_LABELS[k] || k || '未分类';
+    return `<div class="chip ${active}" onclick="toggleVtype('${k}')">${label} <span class="count">(${vCounts[k]})</span></div>`;
+  }).join('');
+
+  const rCounts = {};
+  RAW_DATA.forEach(d => { if(d.region) rCounts[d.region]=(rCounts[d.region]||0)+1; });
+  const rKeys = Object.keys(rCounts).sort((a,b)=>rCounts[b]-rCounts[a]);
+  document.getElementById('regionChips').innerHTML = rKeys.map(k => {
+    const active = state.regions.has(k) ? 'active' : '';
+    return `<div class="chip ${active}" onclick="toggleRegion('${k}')">${k} <span class="count">(${rCounts[k]})</span></div>`;
+  }).join('');
+
+  const stores = [...new Set(RAW_DATA.filter(d=>d.store).map(d=>d.store))].sort();
+  document.getElementById('storeSelect').innerHTML = '<option value="">全部门店</option>' +
+    stores.map(s => `<option value="${s}">${s}</option>`).join('');
+  document.getElementById('storeSelect').value = state.store;
+}
+
+function togglePenalty(k) {
+  if(state.penaltyLevels.has(k)) state.penaltyLevels.delete(k); else state.penaltyLevels.add(k);
+  state.page = 1; renderChips(); renderTable();
+}
+function toggleVtype(k) {
+  if(state.violationTypes.has(k)) state.violationTypes.delete(k); else state.violationTypes.add(k);
+  state.page = 1; renderChips(); renderTable();
+}
+function toggleRegion(k) {
+  if(state.regions.has(k)) state.regions.delete(k); else state.regions.add(k);
+  state.page = 1; renderChips(); renderTable();
+}
+function filterByPenalty(k) {
+  state.penaltyLevels.clear(); state.penaltyLevels.add(k);
+  state.page = 1; renderChips(); renderTable();
+}
+function filterByRegion(k) {
+  state.regions.clear(); state.regions.add(k);
+  state.page = 1; renderChips(); renderTable();
+}
+function filterByStore(storeName) {
+  state.store = storeName;
+  state.page = 1;
+  document.getElementById('storeSelect').value = storeName;
+  switchView('detail');
+  renderTable();
+}
+function resetFilters() {
+  state.penaltyLevels.clear(); state.violationTypes.clear(); state.regions.clear();
+  state.store = ''; state.search = ''; state.page = 1;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('storeSelect').value = '';
+  renderChips(); renderTable();
+}
+
+function switchView(v) {
+  state.view = v;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('detailView').style.display = 'none';
+  document.getElementById('storeView').style.display = 'none';
+  document.getElementById('topicView').style.display = 'none';
+  if(v === 'detail') {
+    document.querySelector('.view-tab:nth-child(1)').classList.add('active');
+    document.getElementById('detailView').style.display = '';
+  } else if(v === 'topic') {
+    document.querySelector('.view-tab:nth-child(2)').classList.add('active');
+    document.getElementById('topicView').style.display = '';
+    renderTopics();
+  } else {
+    document.querySelector('.view-tab:nth-child(3)').classList.add('active');
+    document.getElementById('storeView').style.display = '';
+    renderStoreSummary();
+  }
+}
+
+function buildStoreSummary() {
+  const storeMap = {};
+  RAW_DATA.forEach(d => {
+    if(!d.store) return;
+    if(!storeMap[d.store]) {
+      storeMap[d.store] = {store:d.store, region:d.region, total:0, eco:0, l1:0, l2:0, l3:0, dismiss:0, none:0, fine:0};
+    }
+    const s = storeMap[d.store];
+    s.total++;
+    s.fine += parseInt(d.fine)||0;
+    switch(d.penaltyLevel) {
+      case '经济处罚': s.eco++; break;
+      case '一级批评教育': s.l1++; break;
+      case '二级书面警告': s.l2++; break;
+      case '三级降职降薪': s.l3++; break;
+      case '解除劳动关系': s.dismiss++; break;
+      default: s.none++;
+    }
+  });
+  return Object.values(storeMap);
+}
+
+// === Topic Analysis ===
+const TOPICS = [
+  {key:'过期', icon:'📅', desc:'产品超过最佳售卖期、未废弃', color:'#d93025', bg:'#fce8e6'},
+  {key:'旷工', icon:'🚪', desc:'一个月内旷工达1天，含迟到/早退/漏打卡', color:'#f9ab00', bg:'#fef7e0'},
+];
+
+function matchTopic(d, keyword) {
+  const text = (d.event||'') + ' ' + (d.clause||'');
+  return text.includes(keyword);
+}
+
+function renderTopics() {
+  const html = TOPICS.map(topic => {
+    const matches = RAW_DATA.filter(d => matchTopic(d, topic.key));
+    const stores = new Set(matches.map(d=>d.store).filter(Boolean));
+    const regions = new Set(matches.map(d=>d.region).filter(Boolean));
+    const totalFine = matches.reduce((s,d) => s + (parseInt(d.fine)||0), 0);
+
+    // Penalty level distribution
+    const levels = {};
+    matches.forEach(d => {
+      const k = d.penaltyLevel || '未定级';
+      levels[k] = (levels[k]||0)+1;
+    });
+
+    // Region distribution (top 5)
+    const regionCounts = {};
+    matches.forEach(d => { if(d.region) regionCounts[d.region] = (regionCounts[d.region]||0)+1; });
+    const regionSorted = Object.entries(regionCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const regionMax = regionSorted[0] ? regionSorted[0][1] : 1;
+
+    // Store distribution (top 5, >=2)
+    const storeCounts = {};
+    matches.forEach(d => { if(d.store) storeCounts[d.store] = (storeCounts[d.store]||0)+1; });
+    const storeSorted = Object.entries(storeCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const storeMax = storeSorted[0] ? storeSorted[0][1] : 1;
+
+    // Penalty level bars
+    const levelOrder = ['三级降职降薪','二级书面警告','经济处罚','一级批评教育','解除劳动关系','未定级'];
+    const levelColors = ['#9334c6','#d93025','#f9ab00','#1a73e8','#1a1a2e','#ccc'];
+    const levelLabels = {'三级降职降薪':'三级·降职降薪','二级书面警告':'二级·书面警告','经济处罚':'经济处罚','一级批评教育':'一级·批评教育','解除劳动关系':'解除劳动关系','未定级':'未定级'};
+    const levelBars = levelOrder.map((k,i) => {
+      const count = levels[k]||0;
+      const max = Math.max(...levelOrder.map(k2 => levels[k2]||0), 1);
+      const pct = count/max*100;
+      return count > 0 ? `<div class="topic-row">
+        <div class="tlabel">${levelLabels[k]}</div>
+        <div class="tbar"><div class="tfill" style="width:${pct}%;background:${levelColors[i]}">${count}</div></div>
+        <div class="tnum">${count}</div>
+      </div>` : '';
+    }).join('');
+
+    // Region bars
+    const regionBars = regionSorted.map((r,i) => {
+      const pct = r[1]/regionMax*100;
+      return `<div class="topic-row">
+        <div class="tlabel">${r[0]}</div>
+        <div class="tbar"><div class="tfill color-${i%12}" style="width:${pct}%">${r[1]}</div></div>
+        <div class="tnum">${r[1]}</div>
+      </div>`;
+    }).join('');
+
+    // Store bars
+    const storeBars = storeSorted.map((s,i) => {
+      const pct = s[1]/storeMax*100;
+      return `<div class="topic-row">
+        <div class="tlabel" style="width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s[0]}</div>
+        <div class="tbar"><div class="tfill color-${i%12}" style="width:${pct}%">${s[1]}</div></div>
+        <div class="tnum">${s[1]}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="topic-card">
+      <div class="topic-header" onclick="filterByKeyword('${topic.key}')">
+        <div class="topic-header-left">
+          <div class="topic-icon" style="background:${topic.bg};color:${topic.color}">${topic.icon}</div>
+          <div class="topic-info">
+            <div class="tname">${topic.key}类违规</div>
+            <div class="tdesc">${topic.desc}</div>
+          </div>
+        </div>
+        <div class="topic-count">${matches.length}<span class="unit">条</span></div>
+      </div>
+      <div class="topic-body">
+        <div style="display:flex;gap:20px;margin-bottom:4px;">
+          <div style="font-size:13px;color:#888;">涉及门店 <b style="color:#333">${stores.size}</b> 家</div>
+          <div style="font-size:13px;color:#888;">涉及区域 <b style="color:#333">${regions.size}</b> 个</div>
+          ${totalFine > 0 ? `<div style="font-size:13px;color:#888;">罚款 <b style="color:#d93025">¥${totalFine}</b></div>` : ''}
+        </div>
+        <div class="topic-section-title">处罚类型分布</div>
+        ${levelBars || '<div style="font-size:12px;color:#ccc;padding:8px 0">无数据</div>'}
+        <div class="topic-section-title">区域分布 TOP5</div>
+        ${regionBars || '<div style="font-size:12px;color:#ccc;padding:8px 0">无数据</div>'}
+        <div class="topic-section-title">门店分布 TOP5</div>
+        ${storeBars || '<div style="font-size:12px;color:#ccc;padding:8px 0">无数据</div>'}
+        <button class="topic-btn" onclick="filterByKeyword('${topic.key}')">查看 ${matches.length} 条明细</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('topicGrid').innerHTML = html;
+}
+
+function filterByKeyword(keyword) {
+  resetFilters();
+  state.search = keyword;
+  document.getElementById('searchInput').value = keyword;
+  switchView('detail');
+  renderTable();
+  document.getElementById('detailView').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderStoreSummary() {
+  let summary = buildStoreSummary();
+  const key = state.storeSortKey;
+  const dir = state.storeSortDir;
+  summary.sort((a,b) => {
+    let va = a[key], vb = b[key];
+    if(typeof va === 'string') { va = va||''; vb = vb||''; }
+    if(va < vb) return -1*dir;
+    if(va > vb) return 1*dir;
+    return 0;
+  });
+
+  document.getElementById('storeSummaryBody').innerHTML = summary.map(s => {
+    const sel = state.store === s.store ? 'selected' : '';
+    const safeStore = s.store.replace(/'/g, "\\'");
+    return `<tr class="${sel}" onclick="filterByStore('${safeStore}')">
+      <td><b>${s.store}</b></td>
+      <td>${s.region||'—'}</td>
+      <td class="num-cell" style="color:#667eea">${s.total}</td>
+      <td class="num-cell">${s.eco?`<span class="mini-badge mb-eco">${s.eco}</span>`:'<span class="mini-badge mb-0">0</span>'}</td>
+      <td class="num-cell">${s.l1?`<span class="mini-badge mb-1">${s.l1}</span>`:'<span class="mini-badge mb-0">0</span>'}</td>
+      <td class="num-cell">${s.l2?`<span class="mini-badge mb-2">${s.l2}</span>`:'<span class="mini-badge mb-0">0</span>'}</td>
+      <td class="num-cell">${s.l3?`<span class="mini-badge mb-3">${s.l3}</span>`:'<span class="mini-badge mb-0">0</span>'}</td>
+      <td class="num-cell">${s.dismiss?s.dismiss:'—'}</td>
+      <td class="num-cell" style="color:#999">${s.none||'—'}</td>
+      <td class="num-cell">${s.fine?'¥'+s.fine:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function getFiltered() {
+  return RAW_DATA.filter(d => {
+    if(state.penaltyLevels.size > 0 && !state.penaltyLevels.has(d.penaltyLevel||'')) return false;
+    if(state.violationTypes.size > 0 && !state.violationTypes.has(d.violationType||'')) return false;
+    if(state.regions.size > 0 && !state.regions.has(d.region)) return false;
+    if(state.store && d.store !== state.store) return false;
+    if(state.search) {
+      const q = state.search.toLowerCase();
+      const text = (d.store+' '+d.event+' '+d.clause+' '+d.region+' '+d.manager).toLowerCase();
+      if(!text.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function sortData(data) {
+  const key = state.sortKey; const dir = state.sortDir;
+  return data.sort((a,b) => {
+    let va = a[key] || ''; let vb = b[key] || '';
+    if(key === 'seq' || key === 'fine') { va = parseInt(va)||0; vb = parseInt(vb)||0; }
+    if(key === 'date') { va = va.replace('月','/').replace('日',''); vb = vb.replace('月','/').replace('日',''); }
+    if(va < vb) return -1*dir;
+    if(va > vb) return 1*dir;
+    return 0;
+  });
+}
+
+function renderTable() {
+  let filtered = sortData([...getFiltered()]);
+  document.getElementById('filteredCount').textContent = filtered.length;
+
+  const activeParts = [];
+  if(state.penaltyLevels.size) activeParts.push('处罚类型: '+[...state.penaltyLevels].map(k=>PENALTY_LABELS[k]).join(', '));
+  if(state.violationTypes.size) activeParts.push('违纪类型: '+[...state.violationTypes].map(k=>VTYPE_LABELS[k]||k).join(', '));
+  if(state.regions.size) activeParts.push('区域: '+[...state.regions].join(', '));
+  if(state.store) activeParts.push('门店: '+state.store);
+  if(state.search) activeParts.push('搜索: "'+state.search+'"');
+  document.getElementById('activeFilters').textContent = activeParts.join(' | ');
+
+  document.querySelectorAll('#dataTable thead th').forEach(th => {
+    const icon = th.querySelector('.sort-icon');
+    if(icon) { if(th.dataset.sort === state.sortKey) icon.textContent = state.sortDir > 0 ? '▲' : '▼'; else icon.textContent = ''; }
+  });
+
+  const totalPages = Math.ceil(filtered.length / state.pageSize);
+  if(state.page > totalPages) state.page = 1;
+  const start = (state.page-1) * state.pageSize;
+  const pageData = filtered.slice(start, start + state.pageSize);
+
+  if(pageData.length === 0) {
+    document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" class="empty-row">没有符合条件的记录</td></tr>';
+  } else {
+    document.getElementById('tableBody').innerHTML = pageData.map(d => {
+      const pLevel = d.penaltyLevel || '';
+      const pClass = PENALTY_CLASSES[pLevel]; const pLabel = PENALTY_LABELS[pLevel];
+      const vType = d.violationType || ''; const vClass = VTYPE_CLASSES[vType];
+      const vLabel = VTYPE_LABELS[vType] || vType || '—';
+      const fineStr = d.fine ? '¥'+d.fine : '—';
+      return `<tr>
+        <td>${d.seq}</td><td>${d.region||'—'}</td><td><b>${d.store||'—'}</b></td>
+        <td>${d.date||'—'}</td>
+        <td class="event-cell"><div class="truncate" onclick="this.classList.toggle('expanded')">${esc(d.event)||'—'}</div></td>
+        <td class="clause-cell"><div class="truncate" onclick="this.classList.toggle('expanded')">${esc(d.clause)||'—'}</div></td>
+        <td><span class="badge ${pClass}">${pLabel}</span></td>
+        <td><span class="vtype-tag ${vClass}">${vLabel}</span></td>
+        <td>${fineStr}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  let pagiHtml = '';
+  pagiHtml += `<button class="page-btn" onclick="goPage(${state.page-1})" ${state.page<=1?'disabled':''}>上一页</button>`;
+  const maxBtns = 7;
+  let s2 = Math.max(1, state.page - 3);
+  let e2 = Math.min(totalPages, s2 + maxBtns - 1);
+  s2 = Math.max(1, e2 - maxBtns + 1);
+  for(let i=s2; i<=e2; i++) pagiHtml += `<button class="page-btn ${i===state.page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  pagiHtml += `<button class="page-btn" onclick="goPage(${state.page+1})" ${state.page>=totalPages?'disabled':''}>下一页</button>`;
+  pagiHtml += `<span style="font-size:13px;color:#888;margin-left:8px;">第 ${state.page}/${totalPages||1} 页</span>`;
+  document.getElementById('pagination').innerHTML = pagiHtml;
+}
+
+function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function goPage(p) { state.page = p; renderTable(); }
+
+function copyShareLink() {
+  const url = window.location.href;
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      alert('链接已复制到剪贴板！\n\n直接粘贴发给同事即可打开看板。');
+    }).catch(() => { prompt('请复制此链接分享给同事：', url); });
+  } else {
+    prompt('请复制此链接分享给同事：', url);
+  }
+}
+
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  state.search = e.target.value.trim(); state.page = 1; renderTable();
+});
+document.getElementById('storeSelect').addEventListener('change', function(e) {
+  state.store = e.target.value; state.page = 1; renderTable();
+});
+document.querySelectorAll('#dataTable thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', function() {
+    const key = this.dataset.sort;
+    if(state.sortKey === key) state.sortDir *= -1;
+    else { state.sortKey = key; state.sortDir = 1; }
+    renderTable();
+  });
+});
+document.querySelectorAll('.store-summary-table thead th[data-ssort]').forEach(th => {
+  th.addEventListener('click', function() {
+    const key = this.dataset.ssort;
+    if(state.storeSortKey === key) state.storeSortDir *= -1;
+    else { state.storeSortKey = key; state.storeSortDir = key === 'store' || key === 'region' ? 1 : -1; }
+    renderStoreSummary();
+  });
+});
+
+renderSummary();
+renderCharts();
+renderChips();
+renderTable();
+</script>
+</body>
+</html>
