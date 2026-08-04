@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>绩效管理看板 — 处罚统计 · 门店绩效</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+
+/* ===== Top Tab Bar ===== */
+.tab-bar {
+  display: flex;
+  align-items: center;
+  background: #8C2A2A;
+  padding: 0 20px;
+  height: 44px;
+  user-select: none;
+}
+.tab-bar .brand {
+  color: rgba(255,255,255,.7);
+  font-size: 13px;
+  margin-right: 24px;
+  letter-spacing: 1px;
+}
+.tab-btn {
+  padding: 0 18px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  color: rgba(255,255,255,.65);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all .2s;
+  gap: 6px;
+}
+.tab-btn:hover {
+  color: #fff;
+  background: rgba(255,255,255,.08);
+}
+.tab-btn.active {
+  color: #fff;
+  border-bottom-color: #fff;
+  font-weight: 600;
+}
+
+/* ===== Content Area ===== */
+.content-area {
+  height: calc(100% - 44px);
+  position: relative;
+}
+.content-pane {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+.content-pane.active {
+  display: block;
+}
+.content-pane iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ===== Loading ===== */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <span class="brand">绩效管理看板</span>
+  <div class="tab-btn active" data-pane="punish" onclick="switchTab('punish')">
+    处罚统计
+  </div>
+  <div class="tab-btn" data-pane="perf" onclick="switchTab('perf')">
+    门店绩效排名（全年版）
+  </div>
+</div>
+
+<div class="content-area">
+  <div class="content-pane active" id="pane-punish">
+    <div class="loading">加载中...</div>
+    <iframe id="iframe-punish" onload="hideLoading(this)"></iframe>
+  </div>
+  <div class="content-pane" id="pane-perf">
+    <div class="loading">加载中...</div>
+    <iframe id="iframe-perf" onload="hideLoading(this)"></iframe>
+  </div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.pane === name);
+  });
+  document.querySelectorAll('.content-pane').forEach(function(pane) {
+    pane.classList.toggle('active', pane.id === 'pane-' + name);
+  });
+
+  // Lazy-load iframe on first switch
+  var iframe = document.getElementById('iframe-' + name);
+  if (iframe && !iframe.src) {
+    if (name === 'punish') {
+      iframe.src = '处罚统计看板.html';
+    } else {
+      iframe.src = '门店绩效排名_2026年全年版.html';
+    }
+  }
+}
+
+function hideLoading(iframe) {
+  var pane = iframe.parentElement;
+  var loading = pane.querySelector('.loading');
+  if (loading) loading.style.display = 'none';
+}
+
+// Load default pane on start
+(function init() {
+  var iframe = document.getElementById('iframe-punish');
+  iframe.src = '处罚统计看板.html';
+})();
+</script>
+
+</body>
+</html>
