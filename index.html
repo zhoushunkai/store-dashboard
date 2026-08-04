@@ -4,9 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>门店管理看板</title>
+<script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif; background: #f5f7fa; }
+
+/* Login Overlay */
+#loginOverlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+}
+.login-card {
+  background: #fff; border-radius: 12px; padding: 40px 36px; width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;
+}
+.login-card h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 4px; }
+.login-card .sub { font-size: 13px; color: #999; margin-bottom: 28px; }
+.login-card input {
+  width: 100%; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #e0e0e0;
+  border-radius: 8px; font-size: 15px; outline: none; transition: border 0.2s;
+}
+.login-card input:focus { border-color: #1890ff; }
+.login-card .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #666; }
+.login-card .row label { cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.login-card button {
+  width: 100%; padding: 12px; background: #1890ff; color: #fff; border: none;
+  border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.2s;
+}
+.login-card button:hover { background: #1677cc; }
+.login-card button:disabled { background: #91caff; cursor: not-allowed; }
+#loginError { color: #ff4d4f; font-size: 13px; margin-top: 12px; min-height: 20px; }
+
+/* Dashboard */
+#dashboard { display: none; }
 .tab-bar {
   display: flex; background: #fff; padding: 0 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 100;
@@ -23,68 +54,150 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-s
 .tab-content { display: none; height: calc(100vh - 52px); }
 .tab-content.active { display: block; }
 .tab-content iframe { width: 100%; height: 100%; border: none; }
-.update-info {
+.toolbar {
   margin-left: auto; font-size: 12px; color: #999;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 12px;
 }
-.update-info .dot { width: 6px; height: 6px; border-radius: 50%; background: #52c41a; }
-.update-info .dot.error { background: #ff4d4f; }
+.toolbar .dot { width: 6px; height: 6px; border-radius: 50%; background: #52c41a; }
+.toolbar .dot.error { background: #ff4d4f; }
+.toolbar .logout-btn {
+  background: none; border: 1px solid #ddd; padding: 4px 12px; border-radius: 4px;
+  font-size: 12px; color: #999; cursor: pointer;
+}
+.toolbar .logout-btn:hover { color: #ff4d4f; border-color: #ff4d4f; }
+.toolbar .user-name { color: #333; font-weight: 500; }
 </style>
 </head>
 <body>
 
-<div class="tab-bar">
-  <span class="logo">门店管理看板</span>
-  <button class="tab-btn active" onclick="switchTab('perf')">门店绩效排名</button>
-  <button class="tab-btn" onclick="switchTab('punish')">管理组处罚看板</button>
-  <button class="tab-btn" onclick="switchTab('person')">人员绩效</button>
-  <button class="tab-btn" onclick="switchTab('mgmt')">管理组绩效公示</button>
-  <span class="update-info">
-    <span class="dot" id="statusDot"></span>
-    <span id="updateTime">数据就绪</span>
-  </span>
+<!-- Login Overlay -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <h1>门店管理看板</h1>
+    <p class="sub">请输入手机号和密码登录</p>
+    <input type="tel" id="phone" placeholder="手机号" maxlength="11" autocomplete="tel">
+    <input type="password" id="password" placeholder="密码" autocomplete="current-password">
+    <div class="row">
+      <label><input type="checkbox" id="remember" checked> 记住登录状态</label>
+    </div>
+    <button id="loginBtn" onclick="doLogin()">登 录</button>
+    <p id="loginError"></p>
+  </div>
 </div>
 
-<div id="tab-perf" class="tab-content active">
-  <iframe src="perf.html" onload="onFrameLoad()"></iframe>
-</div>
-<div id="tab-punish" class="tab-content">
-  <iframe src="punish.html"></iframe>
-</div>
-<div id="tab-person" class="tab-content">
-  <iframe src="person.html"></iframe>
-</div>
-<div id="tab-mgmt" class="tab-content">
-  <iframe src="mgmt.html" onload="onFrameLoad()"></iframe>
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="tab-bar">
+    <span class="logo">门店管理看板</span>
+    <button class="tab-btn active" onclick="switchTab('perf')">门店绩效排名</button>
+    <button class="tab-btn" onclick="switchTab('punish')">处罚统计</button>
+    <div class="toolbar">
+      <span class="user-name" id="userName">--</span>
+      <span class="dot" id="statusDot"></span>
+      <span id="updateTime">数据就绪</span>
+      <button class="logout-btn" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+  <div id="tab-perf" class="tab-content active">
+    <iframe src="perf.html"></iframe>
+  </div>
+  <div id="tab-punish" class="tab-content">
+    <iframe src="punish.html"></iframe>
+  </div>
 </div>
 
 <script>
+const SUPABASE_URL = 'https://txgjldozaeyvfqrzkyuc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4Z2psZG96YWV5dmZxcnpreXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4Mjk5MzIsImV4cCI6MjEwMTQwNTkzMn0.MnWbtcUISVvDSkUBGaEK3y80PLfYBSFU1HUf6Z8xijI';
+
+// Auto-login check
+(function() {
+  var raw = sessionStorage.getItem('auth_user');
+  if (raw) {
+    try { showDashboard(JSON.parse(raw)); } catch(e) { sessionStorage.removeItem('auth_user'); }
+  }
+})();
+
+// Enter key support
+document.getElementById('password').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  var phone = document.getElementById('phone').value.trim();
+  var password = document.getElementById('password').value;
+  var errEl = document.getElementById('loginError');
+  var btn = document.getElementById('loginBtn');
+
+  if (!phone || !password) { errEl.textContent = '请输入手机号和密码'; return; }
+  if (!/^1\d{10}$/.test(phone)) { errEl.textContent = '请输入正确的手机号'; return; }
+
+  btn.disabled = true; btn.textContent = '验证中...'; errEl.textContent = '';
+
+  try {
+    var res = await fetch(
+      SUPABASE_URL + '/rest/v1/users?phone=eq.' + phone + '&select=phone,name,password_hash,is_admin',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!res.ok) throw new Error('网络错误');
+    var users = await res.json();
+
+    if (users.length === 0) {
+      errEl.textContent = '手机号不在白名单中'; btn.disabled = false; btn.textContent = '登 录'; return;
+    }
+
+    var user = users[0];
+    var match = dcodeIO.bcrypt.compareSync(password, user.password_hash);
+    if (!match) {
+      errEl.textContent = '密码错误'; btn.disabled = false; btn.textContent = '登 录'; return;
+    }
+
+    var session = { phone: user.phone, name: user.name, is_admin: user.is_admin };
+    if (document.getElementById('remember').checked) {
+      sessionStorage.setItem('auth_user', JSON.stringify(session));
+    }
+    showDashboard(session);
+  } catch(e) {
+    errEl.textContent = '登录失败，请检查网络后重试'; btn.disabled = false; btn.textContent = '登 录';
+  }
+}
+
+function showDashboard(user) {
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('userName').textContent = user.name;
+  updateDataStatus();
+}
+
+function doLogout() {
+  sessionStorage.removeItem('auth_user');
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('phone').value = '';
+  document.getElementById('password').value = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = '登 录';
+}
+
 function switchTab(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
   document.querySelector('.tab-btn[onclick*="' + name + '"]').classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
 }
 
-function onFrameLoad() {
-  document.getElementById('updateTime').textContent = 
-    '数据更新: ' + new Date().toLocaleDateString('zh-CN');
-}
-
-// Ping data files to check availability
-(async function checkData() {
+async function updateDataStatus() {
   try {
     var r1 = await fetch('data_punish.json?t=' + Date.now(), { method: 'HEAD' });
     var r2 = await fetch('data_perf.json?t=' + Date.now(), { method: 'HEAD' });
-    var r3 = await fetch('data_person.json?t=' + Date.now(), { method: 'HEAD' });
     document.getElementById('statusDot').className = 'dot';
-    document.getElementById('updateTime').textContent = '数据就绪';
+    document.getElementById('updateTime').textContent = '数据更新: ' + new Date().toLocaleDateString('zh-CN');
   } catch(e) {
     document.getElementById('statusDot').className = 'dot error';
     document.getElementById('updateTime').textContent = '数据加载异常';
   }
-})();
+}
 </script>
-
 </body>
 </html>
