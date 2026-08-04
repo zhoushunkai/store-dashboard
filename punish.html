@@ -94,6 +94,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .empty-state{text-align:center;padding:60px 20px;color:#999;font-size:15px}
 .loading{text-align:center;padding:40px;color:#888}
 
+/* Unmatched persons section */
+.unmatched-section{margin-bottom:20px;padding:16px 20px;background:#fffbe6;border:1px solid #f0d060;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.unmatched-section h3{font-size:15px;font-weight:600;color:#8a6d14;margin-bottom:10px}
+.unmatched-section .unmatched-grid{display:flex;flex-wrap:wrap;gap:10px}
+.unmatched-section .unmatched-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:#fef9e7;border:1px solid #f0d060;border-radius:16px;font-size:13px;color:#6e5900}
+.unmatched-section .unmatched-tag .store-num{font-size:11px;color:#999;background:#f5f0d0;padding:1px 6px;border-radius:8px}
+
 @media(max-width:768px){
   .charts-row{grid-template-columns:1fr}
   .summary-row{grid-template-columns:repeat(2,1fr)}
@@ -119,6 +126,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 
   <!-- Summary Cards -->
   <div class="summary-row" id="summaryCards"></div>
+
+  <!-- Unmatched Persons Alert -->
+  <div class="unmatched-section" id="unmatchedSection" style="display:none">
+    <h3>管理组未匹配人员 (在管理组名单中但无处罚记录)</h3>
+    <div class="unmatched-grid" id="unmatchedGrid"></div>
+  </div>
 
   <!-- Charts -->
   <div class="charts-row">
@@ -179,9 +192,54 @@ async function loadData() {
     ALL_DATA = await resp.json();
     initFilters();
     switchYear('2026');
+    loadPersonData();
   } catch(e) {
     document.getElementById('personGrid').innerHTML = '<div class="empty-state">数据加载失败：' + e.message + '</div>';
   }
+}
+
+// ─── Unmatched Persons (data_person vs data_punish) ───
+async function loadPersonData() {
+  try {
+    const resp = await fetch('data_person.json');
+    const personData = await resp.json();
+    renderUnmatchedPersons(personData);
+  } catch(e) {
+    console.log('data_person.json 加载失败:', e.message);
+  }
+}
+
+function renderUnmatchedPersons(personData) {
+  const punishNames = new Set(ALL_DATA.punishments.map(r => r.name));
+  const unmatched = [];
+
+  for (const p of personData) {
+    const name = p.person;
+    const baseName = name.split('（')[0].split('(')[0].trim();
+    if (!punishNames.has(baseName)) {
+      let existing = unmatched.find(u => u.name === baseName);
+      if (existing) {
+        existing.stores.push(p.store_num);
+      } else {
+        unmatched.push({ name: baseName, stores: [p.store_num] });
+      }
+    }
+  }
+
+  if (unmatched.length === 0) {
+    document.getElementById('unmatchedSection').style.display = 'none';
+    return;
+  }
+
+  unmatched.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+
+  document.getElementById('unmatchedSection').style.display = 'block';
+  document.getElementById('unmatchedGrid').innerHTML = unmatched.map(u =>
+    `<div class="unmatched-tag">
+      <strong>${u.name}</strong>
+      <span class="store-num">门店 ${u.stores.join(', ')}</span>
+    </div>`
+  ).join('');
 }
 
 // ─── Derive Year from date ───
