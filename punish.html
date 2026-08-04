@@ -184,12 +184,51 @@ let currentYear = '2026';
 let currentMonth = '6月';
 let currentPage = 1;
 const PAGE_SIZE = 25;
+const LOAD_TIMEOUT = 15000;
 let filteredData = [];
+const yearDataCache = {};
+let loadAbortController = null;
+
+function showLoading(msg) {
+  document.getElementById('personGrid').innerHTML = `<div class="loading">${msg || '数据加载中...'}</div>`;
+  document.getElementById('detailBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#999">加载中...</td></tr>';
+}
+
+function showLoadError(year, msg) {
+  document.getElementById('personGrid').innerHTML = `<div class="empty-state">${year}年数据加载失败：${msg}</div>`;
+  document.getElementById('detailBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#999">加载失败</td></tr>';
+}
+
+async function fetchYearData(year) {
+  if (loadAbortController) { loadAbortController.abort(); }
+  loadAbortController = new AbortController();
+
+  const sources = [`data_punish_${year}.json`, 'data_punish.json'];
+
+  for (const src of sources) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), LOAD_TIMEOUT);
+      const resp = await fetch(src, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const yearRecords = data.punishments.filter(r => getYear(r) === year);
+      return { punishments: yearRecords, source: src };
+    } catch(e) {
+      if (e.name === 'AbortError') throw new Error('加载超时');
+      console.warn(`Failed to load ${src}:`, e.message);
+    }
+  }
+  throw new Error('所有数据源加载失败');
+}
 
 async function loadData() {
+  showLoading('正在加载 2026 年处罚数据...');
   try {
-    const resp = await fetch('data_punish.json');
-    ALL_DATA = await resp.json();
+    const data = await fetchYearData('2026');
+    ALL_DATA = data;
+    yearDataCache['2026'] = data;
     initFilters();
     switchYear('2026');
     loadPersonData();
@@ -250,24 +289,37 @@ function getYear(record) {
 }
 
 // ─── Year Switching ───
-function switchYear(year) {
+async function switchYear(year) {
   currentYear = year;
   currentPage = 1;
 
-  // Highlight year tab
   document.querySelectorAll('.year-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.year === year);
   });
 
-  // Build month tabs based on available months for this year
-  const yearData = ALL_DATA.punishments.filter(r => getYear(r) === year);
+  // Check cache, load if needed
+  if (!yearDataCache[year]) {
+    showLoading(`正在加载 ${year} 年处罚数据...`);
+    try {
+      yearDataCache[year] = await fetchYearData(year);
+    } catch(e) {
+      showLoadError(year, e.message);
+      document.getElementById('monthTabs').innerHTML = '';
+      document.getElementById('summaryCards').innerHTML = '';
+      return;
+    }
+  }
+
+  ALL_DATA = yearDataCache[year];
+
+  // Build month tabs
+  const yearData = ALL_DATA.punishments;
   const monthsInYear = [...new Set(yearData.map(r => r.month).filter(Boolean))].sort((a, b) => {
     return parseInt(a) - parseInt(b);
   });
 
   const monthTabsEl = document.getElementById('monthTabs');
   if (monthsInYear.length === 0) {
-    // No data for this year → show empty state
     monthTabsEl.innerHTML = '';
     currentMonth = 'all';
     filteredData = [];
@@ -275,26 +327,21 @@ function switchYear(year) {
     return;
   }
 
-  // Build month tabs HTML
   let tabsHTML = monthsInYear.map(m => 
     `<div class="month-tab" data-month="${m}">${m}</div>`
   ).join('');
-  // Add "累计汇总" tab
   tabsHTML += `<div class="month-tab" data-month="all">累计汇总</div>`;
   monthTabsEl.innerHTML = tabsHTML;
 
-  // Auto-select first month or keep current if valid
   const availableMonths = monthsInYear.concat(['all']);
   if (!availableMonths.includes(currentMonth)) {
     currentMonth = monthsInYear[0];
   }
 
-  // Highlight correct month tab
   document.querySelectorAll('.month-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.month === currentMonth);
   });
 
-  // Apply current view
   applyMonthFilter();
 }
 
