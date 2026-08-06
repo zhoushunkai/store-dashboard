@@ -305,9 +305,9 @@ const App = {
   Permissions: {
     matrix: {
       '总部':     { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
-      '线上稽核': { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: true, task: true },
-      '线下稽核': { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: true, task: true },
-      '稽核员':   { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: true, task: true },
+      '线上稽核': { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '线下稽核': { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '稽核员':   { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
       '客服':     { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
       '营运':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
       '店长':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true },
