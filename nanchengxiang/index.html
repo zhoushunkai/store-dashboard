@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#C41A1A">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/app.css">
+  <title>南城香协作终端</title>
+</head>
+<body>
+
+  <!-- 顶部标题栏 -->
+  <header class="app-header">
+    <span class="header-back" id="header-back" onclick="history.back()">&#8592;</span>
+    <span id="header-title">南城香协作终端</span>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="main-content">
+
+    <!-- 登录页 -->
+    <div class="page active" id="page-login"></div>
+
+    <!-- 首页 -->
+    <div class="page" id="page-home"></div>
+
+    <!-- 门店检查（线上组） -->
+    <div class="page" id="page-inspection"></div>
+
+    <!-- 线下门店检查 -->
+    <div class="page" id="page-offline-inspect"></div>
+
+    <!-- 处罚登记 -->
+    <div class="page" id="page-penalty"></div>
+    <div class="page" id="page-daily"></div>
+
+    <!-- 差评申诉 -->
+    <div class="page" id="page-complaint"></div>
+
+    <!-- 领导看板 -->
+    <div class="page" id="page-dashboard"></div>
+
+    <!-- 通知模板 -->
+    <div class="page" id="page-template"></div>
+
+    <!-- 数据管理（总部专享） -->
+    <div class="page" id="page-admin"></div>
+
+    <!-- 任务发布 -->
+    <div class="page" id="page-task"></div>
+
+  </main>
+
+  <!-- 底部 TabBar -->
+  <nav class="tabbar" id="tabbar" style="display:none">
+    <div class="tab-item active" data-page="home">
+      <span class="tab-icon">&#8962;</span>
+      <span>首页</span>
+    </div>
+    <div class="tab-item" data-page="inspection">
+      <span class="tab-icon">&#10003;</span>
+      <span>检查</span>
+    </div>
+    <div class="tab-item" data-page="daily" onclick="App.navigate('daily')">
+      <span class="tab-icon">&#128203;</span>
+      <span class="tab-label">日报</span>
+    </div>
+    <div class="tab-item" data-page="penalty">
+      <span class="tab-icon">&#9888;</span>
+      <span>处罚</span>
+    </div>
+    <div class="tab-item" data-page="complaint">
+      <span class="tab-icon">&#9993;</span>
+      <span>差评</span>
+    </div>
+    <div class="tab-item" data-page="dashboard">
+      <span class="tab-icon">&#9776;</span>
+      <span>看板</span>
+    </div>
+    <div class="tab-item" data-page="template">
+      <span class="tab-icon">&#128276;</span>
+      <span>通知</span>
+    </div>
+    <div class="tab-item" data-page="task">
+      <span class="tab-icon">&#128203;</span>
+      <span>任务</span>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal-overlay" onclick="event.target===this && this.classList.remove('show')">
+    <div class="modal-box"></div>
+  </div>
+
+  <script src="vendor/supabase.min.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/pages.js"></script>
+  <script src="vendor/tesseract.min.js"></script>
+
+  <!-- 异步加载 xlsx（不阻塞渲染） -->
+  <script async src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
+          onerror="console.warn('xlsx CDN 加载失败，Excel 功能不可用')"></script>
+
+  <!-- Service Worker -->
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function() {});
+  }
+  </script>
+
+</body>
+</html>
