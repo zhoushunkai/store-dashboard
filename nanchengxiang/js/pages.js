@@ -833,8 +833,8 @@ Pages.complaint = function() {
   ['早餐', '午餐', '晚餐', '未知'].forEach(m => { html += '<option>' + m + '</option>'; });
   html += '</select></div>';
 
-  html += '<div class="form-group"><label class="form-label">投诉内容</label>';
-  html += '<textarea id="comp-content" class="form-textarea" placeholder="顾客投诉摘要..."></textarea></div>';
+  html += '<div class="form-group"><label class="form-label">门店调查结果</label>';
+  html += '<textarea id="comp-content" class="form-textarea" placeholder="门店调查结果摘要..."></textarea></div>';
 
   html += '<div class="form-group"><label class="form-label">机会点</label>';
   html += '<input id="comp-opportunity" class="form-input" placeholder="如：口味标准化/服务培训"></div>';
