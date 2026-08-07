@@ -50,7 +50,31 @@ Pages.doPhoneLogin = function() {
   Pages._phoneLoginNumber = phone;
   App._phoneLoginNumber = phone;
 
-  // 按手机号匹配用户
+  // 数据尚未从云端同步完成时，等待后重试
+  if (!App.dataReady && App.supabase) {
+    var btn = document.getElementById('sms-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '同步中...'; }
+    var retry = 0;
+    var self = this;
+    var timer = setInterval(function() {
+      retry++;
+      if (App.dataReady || retry > 40) {
+        clearInterval(timer);
+        if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+        if (App.dataReady) {
+          self._doPhoneLoginCore(phone);
+        } else {
+          App.toast('数据同步超时，请刷新页面重试');
+        }
+      }
+    }, 500);
+    return;
+  }
+
+  this._doPhoneLoginCore(phone);
+};
+
+Pages._doPhoneLoginCore = function(phone) {
   var users = App.getUsers();
   var user = null;
   for (var i = 0; i < users.length; i++) {
