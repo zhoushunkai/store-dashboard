@@ -304,7 +304,7 @@ const App = {
   /* ---- 权限矩阵 ---- */
   Permissions: {
     matrix: {
-      '总部':     { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '总部':     { inspection: true, inspection_edit: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
       '线上稽核': { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
       '线下稽核': { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
       '稽核员':   { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
