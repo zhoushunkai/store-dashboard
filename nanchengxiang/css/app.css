@@ -1256,3 +1256,33 @@ body {
   background: #fefce8;
   text-align: center;
 }
+
+/* 二级Tab栏 */
+.sub-tabbar {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: sticky;
+  top: 48px;
+  z-index: 90;
+}
+.sub-tab-item {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sub-tab-item.active {
+  color: #fff;
+  background: var(--primary, #c41a1a);
+}
