@@ -1706,6 +1706,7 @@ Pages.inspectionTemplates = function() {
       html += '<td>' + (t.createdAt || '') + '</td>';
       html += '<td>';
       html += '<button class="btn btn-sm" onclick="Pages._tplEdit(\'' + t.id + '\')">编辑</button>';
+      if (App.Permissions.canAccess(user.role, 'inspection_edit')) html += '<button class="btn btn-sm btn-primary" onclick="Pages._tplStartCheck(\'' + t.id + '\')">一键检查</button>';
       html += '<button class="btn btn-sm" onclick="Pages._tplToggle(\'' + t.id + '\')">' + (t.isActive !== false ? '停用' : '启用') + '</button>';
       html += '</td></tr>';
     });
@@ -1871,6 +1872,11 @@ Pages._tplExportExcel = function() {
     XLSX.writeFile(wb, '稽核模板导出.xlsx');
   }
   App.toast('导出完成');
+};
+
+Pages._tplStartCheck = function(tplId) {
+  Pages._fillTemplateId = tplId;
+  location.hash = '#inspectionFill';
 };
 
 Pages._tplToggle = function(id) {
