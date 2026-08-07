@@ -53,6 +53,13 @@
     <!-- 任务发布 -->
     <div class="page" id="page-task"></div>
 
+    <!-- 稽核模块 -->
+    <div class="page" id="page-inspectionTemplates"></div>
+    <div class="page" id="page-inspectionFill"></div>
+    <div class="page" id="page-inspectionResults"></div>
+    <div class="page" id="page-inspectionIssues"></div>
+    <div class="page" id="page-inspectionDashboard"></div>
+
   </main>
 
   <!-- 底部 TabBar -->
@@ -68,6 +75,26 @@
     <div class="tab-item" data-page="daily" onclick="App.navigate('daily')">
       <span class="tab-icon">&#128203;</span>
       <span class="tab-label">日报</span>
+    </div>
+    <div class="tab-item" data-page="inspectionTemplates" style="display:none">
+      <span class="tab-icon">&#128196;</span>
+      <span class="tab-label">稽核模板</span>
+    </div>
+    <div class="tab-item" data-page="inspectionFill" style="display:none">
+      <span class="tab-icon">&#9989;</span>
+      <span class="tab-label">稽核检查</span>
+    </div>
+    <div class="tab-item" data-page="inspectionResults" style="display:none">
+      <span class="tab-icon">&#128202;</span>
+      <span class="tab-label">检查结果</span>
+    </div>
+    <div class="tab-item" data-page="inspectionIssues" style="display:none">
+      <span class="tab-icon">&#128221;</span>
+      <span class="tab-label">问题工单</span>
+    </div>
+    <div class="tab-item" data-page="inspectionDashboard" style="display:none">
+      <span class="tab-icon">&#128200;</span>
+      <span class="tab-label">稽核看板</span>
     </div>
     <div class="tab-item" data-page="penalty">
       <span class="tab-icon">&#9888;</span>
