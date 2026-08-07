@@ -422,7 +422,6 @@ Pages.inspection = function() {
 
   // 二级Tab栏
   var subHash = location.hash.replace('#', '');
-  if (subHash === 'inspection') subHash = 'inspectionTemplates';
   var subTabs = [
     { id: 'inspection', label: '检查记录', show: true },
     { id: 'inspectionTemplates', label: '稽核模板', show: App.Permissions.canAccess(user.role, 'inspection') },
