@@ -1683,6 +1683,7 @@ Pages.inspectionTemplates = function() {
   html += '<div class="action-bar">';
   html += '<button class="btn btn-primary btn-sm" onclick="Pages._tplShowForm()">+ 新建模板</button>';
   html += '<button class="btn btn-sm" onclick="document.getElementById(\'tpl-excel-input\').click()">导入Excel</button>';
+  html += '<button class="btn btn-sm" onclick="Pages._tplExportExcel()">导出Excel</button>';
   html += '<input type="file" id="tpl-excel-input" accept=".xlsx,.xls" style="display:none" onchange="Pages._tplImportExcel(this)">';
   html += '</div>';
 
@@ -1836,6 +1837,40 @@ Pages._tplSave = function() {
   var overlay = document.querySelector('.modal-overlay');
   if (overlay) overlay.remove();
   Pages.inspectionTemplates();
+};
+
+Pages._tplExportExcel = function() {
+  var templates = App.getTemplates();
+  if (templates.length === 0) { App.toast('暂无模板可导出'); return; }
+
+  if (templates.length === 1) {
+    // 单模板直接导出
+    var t = templates[0];
+    var rows = [['类别', '检查项目', '分值', '扣分标准']];
+    (t.items || []).forEach(function(it) {
+      rows.push([it.category || '', it.content || '', it.score || 0, it.deductRule || '']);
+    });
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, t.name || '模板');
+    XLSX.writeFile(wb, (t.name || '稽核模板') + '.xlsx');
+  } else {
+    // 多模板每模板一个Sheet
+    var wb = XLSX.utils.book_new();
+    templates.forEach(function(t) {
+      var rows = [['类别', '检查项目', '分值', '扣分标准']];
+      (t.items || []).forEach(function(it) {
+        rows.push([it.category || '', it.content || '', it.score || 0, it.deductRule || '']);
+      });
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
+      var name = (t.name || '模板').substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    });
+    XLSX.writeFile(wb, '稽核模板导出.xlsx');
+  }
+  App.toast('导出完成');
 };
 
 Pages._tplToggle = function(id) {
