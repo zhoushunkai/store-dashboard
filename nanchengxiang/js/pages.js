@@ -420,6 +420,23 @@ Pages.inspection = function() {
     return;
   }
 
+  // 二级Tab栏
+  var subHash = location.hash.replace('#', '');
+  var subTabs = [
+    { id: 'inspection', label: '检查记录', show: true },
+    { id: 'inspectionTemplates', label: '稽核模板', show: App.Permissions.canAccess(user.role, 'inspection') },
+    { id: 'inspectionFill', label: '稽核检查', show: App.Permissions.canAccess(user.role, 'inspection_edit') },
+    { id: 'inspectionResults', label: '检查结果', show: App.Permissions.canAccess(user.role, 'inspection') },
+    { id: 'inspectionIssues', label: '问题工单', show: App.Permissions.canAccess(user.role, 'inspection') },
+    { id: 'inspectionDashboard', label: '稽核看板', show: App.Permissions.canAccess(user.role, 'inspection') }
+  ];
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+  });
+  html += '</div>';
+
   // 表单
   html += '<div class="card"><div class="card-title">\u{1F4F7} 优化部稽核记录</div>';
 
