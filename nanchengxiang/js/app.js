@@ -615,9 +615,11 @@ const App = {
       }
     }
 
-    var tabPages = ['home', 'inspection', 'penalty', 'complaint', 'dashboard', 'template', 'daily', 'task', 'inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard'];
+    var tabPages = ['home', 'inspection', 'penalty', 'complaint', 'dashboard', 'template', 'daily', 'task'];
+    var inspectionSubPages = ['inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard'];
     document.querySelectorAll('.tab-item').forEach(function(t) {
-      t.classList.toggle('active', t.dataset.page === hash);
+      var highlightHash = inspectionSubPages.indexOf(hash) >= 0 ? 'inspection' : hash;
+      t.classList.toggle('active', t.dataset.page === highlightHash);
     });
 
     var tabbar = document.getElementById('tabbar');
