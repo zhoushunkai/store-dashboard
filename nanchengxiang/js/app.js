@@ -299,19 +299,20 @@ const App = {
   },
 
   /* ---- 表名映射 ---- */
-  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports'],
+  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues'],
 
   /* ---- 权限矩阵 ---- */
   Permissions: {
     matrix: {
       '总部':     { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
-      '线上稽核': { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
-      '线下稽核': { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
-      '稽核员':   { inspection: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '线上稽核': { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '线下稽核': { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '稽核员':   { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
       '客服':     { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
-      '营运':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
-      '店长':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true },
+      '营运':     { inspection: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '店长':     { inspection: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true },
       '区域教练': { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '稽核':     { inspection: true, inspection_edit: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
       'admin':   { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true }
     },
     canAccess: function(role, module) {
@@ -408,6 +409,12 @@ const App = {
     this.dataCache.offline_records = JSON.parse(localStorage.getItem('nanchengxiang_offline_records') || '[]');
     this.dataCache.daily_reports = JSON.parse(localStorage.getItem('nanchengxiang_daily_reports') || '[]');
     this.dataCache.notices = JSON.parse(localStorage.getItem('nanchengxiang_notices') || '[]');
+    var localTemplates = localStorage.getItem('nanchengxiang_inspection_templates');
+    if (localTemplates) { try { this.dataCache.inspection_templates = JSON.parse(localTemplates); } catch(e) {} }
+    var localResults = localStorage.getItem('nanchengxiang_inspection_results');
+    if (localResults) { try { this.dataCache.inspection_results = JSON.parse(localResults); } catch(e) {} }
+    var localIssues = localStorage.getItem('nanchengxiang_inspection_issues');
+    if (localIssues) { try { this.dataCache.inspection_issues = JSON.parse(localIssues); } catch(e) {} }
     this.dataReady = true;
   },
 
@@ -462,6 +469,9 @@ const App = {
   getOfflineRecords()  { return this.dataCache.offline_records || []; },
   getRegionCoaches()   { return this.dataCache.region_coaches || []; },
   getDailyReports()   { return this.dataCache.daily_reports || []; },
+  getTemplates()      { return this.dataCache.inspection_templates || []; },
+  getResults()        { return this.dataCache.inspection_results || []; },
+  getIssues()         { return this.dataCache.inspection_issues || []; },
 
   async saveDailyReports(data) {
     this.dataCache.daily_reports = data;
@@ -469,6 +479,30 @@ const App = {
     if (this.supabase) {
       await this.supabase.from('daily_reports').delete().neq('id', '__none__');
       if (data.length > 0) await this.supabase.from('daily_reports').insert(this._snakeList(data));
+    }
+  },
+  async saveTemplates(data) {
+    this.dataCache.inspection_templates = data;
+    localStorage.setItem('nanchengxiang_inspection_templates', JSON.stringify(data));
+    if (this.supabase) {
+      await this.supabase.from('inspection_templates').delete().neq('id','__none__');
+      if (data.length > 0) await this.supabase.from('inspection_templates').insert(this._snakeList(data));
+    }
+  },
+  async saveResults(data) {
+    this.dataCache.inspection_results = data;
+    localStorage.setItem('nanchengxiang_inspection_results', JSON.stringify(data));
+    if (this.supabase) {
+      await this.supabase.from('inspection_results').delete().neq('id','__none__');
+      if (data.length > 0) await this.supabase.from('inspection_results').insert(this._snakeList(data));
+    }
+  },
+  async saveIssues(data) {
+    this.dataCache.inspection_issues = data;
+    localStorage.setItem('nanchengxiang_inspection_issues', JSON.stringify(data));
+    if (this.supabase) {
+      await this.supabase.from('inspection_issues').delete().neq('id','__none__');
+      if (data.length > 0) await this.supabase.from('inspection_issues').insert(this._snakeList(data));
     }
   },
 
@@ -581,7 +615,7 @@ const App = {
       }
     }
 
-    var tabPages = ['home', 'inspection', 'penalty', 'complaint', 'dashboard', 'template', 'daily', 'task'];
+    var tabPages = ['home', 'inspection', 'penalty', 'complaint', 'dashboard', 'template', 'daily', 'task', 'inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard'];
     document.querySelectorAll('.tab-item').forEach(function(t) {
       t.classList.toggle('active', t.dataset.page === hash);
     });
@@ -595,7 +629,10 @@ const App = {
       var role = this.currentUser.role;
       var self = this;
       var pageToModule = { 'inspection': 'inspection', 'daily': 'daily', 'penalty': 'penalty',
-                           'complaint': 'complaint', 'template': 'notice', 'task': 'task', 'dashboard': 'dashboard' };
+                           'complaint': 'complaint', 'template': 'notice', 'task': 'task', 'dashboard': 'dashboard',
+                           'inspectionTemplates': 'inspection', 'inspectionFill': 'inspection_edit',
+                           'inspectionResults': 'inspection', 'inspectionIssues': 'inspection',
+                           'inspectionDashboard': 'inspection' };
       document.querySelectorAll('.tab-item').forEach(function(t) {
         var page = t.dataset.page;
         var module = pageToModule[page];
@@ -607,7 +644,9 @@ const App = {
     var titleMap = {
       login: '南城香协作终端', home: '首页', inspection: '门店检查', 'offline-inspect': '线下门店检查',
       penalty: '处罚登记', complaint: '差评申诉', dashboard: '领导看板', template: '通知模板', admin: '数据管理',
-      daily: '稽核日报', task: '任务发布'
+      daily: '稽核日报', task: '任务发布',
+      inspectionTemplates: '稽核模板', inspectionFill: '稽核检查',
+      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板'
     };
     document.getElementById('header-title').textContent = titleMap[hash] || '';
     document.getElementById('header-back').style.display = (hash === 'login') ? 'none' : 'block';
