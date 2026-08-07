@@ -2576,16 +2576,14 @@ Pages.inspectionDashboard = function() {
 
   var html = '';
 
-  // 门店筛选下拉
-  var storeSet = {};
-  App.getResults().forEach(function(r) { storeSet[r.storeId] = r.store; });
-  var storeEntries = Object.keys(storeSet).map(function(k) { return { id: k, name: storeSet[k] }; });
+  // 门店筛选下拉（使用全量门店列表，含未检查门店）
+  var storeEntries = (App.getStores() || []).sort(function(a,b) { return (a.name||'').localeCompare(b.name||'', 'zh'); });
   html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
   html += '<label style="font-size:13px;white-space:nowrap">门店筛选：</label>';
   html += '<select id="db-store-filter" class="form-input" style="max-width:200px" onchange="Pages._dbStoreFilter=this.value;Pages.inspectionDashboard()">';
   html += '<option value="">全部门店</option>';
   storeEntries.forEach(function(s) {
-    html += '<option value="' + s.id + '"' + (storeFilter === s.id ? ' selected' : '') + '>' + s.name + '</option>';
+    html += '<option value="' + (s.id||s.storeId) + '"' + (storeFilter === (s.id||s.storeId) ? ' selected' : '') + '>' + (s.name||s.store) + '</option>';
   });
   html += '</select>';
   html += '</div>';
