@@ -2344,6 +2344,15 @@ Pages.inspectionIssues = function() {
   html += '<div class="stat-item"><span class="stat-num">' + fixRate + '%</span><span class="stat-label">整改率</span></div>';
   html += '</div>';
 
+  // 批量操作栏（管理角色 + 已整改筛选时显示）
+  var isManager = (user.role === '总部' || user.role === '稽核' || user.role === '稽核员' || user.role === '线上稽核' || user.role === '线下稽核');
+  if (isManager && Pages._issueFilter === '已整改') {
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html += '<label style="cursor:pointer;font-size:12px;user-select:none"><input type="checkbox" id="issue-select-all" onchange="Pages._issueSelectAll()"> 全选</label>';
+    html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueBatchClose()">批量关闭所选</button>';
+    html += '</div>';
+  }
+
   var filtered = issues;
   if (Pages._issueFilter !== 'all') {
     filtered = issues.filter(function(is) { return is.status === Pages._issueFilter; });
@@ -2355,6 +2364,9 @@ Pages.inspectionIssues = function() {
     filtered.reverse().forEach(function(is) {
       var statusColor = is.status === '待处理' ? '#ef4444' : is.status === '已整改' ? '#f59e0b' : is.status === '已闭环' ? '#10b981' : '#6366f1';
       html += '<div class="list-item" style="border-left:3px solid ' + statusColor + '">';
+      if (isManager && is.status === '已整改') {
+        html += '<input type="checkbox" class="issue-checkbox" data-id="' + is.id + '" style="margin-right:8px;flex-shrink:0">';
+      }
       html += '<div class="li-main">';
       html += '<div class="li-title">[' + (is.store||'') + '] ' + (is.content||'') + '</div>';
       html += '<div class="li-sub">' + (is.date||'') + ' | ' + (is.category||'') + ' | 扣' + ((is.stdScore||0) - (is.actualScore||0)) + '分 | ' + (is.deductReason||'') + '</div>';
@@ -2393,6 +2405,29 @@ Pages.inspectionIssues = function() {
 Pages._setIssueFilter = function(filter) {
   Pages._issueFilter = filter;
   Pages.inspectionIssues();
+};
+
+Pages._issueSelectAll = function() {
+  var checked = document.getElementById('issue-select-all').checked;
+  document.querySelectorAll('.issue-checkbox').forEach(function(cb) { cb.checked = checked; });
+};
+
+Pages._issueBatchClose = function() {
+  var checked = document.querySelectorAll('.issue-checkbox:checked');
+  if (checked.length === 0) { App.toast('请先勾选要关闭的工单'); return; }
+  if (!confirm('确定要批量关闭 ' + checked.length + ' 个工单吗？')) return;
+  var ids = [];
+  checked.forEach(function(cb) { ids.push(cb.dataset.id); });
+  var issues = App.getIssues();
+  issues.forEach(function(is) {
+    if (ids.indexOf(is.id) >= 0 && is.status === '已整改') {
+      is.status = '已闭环';
+      is.closedAt = new Date().toISOString().slice(0,10);
+    }
+  });
+  App.saveIssues();
+  Pages.inspectionIssues();
+  App.toast('已批量关闭 ' + ids.length + ' 个工单');
 };
 
 Pages._issueFix = function(id) {
@@ -2525,7 +2560,35 @@ Pages.inspectionDashboard = function() {
   var fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
   var fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
 
+  // 门店筛选（持久化到 Pages 上，切换后重绘）
+  var storeFilter = Pages._dbStoreFilter || '';
+  if (storeFilter) {
+    results = results.filter(function(r) { return r.storeId === storeFilter; });
+    issues = issues.filter(function(is) { return is.storeId === storeFilter; });
+    monthResults = monthResults.filter(function(r) { return r.storeId === storeFilter; });
+    monthIssues = monthIssues.filter(function(is) { return is.storeId === storeFilter; });
+    checkCount = monthResults.length;
+    avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
+    issueCount = monthIssues.length;
+    fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
+    fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
+  }
+
   var html = '';
+
+  // 门店筛选下拉
+  var storeSet = {};
+  App.getResults().forEach(function(r) { storeSet[r.storeId] = r.store; });
+  var storeEntries = Object.keys(storeSet).map(function(k) { return { id: k, name: storeSet[k] }; });
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+  html += '<label style="font-size:13px;white-space:nowrap">门店筛选：</label>';
+  html += '<select id="db-store-filter" class="form-input" style="max-width:200px" onchange="Pages._dbStoreFilter=this.value;Pages.inspectionDashboard()">';
+  html += '<option value="">全部门店</option>';
+  storeEntries.forEach(function(s) {
+    html += '<option value="' + s.id + '"' + (storeFilter === s.id ? ' selected' : '') + '>' + s.name + '</option>';
+  });
+  html += '</select>';
+  html += '</div>';
 
   // KPI 卡片
   html += '<div class="db-kpi-grid">';
