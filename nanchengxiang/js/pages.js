@@ -961,7 +961,7 @@ Pages.showComplaintDetail = function(id) {
 };
 
 /* ---- 店长处理差评：填责任人并生成处罚 ---- */
-Pages.resolveComplaint = function(id) {
+Pages.resolveComplaint = async function(id) {
   var complaints = App.getComplaints();
   var c = complaints.find(function(x) { return x.id === id; });
   if (!c) return;
@@ -978,7 +978,7 @@ Pages.resolveComplaint = function(id) {
   c.responsible = dutyName;
   c.responsibleTitle = dutyType;
   c.status = '已处理';
-  App.saveComplaints(complaints);
+  await App.saveComplaints(complaints);
 
   // 自动生成处罚记录
   var stores = App.getStores();
@@ -1011,7 +1011,7 @@ Pages.resolveComplaint = function(id) {
     dutyCoach: '',
     status: '已闭环'
   });
-  App.savePenalties(penalties);
+  await App.savePenalties(penalties);
 
   App.toast('已生成处罚记录');
   document.getElementById('modal-overlay').classList.remove('show');
