@@ -678,6 +678,10 @@ const App = {
   login(userId) {
     var users = this.getUsers();
     var user = users.find(function(u) { return u.id === userId; });
+    if (!user) {
+      var seedUsers = this.seedData && this.seedData.users ? this.seedData.users : [];
+      user = seedUsers.find(function(u) { return u.id === userId; });
+    }
     if (!user) return false;
     this.currentUser = user;
     localStorage.setItem('nanchengxiang_current_user', JSON.stringify(user));
