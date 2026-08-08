@@ -657,7 +657,7 @@ Pages.penalty = function() {
     return;
   }
 
-  if (App.Permissions.canAccess(user.role, 'penalty') && user.role !== '店长') {
+  if (App.Permissions.canAccess(user.role, 'penalty') && user.role !== '店长' && !sessionStorage.getItem('db_readonly')) {
     // 完整表单 — 22个字段
     html += '<div class="card"><div class="card-title">\u{26A0} 处罚登记</div>';
 
