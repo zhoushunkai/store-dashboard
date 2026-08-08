@@ -1947,6 +1947,7 @@ Pages._tplImportExcel = function(input) {
 /* ==================== 稽核填写 ==================== */
 Pages._fillTemplateId = '';
 Pages._fillStoreId = '';
+Pages._dbTplFilter = '';
 Pages._fillDraft = false;
 
 Pages.inspectionFill = function() {
