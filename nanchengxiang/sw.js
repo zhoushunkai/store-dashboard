@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nanchengxiang-pwa-v27';
+const CACHE_NAME = 'nanchengxiang-pwa-v28';
 const ASSETS = [
   './',
   './index.html',
