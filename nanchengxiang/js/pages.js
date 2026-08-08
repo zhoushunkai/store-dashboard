@@ -864,6 +864,8 @@ Pages.complaint = function() {
     return;
   }
 
+  // 表单（从看板跳转时不显示）
+  if (!sessionStorage.getItem('db_readonly')) {
   // 表单
   html += '<div class="card"><div class="card-title">\u{1F4AC} 差评录入</div>';
 
@@ -895,6 +897,9 @@ Pages.complaint = function() {
   html += '<button class="btn btn-primary" onclick="Pages.submitComplaint()">提交</button>';
   html += '</div>';
 
+  } else {
+    sessionStorage.removeItem('db_readonly');
+  }
   // 列表
   let listComplaints = complaints;
   if (user.role === '店长') {
