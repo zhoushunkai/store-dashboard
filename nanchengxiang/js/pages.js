@@ -1147,10 +1147,10 @@ Pages.dashboard = function() {
 
   // KPI 卡片区
   html += '<div class="db-kpi-grid">';
-  html += dbKpiCard('门店总数', totalStores, '家', '#6366f1', 'M12 20l-8-8-4 4');
-  html += dbKpiCard('闭环率', closeRate, '%', '#10b981', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z');
-  html += dbKpiCard('申诉率', appealRate, '%', '#f59e0b', 'M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122');
-  html += dbKpiCard('待处理', pendingPenalties + overduePenalties, '项', '#ef4444', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z');
+  html += dbKpiCard('门店总数', totalStores, '家', '#6366f1', 'M12 20l-8-8-4 4', "location.hash='#inspection'");
+  html += dbKpiCard('闭环率', closeRate, '%', '#10b981', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', "location.hash='#penalty'");
+  html += dbKpiCard('申诉率', appealRate, '%', '#f59e0b', 'M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122', "location.hash='#complaint'");
+  html += dbKpiCard('待处理', pendingPenalties + overduePenalties, '项', '#ef4444', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', "location.hash='#penalty'");
   html += '</div>';
 
   // 闭环率环形图
@@ -1213,8 +1213,8 @@ Pages.switchDashboard = function(mode) {
   Pages.dashboard();
 };
 
-function dbKpiCard(title, value, unit, color, iconPath) {
-  return '<div class="db-kpi-card"><div class="db-kpi-icon" style="background:' + color + '20;color:' + color + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="db-kpi-body"><div class="db-kpi-title">' + title + '</div><div class="db-kpi-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div></div></div>';
+function dbKpiCard(title, value, unit, color, iconPath, onclick) {
+  return '<div class="db-kpi-card' + (onclick ? ' db-kpi-card-link' : '') + '"' + (onclick ? ' onclick="' + onclick + '"' : '') + '><div class="db-kpi-icon" style="background:' + color + '20;color:' + color + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="db-kpi-body"><div class="db-kpi-title">' + title + (onclick ? ' <span style="font-size:9px;opacity:0.5">›</span>' : '') + '</div><div class="db-kpi-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div></div></div>';
 }
 
 /* ---- 闭环追踪明细弹窗 ---- */
