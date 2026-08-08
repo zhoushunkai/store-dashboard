@@ -2603,6 +2603,16 @@ Pages.inspectionDashboard = function() {
     });
     html += '</select>';
     html += '</div>';
+    // 模板筛选
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+    html += '<label style="font-size:13px;white-space:nowrap">模板筛选：</label>';
+    html += '<select id="db-tpl-filter" class="form-input" style="max-width:200px" onchange="Pages._dbTplFilter=this.value;Pages.inspectionDashboard()">';
+    html += '<option value="">全部模板</option>';
+    (App.getTemplates() || []).forEach(function(t) {
+      html += '<option value="' + t.id + '"' + (tplFilter === t.id ? ' selected' : '') + '>' + (t.name||t.id) + '</option>';
+    });
+    html += '</select>';
+    html += '</div>';
   } else {
     var myStore = (App.getStores() || []).find(function(s) { return (s.id||s.storeId) === (user.storeId||''); });
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:#6b7280">';
