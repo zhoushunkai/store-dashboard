@@ -2560,8 +2560,8 @@ Pages.inspectionDashboard = function() {
   var fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
   var fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
 
-  // 门店筛选（持久化到 Pages 上，切换后重绘）
-  var storeFilter = Pages._dbStoreFilter || '';
+  // 门店筛选（持久化到 Pages 上，切换后重绘；店长强制锁定本人门店）
+  var storeFilter = (user.role === '店长' && user.storeId) ? user.storeId : (Pages._dbStoreFilter || '');
   if (storeFilter) {
     results = results.filter(function(r) { return r.storeId === storeFilter; });
     issues = issues.filter(function(is) { return is.storeId === storeFilter; });
@@ -2576,17 +2576,24 @@ Pages.inspectionDashboard = function() {
 
   var html = '';
 
-  // 门店筛选下拉（使用全量门店列表，含未检查门店）
-  var storeEntries = (App.getStores() || []).sort(function(a,b) { return (a.name||'').localeCompare(b.name||'', 'zh'); });
-  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
-  html += '<label style="font-size:13px;white-space:nowrap">门店筛选：</label>';
-  html += '<select id="db-store-filter" class="form-input" style="max-width:200px" onchange="Pages._dbStoreFilter=this.value;Pages.inspectionDashboard()">';
-  html += '<option value="">全部门店</option>';
-  storeEntries.forEach(function(s) {
-    html += '<option value="' + (s.id||s.storeId) + '"' + (storeFilter === (s.id||s.storeId) ? ' selected' : '') + '>' + (s.name||s.store) + '</option>';
-  });
-  html += '</select>';
-  html += '</div>';
+  // 门店筛选下拉（店长不显示，自动锁定；其他角色使用全量门店列表）
+  if (user.role !== '店长') {
+    var storeEntries = (App.getStores() || []).sort(function(a,b) { return (a.name||'').localeCompare(b.name||'', 'zh'); });
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+    html += '<label style="font-size:13px;white-space:nowrap">门店筛选：</label>';
+    html += '<select id="db-store-filter" class="form-input" style="max-width:200px" onchange="Pages._dbStoreFilter=this.value;Pages.inspectionDashboard()">';
+    html += '<option value="">全部门店</option>';
+    storeEntries.forEach(function(s) {
+      html += '<option value="' + (s.id||s.storeId) + '"' + (storeFilter === (s.id||s.storeId) ? ' selected' : '') + '>' + (s.name||s.store) + '</option>';
+    });
+    html += '</select>';
+    html += '</div>';
+  } else {
+    var myStore = (App.getStores() || []).find(function(s) { return (s.id||s.storeId) === (user.storeId||''); });
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:#6b7280">';
+    html += '当前门店：<b style="color:#111">' + ((myStore && (myStore.name||myStore.store)) || user.store || user.storeId || '') + '</b>';
+    html += '</div>';
+  }
 
   // KPI 卡片
   html += '<div class="db-kpi-grid">';
