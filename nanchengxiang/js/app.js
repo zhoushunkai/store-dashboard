@@ -216,7 +216,9 @@ const App = {
       { id: 's195', name: '东中街店', district: '东城区', adminArea: '东城区', bizArea: '经营十区', region: '经营十区', manager: '周峰', managerTitle: '门店第一负责人', employeeId: '274', mode: '3.0' },
       { id: 's196', name: '郁花园店', district: '大兴区', adminArea: '大兴区', bizArea: '经营十区', region: '经营十区', manager: '李承兵', managerTitle: '门店第一负责人', employeeId: '2280', mode: '3.0' },
       { id: 's197', name: '十里堡店', district: '朝阳区', adminArea: '朝阳区', bizArea: '经营十区', region: '经营十区', manager: '董莹莹', managerTitle: '门店第一负责人', employeeId: '18797', mode: '3.0' },
-      { id: 's198', name: '定福庄店', district: '朝阳区', adminArea: '朝阳区', bizArea: '经营十区', region: '经营十区', manager: '郭丰瑜', managerTitle: '门店第一负责人', employeeId: '12636', mode: '3.0' }
+      { id: 's198', name: '定福庄店', district: '朝阳区', adminArea: '朝阳区', bizArea: '经营十区', region: '经营十区', manager: '郭丰瑜', managerTitle: '门店第一负责人', employeeId: '12636', mode: '3.0' },
+      { id: 'FZ001', name: '方庄店', district: '朝阳区', adminArea: '朝阳区', bizArea: '经营一区', region: '经营一区', manager: '张三', managerTitle: '店长', employeeId: '', mode: '3.0' },
+      { id: 'WJ001', name: '望京店', district: '朝阳区', adminArea: '朝阳区', bizArea: '经营一区', region: '经营一区', manager: '李四', managerTitle: '店长', employeeId: '', mode: '3.0' }
     ],
     users: [
       { id: 'u001', name: '管理员', role: '总部', area: '', storeId: '', store: '', phone: '13800000001' },
