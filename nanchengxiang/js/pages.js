@@ -428,7 +428,7 @@ Pages.inspection = function() {
   }
   var subTabs = [
     { id: 'inspection', label: '检查记录', show: true },
-    { id: 'inspectionTemplates', label: '稽核模板', show: App.Permissions.canAccess(user.role, 'inspection') },
+    { id: 'inspectionTemplates', label: '稽核模板', show: App.Permissions.canAccess(user.role, 'inspection') && App.currentUser.phone === '13581922077' },
     { id: 'inspectionFill', label: '稽核检查', show: App.Permissions.canAccess(user.role, 'inspection_edit') },
     { id: 'inspectionResults', label: '检查结果', show: App.Permissions.canAccess(user.role, 'inspection') },
     { id: 'inspectionIssues', label: '问题工单', show: App.Permissions.canAccess(user.role, 'inspection') },
@@ -1671,8 +1671,8 @@ Pages.inspectionTemplates = function() {
   var user = App.currentUser;
   var templates = App.getTemplates();
 
-  if (!App.Permissions.canAccess(user.role, 'inspection')) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+  if (!App.Permissions.canAccess(user.role, 'inspection') || App.currentUser.phone !== '13581922077') {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前账号无权限访问此页面</div></div>';
     return;
   }
 
