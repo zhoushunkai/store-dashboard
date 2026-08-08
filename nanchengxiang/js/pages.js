@@ -2575,6 +2575,20 @@ Pages.inspectionDashboard = function() {
     fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
   }
 
+  // 模板筛选（与门店筛选叠加）
+  var tplFilter = Pages._dbTplFilter || '';
+  if (tplFilter) {
+    results = results.filter(function(r) { return r.templateId === tplFilter; });
+    issues = issues.filter(function(is) { return is.templateId === tplFilter; });
+    monthResults = monthResults.filter(function(r) { return r.templateId === tplFilter; });
+    monthIssues = monthIssues.filter(function(is) { return is.templateId === tplFilter; });
+    checkCount = monthResults.length;
+    avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
+    issueCount = monthIssues.length;
+    fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
+    fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
+  }
+
   var html = '';
 
   // 门店筛选下拉（店长不显示，自动锁定；其他角色使用全量门店列表）
