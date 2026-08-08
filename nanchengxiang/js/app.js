@@ -218,7 +218,7 @@ const App = {
       { id: 's197', name: '十里堡店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营十区', manager: '董莹莹', managerTitle: '门店第一负责人', employeeId: '18797', mode: '3.0' },
       { id: 's198', name: '定福庄店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营十区', manager: '郭丰瑜', managerTitle: '门店第一负责人', employeeId: '12636', mode: '3.0' }
     ],
-    users: [ 'u001', name: '管理员', role: '总部', area: '', storeId: '', store: '', phone: '13800000001' },
+    users: [ { id: 'u001', name: '管理员', role: '总部', area: '', storeId: '', store: '', phone: '13800000001' },
       { id: 'u002', name: '刘畅', role: '线上稽核', area: '', storeId: '', store: '', phone: '13800000002' },
       { id: 'u003', name: '马昕茹', role: '线上稽核', area: '', storeId: '', store: '', phone: '13800000003' },
       { id: 'u004', name: '陶畅', role: '线上稽核', area: '', storeId: '', store: '', phone: '13800000004' },
