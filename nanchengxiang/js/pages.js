@@ -2618,6 +2618,29 @@ Pages.inspectionDashboard = function() {
   html += '<canvas id="insp-line-chart" width="250" height="250" style="width:100%;max-width:250px;height:250px"></canvas>';
   html += '</div>';
 
+  // 机会点：本月 Top 扣分项
+  var topDeducts = monthIssues.map(function(is) {
+    return { content: is.content, category: is.category, deduct: (is.stdScore||0) - (is.actualScore||0), reason: is.deductReason };
+  }).sort(function(a,b) { return b.deduct - a.deduct; }).slice(0, 5);
+  if (topDeducts.length > 0) {
+    html += '<div class="db-card-3d" style="margin-top:16px"><div class="db-card-title">本月机会点（Top 扣分项）</div>';
+    html += '<div class="table-container" style="margin-top:8px"><table><thead><tr>';
+    html += '<th style="width:55%">检查项目</th><th style="width:15%">类别</th><th style="width:10%">扣分</th><th style="width:20%">扣分原因</th>';
+    html += '</tr></thead><tbody>';
+    topDeducts.forEach(function(d, i) {
+      var barW = Math.round((d.deduct / topDeducts[0].deduct) * 80);
+      html += '<tr>';
+      html += '<td><div style="position:relative">';
+      html += '<div style="position:absolute;left:0;top:0;bottom:0;background:#fecaca;border-radius:2px;width:' + barW + '%"></div>';
+      html += '<span style="position:relative">' + (d.content||'') + '</span></div></td>';
+      html += '<td>' + (d.category||'') + '</td>';
+      html += '<td style="color:#ef4444;font-weight:600">-' + d.deduct + '分</td>';
+      html += '<td style="font-size:11px;color:#6b7280">' + (d.reason||'') + '</td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
   el.innerHTML = html;
 
   // 延迟绘制图表
