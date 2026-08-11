@@ -514,6 +514,14 @@ const App = {
         try { this.dataCache[table] = JSON.parse(localData); } catch (e) {}
       }
     }
+    // 种子数据合并：确保 seedData 中但 Supabase 缺失的记录被载入
+    if (this.seedData[table] && this.seedData[table].length > 0) {
+      var existingIds = {};
+      this.dataCache[table].forEach(function(r){ existingIds[r.id]=true; });
+      this.seedData[table].forEach(function(r){
+        if (!existingIds[r.id]) { this.dataCache[table].push(r); }
+      }.bind(this));
+    }
   },
 
   /* 页面切换时刷新缓存（获取最新数据） */
