@@ -1479,7 +1479,8 @@ Pages.daily = function() {
 
   } else {
     // ===== 日报看板 =====
-    html += Pages._renderDailyBoard(reports, stores);
+    var workRecords = App.getWorkRecords();
+    html += Pages._renderDailyBoard(reports, stores, workRecords);
   }
 
   el.innerHTML = html;
@@ -1588,7 +1589,7 @@ Pages._toggleDailyDetail = function(id) {
 /* ===== 日报看板渲染 ===== */
 Pages._dailyBoardPeriod = 'all'; // 'week' | 'month' | 'all'
 
-Pages._renderDailyBoard = function(reports, stores) {
+Pages._renderDailyBoard = function(reports, stores, workRecords) {
   var html = '';
   var now = new Date();
 
@@ -1618,6 +1619,17 @@ Pages._renderDailyBoard = function(reports, stores) {
     groups[r.inspector].push(r);
   });
 
+  // work_records 按人分组
+  var personWork = {};
+  (workRecords||[]).forEach(function(w) {
+    if (!personWork[w.user]) personWork[w.user] = [];
+    personWork[w.user].push(w);
+  });
+  // 确保只在 work_records 中出现的人也纳入看板
+  Object.keys(personWork).forEach(function(u) {
+    if (!groups[u]) groups[u] = [];
+  });
+
   var inspectorNames = Object.keys(groups).sort();
   if (inspectorNames.length === 0) {
     html += '<div class="empty-state"><div class="empty-icon">&#128202;</div>暂无日报数据</div>';
@@ -1634,13 +1646,16 @@ Pages._renderDailyBoard = function(reports, stores) {
     html += '<div class="bic-avatar">' + (name||'?')[0] + '</div>';
     html += '<div class="bic-info">';
     html += '<div class="bic-name">' + name + '</div>';
-    html += '<div class="bic-stats">日报 ' + grp.length + ' 份 | 累计检查 ' + totalShops + ' 家门店</div>';
+    var wrCount = (personWork[name]||[]).length;
+    var statsText = '日报 ' + grp.length + ' 份 | 累计检查 ' + totalShops + ' 家门店';
+    if (wrCount > 0) statsText += ' | 工作台账 ' + wrCount + ' 条';
+    html += '<div class="bic-stats">' + statsText + '</div>';
     html += '</div><div class="bic-arrow">&#9660;</div>';
     html += '</div>';
 
     html += '<div class="board-detail-table" id="board-detail-' + name.replace(/'/g, "\\'") + '" style="display:none">';
     html += '<table class="m-table">';
-    html += '<thead><tr><th>日期</th><th>类型</th><th>门店</th><th>得分</th><th>发现问题</th></tr></thead>';
+    html += '<thead><tr><th>日期</th><th>类型</th><th>门店</th><th>得分</th><th>发现问题</th><th>内容</th></tr></thead>';
     html += '<tbody>';
     grp.forEach(function(r) {
       var typeLabel = r.type === 'online' ? '线上' : '线下';
@@ -1648,6 +1663,12 @@ Pages._renderDailyBoard = function(reports, stores) {
         html += '<tr><td>' + r.date + '</td><td>' + typeLabel + '</td><td>' + item.store + '</td><td>' + item.score + '</td><td>' + (item.findings||'') + '</td></tr>';
       });
     });
+    // work_records 台账行
+    (personWork[name]||[]).forEach(function(w) {
+      var tagColor = w.type === '客诉' ? '#e74c3c' : '#8e44ad';
+      html += '<tr class="wr-row"><td>' + w.date + '</td><td><span class="wr-tag" style="background:' + tagColor + '">' + w.type + '</span></td><td colspan="2">' + w.summary + '</td><td class="wr-content">' + (w.detail&&w.detail.content?w.detail.content.replace(/\n/g,'<br>') : '') + '</td></tr>';
+    });
+
     html += '</tbody></table></div></div>';
   });
 
