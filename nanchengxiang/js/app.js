@@ -259,6 +259,68 @@ const App = {
       { id: 'o001', inspector: '刘畅', storeId: 's056', store: '方庄店', date: '2026-08-01', content: '顾客差评：菜品味道偏咸' },
       { id: 'o002', inspector: '刘畅', storeId: 's048', store: '望京花家地店', date: '2026-08-02', content: '投诉出餐速度慢' }
     ],
+    areaCoaches: [
+        {
+                "area": "经营一区",
+                "leader": "胡柯翊",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营二区",
+                "leader": "李万鹏",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营三区",
+                "leader": "李鹏",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营四区",
+                "leader": "高瑶",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营五区",
+                "leader": "程帅威",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营六区",
+                "leader": "杨贺川",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营七店",
+                "leader": "赵芳",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营八区",
+                "leader": "李塘龙",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营九区",
+                "leader": "闫海青",
+                "type": "bizArea"
+        },
+        {
+                "area": "经营十区",
+                "leader": "陈秋",
+                "type": "bizArea"
+        },
+        {
+                "area": "训练店",
+                "leader": "陈贵安",
+                "type": "region"
+        },
+        {
+                "area": "上海",
+                "leader": "洪登峰",
+                "type": "region"
+        }
+],
     offlineRecords: [
       { id: 'of001', inspector: '范晓明', storeId: 's056', store: '方庄店', date: '2026-08-03', score: 85, content: '后厨卫生扣5分；食材存放扣10分' },
       { id: 'of002', inspector: '钱磊', storeId: 'SLH001', store: '十里河店', date: '2026-08-06', score: 72, content: '食品过期扣15分；服务态度扣8分；环境扣5分' }
@@ -465,6 +527,8 @@ const App = {
   getPenalties()       { return this.dataCache.penalties || []; },
   getComplaints()      { return this.dataCache.complaints || []; },
   getOnlineRecords()   { return this.dataCache.online_records || []; },
+
+  getAreaCoaches()   { return this.seedData.areaCoaches || []; },
   getOfflineRecords()  { return this.dataCache.offline_records || []; },
   getRegionCoaches()   { return this.dataCache.region_coaches || []; },
   getDailyReports()   { return this.dataCache.daily_reports || []; },
