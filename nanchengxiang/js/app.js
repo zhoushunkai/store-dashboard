@@ -462,6 +462,8 @@ const App = {
       localStorage.setItem('nanchengxiang_online_records', JSON.stringify(this.seedData.online_records));
       localStorage.setItem('nanchengxiang_offline_records', JSON.stringify(this.seedData.offline_records));
       localStorage.setItem('nanchengxiang_daily_reports', JSON.stringify(this.seedData.daily_reports));
+      localStorage.setItem('nanchengxiang_inspection_results', JSON.stringify(this.seedData.inspection_results));
+      localStorage.setItem('nanchengxiang_inspection_issues', JSON.stringify(this.seedData.inspection_issues));
     }
     this.dataCache.stores = JSON.parse(localStorage.getItem('nanchengxiang_stores') || '[]');
     this.dataCache.users = JSON.parse(localStorage.getItem('nanchengxiang_users') || '[]');
