@@ -545,8 +545,8 @@ const App = {
   getRegionCoaches()   { return this.dataCache.region_coaches || []; },
   getDailyReports()   { return this.dataCache.daily_reports || []; },
   getTemplates()      { return this.dataCache.inspection_templates || []; },
-  getResults()        { return this.dataCache.inspection_results || []; },
-  getIssues()         { return this.dataCache.inspection_issues || []; },
+  getResults()        { var d = this.dataCache.inspection_results || []; if (this.seedData.inspection_results && this.seedData.inspection_results.length > 0) { var ids={}; d.forEach(function(r){ids[r.id]=true}); this.seedData.inspection_results.forEach(function(r){if(!ids[r.id])d.push(r)}); } return d; },
+  getIssues()         { var d = this.dataCache.inspection_issues || []; if (this.seedData.inspection_issues && this.seedData.inspection_issues.length > 0) { var ids={}; d.forEach(function(r){ids[r.id]=true}); this.seedData.inspection_issues.forEach(function(r){if(!ids[r.id])d.push(r)}); } return d; },
 
   async saveDailyReports(data) {
     this.dataCache.daily_reports = data;
