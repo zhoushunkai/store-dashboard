@@ -16,6 +16,15 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 
 
+/* ---------------- 全局工具函数 ---------------- */
+
+window.safeGet = function(key, def) {
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e) { return def; }
+};
+window.safeSet = function(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+};
+
 const App = {
 
   supabase: null,
