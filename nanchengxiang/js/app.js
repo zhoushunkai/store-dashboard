@@ -2,11 +2,23 @@
 
 
 
+
+
+
+
    app.js - 南城香协作终端
 
 
 
+
+
+
+
    Supabase 云端数据 + 前端路由
+
+
+
+
 
 
 
@@ -18,11 +30,27 @@
 
 
 
+
+
+
+
+
+
+
+
 /* ---------------- Supabase 配置（部署时替换） ---------------- */
 
 
 
+
+
+
+
 const SUPABASE_URL = 'https://omkshuposrdmwgukpoxd.supabase.co';
+
+
+
+
 
 
 
@@ -34,21 +62,47 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 
 
+
+
+
+
+
+
+
+
 /* ---------------- 全局工具函数 ---------------- */
+
+
+
+
 
 
 
 window.safeGet = function(key, def) {
 
+
+
   try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch(e) { return def; }
 
+
+
 };
+
+
 
 window.safeSet = function(key, val) {
 
+
+
   try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
 
+
+
 };
+
+
+
+
 
 
 
@@ -56,7 +110,15 @@ const App = {
 
 
 
+
+
+
+
   supabase: null,
+
+
+
+
 
 
 
@@ -64,11 +126,23 @@ const App = {
 
 
 
+
+
+
+
   currentHash: '',
 
 
 
+
+
+
+
   dataCache: {},       // 内存缓存，页面同步读取
+
+
+
+
 
 
 
@@ -80,7 +154,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
   /* ---- 种子数据（首次初始化用，camelCase 兼容旧代码） ---- */
+
+
+
+
 
 
 
@@ -88,1279 +174,2559 @@ const App = {
 
 
 
+
+
+
+
   seedData: {
+
+
+
+
 
 
 
     daily_reports: [[{id: 'sd_dr_001', inspector: '钱磊', date: '2026-07-29', type: 'online', items: [{store: '天慧广场店', score: 94, findings: '[QSC] 超五分钟未翻动；[QSC] 铲子掉落台面继续使用；[QSC] 超30分钟未处理'}, {store: '万航渡路店', score: 91, findings: '[QSC] 填补餐具未戴手套；[QSC] 超五分钟未翻动；[QSC] 超30分钟未处理；[QSC] 打包盒接触隔层'}, {store: '杨庄东街店', score: 95, findings: '[QSC] 超五分钟未翻动；[QSC] 超30分钟未处理；[QSC] 仪容仪表不合格'}, {store: '左安门店', score: 92, findings: '[QSC] 菜刀接触保鲜盒底；[QSC] 超五分钟未翻动；[QSC] 超30分钟未处理；[QSC] 仪容仪表不合格'}, {store: '汇融天地店', score: 86, findings: '[QSC] 带耳钉；[QSC] 仪容仪表不合格；[QSC] 未戴口罩；[QSC] 接触馒头未戴手套；[QSC] 午餐炒菜断档；[QSC] 超五分钟未翻动；[QSC] 超30分钟未处理'}, {store: '朝丰家园店', score: 90, findings: '[QSC] 超五分钟未翻动；[QSC] 超30分钟未处理；[QSC] 夹子接触盖子；[QSC] 炒锅洗份数盒'}, {store: '马家堡店', score: 94, findings: '[QSC] 超五分钟未翻动；[QSC] 超30分钟未处理；[QSC] 夹子接触台面'}, {store: '丰管路店', score: 94, findings: '[QSC] 超五分钟未翻动；[QSC] 超30分钟未处理；[QSC] 夹子接触台面；[QSC] 报损过多'}], storeCount: 8, issuesCount: 32}, {id: 'sd_dr_002', inspector: '钱磊', date: '2026-07-30', type: 'online', items: [{store: '郁花园店', score: 95, findings: '[QSC] 未规范佩戴口罩；[QSC] 仪容仪表不合格；[QSC] 未溜边放'}, {store: '物资学院店', score: 88, findings: '[QSC] 佩戴首饰；[QSC] 仪容仪表不合格；[QSC] 米饭未加盖；[QSC] 包装袋入水；[QSC] 关火一分钟后出餐；[QSC] 米饭未及时打散'}, {store: '青年路店', score: 90, findings: '[QSC] 饮料未用规定工具称量；[QSC] 垃圾桶垃圾溢出；[QSC] 金针菇未软榻；[QSC] 汤汁少'}, {store: '旧宫店', score: 90, findings: '[QSC] 锅贴煎制时间不足；[QSC] 筷子掉落台面；[QSC] 米饭未及时打散；[QSC] 焯水时间过长；[QSC] 佩戴首饰'}, {store: '太平街店', score: 87, findings: '[QSC] 浇油操作错误；[QSC] 2米饭未加盖；[QSC] 3打烊过早；[QSC] 4交叉污染；[QSC] 5自助服务区未及时清洁；[QSC] 6未使用专用称量器具'}], storeCount: 5, issuesCount: 24}, {id: 'sd_dr_003', inspector: '钱磊', date: '2026-07-31', type: 'online', items: [{store: '通胡大街店', score: 90, findings: '[QSC] 打烊过早；[QSC] 仪容仪表不合格；[QSC] 交叉污染，煮台热料包；[QSC] 未及时加盖；[QSC] 米饭未及时打散'}, {store: '木樨园桥西店', score: 91, findings: '[QSC] 打烊过早；[QSC] 交叉污染；[QSC] 热料包方式错误；[QSC] 水未开下米'}, {store: '交大东路店', score: 87, findings: '[QSC] 米饭未及时打散；[QSC] 工牌无名字；[QSC] 货物掉落地面；[QSC] 炒肉无锅圈；[QSC] 饮料未使用规定器具称量；[QSC] 米饭未及时加盖'}, {store: '丰台南路店', score: 89, findings: '[QSC] 只放辣椒未放油；[QSC] 仪容仪表不合格；[QSC] 锅圈接触台面后继续使用；[QSC] 米饭未及时打散；[QSC] 米饭未及时加盖'}, {store: '和平东桥店', score: 92, findings: '[QSC] 筷子头落入烤鱼酱；[QSC] 水未开下配料；[QSC] 保鲜盒落地；[QSC] 饮料未使用规定器具称量'}], storeCount: 5, issuesCount: 24}, {id: 'sd_dr_004', inspector: '钱磊', date: '2026-08-01', type: 'online', items: [{store: '平乐园店', score: 90, findings: '[QSC] 水未开下绿豆；[QSC] 未及时清洁；[QSC] 咸菜断档；[QSC] 焯水时间过长'}, {store: '宋家庄店', score: 91, findings: '[QSC] 水未开下小米；[QSC] 放油不标准；[QSC] 米饭未及时打散；[QSC] 汤汁过少；[QSC] 填补餐具未戴手套；[QSC] 一块面出七根半油条'}, {store: '和义南站店', score: 87, findings: '[QSC] 仪容仪表不合格；[QSC] 米饭未及时打散；[QSC] 未及时分装；[QSC] 垃圾溢出；[QSC] 佩戴首饰；[QSC] 交叉污染'}, {store: '通州耿庄店', score: 89, findings: '[QSC] 提前打烊；[QSC] 烧麦接触墙壁；[QSC] 米饭未及时打散；[QSC] 煎制时间不足；[QSC] 报损过多'}, {store: '驼房营店', score: 92, findings: '[QSC] 佩戴首饰；[QSC] 仪容仪表不合格；[QSC] 油条开叉；[QSC] 加料汁后未充分搅拌；[QSC] 加小葱未使用标准工器具'}], storeCount: 5, issuesCount: 26}, {id: 'sd_dr_005', inspector: '钱磊', date: '2026-08-02', type: 'online', items: [{store: '晓月中路店', score: 90, findings: '[QSC] 蒸菜断档；[QSC] 超 5 分钟未翻动；[QSC] 超 30 分钟未处理'}, {store: '德胜门店', score: 92, findings: '[QSC] 填补餐具未戴手套；[QSC] 超 30 分钟未处理；[QSC] 超 5 分钟未翻动；[QSC] 未溜边放'}, {store: '红庙店', score: 91, findings: '[QSC] 蒸菜断档；[QSC] 填补餐具未戴手套；[QSC] 超 5 分钟未翻动；[QSC] 超 30 分钟未处理'}, {store: '内江路店', score: 88, findings: '[QSC] 超 5 分钟未翻动；[QSC] 超 30 分钟未处理；[QSC] 炒菜断档；[QSC] 蒸菜断档；[QSC] 交叉污染'}, {store: '江苏路店', score: 92, findings: '[QSC] 超 5 分钟未翻动；[QSC] 超 30 分钟未处理；[QSC] 夹子放入屉中；[QSC] 未用新碗'}, {store: '控江路店', score: 86, findings: '[QSC] 用手抓熟包子；[QSC] 报损过多；[QSC] 超 5 分钟未翻动；[QSC] 超 30 分钟未处理；[QSC] 未溜边放；[QSC] 午餐蒸菜断档；[QSC] 晚餐蒸菜断档'}, {store: '小马厂店', score: 91, findings: '[QSC] 仪容仪表不合格；[QSC] 夹子接触桌面后继续使用；[QSC] 超 5 分钟未翻动；[QSC] 晚餐蒸菜断档'}, {store: '海淀黄庄店', score: 92, findings: '[QSC] 仪容仪表不合格；[QSC] 夹子接触桌面后继续使用；[QSC] 超 5 分钟未翻动；[QSC] 超 30 分钟未处理'}], storeCount: 8, issuesCount: 35}, {id: 'sd_dr_006', inspector: '钱磊', date: '2026-08-04', type: 'online', items: [{store: '天通西苑店', score: 88, findings: '[QSC] 佩戴首饰；[QSC] 仪容仪表不合格；[QSC] 交叉污染；[QSC] 未及时分装；[QSC] 焯水时间过长；[QSC] 米饭未及时打散'}, {store: '小园地铁店', score: 90, findings: '[QSC] 包子掉落台面继续使用；[QSC] 米饭未加盖；[QSC] 提前打烊；[QSC] 仪容仪表不合格；[QSC] 米饭未及时打散'}, {store: '新天地店', score: 92, findings: '[QSC] 米饭未加盖；[QSC] 交叉污染；[QSC] 工牌无名字；[QSC] 米饭未及时打散'}, {store: '次渠店', score: 87, findings: '[QSC] 工牌无名字；[QSC] 仪容仪表不合格；[QSC] 水未开下配料；[QSC] 米饭未及时打散；[QSC] 报损过多；[QSC] 汤汁过少；[QSC] 浇油数量不标准；[QSC] 未及时清洁'}, {store: '莲怡园店', score: 86, findings: '[QSC] 未穿工服；[QSC] 米饭未加盖；[QSC] 浇油数量不标准；[QSC] 交叉污染；[QSC] 米饭未及时打散；[QSC] 咸菜断档；[QSC] 未及时清洁'}], storeCount: 5, issuesCount: 30}, {id: 'sd_dr_007', inspector: '钱磊', date: '2026-08-05', type: 'online', items: [{store: '宛平城店', score: 95, findings: '[QSC] 未使用标准工器具；[QSC] 米饭未及时打散'}, {store: '草桥地铁店', score: 94, findings: '[QSC] 汤勺接触水龙头开关；[QSC] 提前打烊；[QSC] 报损过多；[QSC] 仪容仪表不合格'}, {store: '南站 2 店', score: 96, findings: '[QSC] 嘴里嚼东西；[QSC] 后厨摘帽子'}, {store: '角北店', score: 91, findings: '[QSC] 仪容仪表不合格；[QSC] 下馄饨未抖动；[QSC] 汤勺接触水龙头开关；[QSC] 未使用标准工器具称量'}, {store: '黄寺大街店', score: 89, findings: '[QSC] 汤勺接触桌面；[QSC] 仪容仪表不合格；[QSC] 三勺油两份肉；[QSC] 自助服务区未及时清洁；[QSC] 制作饮料未使用标准工器具'}], storeCount: 5, issuesCount: 17}, {id: 'dr0100', date: '2026-08-01', inspector: '陶畅', storeCount: 5, issuesCount: 25, type: 'offline', items: [{store: '小营西路店', score: 89, findings: '[QSC] 1.值班类
 
+
+
 ①员工岗位标准掌握不足，部分产品规格参数不清楚
+
+
 
 ②台账相关抽查问答存在不熟悉问题；[QSC] 2.服务类
 
+
+
 ①前厅话术频次较低，9:00后到店顾客未听见迎宾语；[QSC] 3.产品类
+
+
 
 ①高峰期部分菜品断档，出餐超时
 
+
+
 ②西红柿加工未去除果蒂，处理不符合标准
+
+
 
 ③早餐出品不合格，素包子出现破损；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①桌椅台面残留油渍污渍，收餐清理不及时
 
+
+
 ②饮水机滴水盘存有毛发，清洁不到位
+
+
 
 ③门店门框、玻璃下方存在污渍，有张贴小广告痕迹
 
+
+
 ④门口三包区域垃圾未及时清理
+
+
 
 ⑤开水器、封膜机设备表面有污渍积灰
 
+
+
 ⑥冰箱门封条存有污渍
 
+
+
 顾客不可视区域
+
+
 
 ①后厨水池下方清洁不到位留有污渍
 
+
+
 ②洗碗机设备封条、天花板存在污渍毛发；[QSC] 5.食安类
+
+
 
 ①托盘存有食物残渣未清理干净
 
+
+
 ②消毒柜未正常开启，餐盘残留残渣
+
+
 
 ③筷子清洗不干净存在污渍
 
+
+
 ④晨检相关记录缺失无法找到
+
+
 
 ⑤垃圾分类执行不彻底
 
+
+
 ⑥食材生熟混放，部分物料未封口储存'}, {store: '秋实路店', score: 86, findings: '[QSC] 1.值班类
+
+
 
 ①门店管理人员对产品标准掌握不熟，抽查问答答错
 
+
+
 ②员工岗位知识掌握存在短板；[QSC] 2.服务类
+
+
 
 ①前厅员工工服纽扣未全部扣齐，着装不规范
 
+
+
 ②后厨值班经理佩戴项链，仪容不符合要求；[QSC] 3.产品类
+
+
 
 ①小葱切制规格不合格，切配未达标
 
+
+
 ②馄饨破皮后正常出餐，出品检查不到位；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内筷子、餐盘残留污渍残渣
 
+
+
 ②饮水机出水口有水垢未清洁
+
+
 
 ③清洁工具摆放杂乱、工具表面有污渍
 
+
+
 ④门店玻璃留有手印污渍
+
+
 
 ⑤豆浆机、开水器设备污渍未清理干净
 
+
+
 ⑥消毒柜下方散落毛发
 
+
+
 顾客不可视区域
+
+
 
 ①后厨设备底部积有污渍
 
+
+
 ②后厨墙面、胶条存有污渍
+
+
 
 ③备餐区下方墙面污垢堆积
 
+
+
 ④冰柜封条污渍较重未清洁；[QSC] 5.食安类
+
+
 
 ①垃圾分类未执行到位
 
+
+
 ②制冰机内部水垢污垢未清理
+
+
 
 ③员工水杯没有集中定点存放
 
+
+
 ④案板刀具未分区管理，带有食物残渣污渍'}, {store: '红军营店', score: 89, findings: '[QSC] 1.值班类
+
+
 
 ①管理人员产品标准掌握不熟练
 
+
+
 ②岗位抽查问答存在不熟悉情况；[QSC] 2.服务类
 
+
+
 无问题项；[QSC] 3.产品类
+
+
 
 ①圆白菜储存不当出现冻伤，原材料品质受损；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①餐桌餐椅残留食物残渣
 
+
+
 ②饮水机出水口有水垢污渍
+
+
 
 ③天花板积有毛絮灰尘
 
+
+
 ④前台设备表面积灰、留有污渍
+
+
 
 顾客不可视区域
 
+
+
 ①后厨设备底部残留污渍残渣
 
+
+
 ②后厨水池下方污渍堆积
+
+
 
 ⑤冰柜门封条存有污渍残渣；[QSC] 5.食安类
 
+
+
 ①冷藏库内食材开封后未及时封口加盖储存
+
+
 
 ②冰箱内部生熟食材混放
 
+
+
 ③米面粮油未离地存放
+
+
 
 ④制冰机内部水垢未清理
 
+
+
 ⑤刀具上面残留食物残渣'}, {store: '木偶剧院店', score: 87, findings: '[QSC] 1.值班类
+
+
 
 ①管理人员对产品配比标准掌握不清
 
+
+
 ②员工岗位相关制度问答答错；[QSC] 2.服务类
+
+
 
 ①前厅员工工服仅扣一颗纽扣，着装不规范；[QSC] 3.产品类
 
+
+
 ①蔬菜储存不当出现冻伤情况
+
+
 
 ②香葱、小葱切制规格不合格，香葱夹带黄叶；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜餐具残留残渣污渍
 
+
+
 ②饮水机接水口存有污渍
+
+
 
 ③餐桌餐椅表面残留食物残渣
 
+
+
 ④天花板检修口周边堆积毛絮灰尘
+
+
 
 ⑤前台设备顶部污渍积灰未清理
 
+
+
 顾客不可视区域
+
+
 
 ①后厨设备底部残留污渍残渣
 
+
+
 ②后厨水池下方污渍堆积
+
+
 
 ③收银台底部胶渍、油污较重
 
+
+
 ④冰柜门封条污渍残渣未清理；[QSC] 5.食安类
+
+
 
 ①库房食材开封后未封口储存
 
+
+
 ②冰箱内生熟食材混放存放
+
+
 
 ③米面粮油没有离地存放
 
+
+
 ④制冰机内部有水垢污渍
+
+
 
 ⑤刀具缝隙残留食物残渣'}, {store: '黄寺大街店', score: 87, findings: '[QSC] 1.值班类
 
+
+
 ①管理人员产品克重标准掌握不熟悉
+
+
 
 ②员工相关制度抽查问答出错；[QSC] 2.服务类
 
+
+
 无问题项；[QSC] 3.产品类
+
+
 
 ①圆白菜储存不当出现冻伤
 
+
+
 ②香葱原料夹带黄叶，品质不佳
+
+
 
 ③烤串制作不达标，鸡肉串破皮、羊肉串重量超标；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜餐碟存有毛发
 
+
+
 ②餐具柜抽屉内部残留残渣
+
+
 
 ③餐桌台面残留食物残渣污渍
 
+
+
 ④厨余垃圾桶桶盖未加盖
+
+
 
 ⑤门店铜牌位置有污渍
 
+
+
 ⑥开水机顶部积灰存有污渍
 
+
+
 顾客不可视区域
+
+
 
 ①排烟罩积攒油垢
 
+
+
 ②冰箱层架、封条存在污渍；[QSC] 5.食安类
+
+
 
 ①垃圾分类落实不到位
 
+
+
 ②冷藏食材开封后未封口储存
+
+
 
 ③冰箱内部生熟混放，出现交叉存放风险
 
+
+
 ④案板、刀具残留食物残渣污渍
+
+
 
 ⑤晨检记录缺失，台账资料不全'}]}, {id: 'dr0101', date: '2026-08-01', inspector: '马昕茹', storeCount: 7, issuesCount: 0, type: 'online', items: [{store: '顺义站前南街店', score: 84, findings: ''}, {store: '北花园店', score: 89, findings: ''}, {store: '西二旗店', score: 86, findings: ''}, {store: '丰台大悦春风里店', score: 86, findings: ''}, {store: '通州店', score: 93, findings: ''}, {store: '通州梨园店', score: 91, findings: ''}, {store: '马驹桥店', score: 79, findings: ''}]}, {id: 'dr0103', date: '2026-08-01', inspector: '范晓明', storeCount: 3, issuesCount: 0, type: 'online', items: [{store: '枣园店', score: 86, findings: ''}, {store: '木偶剧院店', score: 90, findings: ''}, {store: '新桥南街店', score: 87, findings: ''}]}, {id: 'dr0104', date: '2026-08-01', inspector: '徐瑞雪', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '车公庄店', score: 91, findings: '[QSC] 无差异'}, {store: '杨庄东街店', score: 93, findings: '[QSC] 无差异'}, {store: '金顶北路店', score: 87, findings: '[QSC] 长款0.3元'}, {store: '西八里庄店', score: 89, findings: '[QSC] 无差异'}]}, {id: 'dr0105', date: '2026-08-01', inspector: '乔雨地', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '次渠店', score: 81, findings: '[QSC] 短款1.2元'}, {store: '辛房路店', score: 90, findings: '[QSC] 短款95.2元'}, {store: '亦庄店', score: 89, findings: '[QSC] 无误差'}, {store: '亦庄桥店', score: 88, findings: '[QSC] 长款10元'}]}, {id: 'dr0106', date: '2026-08-02', inspector: '马昕茹', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '定福庄店', score: 88, findings: ''}, {store: '打浦路店', score: 72, findings: ''}, {store: '郁花园店', score: 96, findings: ''}, {store: '安慧北里店', score: 93, findings: ''}, {store: '东大桥店', score: 89, findings: ''}, {store: '十里堡店', score: 90, findings: ''}, {store: '将台路店', score: 89, findings: ''}, {store: '翠成馨园店', score: 93, findings: ''}]}, {id: 'dr0107', date: '2026-08-02', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '东中街店', score: 84, findings: ''}, {store: '北苑中街店', score: 90, findings: ''}, {store: '广渠门店', score: 94, findings: ''}, {store: '清河店', score: 95, findings: ''}, {store: '天慧广场店', score: 95, findings: ''}, {store: '古城大街店', score: 90, findings: ''}, {store: '航天桥店', score: 85, findings: ''}, {store: '车公庄店', score: 82, findings: ''}]}, {id: 'dr0109', date: '2026-08-02', inspector: '范晓明', storeCount: 3, issuesCount: 0, type: 'online', items: [{store: '东坝店', score: 86, findings: ''}, {store: '五道口店', score: 88, findings: ''}, {store: '前进花园店', score: 83, findings: ''}]}, {id: 'dr0110', date: '2026-08-02', inspector: '乔雨地', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '驼房营店', score: 90, findings: '[QSC] 无误差'}, {store: '天通西苑店', score: 91, findings: '[QSC] 无误差'}, {store: '回龙观东大街店', score: 88, findings: '[QSC] 长款6.3元'}, {store: '昌平地铁店', score: 90, findings: '[QSC] 短款10元'}]}, {id: 'dr0111', date: '2026-08-02', inspector: '王红丽', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '光彩路店', score: 90, findings: '[QSC] 短款4.38元'}, {store: '物资学院店', score: 87, findings: '[QSC] 无差异'}, {store: '通胡大街店', score: 91, findings: '[QSC] 无差异'}, {store: '垡头店', score: 89, findings: '[QSC] 长款4.2元'}]}, {id: 'dr0112', date: '2026-08-03', inspector: '范晓明', storeCount: 3, issuesCount: 0, type: 'online', items: [{store: '北大地店', score: 89, findings: ''}, {store: '暖山生活店', score: 95, findings: ''}, {store: '周庄嘉园店', score: 83, findings: ''}]}, {id: 'dr0113', date: '2026-08-03', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '杨庄地铁店', score: 86, findings: ''}, {store: '金融街店', score: 89, findings: ''}, {store: '迎春路店', score: 83, findings: ''}, {store: '右安门店', score: 87, findings: ''}, {store: '中关村南路店', score: 92, findings: ''}, {store: '古城大街店', score: 90, findings: ''}, {store: '航天桥店', score: 85, findings: ''}, {store: '车公庄店', score: 82, findings: ''}]}, {id: 'dr0114', date: '2026-08-03', inspector: '陶畅', storeCount: 3, issuesCount: 15, type: 'offline', items: [{store: '新桥南街店', score: 90, findings: '[QSC] 1.值班类
 
+
+
 ①早餐产品供应管控不到位，9:05‑9:17松糕出现断档
+
+
 
 ②员工对公司相关制度掌握不足
 
+
+
 ③岗位SOP知识抽查回答不熟练
+
+
 
 ④设备故障报修跟进记录不完善；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①烧麦出现破皮，蒸制出品未按标准操作；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内餐碟存在污渍、筷子残留残渣
 
+
+
 ②饮水机斟水口有污渍未清洁
+
+
 
 ③铜锅、锅架表面油渍、锅底有污渍
 
+
+
 ④桌椅缝隙残留食物残渣
+
+
 
 ⑤门店门玻璃留有手印污渍
 
+
+
 ⑥门口三包区有纸巾杂物垃圾
 
+
+
 顾客不可视区域
+
+
 
 ①收汁锅残留污渍未清洁干净
 
+
+
 ②洗碗机内部存有污垢污渍
+
+
 
 ③冰箱密封条积有污渍；[QSC] 5.食安类
 
+
+
 ①常温库房原料开封后未封口储存
+
+
 
 ②制冰机内部有水垢未清理
 
+
+
 ③晨检相关台账记录未及时填写'}, {store: '杨庄地铁店', score: 90, findings: '[QSC] 1.值班类
+
+
 
 ①在岗人员手机数量统计核对不一致
 
+
+
 ②员工制度掌握抽查回答有误
+
+
 
 ③岗位SOP知识抽查回答不熟练
 
+
+
 ④设备出品检查记录不规范；[QSC] 2.服务类
+
+
 
 无问题；[QSC] 3.产品类
 
+
+
 ①番茄鱼出品未撒小葱，出品标准未落实
+
+
 
 ②高峰期扣肉出现断档，菜品档口管控不足
 
+
+
 ③蔬菜出现冻伤、黄豆未按要求存放冷冻冰箱，原料储存不当
+
+
 
 ④剪刀工具存有污渍
 
+
+
 ⑤蒜蓉粉丝虾粉丝发干，出品未达标；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①无回餐空位，回餐盘收纳不合理
 
+
+
 ②洗碗间垃圾桶未加盖
+
+
 
 ③开水器龙头、封膜机顶部存在污渍
 
+
+
 ④冰箱密封条留有污渍
 
+
+
 顾客不可视区域
+
+
 
 无问题；[QSC] 5.食安类
 
+
+
 ①餐盘柜未开启，餐盘无预热温度
+
+
 
 ②晨检、食品添加剂台账记录未及时更新
 
+
+
 ③垃圾没有完全分类
+
+
 
 ④物料原料开封后未封口存放'}, {store: '嘉园店', score: 88, findings: '[QSC] 1.值班类
 
+
+
 ①高峰期牛肉面估清断货，产品档口管控不足
+
+
 
 ②门店广告机画面显示异常未及时处理报修
 
+
+
 ③员工制度掌握抽查回答有误
+
+
 
 ④岗位SOP知识抽查回答不熟练
 
+
+
 ⑤广告机故障报修跟进不及时；[QSC] 2.服务类
+
+
 
 ①后厨员工工服扣子未按规范扣好；[QSC] 3.产品类
 
+
+
 无问题；[QSC] 4.环境类
+
+
 
 顾客可视区域
 
+
+
 ①消毒柜餐碟存有油渍、毛发
+
+
 
 ②抽屉内部残留杂物残渣
 
+
+
 ③洗碗间垃圾桶未加盖
+
+
 
 ④门店大门玻璃留有胶痕污渍
 
+
+
 ⑤墙面开关位置存在污渍
+
+
 
 ⑥封膜机顶部留有污渍
 
+
+
 ⑦消毒柜内部残留残渣
+
+
 
 顾客不可视区域
 
+
+
 ①清洁工具摆放杂乱、剪刀存有污渍
+
+
 
 ②后厨各类容器、设备表面油垢未清理
 
+
+
 ③收汁台下方积存油垢
+
+
 
 ④冰箱层架位置留有污渍；[QSC] 5.食安类
 
+
+
 ①库房开封原料未封口储存
 
+
+
 ②冰箱内物品堆放杂乱、包装箱直接放置冰箱
+
+
 
 ③后厨区域发现苍蝇，虫害防控不到位'}]}, {id: 'dr0115', date: '2026-08-03', inspector: '王红丽', storeCount: 3, issuesCount: 3, type: 'offline', items: [{store: '暖山生活店', score: 93, findings: '[QSC] 长款20.1元'}, {store: '广源大厦店', score: 86, findings: '[QSC] 短款0.1元'}, {store: '和平东桥店', score: 92, findings: '[QSC] 无差异'}]}, {id: 'dr0116', date: '2026-08-03', inspector: '乔雨地', storeCount: 6, issuesCount: 15, type: 'offline', items: [{store: '玉桥中路店', score: 0, findings: '[QSC] 玉桥中路，经营四区，第一负责人王新龙；[QSC] 整体周清痕迹明显，设备底部干净，遗漏点：；[QSC] 冰箱层架有霉斑、污渍，密封条需要进一步清理'}, {store: '李老新村店', score: 0, findings: '[QSC] 李老新村，经营八区，区域直管；[QSC] 整体周清痕迹明显，忽略冰箱密封条卫生，前厅三个吊灯内部蜘蛛网未清理'}, {store: '通州梨园店', score: 0, findings: '[QSC] 通州梨园店，经营四区，店长张帅帅；[QSC] 整体周清痕迹明显，忽略点：冰箱层架夹缝霉斑，前厅墙角蜘蛛网，墙面胶痕'}, {store: '塔营北街店', score: 0, findings: '[QSC] 塔营北街店。经营四区，店长关姗姗；[QSC] 整体周清痕迹明显，效果良好；[QSC] 忽略冰箱柜门卫生，柜门油渍，层架污渍'}, {store: '甜水园店', score: 0, findings: '[QSC] 经营八区，甜水园店，店长郝帅杰；[QSC] 周清痕迹明显；[QSC] 但忽略了吧台的冰箱层架，发霉、长毛；制冰机少许青苔'}, {store: '东大桥店', score: 91, findings: '[QSC] 短款五元'}]}, {id: 'dr0117', date: '2026-08-04', inspector: '范晓明', storeCount: 3, issuesCount: 0, type: 'online', items: [{store: '北大地店', score: 89, findings: ''}, {store: '暖山生活店', score: 95, findings: ''}, {store: '周庄嘉园店', score: 83, findings: ''}]}, {id: 'dr0118', date: '2026-08-04', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '杨庄地铁店', score: 86, findings: ''}, {store: '金融街店', score: 89, findings: ''}, {store: '迎春路店', score: 83, findings: ''}, {store: '右安门店', score: 87, findings: ''}, {store: '中关村南路店', score: 92, findings: ''}, {store: '古城大街店', score: 90, findings: ''}, {store: '航天桥店', score: 85, findings: ''}, {store: '车公庄店', score: 82, findings: ''}]}, {id: 'dr0119', date: '2026-08-04', inspector: '陶畅', storeCount: 3, issuesCount: 15, type: 'offline', items: [{store: '新桥南街店', score: 90, findings: '[QSC] 1.值班类
 
+
+
 ①早餐产品供应管控不到位，9:05‑9:17松糕出现断档
+
+
 
 ②员工对公司相关制度掌握不足
 
+
+
 ③岗位SOP知识抽查回答不熟练
+
+
 
 ④设备故障报修跟进记录不完善；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①烧麦出现破皮，蒸制出品未按标准操作；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内餐碟存在污渍、筷子残留残渣
 
+
+
 ②饮水机斟水口有污渍未清洁
+
+
 
 ③铜锅、锅架表面油渍、锅底有污渍
 
+
+
 ④桌椅缝隙残留食物残渣
+
+
 
 ⑤门店门玻璃留有手印污渍
 
+
+
 ⑥门口三包区有纸巾杂物垃圾
 
+
+
 顾客不可视区域
+
+
 
 ①收汁锅残留污渍未清洁干净
 
+
+
 ②洗碗机内部存有污垢污渍
+
+
 
 ③冰箱密封条积有污渍；[QSC] 5.食安类
 
+
+
 ①常温库房原料开封后未封口储存
+
+
 
 ②制冰机内部有水垢未清理
 
+
+
 ③晨检相关台账记录未及时填写'}, {store: '杨庄地铁店', score: 90, findings: '[QSC] 1.值班类
+
+
 
 ①在岗人员手机数量统计核对不一致
 
+
+
 ②员工制度掌握抽查回答有误
+
+
 
 ③岗位SOP知识抽查回答不熟练
 
+
+
 ④设备出品检查记录不规范；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①番茄鱼出品未撒小葱，出品标准未落实
 
+
+
 ②高峰期扣肉出现断档，菜品档口管控不足
+
+
 
 ③蔬菜出现冻伤、黄豆未按要求存放冷冻冰箱，原料储存不当
 
+
+
 ④剪刀工具存有污渍
+
+
 
 ⑤蒜蓉粉丝虾粉丝发干，出品未达标；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①无回餐空位，回餐盘收纳不合理
 
+
+
 ②洗碗间垃圾桶未加盖
+
+
 
 ③开水器龙头、封膜机顶部存在污渍
 
+
+
 ④冰箱密封条留有污渍
 
+
+
 顾客不可视区域
+
+
 
 无问题；[QSC] 5.食安类
 
+
+
 ①餐盘柜未开启，餐盘无预热温度
+
+
 
 ②晨检、食品添加剂台账记录未及时更新
 
+
+
 ③垃圾没有完全分类
+
+
 
 ④物料原料开封后未封口存放'}, {store: '嘉园店', score: 88, findings: '[QSC] 1.值班类
 
+
+
 ①高峰期牛肉面估清断货，产品档口管控不足
+
+
 
 ②门店广告机画面显示异常未及时处理报修
 
+
+
 ③员工制度掌握抽查回答有误
+
+
 
 ④岗位SOP知识抽查回答不熟练
 
+
+
 ⑤广告机故障报修跟进不及时；[QSC] 2.服务类
+
+
 
 ①后厨员工工服扣子未按规范扣好；[QSC] 3.产品类
 
+
+
 无问题；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜餐碟存有油渍、毛发
 
+
+
 ②抽屉内部残留杂物残渣
+
+
 
 ③洗碗间垃圾桶未加盖
 
+
+
 ④门店大门玻璃留有胶痕污渍
+
+
 
 ⑤墙面开关位置存在污渍
 
+
+
 ⑥封膜机顶部留有污渍
+
+
 
 ⑦消毒柜内部残留残渣
 
+
+
 顾客不可视区域
 
+
+
 ①清洁工具摆放杂乱、剪刀存有污渍
+
+
 
 ②后厨各类容器、设备表面油垢未清理
 
+
+
 ③收汁台下方积存油垢
+
+
 
 ④冰箱层架位置留有污渍；[QSC] 5.食安类
 
+
+
 ①库房开封原料未封口储存
+
+
 
 ②冰箱内物品堆放杂乱、包装箱直接放置冰箱
 
+
+
 ③后厨区域发现苍蝇，虫害防控不到位'}]}, {id: 'dr0120', date: '2026-08-04', inspector: '王红丽', storeCount: 3, issuesCount: 3, type: 'offline', items: [{store: '暖山生活店', score: 93, findings: '[QSC] 长款20.1元'}, {store: '广源大厦店', score: 86, findings: '[QSC] 短款0.1元'}, {store: '和平东桥店', score: 92, findings: '[QSC] 无差异'}]}, {id: 'dr0121', date: '2026-08-04', inspector: '乔雨地', storeCount: 6, issuesCount: 15, type: 'offline', items: [{store: '玉桥中路店', score: 0, findings: '[QSC] 玉桥中路，经营四区，第一负责人王新龙；[QSC] 整体周清痕迹明显，设备底部干净，遗漏点：；[QSC] 冰箱层架有霉斑、污渍，密封条需要进一步清理'}, {store: '李老新村店', score: 0, findings: '[QSC] 李老新村，经营八区，区域直管；[QSC] 整体周清痕迹明显，忽略冰箱密封条卫生，前厅三个吊灯内部蜘蛛网未清理'}, {store: '通州梨园店', score: 0, findings: '[QSC] 通州梨园店，经营四区，店长张帅帅；[QSC] 整体周清痕迹明显，忽略点：冰箱层架夹缝霉斑，前厅墙角蜘蛛网，墙面胶痕'}, {store: '塔营北街店', score: 0, findings: '[QSC] 塔营北街店。经营四区，店长关姗姗；[QSC] 整体周清痕迹明显，效果良好；[QSC] 忽略冰箱柜门卫生，柜门油渍，层架污渍'}, {store: '甜水园店', score: 0, findings: '[QSC] 经营八区，甜水园店，店长郝帅杰；[QSC] 周清痕迹明显；[QSC] 但忽略了吧台的冰箱层架，发霉、长毛；制冰机少许青苔'}, {store: '东大桥店', score: 91, findings: '[QSC] 短款五元'}]}, {id: 'dr0122', date: '2026-08-05', inspector: '马昕茹', storeCount: 5, issuesCount: 0, type: 'online', items: [{store: '朝丰家园店', score: 86, findings: ''}, {store: '马家堡店', score: 85, findings: ''}, {store: '光彩路店', score: 87, findings: ''}, {store: '小营西路店', score: 95, findings: ''}, {store: '枣园地铁店', score: 92, findings: ''}]}, {id: 'dr0123', date: '2026-08-05', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '万航渡路店', score: 81, findings: ''}, {store: '杨庄东街店', score: 91, findings: ''}, {store: '左安门店', score: 86, findings: ''}, {store: '汇融天地店', score: 85, findings: ''}, {store: '丰管路店', score: 84, findings: ''}, {store: '古城大街店', score: 90, findings: ''}, {store: '航天桥店', score: 85, findings: ''}, {store: '车公庄店', score: 82, findings: ''}]}, {id: 'dr0124', date: '2026-08-05', inspector: '陶畅', storeCount: 5, issuesCount: 25, type: 'offline', items: [{store: '石榴园店', score: 83, findings: '[QSC] 1.值班类
+
+
 
 ①在岗人员手机数量收集不一致
 
+
+
 ②早餐9:30后产品断档，豆腐脑断档10分钟；[QSC] 2.服务类
+
+
 
 ①后厨员工工服纽扣未扣齐；[QSC] 3.产品类
 
+
+
 ①蔬菜包存在冻伤情况
+
+
 
 ②制备区香菜发黄；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内餐具有残渣污渍
 
+
+
 ②洗手池周边存有垃圾
+
+
 
 ③垃圾桶未加盖
 
+
+
 ④三包区域烟头、纸巾垃圾未清理
+
+
 
 ⑤设备表面存在污渍，封膜机有污渍
 
+
+
 ⑥消毒柜内部有毛发
 
+
+
 顾客不可视区域
+
+
 
 ①后厨设备下方地面卫生较差
 
+
+
 ②收汁锅未清洁留有污渍
+
+
 
 ③洗碗间有水垢油污、地面不干净
 
+
+
 ④冰柜密封条存有污渍；[QSC] 5.食安类
+
+
 
 ①原材料未做到先进先出
 
+
+
 ②常温库存原料开封后未封口储存
+
+
 
 ③制冰机内部存有残渣污垢未清理
 
+
+
 ④员工水杯未集中定点存放
+
+
 
 ⑤案板刀具残留食物残渣
 
+
+
 ⑥后厨区域发现苍蝇
+
+
 
 ⑦各类台账记录更新不及时'}, {store: '木樨园桥西店', score: 86, findings: '[QSC] 1.值班类
 
+
+
 无问题；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①洋葱上冻储存
 
+
+
 ②烤串鸡肉皮单独成块，操作不符合标准
+
+
 
 ③黄焖鸡收汁不够浓稠，出品不达标；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜餐具残留残渣
 
+
+
 ②垃圾桶没有加盖
+
+
 
 ②门框上方存有蜘蛛网小虫
 
+
+
 ③封膜机、豆浆机机盖污渍未清理
+
+
 
 ④吧台水池下方存有污渍
 
+
+
 ⑤消毒柜底部积灰
 
+
+
 顾客不可视区域
+
+
 
 ①清洁工具摆放杂乱、剪刀存有污渍
 
+
+
 ②洗碗间台面下方结蜘蛛网
+
+
 
 ③库房货架下方有蜘蛛网
 
+
+
 ④冰柜密封条、冰箱内侧边角污渍未清理；[QSC] 5.食安类
+
+
 
 ①原材料未落实先进先出
 
+
+
 ②开封物料未封口保存
+
+
 
 ③制冰机内部有水垢污垢
 
+
+
 ④案板、刀具存有残渣飞虫'}, {store: '天桥店', score: 87, findings: '[QSC] 1.值班类
 
+
+
 无问题；[QSC] 2.服务类
+
+
 
 ①收台员工未按要求佩戴腰包；[QSC] 3.产品类
 
+
+
 ①洋葱、螺丝椒上冻储存
+
+
 
 ②香菜存在黄叶
 
+
+
 ③烤串鸡皮单独成块，操作不标准
+
+
 
 ④烤串出现漏签问题
 
+
+
 ⑤红烧鲈鱼出品碗边没有擦拭干净；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①洗碗间垃圾桶未加盖
 
+
+
 顾客不可视区域
+
+
 
 ①锅贴机油槽、蒸饭车把手留有油渍
 
+
+
 ②冰柜滤网、密封条污渍未清洁；[QSC] 5.食安类
+
+
 
 ①牛奶原材料未离地存放
 
+
+
 ②制冰机内部有水垢污垢
+
+
 
 ③刀具存有食物残渣
 
+
+
 ④台账晨检记录、添加剂记录未及时更新'}, {store: '日坛北路店', score: 86, findings: '[QSC] 1.值班类
+
+
 
 无问题；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①蔬菜存在冻伤
 
+
+
 ②香菜烂叶
+
+
 
 ③烤串黑边没有修剪，出品不合格；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜小碟子存有污渍
 
+
+
 ②抽屉内部留有鸡蛋壳残渣
+
+
 
 ③门框留有胶痕污渍
 
+
+
 ④豆浆机、封膜机顶部污渍未清理
+
+
 
 ⑤消毒柜内部残留残渣
 
+
+
 顾客不可视区域
+
+
 
 ①清洁工具摆放杂乱，剪刀留有污渍
 
+
+
 ②蒸饭车把手油渍、备餐间水池污渍
+
+
 
 ③后厨风口存有毛絮、天花板污渍
 
+
+
 ④洗碗机内部有水垢
+
+
 
 ⑤库房风口毛絮堆积
 
+
+
 ⑥冰箱滤网、密封条污渍未清理；[QSC] 5.食安类
+
+
 
 ①开封辣椒物料没有封口储存
 
+
+
 ②制冰机水槽有水垢污渍
+
+
 
 ③案板刀具残留食物残渣
 
+
+
 ④各类台账记录未及时更新'}, {store: '将台路店', score: 91, findings: '[QSC] 1.值班类
+
+
 
 无问题；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①蔬菜存放出现上冻情况
 
+
+
 ②剪刀存有污渍
+
+
 
 ③蒜蓉粉丝虾蒜蓉铺撒不均匀，出品不达标；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①垃圾桶外围脏污
 
+
+
 ②餐桌台面残留残渣油渍
+
+
 
 ③餐盘存有毛发、餐碟残留残渣
 
+
+
 ④饮水机出水口污渍
+
+
 
 ⑤洗碗间垃圾桶未加盖
 
+
+
 ⑥封膜机、开水器有水垢污渍
+
+
 
 ⑦消毒柜内部残留残渣
 
+
+
 ⑧冰箱密封条侧边存有污渍
 
+
+
 顾客不可视区域
+
+
 
 ①外卖柜门胶条、蒸饭车把手油渍
 
+
+
 ②天花板上方堆积毛絮
+
+
 
 ③洗碗间内部水垢、墙面留有污渍；[QSC] 5.食安类
 
+
+
 ①托盘残留食物残渣
+
+
 
 ②筷子存有残渣污渍
 
+
+
 ③员工水杯未集中存放
+
+
 
 ④剩余物料储存未封口'}]}, {id: 'dr0126', date: '2026-08-05', inspector: '王红丽', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '五道口店', score: 82, findings: '[QSC] 无差异'}, {store: '马连洼店', score: 85, findings: '[QSC] 无差异'}, {store: '霍营地铁店', score: 91, findings: '[QSC] 短款7元'}, {store: '温都水城店', score: 89, findings: '[QSC] 无差异'}]}, {id: 'dr0127', date: '2026-08-06', inspector: '马昕茹', storeCount: 2, issuesCount: 0, type: 'online', items: [{store: '国展店', score: 86, findings: ''}, {store: '迎春路店', score: 85, findings: ''}]}, {id: 'dr0128', date: '2026-08-06', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '西八里庄店', score: 91, findings: ''}, {store: '兴丰大街店', score: 92, findings: ''}, {store: '左安门店', score: 86, findings: ''}, {store: '汇融天地店', score: 85, findings: ''}, {store: '丰管路店', score: 84, findings: ''}, {store: '古城大街店', score: 90, findings: ''}, {store: '航天桥店', score: 85, findings: ''}, {store: '车公庄店', score: 82, findings: ''}]}, {id: 'dr0129', date: '2026-08-06', inspector: '陶畅', storeCount: 4, issuesCount: 20, type: 'offline', items: [{store: '良乡店', score: 89, findings: '[QSC] 1.值班类
 
+
+
 ①早餐时段虾仁锅贴、松糕素包出现断档，早餐产品供应未达标
+
+
 
 ②员工SOP知识抽查掌握度不足，部分问题回答错误；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 无问题；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内餐具残留残渣污垢
 
+
+
 ②餐桌椅表面存在残渣、小飞虫
+
+
 
 ③门店对外企划海报未按时翻面更新
 
+
+
 ④封膜机顶部存在污渍
 
+
+
 顾客不可视区域
+
+
 
 ①蒸饭车把手、烤箱存有油渍未清洁
 
+
+
 ②洗碗机封条有水垢污渍
+
+
 
 ③冰柜门下方积有油垢；[QSC] 5.食安类
 
+
+
 ①辣椒段未执行先进先出原则
+
+
 
 ②面条、烤串原材料开封后未加盖密封存放
 
+
+
 ③制冰机水槽有水垢
+
+
 
 ④净水机内部发现飞虫尸体
 
+
+
 ⑤菜板残留食物残渣'}, {store: '鲁谷银河店', score: 91, findings: '[QSC] 1.值班类
+
+
 
 ①员工岗位SOP知识点回答有误；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①圆白菜、洋葱存在冻伤情况；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①洗手间出风口积存毛絮
 
+
+
 ②墙面存在毛絮灰尘
+
+
 
 ③收银台上方出风口未清洁
 
+
+
 ④开水机、封膜机顶部积灰污渍
+
+
 
 ⑤消毒柜内部残留毛发、残渣
 
+
+
 顾客不可视区域
+
+
 
 ①剪刀存有污渍
 
+
+
 ②库房货架下方堆放垃圾残渣
+
+
 
 ③后厨冰箱密封条、层架油污未清理；[QSC] 5.食安类
 
+
+
 ①茶叶蛋原材料开封后未完全封口
+
+
 
 ②制冰机水槽有水垢、冰铲污渍
 
+
+
 ③灭蝇灯粘虫纸未及时更换'}, {store: '三环新城店', score: 90, findings: '[QSC] 1.值班类
+
+
 
 ①员工SOP知识抽查部分原料克数回答错误；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①制备区香菜存在黄叶，原料品相不合格；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①饮水机出水口存在污渍
 
+
+
 ②餐椅表面残留食物残渣
+
+
 
 ③豆浆机、封膜机存有污渍未清洁干净
 
+
+
 ④吧台水池下方有污渍
+
+
 
 ⑤消毒柜抽屉内部有毛发
 
+
+
 ⑥炒菜机旁玻璃留有油渍
 
+
+
 顾客不可视区域
+
+
 
 ①剪刀存在油渍
 
+
+
 ②油条机柜门存有油渍；[QSC] 5.食安类
+
+
 
 ①垃圾未做到完全分类投放
 
+
+
 ②葱油未落实先进先出
+
+
 
 ③食材开封存放未封口
 
+
+
 ④净水机内部存在虫子尸体'}, {store: '白纸坊店', score: 89, findings: '[QSC] 1.值班类
+
+
 
 ①员工SOP考核多项原料参数回答错误；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①香菜带有黄叶、小葱切制不符合标准；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内筷子、水杯残留残渣、毛发
 
+
+
 ②饮水机斟水口周边存在污渍
+
+
 
 ③门框有蛛网、门锁留有胶痕
 
+
+
 ④封膜机顶部、豆浆机盖子污渍未清理
+
+
 
 ⑤消毒柜内部存有残渣
 
+
+
 顾客不可视区域
+
+
 
 ①后厨设备下方清洁不到位
 
+
+
 ②锅贴机油槽未清理
+
+
 
 ③洗碗机有水垢污渍
 
+
+
 ④库房货架下方残留污渍残渣
+
+
 
 ⑤冰柜层架、密封条存有污渍；[QSC] 5.食安类
 
+
+
 ①冰箱内存放物品存在交叉污染风险
+
+
 
 ②制冰机水槽留有污渍
 
+
+
 ③菜板存在残渍、掉漆
+
+
 
 ④后厨区域发现蚊虫，虫害防控不到位'}]}, {id: 'dr0130', date: '2026-08-06', inspector: '徐瑞雪', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '大钟寺店', score: 87, findings: '[QSC] 无差异'}, {store: '中关村南路店', score: 93, findings: '[QSC] ﻿长款17.45元（备用金500无误，另一个钱箱内17.5为私人款项换零钱放入）'}, {store: '双榆树店', score: 90, findings: '[QSC] 无差异'}, {store: '昌平南环路店', score: 87, findings: '[QSC] 无差异'}]}, {id: 'dr0131', date: '2026-08-06', inspector: '乔雨地', storeCount: 5, issuesCount: 5, type: 'offline', items: [{store: '拱辰南大街店', score: 86, findings: '[QSC] 无误差'}, {store: '晓月中路店', score: 92, findings: '[QSC] 长款4.2元'}, {store: '丰台南路店', score: 93, findings: '[QSC] 无误差'}, {store: '东大街店', score: 94, findings: '[QSC] 无误差'}, {store: '南站店', score: 93, findings: '[QSC] 无误差'}]}, {id: 'dr0132', date: '2026-08-07', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '白纸坊店', score: 83, findings: ''}, {store: '垡头店', score: 90, findings: ''}, {store: '天通东苑店', score: 92, findings: ''}, {store: '富力又一城店', score: 91, findings: ''}, {store: '丰管路店', score: 84, findings: ''}, {store: '古城大街店', score: 90, findings: ''}, {store: '航天桥店', score: 85, findings: ''}, {store: '车公庄店', score: 82, findings: ''}]}, {id: 'dr0133', date: '2026-08-07', inspector: '钱磊', storeCount: 5, issuesCount: 0, type: 'online', items: [{store: '广渠门外大街店', score: 90, findings: ''}, {store: '马连道店', score: 93, findings: ''}, {store: '草房地铁店', score: 84, findings: ''}, {store: '泰和园店', score: 96, findings: ''}, {store: '土桥店', score: 87, findings: ''}]}, {id: 'dr0134', date: '2026-08-07', inspector: '陶畅', storeCount: 5, issuesCount: 25, type: 'offline', items: [{store: '红庙店', score: 89, findings: '[QSC] 1.值班类
 
+
+
 ①员工工装形象不达标，人员着装未做到干净整洁
+
+
 
 ②财务台账存在短款8.22元，台账管理存在问题；[QSC] 2.服务类
 
+
+
 ①服务台未主动介绍餐具位置
+
+
 
 ②前厅服务话术频次低，未做到到店主动问候；[QSC] 3.产品类
 
+
+
 ①原材料葱花存在冻伤情况；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①桌面有汤汁、牛奶残渣未及时清理
 
+
+
 ②洗手间镜子存在水印
 
+
+
 ③三包区地面存在垃圾
+
+
 
 ④开水器龙头有水渍污渍
 
+
+
 ⑤消毒柜内部存在残渣、头发
+
+
 
 ⑥外卖台冰箱滤网未清洁
 
+
+
 顾客不可视区域
+
+
 
 ①洗碗间垃圾桶未盖盖子
 
+
+
 ②工具刀具摆放杂乱，剪刀未清洁
+
+
 
 ③后厨设备下方卫生未清洁
 
+
+
 ④电子秤存在油渍
+
+
 
 ⑤洗碗机密封条有水垢水渍
 
+
+
 ⑥库房货架下方卫生未清洁；[QSC] 5.食安类
+
+
 
 ①托盘存在残渣污渍
 
+
+
 ②餐盘餐碟存在残渣污渍
+
+
 
 ③筷子存在残渣污渍
 
+
+
 ④晨检台账未更新
+
+
 
 ⑤物料未封口存放'}, {store: '十里堡店', score: 90, findings: '[QSC] 1.值班类
 
+
+
 ①员工佩戴项链，工装形象不规范
+
+
 
 ②财务台账短款5.3元，台账管理异常；[QSC] 2.服务类
 
+
+
 无；[QSC] 3.产品类
+
+
 
 ①番茄鱼出品品质不达标，西红柿糊锅
 
+
+
 ②原材料蔬菜存在冻伤；[QSC] 4.环境类
+
+
 
 顾客可视区域
 
+
+
 ①垃圾桶外围存在污渍
+
+
 
 ②大门玻璃存在大量手印脏污
 
+
+
 ③桌面存在椅面残渣未清理
+
+
 
 ④饮水机斟出口存在污渍
 
+
+
 ⑤洗手台镜子有水渍
+
+
 
 ⑥洗碗间垃圾桶未加盖
 
+
+
 ⑦门框毛絮、门锁存在胶痕
+
+
 
 ⑧空调散热口积灰
 
+
+
 ⑨开关存在污渍
+
+
 
 ⑩封膜机顶部存在污渍
 
+
+
 顾客不可视区域
+
+
 
 ①冰箱封条存在污渍、内部有残渣
 
+
+
 ②油条机柜门存在油渍
+
+
 
 ③洗碗机有水垢污渍；[QSC] 5.食安类
 
+
+
 ①托盘存在残渣、残渣污渍
+
+
 
 ②晨检台账填写不完整
 
+
+
 ③员工水杯未集中存放
+
+
 
 ④茶叶蛋物料未完全封口'}, {store: '十里堡地铁店', score: 87, findings: '[QSC] 1.值班类
 
+
+
 无；[QSC] 2.服务类
+
+
 
 ①上餐未按要求使用托盘；[QSC] 3.产品类
 
+
+
 ①备餐区香菜存在黑叶，原料处理不到位；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内部餐碟存在污渍残渣
 
+
+
 ②桌面存在残渣未清理
+
+
 
 ③封膜机顶部存在污渍
 
+
+
 ④消毒柜内部积灰
 
+
+
 顾客不可视区域
+
+
 
 ①剪刀存在油渍，工具摆放杂乱
 
+
+
 ②烤串冰箱、备餐间冰箱下方存在污渍
+
+
 
 ③蒸饭车把手存在油渍
 
+
+
 ④收汁台下方存在油垢
+
+
 
 ⑤冰箱门、封条存在毛絮污渍；[QSC] 5.食安类
 
+
+
 ①物料未执行先进先出原则
+
+
 
 ②花椒、大米等物料开封后未封口
 
+
+
 ③制冰机内部有水垢污渍
+
+
 
 ④刀具案板存在食物残渣
 
+
+
 ⑤后厨出现苍蝇虫害问题'}, {store: '石佛营店', score: 86, findings: '[QSC] 1.值班类
+
+
 
 ①后厨男员工未佩戴工牌，前厅员工工服扣子未扣齐
 
+
+
 ②店长不在岗，门店主体责任无法核查
+
+
 
 ③采购台账8月份记录缺失，食安文件台账不全；[QSC] 2.服务类
 
+
+
 无；[QSC] 3.产品类
+
+
 
 ①备餐区香菜存在黄叶，原料处理不合格；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜内餐具存在污渍
 
+
+
 ②饮水机斟出口存在污渍
+
+
 
 ③三包区地面存在垃圾
 
+
+
 ④开水机龙头、封膜机顶部存在污渍
+
+
 
 ⑤消毒柜内部存在残渣
 
+
+
 顾客不可视区域
+
+
 
 ①剪刀存在油垢，工具摆放杂乱
 
+
+
 ②烤串冰箱下方卫生未清洁
+
+
 
 ③蒸饭车把手存在油垢
 
+
+
 ④洗碗机存在水垢
+
+
 
 ⑤冰箱层架、封条存在污渍；[QSC] 5.食安类
 
+
+
 ①物料未执行先进先出
+
+
 
 ②开封产品未封口存放
 
+
+
 ③制冰机有水垢污渍
+
+
 
 ④案板刀具存在食物残渣'}, {store: '新天地店', score: 89, findings: '[QSC] 1.值班类
 
+
+
 ①财务台账短款1.1元；[QSC] 2.服务类
+
+
 
 无；[QSC] 3.产品类
 
+
+
 ①圆白菜原材料冻伤
+
+
 
 ②备餐区香菜出现烂叶；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜餐碟存在残渣污渍
 
+
+
 ②抽屉内部留有残渣
+
+
 
 ③洗手池存在污渍
 
+
+
 ④桌面有椅面残渣
+
+
 
 ⑤天花板存在蜘蛛网
 
+
+
 顾客不可视区域
+
+
 
 ①后厨水池、外卖台冰箱底部存在污渍
 
+
+
 ②冲汤机存在污渍
+
+
 
 ③收汁台下方油垢，收油容器污渍
 
+
+
 ④洗碗机存在污垢
+
+
 
 ⑤冰箱封条存在污渍；[QSC] 5.食安类
 
+
+
 ①开封物料未封口存放
+
+
 
 ②制冰机有水垢污渍
 
+
+
 ③员工水杯未集中存放
+
+
 
 ④案板存在食物残渣'}]}, {id: 'dr0135', date: '2026-08-07', inspector: '范晓明', storeCount: 6, issuesCount: 0, type: 'online', items: [{store: '灯市口地铁店', score: 89, findings: ''}, {store: '石榴园店', score: 82, findings: ''}, {store: '四路通店', score: 95, findings: ''}, {store: '开阳里店', score: 91, findings: ''}, {store: '东四南大街店', score: 87, findings: ''}, {store: '小营路店', score: 90, findings: ''}]}, {id: 'dr0136', date: '2026-08-07', inspector: '乔雨地', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '丰台大悦春风里店', score: 89, findings: '[QSC] 无误差'}, {store: '角北店', score: 85, findings: '[QSC] 长款5.6元'}, {store: '西马场店', score: 83, findings: '[QSC] 短款192.5元'}, {store: '赵公口店', score: 92, findings: '[QSC] 无误差'}]}, {id: 'dr0137', date: '2026-08-07', inspector: '王红丽', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '东中街店', score: 87, findings: '[QSC] 无差异'}, {store: '和平里店', score: 88, findings: '[QSC] 长款0.5元'}, {store: '科学院南路店', score: 87, findings: '[QSC] 无差异'}, {store: '金融街店', score: 90, findings: '[QSC] 短款1.8元'}]}, {id: 'dr0138', date: '2026-08-07', inspector: '徐瑞雪', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '东坝店', score: 83, findings: '[QSC] 无差异'}, {store: '常营V中心店', score: 93, findings: '[QSC] 长款0.48元'}, {store: '青年路店', score: 90, findings: '[QSC] 长款0.1元'}, {store: '大柳树店', score: 86, findings: '[QSC] 无差异'}]}, {id: 'dr0139', date: '2026-08-08', inspector: '马昕茹', storeCount: 4, issuesCount: 0, type: 'online', items: [{store: '方庄店', score: 0, findings: ''}, {store: '泰和园店', score: 0, findings: ''}, {store: '天通东苑店', score: 0, findings: ''}, {store: '富力又一城店', score: 0, findings: ''}]}, {id: 'dr0140', date: '2026-08-08', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online', items: [{store: '东大桥店', score: 88, findings: ''}, {store: '金融街店', score: 90, findings: ''}, {store: '天通东苑店', score: 92, findings: ''}, {store: '富力又一城店', score: 91, findings: ''}, {store: '丰管路店', score: 84, findings: ''}, {store: '古城大街店', score: 90, findings: ''}, {store: '航天桥店', score: 85, findings: ''}, {store: '车公庄店', score: 82, findings: ''}]}, {id: 'dr0141', date: '2026-08-08', inspector: '钱磊', storeCount: 1, issuesCount: 0, type: 'online', items: [{store: '双井桥东店', score: 90, findings: ''}]}, {id: 'dr0142', date: '2026-08-08', inspector: '陶畅', storeCount: 2, issuesCount: 10, type: 'offline', items: [{store: '夕照寺店', score: 90, findings: '[QSC] 1.值班类
 
+
+
 无问题；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①香菜存在黄叶；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜筷子存在污渍
 
+
+
 ②饮水机斟出口污渍
+
+
 
 ③桌面存在污渍残渣
 
+
+
 ④垃圾桶未加盖
+
+
 
 ⑤门框角落有毛絮蜘蛛网
 
+
+
 ⑥吊灯未正常开启
+
+
 
 ⑦豆浆机盖子清洁不彻底
 
+
+
 ⑧消毒柜内部有灰尘虫子尸体
 
+
+
 顾客不可视区域
+
+
 
 ①外卖台下方存在污渍
 
+
+
 ②蒸饭车把手存在油渍
+
+
 
 ③洗碗机密封条有污渍
 
+
+
 ④库房货架下方有残渣
+
+
 
 ⑤冰柜层架存在污渍；[QSC] 5.食安类
 
+
+
 ①开封产品未封口储存
+
+
 
 ②制冰机水槽有水垢残渣'}, {store: '和义南站店', score: 88, findings: '[QSC] 1.值班类
 
+
+
 ①值班经理长时间离岗顶岗；[QSC] 2.服务类
+
+
 
 ①收桌后手部未消毒就上餐；[QSC] 3.产品类
 
+
+
 ①香菇片、圆白菜出现冻伤；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①卫生间风口有毛絮
 
+
+
 ②椅面存在残渣
+
+
 
 ③铜牌标牌存在污渍
 
+
+
 ④门口三包区域存在垃圾
+
+
 
 ⑤消毒柜内部有毛发污渍
 
+
+
 顾客不可视区域
+
+
 
 ①剪刀工具存在污渍
 
+
+
 ②锅贴机油槽未清洁干净
+
+
 
 ③蒸饭车把手有油渍
 
+
+
 ④后厨风口存在毛絮
+
+
 
 ⑤收汁台下方有油垢
 
+
+
 ⑥洗碗机盖子、密封条有污渍
+
+
 
 ⑦后厨冰箱密封条存在污渍；[QSC] 5.食安类
 
+
+
 ①咸菜开封后未封口
+
+
 
 ②净水滤芯到期未更换
 
+
+
 ③砧板刀具存在食物残渣
+
+
 
 ④灭蝇灯未开启'}]}, {id: 'dr0143', date: '2026-08-08', inspector: '王红丽', storeCount: 5, issuesCount: 5, type: 'offline', items: [{store: '万源路店', score: 87, findings: '[QSC] 长款0.4元'}, {store: '阜成门店', score: 91, findings: '[QSC] 无差异'}, {store: '莲怡园店', score: 80, findings: '[QSC] 短款10元'}, {store: '达官营店', score: 89, findings: '[QSC] 无差异'}, {store: '小马厂店', score: 91, findings: '[QSC] 短款1.7元'}]}, {id: 'dr0144', date: '2026-08-08', inspector: '乔雨地', storeCount: 2, issuesCount: 2, type: 'offline', items: [{store: '大兴龙湖天街店', score: 92, findings: '[QSC] 无误差'}, {store: '黄村西大街店', score: 90, findings: '[QSC] 无误差'}]}, {id: 'dr0145', date: '2026-08-08', inspector: '徐瑞雪', storeCount: 3, issuesCount: 3, type: 'offline', items: [{store: '平乐园店', score: 88, findings: '[QSC] 备用金600，钱箱总额896.7元，今日现金收入257.9，长款36.8元（6.8元为收银员早餐一个订单未入机，30元为店长私人款项换零钱放入）'}, {store: '兴丰大街店', score: 88, findings: '[QSC] 长款0.48元'}, {store: '枣园店', score: 88, findings: '[QSC] 无差异'}]}, {id: 'dr0146', date: '2026-08-09', inspector: '马昕茹', storeCount: 4, issuesCount: 0, type: 'online', items: [{store: '万源路店', score: 81, findings: ''}, {store: '798店', score: 94, findings: ''}, {store: '亦庄桥店', score: 94, findings: ''}, {store: '马连洼店', score: 92, findings: ''}]}, {id: 'dr0147', date: '2026-08-09', inspector: '钱磊', storeCount: 4, issuesCount: 0, type: 'online', items: [{store: '西罗园店', score: 87, findings: ''}, {store: '赵公口店', score: 96, findings: ''}, {store: '霍营地铁店', score: 88, findings: ''}, {store: '北京站店', score: 91, findings: ''}]}, {id: 'dr0148', date: '2026-08-09', inspector: '范晓明', storeCount: 5, issuesCount: 0, type: 'online', items: [{store: '七里庄店', score: 88, findings: ''}, {store: '春秀路店', score: 91, findings: ''}, {store: '甜水园店', score: 91, findings: ''}, {store: '金顶北路店', score: 87, findings: ''}, {store: '正阳大街店', score: 87, findings: ''}]}, {id: 'dr0149', date: '2026-08-09', inspector: '陶畅', storeCount: 4, issuesCount: 20, type: 'offline', items: [{store: '新街口店', score: 87, findings: '[QSC] 1.值班类
 
+
+
 ①后厨员工佩戴手链，员工工服扣子缺少一颗；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①蔬菜存在冻伤情况
 
+
+
 ②香菜黄叶，原材料处理不达标；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①饮水机斟出口污渍
 
+
+
 ②抽屉内部存在残渣
+
+
 
 ③卫生间洗手台、镜子有水渍
 
+
+
 ④椅面存在残渣
+
+
 
 ⑤垃圾桶未加盖子
 
+
+
 ⑥开关存在污渍
+
+
 
 ⑦消毒柜下方有灰尘残渣
 
+
+
 ⑧出餐口玻璃存在污渍
 
+
+
 顾客不可视区域
+
+
 
 ①剪刀工具有污渍
 
+
+
 ②收汁台下方存在油垢
+
+
 
 ③洗碗机设备、盘子有污渍油垢
 
+
+
 ④库房货架下方未清洁
+
+
 
 ⑤冰柜滤网、密封条存在污渍毛絮；[QSC] 5.食安类
 
+
+
 ①开封原材料未封口储存
+
+
 
 ②原材料未离地存放
 
+
+
 ③制冰机内部有水垢
+
+
 
 ④刀具砧板有残渣，未分色管理'}, {store: '崇文门店', score: 92, findings: '[QSC] 1.值班类
 
+
+
 无问题；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①圆白菜冻伤
 
+
+
 ②香菜存在烂叶；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①椅面存在残渣
 
+
+
 ②收银机表面存在污渍
+
+
 
 ③出餐口玻璃有油渍
 
+
+
 顾客不可视区域
+
+
 
 ①洗碗间封条存在油渍
 
+
+
 ②冰柜密封条存在污渍；[QSC] 5.食安类
+
+
 
 ①垃圾未完全分类
 
+
+
 ②花椒开封后未封口
+
+
 
 ③制冰机水槽存在水垢'}, {store: '潘家园东路店', score: 87, findings: '[QSC] 1.值班类
 
+
+
 ①在岗员工手机未交齐
+
+
 
 ②钱箱钥匙未拔下；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①香菜存在烂叶；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①消毒柜筷子内有残渣
 
+
+
 ②抽屉内部有鸡蛋皮残渣
+
+
 
 ③椅面存在残渣
 
+
+
 ④后厨开关有污渍
+
+
 
 ⑤企划海报未翻面
 
+
+
 ⑥封膜机、豆浆机顶部有污渍
 
+
+
 顾客不可视区域
+
+
 
 ①风口存在毛絮
 
+
+
 ②收汁台下方有油垢
+
+
 
 ③洗碗间有水垢
 
+
+
 ④货架下方未清洁
+
+
 
 ⑤冰箱密封条存在污渍；[QSC] 5.食安类
 
+
+
 ①茶叶蛋开封未封口
+
+
 
 ②冰箱内生熟存在交叉污染
 
+
+
 ③制冰机水槽有水渍水垢
+
+
 
 ④砧板刀具残留食物残渣
 
+
+
 ⑤灭蝇纸需要更换'}, {store: '左安门店', score: 90, findings: '[QSC] 1.值班类
+
+
 
 ①在岗人员上交手机数量不一致；[QSC] 2.服务类
 
+
+
 无问题；[QSC] 3.产品类
+
+
 
 ①豆腐脑高峰期断档
 
+
+
 ②香菇片原材料冻伤
+
+
 
 ③早餐肉包破损，出品不合格；[QSC] 4.环境类
 
+
+
 顾客可视区域
+
+
 
 ①垃圾桶外围存在污渍
 
+
+
 ②桌面有食物残渣
+
+
 
 ③无回餐空位
 
+
+
 ④门口三包区存在垃圾
+
+
 
 ⑤空调散热口积攒灰尘
 
+
+
 ⑥开关表面存在污渍
+
+
 
 ⑦冰柜密封条有污渍
 
+
+
 顾客不可视区域
+
+
 
 ①库房货架底部存在污渍；[QSC] 5.食安类
 
+
+
 ①托盘存在残渣纸屑
+
+
 
 ②餐碟内有毛发残渣
 
+
+
 ③晨检记录未及时更新
 
+
+
 ④灭蝇灯未开启'}]}, {id: 'dr0150', date: '2026-08-09', inspector: '乔雨地', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '万寿路西街店', score: 88, findings: '[QSC] 无误差'}, {store: '定慧寺店', score: 90, findings: '[QSC] 短款0.49元'}, {store: '彰化路店', score: 90, findings: '[QSC] 无误差'}, {store: '远大路店', score: 87, findings: '[QSC] 短款99.6元'}]}, {id: 'dr0151', date: '2026-08-09', inspector: '王红丽', storeCount: 4, issuesCount: 4, type: 'offline', items: [{store: '马驹桥店', score: 85, findings: '[QSC] 无差异'}, {store: '三营门店', score: 89, findings: '[QSC] 无差异'}, {store: '灯市口地铁店', score: 90, findings: '[QSC] 长款10元'}, {store: '西罗园店', score: 84, findings: '[QSC] 长款5元'}]}]],
+
+
+
+
 
 
 
@@ -1368,7 +2734,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0101', date: '2026-08-01', inspector: '马昕茹', storeCount: 7, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1376,7 +2750,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0103', date: '2026-08-01', inspector: '范晓明', storeCount: 3, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1384,7 +2766,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0105', date: '2026-08-01', inspector: '乔雨地', storeCount: 4, issuesCount: 4, type: 'offline'},
+
+
+
+
 
 
 
@@ -1392,7 +2782,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0107', date: '2026-08-02', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1400,7 +2798,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0109', date: '2026-08-02', inspector: '范晓明', storeCount: 3, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1408,7 +2814,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0111', date: '2026-08-02', inspector: '王红丽', storeCount: 4, issuesCount: 4, type: 'offline'},
+
+
+
+
 
 
 
@@ -1416,7 +2830,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0113', date: '2026-08-03', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1424,7 +2846,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0115', date: '2026-08-03', inspector: '王红丽', storeCount: 3, issuesCount: 3, type: 'offline'},
+
+
+
+
 
 
 
@@ -1432,7 +2862,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0117', date: '2026-08-04', inspector: '范晓明', storeCount: 3, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1440,7 +2878,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0119', date: '2026-08-04', inspector: '陶畅', storeCount: 3, issuesCount: 15, type: 'offline'},
+
+
+
+
 
 
 
@@ -1448,7 +2894,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0121', date: '2026-08-04', inspector: '乔雨地', storeCount: 6, issuesCount: 14, type: 'offline'},
+
+
+
+
 
 
 
@@ -1456,7 +2910,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0123', date: '2026-08-05', inspector: '张炜玉', storeCount: 8, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1464,7 +2926,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0125', date: '2026-08-05', inspector: '钱磊', storeCount: 5, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1472,7 +2942,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0127', date: '2026-08-06', inspector: '马昕茹', storeCount: 2, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1480,7 +2958,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0129', date: '2026-08-06', inspector: '陶畅', storeCount: 4, issuesCount: 20, type: 'offline'},
+
+
+
+
 
 
 
@@ -1488,7 +2974,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0131', date: '2026-08-06', inspector: '乔雨地', storeCount: 5, issuesCount: 5, type: 'offline'},
+
+
+
+
 
 
 
@@ -1496,7 +2990,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0133', date: '2026-08-07', inspector: '钱磊', storeCount: 5, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1504,7 +3006,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0135', date: '2026-08-07', inspector: '范晓明', storeCount: 6, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1512,7 +3022,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0137', date: '2026-08-07', inspector: '王红丽', storeCount: 4, issuesCount: 4, type: 'offline'},
+
+
+
+
 
 
 
@@ -1520,7 +3038,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0139', date: '2026-08-08', inspector: '马昕茹', storeCount: 4, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1528,7 +3054,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0141', date: '2026-08-08', inspector: '钱磊', storeCount: 1, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1536,7 +3070,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0143', date: '2026-08-08', inspector: '王红丽', storeCount: 5, issuesCount: 5, type: 'offline'},
+
+
+
+
 
 
 
@@ -1544,7 +3086,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0145', date: '2026-08-08', inspector: '徐瑞雪', storeCount: 3, issuesCount: 3, type: 'offline'},
+
+
+
+
 
 
 
@@ -1552,7 +3102,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0147', date: '2026-08-09', inspector: '钱磊', storeCount: 4, issuesCount: 0, type: 'online'},
+
+
+
+
 
 
 
@@ -1560,7 +3118,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0149', date: '2026-08-09', inspector: '陶畅', storeCount: 4, issuesCount: 20, type: 'offline'},
+
+
+
+
 
 
 
@@ -1568,7 +3134,15 @@ const App = {
 
 
 
+
+
+
+
     {id: 'dr0151', date: '2026-08-09', inspector: '王红丽', storeCount: 4, issuesCount: 4, type: 'offline'}
+
+
+
+
 
 
 
@@ -1576,11 +3150,23 @@ const App = {
 
 
 
+
+
+
+
     
+
+
 
     inspection_templates: [{"id":"tpl1786091061234","name":"6月优化部用-2026年2月2.0_2.5门店线上检查表格大迭代3.0","version":1,"items":[{"index":0,"score":2,"content":"早餐粥类产品按标准进行操作（皮蛋粥、红豆粥、小米粥、酸辣汤、牛奶、豆浆、橙汁、豆腐脑）；","category":"","deductRule":"2.0"},{"index":1,"score":2,"content":"早餐煎制产品按标准进行操作（锅贴）；","category":"","deductRule":"2.0"},{"index":2,"score":2,"content":"早餐炸制产品按照标准进行操作（油条、炸糕）；","category":"","deductRule":"2.0"},{"index":3,"score":2,"content":"制备区产品按照标准进行操作（焯制拌制圆白菜）","category":"","deductRule":"2.0"},{"index":4,"score":4,"content":"①2.0门店黄焖鸡按照标准焖制/2.5门店三杯鸡有润锅动作，煎鸡肉时，需平摊不翻动，每面煎约10-15秒                                                       ②金针菇去根打散","category":"","deductRule":"4.0"},{"index":5,"score":3,"content":"①2.0门店：螺丝椒炒肉操作符合标准（关键点：空锅烧5秒后加油摇锅，使用硅胶勺炒制，小黑锅：先放肉，放汁，放辣椒，一次出一份）                                                                    ②2.5门店：先下入肥肉（炒出油，焦黄，打卷，）锅内下入阳雀湖辣椒后，必须有按压动作","category":"","deductRule":"3.0"},{"index":6,"score":3,"content":"麻婆豆腐操作符合标准（关键点：漏勺控水，先放酱后放豆腐，收汁时间不低于2.5分钟，使用硅胶勺操作）","category":"","deductRule":"3.0"},{"index":7,"score":3,"content":"肥牛操作符合标准（关键点：金针菇彻底打散，洋葱金针菇煮软榻后放肥牛片，肥牛煮制过程中要来回挑动肉片使其受热更均匀，肥牛片不碎）","category":"","deductRule":"3.0"},{"index":8,"score":3,"content":"酸菜鱼操作符合标准（关键点：花椒炸油浴油器温度200-210℃，鱼片轻轻挑开煮制大火烧开开锅煮约3-4分钟，不要频繁搅动防止鱼片太碎）","category":"","deductRule":"3.0"},{"index":9,"score":3,"content":"馄饨操作符合标准（馄饨关键点：开水下锅，馄饨抖动防止粘连，煮制时间4分钟，开水冲汤）","category":"","deductRule":"3.0"},{"index":10,"score":3,"content":"面条操作符合标准（面条关键点：开水下锅，挑动防粘连，煮制时间3分钟，牛肉料包开水煮透，开水冲汤）","category":"","deductRule":"3.0"},{"index":11,"score":2,"content":"红烧鲈鱼：制作过程中，必须要抖动，防止粘锅，出锅后观察汤汁是否浓稠，出餐时器具确保干净/低峰期不可外放","category":"","deductRule":"2.0"},{"index":12,"score":4,"content":"米饭的操作符合标准（关键点：米饭蒸好 10 分钟内打散，洗米符合标准）","category":"","deductRule":"4.0"},{"index":13,"score":2,"content":"米饭的操作符合标准（关键点：是否更换保温槽做到先进先出，盖饭台米饭加盖保温，2分钟以上不操作需要加盖（低峰期））","category":"","deductRule":"2.0"},{"index":14,"score":2,"content":"饮料（柠檬茶、奶茶）按照标准操作","category":"","deductRule":"2.0"},{"index":15,"score":3,"content":"早开市早餐产品按时供应，早餐产品9:30前不可断档，早餐9:30分后可断档1款粥","category":"","deductRule":"3.0"},{"index":16,"score":3,"content":"添加规范：                                                                                                  \n\n1、14：00之后两款咸菜单次添加量不得多于1/2\n\n2、添加咸菜不可在顾客可视区域携带原包装添加，统一使用保鲜盒中转\n\n3、晚打烊后服务台上剩余的咸菜放入保鲜盒加盖放入冷藏冰箱\n\n4、早开市咸菜不可前一天备货，一律早开市前添加\n\n5.营业期间两款咸菜不得断档","category":"","deductRule":"3.0"},{"index":17,"score":2,"content":"清洗标准\n1、午高峰过后需要更换新的透明份数盒，更换下来的份数盒使用洗碗机清洗消毒\n2、晚打烊后盛放咸菜的透明份数盒使用洗碗机清洗消毒，晾干后第二天待用","category":"","deductRule":"2.0"},{"index":18,"score":2,"content":"2.5门店：虾仁炒蛋有润锅动作，虾仁被鸡蛋包裹住，煎蛋定型过程仅使用推拉、翻拌手法，成品无黑糊、碎散。","category":"","deductRule":"2.0"},{"index":19,"score":3,"content":"门店现场是否立即收桌（有桌没收，员工没有收桌的动作）","category":"","deductRule":"3.0"},{"index":20,"score":2,"content":"员工在顾客可视范围内是否有不雅动作（交头接耳，打闹，亲密动作等）","category":"","deductRule":"2.0"},{"index":21,"score":2,"content":"员工工作期间要佩戴帽子、口罩、围裙/工牌（工牌上要有姓名）/工服要保持洁净/员工要佩戴发网","category":"","deductRule":"2.0"},{"index":22,"score":2,"content":"上班期间员工不得玩手机/戴耳机","category":"","deductRule":"2.0"},{"index":23,"score":2,"content":"点餐是否给顾客计时沙漏和定位卡/客用餐具水杯、小碟不可断档","category":"","deductRule":"2.0"},{"index":24,"score":2,"content":"门店是否执行服务话术：欢迎，欢送（达成率80%）/是否执行点餐话术","category":"","deductRule":"2.0"},{"index":25,"score":2,"content":"禁止佩戴大耳环、大项链等易造成卫生隐患或视觉冲突的饰品，工作期间禁止佩戴戒指、手链、手串等饰品。","category":"","deductRule":"2.0"},{"index":26,"score":2,"content":"广告机正常开启，显示正常","category":"","deductRule":"2.0"},{"index":27,"score":2,"content":"三元自助区干净整洁","category":"","deductRule":"2.0"},{"index":28,"score":2,"content":"收汁岗台面摆放整洁，无残渣","category":"","deductRule":"2.0"},{"index":29,"score":2,"content":"烤串岗台面摆放整洁，无残渣，烤串岗每日打样清洁追踪","category":"","deductRule":"2.0"},{"index":30,"score":2,"content":"所有区域地面（低峰期）：干净整洁、无水渍、无大面积纸屑及残渣","category":"","deductRule":"2.0"},{"index":31,"score":3,"content":"所有垃圾桶：无垃圾溢出","category":"","deductRule":"3.0"},{"index":32,"score":2,"content":"20:00之前，禁止有提前收市打烊动作","category":"","deductRule":"2.0"},{"index":33,"score":2,"content":"物料是否按照标准储存，（关键点：大米隔墙离地）","category":"","deductRule":"2.0"},{"index":34,"score":3,"content":"前厅手部清洁（例如：扫地后上餐，上完卫生间后上餐，收完桌后上餐）（消毒洗手都可以，按项目查）","category":"","deductRule":"3.0"},{"index":35,"score":4,"content":"食品加工人员可以及时洗手（收银后、处理食物前、处理垃圾后、使用卫生间后、接触生食后、接触受到污染的工具设备后、咳嗽、打喷嚏或者抹鼻涕后、处理废弃物后、触摸耳朵、鼻子、头发、面部、口腔、或身体其他部位后、从事任何可能会污染双手的活动后）","category":"","deductRule":"4.0"},{"index":36,"score":2,"content":"进后厨前使用滚筒粘去身上毛发","category":"","deductRule":"2.0"},{"index":37,"score":1,"content":"一切外来人员进入后厨必须佩戴口罩和网帽（或工帽），包括政府检查、内部检查、维修、收垃圾等（公司内部人员要出示企业微信身份）","category":"","deductRule":"1.0"},{"index":38,"score":4,"content":"员工进行食品加工（熟制产品，顾客直接入口）以及前厅填补客用餐具时都要佩戴手套","category":"","deductRule":"4.0"},{"index":39,"score":2,"content":"食品与不洁工器具交叉污染","category":"","deductRule":"2.0"},{"index":40,"score":2,"content":"回收餐具以及洗碗筐不得接触地面以及垃圾桶","category":"","deductRule":"2.0"},{"index":41,"score":0,"content":"辣椒炒肉有润锅动作，先下入肥肉（炒出油、焦黄、打卷），再放入瘦肉，锅内下入阳雀湖辣椒后，必须有按压动作","category":"","deductRule":"0.0"},{"index":42,"score":0,"content":"三杯鸡有润锅动作，煎鸡肉时，需平摊不翻动、每面煎约10-15秒；","category":"","deductRule":"0.0"},{"index":43,"score":0,"content":"虾仁炒蛋有润锅动作，虾仁被鸡蛋包裹住，煎蛋定型过程仅使用推拉、翻拌手法","category":"","deductRule":"0.0"},{"index":44,"score":0,"content":"门店执行物料外放标准","category":"","deductRule":"0.0"},{"index":45,"score":0,"content":"门店早餐价签根据企划部要求做出更新","category":"","deductRule":"0.0"},{"index":46,"score":0,"content":"早餐收市（10：00）：报损蒸制产品数理，报损数量≤10=2分。不用写分，不合格的写个数","category":"","deductRule":"0.0"},{"index":47,"score":0,"content":"午餐收市（14：30）：外送备货剩余数量，报损数量≤5=2分，不用写分，不合格的写个数","category":"","deductRule":"0.0"},{"index":48,"score":0,"content":"晚餐收市：米饭报损数量，报损数量≤1屉(锅）=2分，不用写分，不合格的写个数","category":"","deductRule":"0.0"},{"index":49,"score":0,"content":"员工餐标准操作，不允许集中补单。集中补单，写上","category":"","deductRule":"0.0"},{"index":50,"score":0,"content":"员工餐的用餐区域：客区、监控能看见位置。不合格，写上","category":"","deductRule":"0.0"},{"index":51,"score":0,"content":"骑手餐（便装的需拍照片、照片上传企微群，报备教练）；不允许集中补单，不合格，写上","category":"","deductRule":"0.0"},{"index":52,"score":0,"content":"能耗管理：关于门店水管理，电管理的不合格现象都可以记录","category":"","deductRule":"0.0"}],"isActive":true,"createdAt":"2026-08-07","updatedAt":"2026-08-07"}],
 
+
+
     inspection_results: [{"id": "r001", "storeId": "s011", "store": "天慧广场店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 94, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r002", "storeId": "s005", "store": "万航渡路店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 91, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r003", "storeId": "s170", "store": "杨庄东街店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 95, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r004", "storeId": "s166", "store": "左安门店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 92, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r005", "storeId": "s006", "store": "汇融天地店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 86, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r006", "storeId": "s165", "store": "朝丰家园店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 90, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r007", "storeId": "s178", "store": "马家堡店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 94, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r008", "storeId": "s182", "store": "丰管路店", "inspector": "钱磊", "date": "2026-07-29", "totalScore": 94, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r009", "storeId": "s196", "store": "郁花园店", "inspector": "钱磊", "date": "2026-07-30", "totalScore": 95, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r010", "storeId": "s079", "store": "物资学院店", "inspector": "钱磊", "date": "2026-07-30", "totalScore": 88, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r011", "storeId": "s160", "store": "青年路店", "inspector": "钱磊", "date": "2026-07-30", "totalScore": 90, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r012", "storeId": "s146", "store": "旧宫店", "inspector": "钱磊", "date": "2026-07-30", "totalScore": 90, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r013", "storeId": "s148", "store": "太平街店", "inspector": "钱磊", "date": "2026-07-30", "totalScore": 87, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r014", "storeId": "s075", "store": "通胡大街店", "inspector": "钱磊", "date": "2026-07-31", "totalScore": 90, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r015", "storeId": "s132", "store": "木樨园桥西店", "inspector": "钱磊", "date": "2026-07-31", "totalScore": 91, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r016", "storeId": "s042", "store": "交大东路店", "inspector": "钱磊", "date": "2026-07-31", "totalScore": 87, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r017", "storeId": "s113", "store": "丰台南路店", "inspector": "钱磊", "date": "2026-07-31", "totalScore": 89, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r018", "storeId": "s017", "store": "和平东桥店", "inspector": "钱磊", "date": "2026-07-31", "totalScore": 92, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r019", "storeId": "s089", "store": "平乐园店", "inspector": "钱磊", "date": "2026-08-01", "totalScore": 90, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r020", "storeId": "s152", "store": "宋家庄店", "inspector": "钱磊", "date": "2026-08-01", "totalScore": 91, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r021", "storeId": "s133", "store": "和义南站店", "inspector": "钱磊", "date": "2026-08-01", "totalScore": 87, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r022", "storeId": "s071", "store": "通州耿庄店", "inspector": "钱磊", "date": "2026-08-01", "totalScore": 89, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r023", "storeId": "s068", "store": "驼房营店", "inspector": "钱磊", "date": "2026-08-01", "totalScore": 92, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r024", "storeId": "s181", "store": "晓月中路店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 90, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r025", "storeId": "s149", "store": "德胜门店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 92, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r026", "storeId": "s164", "store": "红庙店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 91, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r027", "storeId": "s002", "store": "内江路店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 88, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r028", "storeId": "s004", "store": "江苏路店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 92, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r029", "storeId": "s001", "store": "控江路店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 86, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r030", "storeId": "s191", "store": "小马厂店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 91, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r031", "storeId": "s177", "store": "海淀黄庄店", "inspector": "钱磊", "date": "2026-08-02", "totalScore": 92, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r032", "storeId": "s024", "store": "天通西苑店", "inspector": "钱磊", "date": "2026-08-04", "totalScore": 88, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r033", "storeId": "s094", "store": "小园地铁店", "inspector": "钱磊", "date": "2026-08-04", "totalScore": 90, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r034", "storeId": "s087", "store": "新天地店", "inspector": "钱磊", "date": "2026-08-04", "totalScore": 92, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r035", "storeId": "s141", "store": "次渠店", "inspector": "钱磊", "date": "2026-08-04", "totalScore": 87, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r036", "storeId": "s108", "store": "莲怡园店", "inspector": "钱磊", "date": "2026-08-04", "totalScore": 86, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r037", "storeId": "s104", "store": "宛平城店", "inspector": "钱磊", "date": "2026-08-05", "totalScore": 95, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r038", "storeId": "s136", "store": "草桥地铁店", "inspector": "钱磊", "date": "2026-08-05", "totalScore": 94, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r039", "storeId": "s115", "store": "南站 2 店", "inspector": "钱磊", "date": "2026-08-05", "totalScore": 96, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r040", "storeId": "s134", "store": "角北店", "inspector": "钱磊", "date": "2026-08-05", "totalScore": 91, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"}, {"id": "r041", "storeId": "s051", "store": "黄寺大街店", "inspector": "钱磊", "date": "2026-08-05", "totalScore": 89, "maxScore": 100, "templateId": "qianlei-online", "status": "已完成"},{"id": "a0020", "date": "2026-08-01", "inspector": "陶畅", "storeId": "s186", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0021", "date": "2026-08-01", "inspector": "陶畅", "storeId": "s020", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0022", "date": "2026-08-01", "inspector": "陶畅", "storeId": "s019", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0023", "date": "2026-08-01", "inspector": "陶畅", "storeId": "s050", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0024", "date": "2026-08-01", "inspector": "陶畅", "storeId": "s051", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0025", "date": "2026-08-01", "inspector": "马昕茹", "storeId": "s015", "score": 84, "type": "online", "qscScore": 84, "complianceIssues": 0},{"id": "a0026", "date": "2026-08-01", "inspector": "马昕茹", "storeId": "s085", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0027", "date": "2026-08-01", "inspector": "马昕茹", "storeId": "s032", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0028", "date": "2026-08-01", "inspector": "马昕茹", "storeId": "s137", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0029", "date": "2026-08-01", "inspector": "马昕茹", "storeId": "s072", "score": 93, "type": "online", "qscScore": 93, "complianceIssues": 0},{"id": "a0030", "date": "2026-08-01", "inspector": "马昕茹", "storeId": "s074", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0031", "date": "2026-08-01", "inspector": "马昕茹", "storeId": "s143", "score": 79, "type": "online", "qscScore": 79, "complianceIssues": 0},{"id": "a0032", "date": "2026-08-01", "inspector": "钱磊", "storeId": "s089", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0033", "date": "2026-08-01", "inspector": "钱磊", "storeId": "s152", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0034", "date": "2026-08-01", "inspector": "钱磊", "storeId": "s133", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0035", "date": "2026-08-01", "inspector": "钱磊", "storeId": "s071", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0036", "date": "2026-08-01", "inspector": "钱磊", "storeId": "s068", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0037", "date": "2026-08-01", "inspector": "范晓明", "storeId": "s122", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0038", "date": "2026-08-01", "inspector": "范晓明", "storeId": "s050", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0039", "date": "2026-08-01", "inspector": "范晓明", "storeId": "s095", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0040", "date": "2026-08-01", "inspector": "徐瑞雪", "storeId": "s193", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0041", "date": "2026-08-01", "inspector": "徐瑞雪", "storeId": "s170", "score": 93, "type": "offline", "qscScore": 93, "complianceIssues": 0},{"id": "a0042", "date": "2026-08-01", "inspector": "徐瑞雪", "storeId": "s092", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0043", "date": "2026-08-01", "inspector": "徐瑞雪", "storeId": "s043", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0044", "date": "2026-08-01", "inspector": "乔雨地", "storeId": "s141", "score": 81, "type": "offline", "qscScore": 81, "complianceIssues": 0},{"id": "a0045", "date": "2026-08-01", "inspector": "乔雨地", "storeId": "s142", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0046", "date": "2026-08-01", "inspector": "乔雨地", "storeId": "s144", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0047", "date": "2026-08-01", "inspector": "乔雨地", "storeId": "s145", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0048", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s198", "score": 88, "type": "online", "qscScore": 88, "complianceIssues": 0},{"id": "a0049", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s003", "score": 72, "type": "online", "qscScore": 72, "complianceIssues": 0},{"id": "a0050", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s196", "score": 96, "type": "online", "qscScore": 96, "complianceIssues": 0},{"id": "a0051", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s012", "score": 93, "type": "online", "qscScore": 93, "complianceIssues": 0},{"id": "a0052", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s162", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0053", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s197", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0054", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s161", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0055", "date": "2026-08-02", "inspector": "马昕茹", "storeId": "s163", "score": 93, "type": "online", "qscScore": 93, "complianceIssues": 0},{"id": "a0056", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s195", "score": 84, "type": "online", "qscScore": 84, "complianceIssues": 0},{"id": "a0057", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s185", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0058", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s009", "score": 94, "type": "online", "qscScore": 94, "complianceIssues": 0},{"id": "a0059", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s176", "score": 95, "type": "online", "qscScore": 95, "complianceIssues": 0},{"id": "a0060", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s011", "score": 95, "type": "online", "qscScore": 95, "complianceIssues": 0},{"id": "a0061", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s192", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0062", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s174", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0063", "date": "2026-08-02", "inspector": "张炜玉", "storeId": "s193", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0064", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s181", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0065", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s149", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0066", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s164", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0067", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s002", "score": 88, "type": "online", "qscScore": 88, "complianceIssues": 0},{"id": "a0068", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s004", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0069", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s001", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0070", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s191", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0071", "date": "2026-08-02", "inspector": "钱磊", "storeId": "s177", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0072", "date": "2026-08-02", "inspector": "范晓明", "storeId": "s067", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0073", "date": "2026-08-02", "inspector": "范晓明", "storeId": "s045", "score": 88, "type": "online", "qscScore": 88, "complianceIssues": 0},{"id": "a0074", "date": "2026-08-02", "inspector": "范晓明", "storeId": "s014", "score": 83, "type": "online", "qscScore": 83, "complianceIssues": 0},{"id": "a0075", "date": "2026-08-02", "inspector": "乔雨地", "storeId": "s068", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0076", "date": "2026-08-02", "inspector": "乔雨地", "storeId": "s024", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0077", "date": "2026-08-02", "inspector": "乔雨地", "storeId": "s026", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0078", "date": "2026-08-02", "inspector": "乔雨地", "storeId": "s030", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0079", "date": "2026-08-02", "inspector": "王红丽", "storeId": "s194", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0080", "date": "2026-08-02", "inspector": "王红丽", "storeId": "s079", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0081", "date": "2026-08-02", "inspector": "王红丽", "storeId": "s075", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0082", "date": "2026-08-02", "inspector": "王红丽", "storeId": "s082", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0083", "date": "2026-08-03", "inspector": "范晓明", "storeId": "s099", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0084", "date": "2026-08-03", "inspector": "范晓明", "storeId": "s135", "score": 95, "type": "online", "qscScore": 95, "complianceIssues": 0},{"id": "a0085", "date": "2026-08-03", "inspector": "范晓明", "storeId": "s086", "score": 83, "type": "online", "qscScore": 83, "complianceIssues": 0},{"id": "a0086", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s171", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0087", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s188", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0088", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s007", "score": 83, "type": "online", "qscScore": 83, "complianceIssues": 0},{"id": "a0089", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s151", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0090", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s173", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0091", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s192", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0092", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s174", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0093", "date": "2026-08-03", "inspector": "张炜玉", "storeId": "s193", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0094", "date": "2026-08-03", "inspector": "陶畅", "storeId": "s095", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0095", "date": "2026-08-03", "inspector": "陶畅", "storeId": "s171", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0096", "date": "2026-08-03", "inspector": "陶畅", "storeId": "s180", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0097", "date": "2026-08-03", "inspector": "王红丽", "storeId": "s135", "score": 93, "type": "offline", "qscScore": 93, "complianceIssues": 0},{"id": "a0098", "date": "2026-08-03", "inspector": "王红丽", "storeId": "s172", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0099", "date": "2026-08-03", "inspector": "王红丽", "storeId": "s017", "score": 92, "type": "offline", "qscScore": 92, "complianceIssues": 0},{"id": "a0100", "date": "2026-08-03", "inspector": "乔雨地", "storeId": "s076", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0101", "date": "2026-08-03", "inspector": "乔雨地", "storeId": "s150", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0102", "date": "2026-08-03", "inspector": "乔雨地", "storeId": "s074", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0103", "date": "2026-08-03", "inspector": "乔雨地", "storeId": "s083", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0104", "date": "2026-08-03", "inspector": "乔雨地", "storeId": "s156", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0105", "date": "2026-08-03", "inspector": "乔雨地", "storeId": "s162", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0106", "date": "2026-08-04", "inspector": "范晓明", "storeId": "s099", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0107", "date": "2026-08-04", "inspector": "范晓明", "storeId": "s135", "score": 95, "type": "online", "qscScore": 95, "complianceIssues": 0},{"id": "a0108", "date": "2026-08-04", "inspector": "范晓明", "storeId": "s086", "score": 83, "type": "online", "qscScore": 83, "complianceIssues": 0},{"id": "a0109", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s171", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0110", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s188", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0111", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s007", "score": 83, "type": "online", "qscScore": 83, "complianceIssues": 0},{"id": "a0112", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s151", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0113", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s173", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0114", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s192", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0115", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s174", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0116", "date": "2026-08-04", "inspector": "张炜玉", "storeId": "s193", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0117", "date": "2026-08-04", "inspector": "陶畅", "storeId": "s095", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0118", "date": "2026-08-04", "inspector": "陶畅", "storeId": "s171", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0119", "date": "2026-08-04", "inspector": "陶畅", "storeId": "s180", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0120", "date": "2026-08-04", "inspector": "王红丽", "storeId": "s135", "score": 93, "type": "offline", "qscScore": 93, "complianceIssues": 0},{"id": "a0121", "date": "2026-08-04", "inspector": "王红丽", "storeId": "s172", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0122", "date": "2026-08-04", "inspector": "王红丽", "storeId": "s017", "score": 92, "type": "offline", "qscScore": 92, "complianceIssues": 0},{"id": "a0123", "date": "2026-08-04", "inspector": "乔雨地", "storeId": "s076", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0124", "date": "2026-08-04", "inspector": "乔雨地", "storeId": "s150", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0125", "date": "2026-08-04", "inspector": "乔雨地", "storeId": "s074", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0126", "date": "2026-08-04", "inspector": "乔雨地", "storeId": "s083", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0127", "date": "2026-08-04", "inspector": "乔雨地", "storeId": "s156", "score": 0, "type": "offline", "qscScore": 0, "complianceIssues": 0},{"id": "a0128", "date": "2026-08-04", "inspector": "乔雨地", "storeId": "s162", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0129", "date": "2026-08-05", "inspector": "马昕茹", "storeId": "s165", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0130", "date": "2026-08-05", "inspector": "马昕茹", "storeId": "s178", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0131", "date": "2026-08-05", "inspector": "马昕茹", "storeId": "s194", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0132", "date": "2026-08-05", "inspector": "马昕茹", "storeId": "s186", "score": 95, "type": "online", "qscScore": 95, "complianceIssues": 0},{"id": "a0133", "date": "2026-08-05", "inspector": "马昕茹", "storeId": "s010", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0134", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s005", "score": 81, "type": "online", "qscScore": 81, "complianceIssues": 0},{"id": "a0135", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s170", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0136", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s166", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0137", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s006", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0138", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s182", "score": 84, "type": "online", "qscScore": 84, "complianceIssues": 0},{"id": "a0139", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s192", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0140", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s174", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0141", "date": "2026-08-05", "inspector": "张炜玉", "storeId": "s193", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0142", "date": "2026-08-05", "inspector": "陶畅", "storeId": "s138", "score": 83, "type": "offline", "qscScore": 83, "complianceIssues": 0},{"id": "a0143", "date": "2026-08-05", "inspector": "陶畅", "storeId": "s132", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0144", "date": "2026-08-05", "inspector": "陶畅", "storeId": "s052", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0145", "date": "2026-08-05", "inspector": "陶畅", "storeId": "s184", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0146", "date": "2026-08-05", "inspector": "陶畅", "storeId": "s161", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0147", "date": "2026-08-05", "inspector": "钱磊", "storeId": "s104", "score": 95, "type": "online", "qscScore": 95, "complianceIssues": 0},{"id": "a0148", "date": "2026-08-05", "inspector": "钱磊", "storeId": "s136", "score": 94, "type": "online", "qscScore": 94, "complianceIssues": 0},{"id": "a0149", "date": "2026-08-05", "inspector": "钱磊", "storeId": "s115", "score": 96, "type": "online", "qscScore": 96, "complianceIssues": 0},{"id": "a0150", "date": "2026-08-05", "inspector": "钱磊", "storeId": "s134", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0151", "date": "2026-08-05", "inspector": "钱磊", "storeId": "s051", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0152", "date": "2026-08-05", "inspector": "王红丽", "storeId": "s045", "score": 82, "type": "offline", "qscScore": 82, "complianceIssues": 0},{"id": "a0153", "date": "2026-08-05", "inspector": "王红丽", "storeId": "s038", "score": 85, "type": "offline", "qscScore": 85, "complianceIssues": 0},{"id": "a0154", "date": "2026-08-05", "inspector": "王红丽", "storeId": "s187", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0155", "date": "2026-08-05", "inspector": "王红丽", "storeId": "s028", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0156", "date": "2026-08-06", "inspector": "马昕茹", "storeId": "s154", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0157", "date": "2026-08-06", "inspector": "马昕茹", "storeId": "s007", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0158", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s043", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0159", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s124", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0160", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s166", "score": 86, "type": "online", "qscScore": 86, "complianceIssues": 0},{"id": "a0161", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s006", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0162", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s182", "score": 84, "type": "online", "qscScore": 84, "complianceIssues": 0},{"id": "a0163", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s192", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0164", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s174", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0165", "date": "2026-08-06", "inspector": "张炜玉", "storeId": "s193", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0166", "date": "2026-08-06", "inspector": "陶畅", "storeId": "s121", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0167", "date": "2026-08-06", "inspector": "陶畅", "storeId": "s091", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0168", "date": "2026-08-06", "inspector": "陶畅", "storeId": "s096", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0169", "date": "2026-08-06", "inspector": "陶畅", "storeId": "s109", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0170", "date": "2026-08-06", "inspector": "徐瑞雪", "storeId": "s039", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0171", "date": "2026-08-06", "inspector": "徐瑞雪", "storeId": "s173", "score": 93, "type": "offline", "qscScore": 93, "complianceIssues": 0},{"id": "a0172", "date": "2026-08-06", "inspector": "徐瑞雪", "storeId": "s046", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0173", "date": "2026-08-06", "inspector": "徐瑞雪", "storeId": "s027", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0174", "date": "2026-08-06", "inspector": "乔雨地", "storeId": "s120", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0175", "date": "2026-08-06", "inspector": "乔雨地", "storeId": "s181", "score": 92, "type": "offline", "qscScore": 92, "complianceIssues": 0},{"id": "a0176", "date": "2026-08-06", "inspector": "乔雨地", "storeId": "s113", "score": 93, "type": "offline", "qscScore": 93, "complianceIssues": 0},{"id": "a0177", "date": "2026-08-06", "inspector": "乔雨地", "storeId": "s101", "score": 94, "type": "offline", "qscScore": 94, "complianceIssues": 0},{"id": "a0178", "date": "2026-08-06", "inspector": "乔雨地", "storeId": "s114", "score": 93, "type": "offline", "qscScore": 93, "complianceIssues": 0},{"id": "a0179", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s109", "score": 83, "type": "online", "qscScore": 83, "complianceIssues": 0},{"id": "a0180", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s082", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0181", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s023", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0182", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s084", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0183", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s182", "score": 84, "type": "online", "qscScore": 84, "complianceIssues": 0},{"id": "a0184", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s192", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0185", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s174", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0186", "date": "2026-08-07", "inspector": "张炜玉", "storeId": "s193", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0187", "date": "2026-08-07", "inspector": "钱磊", "storeId": "s063", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0188", "date": "2026-08-07", "inspector": "钱磊", "storeId": "s111", "score": 93, "type": "online", "qscScore": 93, "complianceIssues": 0},{"id": "a0189", "date": "2026-08-07", "inspector": "钱磊", "storeId": "s158", "score": 84, "type": "online", "qscScore": 84, "complianceIssues": 0},{"id": "a0190", "date": "2026-08-07", "inspector": "钱磊", "storeId": "s140", "score": 96, "type": "online", "qscScore": 96, "complianceIssues": 0},{"id": "a0191", "date": "2026-08-07", "inspector": "钱磊", "storeId": "s073", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0192", "date": "2026-08-07", "inspector": "陶畅", "storeId": "s164", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0193", "date": "2026-08-07", "inspector": "陶畅", "storeId": "s197", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0194", "date": "2026-08-07", "inspector": "陶畅", "storeId": "s155", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0195", "date": "2026-08-07", "inspector": "陶畅", "storeId": "s081", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0196", "date": "2026-08-07", "inspector": "陶畅", "storeId": "s087", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0197", "date": "2026-08-07", "inspector": "范晓明", "storeId": "s153", "score": 89, "type": "online", "qscScore": 89, "complianceIssues": 0},{"id": "a0198", "date": "2026-08-07", "inspector": "范晓明", "storeId": "s138", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0199", "date": "2026-08-07", "inspector": "范晓明", "storeId": "s054", "score": 95, "type": "online", "qscScore": 95, "complianceIssues": 0},{"id": "a0200", "date": "2026-08-07", "inspector": "范晓明", "storeId": "s119", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0201", "date": "2026-08-07", "inspector": "范晓明", "storeId": "s061", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0202", "date": "2026-08-07", "inspector": "范晓明", "storeId": "s022", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0203", "date": "2026-08-07", "inspector": "乔雨地", "storeId": "s137", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0204", "date": "2026-08-07", "inspector": "乔雨地", "storeId": "s134", "score": 85, "type": "offline", "qscScore": 85, "complianceIssues": 0},{"id": "a0205", "date": "2026-08-07", "inspector": "乔雨地", "storeId": "s129", "score": 83, "type": "offline", "qscScore": 83, "complianceIssues": 0},{"id": "a0206", "date": "2026-08-07", "inspector": "乔雨地", "storeId": "s008", "score": 92, "type": "offline", "qscScore": 92, "complianceIssues": 0},{"id": "a0207", "date": "2026-08-07", "inspector": "王红丽", "storeId": "s195", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0208", "date": "2026-08-07", "inspector": "王红丽", "storeId": "s183", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0209", "date": "2026-08-07", "inspector": "王红丽", "storeId": "s044", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0210", "date": "2026-08-07", "inspector": "王红丽", "storeId": "s188", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0211", "date": "2026-08-07", "inspector": "徐瑞雪", "storeId": "s067", "score": 83, "type": "offline", "qscScore": 83, "complianceIssues": 0},{"id": "a0212", "date": "2026-08-07", "inspector": "徐瑞雪", "storeId": "s157", "score": 93, "type": "offline", "qscScore": 93, "complianceIssues": 0},{"id": "a0213", "date": "2026-08-07", "inspector": "徐瑞雪", "storeId": "s160", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0214", "date": "2026-08-07", "inspector": "徐瑞雪", "storeId": "s159", "score": 86, "type": "offline", "qscScore": 86, "complianceIssues": 0},{"id": "a0215", "date": "2026-08-08", "inspector": "马昕茹", "storeId": "s056", "score": 0, "type": "online", "qscScore": 0, "complianceIssues": 0},{"id": "a0216", "date": "2026-08-08", "inspector": "马昕茹", "storeId": "s140", "score": 0, "type": "online", "qscScore": 0, "complianceIssues": 0},{"id": "a0217", "date": "2026-08-08", "inspector": "马昕茹", "storeId": "s023", "score": 0, "type": "online", "qscScore": 0, "complianceIssues": 0},{"id": "a0218", "date": "2026-08-08", "inspector": "马昕茹", "storeId": "s084", "score": 0, "type": "online", "qscScore": 0, "complianceIssues": 0},{"id": "a0219", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s162", "score": 88, "type": "online", "qscScore": 88, "complianceIssues": 0},{"id": "a0220", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s188", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0221", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s023", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0222", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s084", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0223", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s182", "score": 84, "type": "online", "qscScore": 84, "complianceIssues": 0},{"id": "a0224", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s192", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0225", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s174", "score": 85, "type": "online", "qscScore": 85, "complianceIssues": 0},{"id": "a0226", "date": "2026-08-08", "inspector": "张炜玉", "storeId": "s193", "score": 82, "type": "online", "qscScore": 82, "complianceIssues": 0},{"id": "a0227", "date": "2026-08-08", "inspector": "钱磊", "storeId": "s080", "score": 90, "type": "online", "qscScore": 90, "complianceIssues": 0},{"id": "a0228", "date": "2026-08-08", "inspector": "陶畅", "storeId": "s064", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0229", "date": "2026-08-08", "inspector": "陶畅", "storeId": "s133", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0230", "date": "2026-08-08", "inspector": "王红丽", "storeId": "s147", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0231", "date": "2026-08-08", "inspector": "王红丽", "storeId": "s033", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0232", "date": "2026-08-08", "inspector": "王红丽", "storeId": "s108", "score": 80, "type": "offline", "qscScore": 80, "complianceIssues": 0},{"id": "a0233", "date": "2026-08-08", "inspector": "王红丽", "storeId": "s090", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0234", "date": "2026-08-08", "inspector": "王红丽", "storeId": "s191", "score": 91, "type": "offline", "qscScore": 91, "complianceIssues": 0},{"id": "a0235", "date": "2026-08-08", "inspector": "乔雨地", "storeId": "s127", "score": 92, "type": "offline", "qscScore": 92, "complianceIssues": 0},{"id": "a0236", "date": "2026-08-08", "inspector": "乔雨地", "storeId": "s126", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0237", "date": "2026-08-08", "inspector": "徐瑞雪", "storeId": "s089", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0238", "date": "2026-08-08", "inspector": "徐瑞雪", "storeId": "s124", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0239", "date": "2026-08-08", "inspector": "徐瑞雪", "storeId": "s122", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0240", "date": "2026-08-09", "inspector": "马昕茹", "storeId": "s147", "score": 81, "type": "online", "qscScore": 81, "complianceIssues": 0},{"id": "a0241", "date": "2026-08-09", "inspector": "马昕茹", "storeId": "s047", "score": 94, "type": "online", "qscScore": 94, "complianceIssues": 0},{"id": "a0242", "date": "2026-08-09", "inspector": "马昕茹", "storeId": "s145", "score": 94, "type": "online", "qscScore": 94, "complianceIssues": 0},{"id": "a0243", "date": "2026-08-09", "inspector": "马昕茹", "storeId": "s038", "score": 92, "type": "online", "qscScore": 92, "complianceIssues": 0},{"id": "a0244", "date": "2026-08-09", "inspector": "钱磊", "storeId": "s058", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0245", "date": "2026-08-09", "inspector": "钱磊", "storeId": "s008", "score": 96, "type": "online", "qscScore": 96, "complianceIssues": 0},{"id": "a0246", "date": "2026-08-09", "inspector": "钱磊", "storeId": "s187", "score": 88, "type": "online", "qscScore": 88, "complianceIssues": 0},{"id": "a0247", "date": "2026-08-09", "inspector": "钱磊", "storeId": "s062", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0248", "date": "2026-08-09", "inspector": "范晓明", "storeId": "s103", "score": 88, "type": "online", "qscScore": 88, "complianceIssues": 0},{"id": "a0249", "date": "2026-08-09", "inspector": "范晓明", "storeId": "s065", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0250", "date": "2026-08-09", "inspector": "范晓明", "storeId": "s156", "score": 91, "type": "online", "qscScore": 91, "complianceIssues": 0},{"id": "a0251", "date": "2026-08-09", "inspector": "范晓明", "storeId": "s092", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0252", "date": "2026-08-09", "inspector": "范晓明", "storeId": "s102", "score": 87, "type": "online", "qscScore": 87, "complianceIssues": 0},{"id": "a0253", "date": "2026-08-09", "inspector": "陶畅", "storeId": "s035", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0254", "date": "2026-08-09", "inspector": "陶畅", "storeId": "s059", "score": 92, "type": "offline", "qscScore": 92, "complianceIssues": 0},{"id": "a0255", "date": "2026-08-09", "inspector": "陶畅", "storeId": "s069", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0256", "date": "2026-08-09", "inspector": "陶畅", "storeId": "s166", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0257", "date": "2026-08-09", "inspector": "乔雨地", "storeId": "s036", "score": 88, "type": "offline", "qscScore": 88, "complianceIssues": 0},{"id": "a0258", "date": "2026-08-09", "inspector": "乔雨地", "storeId": "s175", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0259", "date": "2026-08-09", "inspector": "乔雨地", "storeId": "s040", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0260", "date": "2026-08-09", "inspector": "乔雨地", "storeId": "s037", "score": 87, "type": "offline", "qscScore": 87, "complianceIssues": 0},{"id": "a0261", "date": "2026-08-09", "inspector": "王红丽", "storeId": "s143", "score": 85, "type": "offline", "qscScore": 85, "complianceIssues": 0},{"id": "a0262", "date": "2026-08-09", "inspector": "王红丽", "storeId": "s131", "score": 89, "type": "offline", "qscScore": 89, "complianceIssues": 0},{"id": "a0263", "date": "2026-08-09", "inspector": "王红丽", "storeId": "s153", "score": 90, "type": "offline", "qscScore": 90, "complianceIssues": 0},{"id": "a0264", "date": "2026-08-09", "inspector": "王红丽", "storeId": "s058", "score": 84, "type": "offline", "qscScore": 84, "complianceIssues": 0}],
+
+
+
+
 
 
 
@@ -1588,7 +3174,15 @@ const App = {
 
 
 
+
+
+
+
     stores: [
+
+
+
+
 
 
 
@@ -1596,7 +3190,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's002', name: '内江路店', district: '上海', adminArea: '上海', bizArea: '经营二区', region: '上海', manager: '段琳阁', managerTitle: '门店第一负责人', employeeId: '15841', mode: '3.0' },
+
+
+
+
 
 
 
@@ -1604,7 +3206,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's004', name: '江苏路店', district: '上海', adminArea: '上海', bizArea: '经营四区', region: '上海', manager: '陈高峰', managerTitle: '门店第一负责人', employeeId: '12199', mode: '3.0' },
+
+
+
+
 
 
 
@@ -1612,7 +3222,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's006', name: '汇融天地店', district: '上海', adminArea: '上海', bizArea: '经营六区', region: '上海', manager: '关晓亮', managerTitle: '储备店长', employeeId: '25145', mode: '3.0' },
+
+
+
+
 
 
 
@@ -1620,7 +3238,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's008', name: '赵公口店', district: '丰台区', adminArea: '丰台区', bizArea: '经营八区', region: '训练店', manager: '胡敬花', managerTitle: '门店第一负责人', employeeId: '338', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1628,7 +3254,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's010', name: '枣园地铁店', district: '大兴区', adminArea: '大兴区', bizArea: '经营十区', region: '训练店', manager: '朱澳洋', managerTitle: '门店第一负责人', employeeId: '5851', mode: '3.0' },
+
+
+
+
 
 
 
@@ -1636,7 +3270,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's012', name: '安慧北里店', district: '朝阳区', adminArea: '朝阳区', bizArea: '上海', region: '训练店', manager: '苏丽莉', managerTitle: '门店第一负责人', employeeId: '8799', mode: '3.0' },
+
+
+
+
 
 
 
@@ -1644,7 +3286,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's014', name: '前进花园店', district: '顺义区', adminArea: '顺义区', bizArea: '事业管理室：邹安定、王同斌（兼），陈贵安      【 2.0程帅威、3.0陈秋】', region: '经营一区', manager: '李海波', managerTitle: '门店第一负责人', employeeId: '16259', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1652,7 +3302,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's016', name: '建新东街店', district: '顺义区', adminArea: '顺义区', bizArea: '', region: '经营一区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1660,7 +3318,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's018', name: '和平街店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营一区', manager: '刘明花', managerTitle: '门店第一负责人', employeeId: '2567', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1668,7 +3334,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's020', name: '秋实路店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营一区', manager: '张开琴', managerTitle: '门店第一负责人', employeeId: '1784', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1676,7 +3350,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's022', name: '小营路店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营一区', manager: '王丽娜', managerTitle: '门店第一负责人', employeeId: '29', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1684,7 +3366,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's024', name: '天通西苑店', district: '昌平区', adminArea: '昌平区', bizArea: '', region: '经营一区', manager: '张然', managerTitle: '门店第一负责人', employeeId: '757', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1692,7 +3382,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's026', name: '回龙观东大街店', district: '昌平区', adminArea: '昌平区', bizArea: '', region: '经营一区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.5' },
+
+
+
+
 
 
 
@@ -1700,7 +3398,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's028', name: '温都水城店', district: '昌平区', adminArea: '昌平区', bizArea: '', region: '经营一区', manager: '刘丽', managerTitle: '门店第一负责人', employeeId: '1771', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1708,7 +3414,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's030', name: '昌平地铁店', district: '昌平区', adminArea: '昌平区', bizArea: '', region: '经营一区', manager: '邹喜尧', managerTitle: '门店第一负责人', employeeId: '22988', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1716,7 +3430,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's032', name: '西二旗店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营一区', manager: '梁书平', managerTitle: '门店第一负责人', employeeId: '1189', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1724,7 +3446,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's034', name: '三里河店', district: '西城区', adminArea: '西城区', bizArea: '', region: '经营二区', manager: '王芬', managerTitle: '门店第一负责人', employeeId: '3029', mode: '2.5' },
+
+
+
+
 
 
 
@@ -1732,7 +3462,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's036', name: '万寿路西街店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营二区', manager: '陈书芳', managerTitle: '门店第一负责人', employeeId: '10013', mode: '2.5' },
+
+
+
+
 
 
 
@@ -1740,7 +3478,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's038', name: '马连洼店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营二区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1748,7 +3494,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's040', name: '彰化路店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营二区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1756,7 +3510,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's042', name: '交大东路店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营二区', manager: '赵状状', managerTitle: '门店第一负责人', employeeId: '301', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1764,7 +3526,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's044', name: '科学院南路店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营二区', manager: '李顺', managerTitle: '二副', employeeId: '24936', mode: '2.5' },
+
+
+
+
 
 
 
@@ -1772,7 +3542,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's046', name: '双榆树店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营二区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.5' },
+
+
+
+
 
 
 
@@ -1780,7 +3558,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's048', name: '望京花家地店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营二区', manager: '杜小玲', managerTitle: '门店第一负责人', employeeId: '6121', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1788,7 +3574,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's050', name: '木偶剧院店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营二区', manager: '柏成', managerTitle: '门店第一负责人', employeeId: '10273', mode: '2.5' },
+
+
+
+
 
 
 
@@ -1796,7 +3590,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's052', name: '天桥店', district: '西城区', adminArea: '西城区', bizArea: '', region: '经营三区', manager: '林周强', managerTitle: '门店第一负责人', employeeId: '280', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1804,7 +3606,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's054', name: '四路通店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营三区', manager: '张红光', managerTitle: '门店第一负责人', employeeId: '7352', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1812,7 +3622,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's056', name: '方庄店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营三区', manager: '陈明振', managerTitle: '门店第一负责人', employeeId: '1641', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1820,7 +3638,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's058', name: '西罗园店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营三区', manager: '季必成', managerTitle: '门店第一负责人', employeeId: '5251', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1828,7 +3654,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's060', name: '王府井店', district: '东城区', adminArea: '东城区', bizArea: '', region: '经营三区', manager: '樊元聪', managerTitle: '门店第一负责人', employeeId: '5858', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1836,7 +3670,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's062', name: '北京站店', district: '东城区', adminArea: '东城区', bizArea: '', region: '经营三区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1844,7 +3686,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's064', name: '夕照寺店', district: '东城区', adminArea: '东城区', bizArea: '', region: '经营三区', manager: '刘东', managerTitle: '门店第一负责人', employeeId: '209', mode: '2.5' },
+
+
+
+
 
 
 
@@ -1852,7 +3702,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's066', name: '成寿寺店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营三区', manager: '张硕', managerTitle: '门店第一负责人', employeeId: '22879', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1860,7 +3718,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's068', name: '驼房营店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营三区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1868,7 +3734,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's070', name: '华威桥店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营三区', manager: '周璐', managerTitle: '门店第一负责人', employeeId: '1693', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1876,7 +3750,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's072', name: '通州店', district: '通州区', adminArea: '通州区', bizArea: '', region: '经营四区', manager: '刘加刚', managerTitle: '门店第一负责人', employeeId: '1691', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1884,7 +3766,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's074', name: '通州梨园店', district: '通州区', adminArea: '通州区', bizArea: '', region: '经营四区', manager: '张帅帅', managerTitle: '店长', employeeId: '10615', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1892,7 +3782,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's076', name: '玉桥中路店', district: '通州区', adminArea: '通州区', bizArea: '', region: '经营四区', manager: '王新龙', managerTitle: '门店第一负责人', employeeId: '949', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1900,7 +3798,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's078', name: '玉桥东里店', district: '通州区', adminArea: '通州区', bizArea: '', region: '经营四区', manager: '闫良莹', managerTitle: '门店第一负责人', employeeId: '14406', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1908,7 +3814,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's080', name: '双井桥东店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营四区', manager: '丁卜军', managerTitle: '门店第一负责人', employeeId: '8275', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1916,7 +3830,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's082', name: '垡头店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营四区', manager: '刘震', managerTitle: '门店第一负责人', employeeId: '325', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1924,7 +3846,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's084', name: '富力又一城店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营四区', manager: '吴少艳', managerTitle: '门店第一负责人', employeeId: '1666', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1932,7 +3862,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's086', name: '周庄嘉园店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营四区', manager: '琚璐瑶', managerTitle: '门店第一负责人', employeeId: '4787', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1940,7 +3878,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's088', name: '百子湾店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营四区', manager: '金瑞', managerTitle: '门店第一负责人', employeeId: '196', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1948,7 +3894,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's090', name: '达官营店', district: '西城区', adminArea: '西城区', bizArea: '', region: '经营五区', manager: '樊雪晴', managerTitle: '门店第一负责人', employeeId: '1774', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1956,7 +3910,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's092', name: '金顶北路店', district: '石景山区', adminArea: '石景山区', bizArea: '', region: '经营五区', manager: '赵玉杰', managerTitle: '门店第一负责人', employeeId: '4131', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1964,7 +3926,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's094', name: '小园地铁店', district: '门头沟区', adminArea: '门头沟区', bizArea: '', region: '经营五区', manager: '贾建伟', managerTitle: '门店第一负责人', employeeId: '3637', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1972,7 +3942,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's096', name: '三环新城店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营五区', manager: '况孝武', managerTitle: '门店第一负责人', employeeId: '1605', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1980,7 +3958,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's098', name: '青塔店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营五区', manager: '王慧芳', managerTitle: '门店第一负责人', employeeId: '2051', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1988,7 +3974,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's100', name: '富丰桥店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营五区', manager: '董伦', managerTitle: '门店第一负责人', employeeId: '7537', mode: '2.0' },
+
+
+
+
 
 
 
@@ -1996,7 +3990,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's102', name: '正阳大街店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营五区', manager: '郭杏辉', managerTitle: '门店第一负责人', employeeId: '2340', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2004,7 +4006,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's104', name: '宛平城店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营五区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2012,7 +4022,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's106', name: '华源一里店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营五区', manager: '闵丹丹', managerTitle: '门店第一负责人', employeeId: '4246', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2020,7 +4038,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's108', name: '莲怡园店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营五区', manager: '潘永帅', managerTitle: '储备店长', employeeId: '25490', mode: '2.5' },
+
+
+
+
 
 
 
@@ -2028,7 +4054,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's110', name: '陶然亭店', district: '西城区', adminArea: '西城区', bizArea: '', region: '经营六区', manager: '屈凡伟', managerTitle: '门店第一负责人', employeeId: '1', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2036,7 +4070,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's112', name: '菜户营西路店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营六区', manager: '惠霞', managerTitle: '门店第一负责人', employeeId: '8049', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2044,7 +4086,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's114', name: '南站店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营六区', manager: '黄华静', managerTitle: '门店第一负责人', employeeId: '127', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2052,7 +4102,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's116', name: '南站3店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营六区', manager: '赵棋', managerTitle: '门店第一负责人', employeeId: '2001', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2060,7 +4118,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's118', name: '西站店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营六区', manager: '王贵龙', managerTitle: '门店第一负责人', employeeId: '23306', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2068,7 +4134,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's120', name: '拱辰南大街店', district: '房山区', adminArea: '房山区', bizArea: '', region: '经营六区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2076,7 +4150,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's122', name: '枣园店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营六区', manager: '束佩佩', managerTitle: '门店第一负责人', employeeId: '255', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2084,7 +4166,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's124', name: '兴丰大街店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营六区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2092,7 +4182,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's126', name: '黄村西大街店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营六区', manager: '吕晓华', managerTitle: '门店第一负责人', employeeId: '884', mode: '2.5' },
+
+
+
+
 
 
 
@@ -2100,7 +4198,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's128', name: '高米店北店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营六区', manager: '王琴', managerTitle: '门店第一负责人', employeeId: '2', mode: '2.5' },
+
+
+
+
 
 
 
@@ -2108,7 +4214,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's130', name: '东铁营店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营七区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2116,7 +4230,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's132', name: '木樨园桥西店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营七区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2124,7 +4246,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's134', name: '角北店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营七区', manager: '杨磊', managerTitle: '门店第一负责人', employeeId: '3100', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2132,7 +4262,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's136', name: '草桥地铁店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营七区', manager: '沈美玲', managerTitle: '门店第一负责人', employeeId: '445', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2140,7 +4278,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's138', name: '石榴园店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营七区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.5' },
+
+
+
+
 
 
 
@@ -2148,7 +4294,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's140', name: '泰和园店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营七区', manager: '常红燕', managerTitle: '门店第一负责人', employeeId: '2646', mode: '2.5' },
+
+
+
+
 
 
 
@@ -2156,7 +4310,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's142', name: '辛房路店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营七区', manager: '叶子瑞', managerTitle: '门店第一负责人', employeeId: '16699', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2164,7 +4326,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's144', name: '亦庄店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营七区', manager: '霍志鹏', managerTitle: '门店第一负责人', employeeId: '4836', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2172,7 +4342,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's146', name: '旧宫店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营七区', manager: '唐勇', managerTitle: '门店第一负责人', employeeId: '47', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2180,7 +4358,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's148', name: '太平街店', district: '西城区', adminArea: '西城区', bizArea: '', region: '经营八区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2188,7 +4374,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's150', name: '李老新村店', district: '通州区', adminArea: '通州区', bizArea: '', region: '经营八区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2196,7 +4390,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's152', name: '宋家庄店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营八区', manager: '谢莉莉', managerTitle: '门店第一负责人', employeeId: '4132', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2204,7 +4406,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's154', name: '国展店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营八区', manager: '田凯迪', managerTitle: '区域教练', employeeId: '25405', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2212,7 +4422,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's156', name: '甜水园店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营八区', manager: '郝帅杰', managerTitle: '门店第一负责人', employeeId: '9011', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2220,7 +4438,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's158', name: '草房地铁店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营八区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2228,7 +4454,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's160', name: '青年路店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营八区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.5' },
+
+
+
+
 
 
 
@@ -2236,7 +4470,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's162', name: '东大桥店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营八区', manager: '张志龙', managerTitle: '门店第一负责人', employeeId: '545', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2244,7 +4486,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's164', name: '红庙店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营八区', manager: '王丹丹', managerTitle: '门店第一负责人', employeeId: '18486', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2252,7 +4502,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's166', name: '左安门店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营八区', manager: '秦少霞', managerTitle: '门店第一负责人', employeeId: '847', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2260,7 +4518,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's168', name: '建华南路店', district: '', adminArea: '', bizArea: '', region: '经营八区', manager: '刘云龙', managerTitle: '储备店长', employeeId: '25497', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2268,7 +4534,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's170', name: '杨庄东街店', district: '石景山区', adminArea: '石景山区', bizArea: '', region: '经营九区', manager: '王燕敏', managerTitle: '门店第一负责人', employeeId: '1687', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2276,7 +4550,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's172', name: '广源大厦店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营九区', manager: '何洋', managerTitle: '门店第一负责人', employeeId: '11660', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2284,7 +4566,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's174', name: '航天桥店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营九区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2292,7 +4582,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's176', name: '清河店', district: '海淀区', adminArea: '海淀区', bizArea: '', region: '经营九区', manager: '栾祖全', managerTitle: '门店第一负责人', employeeId: '27', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2300,7 +4598,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's178', name: '马家堡店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营九区', manager: '金灿', managerTitle: '门店第一负责人', employeeId: '21714', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2308,7 +4614,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's180', name: '嘉园店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营九区', manager: '区域直管', managerTitle: '', employeeId: '', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2316,7 +4630,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's182', name: '丰管路店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营九区', manager: '刘艳鹏', managerTitle: '门店第一负责人', employeeId: '22994', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2324,7 +4646,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's184', name: '日坛北路店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营九区', manager: '姜雨含', managerTitle: '门店第一负责人', employeeId: '25129', mode: '2.0' },
+
+
+
+
 
 
 
@@ -2332,7 +4662,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's186', name: '小营西路店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营九区', manager: '关永鑫', managerTitle: '门店第一负责人', employeeId: '21794', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2340,7 +4678,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's188', name: '金融街店', district: '西城区', adminArea: '西城区', bizArea: '', region: '经营九区', manager: '沈静婷', managerTitle: '门店第一负责人', employeeId: '198', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2348,7 +4694,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's190', name: '四路通二店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营九区', manager: '张耀民', managerTitle: '储备店长', employeeId: '25541', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2356,7 +4710,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's192', name: '古城大街店', district: '石景山区', adminArea: '石景山区', bizArea: '', region: '经营十区', manager: '汪开天', managerTitle: '门店第一负责人', employeeId: '19331', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2364,7 +4726,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's194', name: '光彩路店', district: '丰台区', adminArea: '丰台区', bizArea: '', region: '经营十区', manager: '吴建', managerTitle: '门店第一负责人', employeeId: '2264', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2372,7 +4742,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 's196', name: '郁花园店', district: '大兴区', adminArea: '大兴区', bizArea: '', region: '经营十区', manager: '李承兵', managerTitle: '门店第一负责人', employeeId: '2280', mode: '3.0' },
+
+
+
+
 
 
 
@@ -2380,11 +4758,23 @@ const App = {
 
 
 
+
+
+
+
       { id: 's198', name: '定福庄店', district: '朝阳区', adminArea: '朝阳区', bizArea: '', region: '经营十区', manager: '郭丰瑜', managerTitle: '门店第一负责人', employeeId: '12636', mode: '3.0' }
 
 
 
+
+
+
+
     ],
+
+
+
+
 
 
 
@@ -2392,7 +4782,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u002', name: '刘畅', role: '线上稽核', area: '', storeId: '', store: '', phone: '13800000002' },
+
+
+
+
 
 
 
@@ -2400,7 +4798,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u004', name: '陶畅', role: '线上稽核', area: '', storeId: '', store: '', phone: '13800000004' },
+
+
+
+
 
 
 
@@ -2408,7 +4814,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u006', name: '钱磊', role: '线下稽核', area: '', storeId: '', store: '', phone: '13800000006' },
+
+
+
+
 
 
 
@@ -2416,7 +4830,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u008', name: '教练B', role: '区域教练', area: '上海', storeId: '', store: '', phone: '13800000008' },
+
+
+
+
 
 
 
@@ -2424,7 +4846,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u010', name: '李四', role: '店长', area: '', storeId: 's048', store: '望京花家地店', phone: '13800000010' },
+
+
+
+
 
 
 
@@ -2432,7 +4862,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u012', name: '赵六', role: '店长', area: '', storeId: 'SH001', store: '上海徐汇店', phone: '13800000012' },
+
+
+
+
 
 
 
@@ -2440,7 +4878,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u014', name: '周八', role: '店长', area: '', storeId: 'DC001', store: '东城王府井店', phone: '13800000014' },
+
+
+
+
 
 
 
@@ -2448,7 +4894,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'u016', name: '客服小王', role: '客服', area: '', storeId: '', store: '', phone: '13800000016' },
+
+
+
+
 
 
 
@@ -2456,7 +4910,15 @@ const App = {
 
 
 
+
+
+
+
     ],
+
+
+
+
 
 
 
@@ -2464,7 +4926,15 @@ const App = {
 
 
 
+
+
+
+
       { region: '经营一区', coach: '教练A', storeCount: 3 },
+
+
+
+
 
 
 
@@ -2472,7 +4942,15 @@ const App = {
 
 
 
+
+
+
+
       { region: '经营三区', coach: '教练C', storeCount: 1 },
+
+
+
+
 
 
 
@@ -2480,7 +4958,15 @@ const App = {
 
 
 
+
+
+
+
     ],
+
+
+
+
 
 
 
@@ -2488,7 +4974,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'p001', storeId: 's056', store: '方庄店', region: '经营一区', district: '朝阳区', manager: '张三', eventDate: '2026-08-03', event: '未及时上传日清记录', category: '管理失职', level: '一级批评教育', source: '现场稽核', inspector: '范晓明', personName: '张三', personLevel: '一级批评教育', personType: '管理失职', penaltyPerson: '', penaltyManager: '', survey: '经查，门店未及时上传7月28日日清记录', suggestion: '通报批评，限期整改', policyRef: '新奖惩制度第3.1条', dutyPerson: '', dutyManager: '', dutyValue: '', dutyCoach: '', status: '待补填' },
+
+
+
+
 
 
 
@@ -2496,7 +4990,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'p003', storeId: 'SLH001', store: '十里河店', region: '经营二区', district: '朝阳区', manager: '王五', eventDate: '2026-08-10', event: '食品过期未下架', category: '食品安全', level: '三级降职降薪', source: '线下稽核', inspector: '钱磊', personName: '王五', personLevel: '三级降职降薪', personType: '食品安全', penaltyPerson: '取消当月奖金', penaltyManager: '取消当月奖金', survey: '巡检发现冷藏柜中有过期食材未及时处理', suggestion: '降职降薪，取消当月奖金', policyRef: '新奖惩制度第8.1条', dutyPerson: '王五', dutyManager: '王五', dutyValue: '取消当月奖金', dutyCoach: '教练A', status: '已闭环' },
+
+
+
+
 
 
 
@@ -2504,7 +5006,15 @@ const App = {
 
 
 
+
+
+
+
     ],
+
+
+
+
 
 
 
@@ -2512,7 +5022,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'c001', storeId: 's056', store: '方庄店', date: '2026-08-01', meal: '午餐', content: '菜品太咸，服务态度差', opportunity: '口味标准化/服务培训', platform: '点评', responsible: '张三', responsibleTitle: '店长', dutyManager: '张三', status: '待处理', appealContent: '', appealResult: '' },
+
+
+
+
 
 
 
@@ -2520,7 +5038,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'c003', storeId: 'SLH001', store: '十里河店', date: '2026-08-05', meal: '早餐', content: '豆浆有异味', opportunity: '食品安全检查', platform: '点评', responsible: '王五', responsibleTitle: '店长', dutyManager: '王五', status: '已处理', appealContent: '', appealResult: '' },
+
+
+
+
 
 
 
@@ -2528,11 +5054,23 @@ const App = {
 
 
 
+
+
+
+
       { id: 'c005', storeId: 's056', store: '方庄店', date: '2026-08-08', meal: '晚餐', content: '外卖漏送菜品', opportunity: '外卖打包流程', platform: '点评', responsible: '打包员', responsibleTitle: '小时工', dutyManager: '张三', status: '已驳回', appealContent: '员工操作失误已处罚', appealResult: '驳回' }
 
 
 
+
+
+
+
     ],
+
+
+
+
 
 
 
@@ -2540,7 +5078,15 @@ const App = {
 
 
 
+
+
+
+
       { id: 'o001', inspector: '刘畅', storeId: 's056', store: '方庄店', date: '2026-08-01', content: '顾客差评：菜品味道偏咸' },
+
+
+
+
 
 
 
@@ -2548,7 +5094,15 @@ const App = {
 
 
 
+
+
+
+
     ],
+
+
+
+
 
 
 
@@ -2556,7 +5110,15 @@ const App = {
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2564,7 +5126,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "胡柯翊",
+
+
+
+
 
 
 
@@ -2572,11 +5142,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2584,7 +5166,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "李万鹏",
+
+
+
+
 
 
 
@@ -2592,11 +5182,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2604,7 +5206,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "李鹏",
+
+
+
+
 
 
 
@@ -2612,11 +5222,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2624,7 +5246,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "高瑶",
+
+
+
+
 
 
 
@@ -2632,11 +5262,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2644,7 +5286,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "程帅威",
+
+
+
+
 
 
 
@@ -2652,11 +5302,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2664,7 +5326,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "杨贺川",
+
+
+
+
 
 
 
@@ -2672,11 +5342,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2684,7 +5366,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "赵芳",
+
+
+
+
 
 
 
@@ -2692,11 +5382,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2704,7 +5406,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "李塘龙",
+
+
+
+
 
 
 
@@ -2712,11 +5422,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2724,7 +5446,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "闫海青",
+
+
+
+
 
 
 
@@ -2732,11 +5462,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2744,7 +5486,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "陈秋",
+
+
+
+
 
 
 
@@ -2752,11 +5502,23 @@ const App = {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2764,11 +5526,23 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "陈贵安",
 
 
 
+
+
+
+
                 "type": "region"
+
+
+
+
 
 
 
@@ -2776,7 +5550,15 @@ const App = {
 
 
 
+
+
+
+
         {
+
+
+
+
 
 
 
@@ -2784,7 +5566,15 @@ const App = {
 
 
 
+
+
+
+
                 "leader": "洪登峰",
+
+
+
+
 
 
 
@@ -2792,7 +5582,15 @@ const App = {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -2800,7 +5598,15 @@ const App = {
 
 
 
+
+
+
+
     offlineRecords: [
+
+
+
+
 
 
 
@@ -2808,11 +5614,27 @@ const App = {
 
 
 
+
+
+
+
       { id: 'of002', inspector: '钱磊', storeId: 'SLH001', store: '十里河店', date: '2026-08-06', score: 72, content: '食品过期扣15分；服务态度扣8分；环境扣5分' }
 
 
 
+
+
+
+
     ],
+
+
+
+
+
+
+
+
 
 
 
@@ -2824,7 +5646,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -2836,7 +5670,15 @@ const App = {
 
 
 
+
+
+
+
   _toSnake(str) {
+
+
+
+
 
 
 
@@ -2844,7 +5686,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -2852,11 +5702,23 @@ const App = {
 
 
 
+
+
+
+
     return str.replace(/_([a-z])/g, function(m, c) { return c.toUpperCase(); });
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -2864,7 +5726,15 @@ const App = {
 
 
 
+
+
+
+
     if (!row) return row;
+
+
+
+
 
 
 
@@ -2872,7 +5742,15 @@ const App = {
 
 
 
+
+
+
+
     for (var k in row) {
+
+
+
+
 
 
 
@@ -2880,7 +5758,15 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -2888,7 +5774,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -2896,7 +5790,15 @@ const App = {
 
 
 
+
+
+
+
     if (!row) return row;
+
+
+
+
 
 
 
@@ -2904,7 +5806,15 @@ const App = {
 
 
 
+
+
+
+
     for (var k in row) {
+
+
+
+
 
 
 
@@ -2912,7 +5822,15 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -2920,7 +5838,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -2928,7 +5854,15 @@ const App = {
 
 
 
+
+
+
+
     var self = this;
+
+
+
+
 
 
 
@@ -2936,7 +5870,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -2944,7 +5886,15 @@ const App = {
 
 
 
+
+
+
+
     var self = this;
+
+
+
+
 
 
 
@@ -2952,7 +5902,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -2964,7 +5926,19 @@ const App = {
 
 
 
+
+
+
+
   tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues', 'work_records'],
+
+
+
+
+
+
+
+
 
 
 
@@ -2976,7 +5950,15 @@ const App = {
 
 
 
+
+
+
+
   Permissions: {
+
+
+
+
 
 
 
@@ -2984,7 +5966,15 @@ const App = {
 
 
 
+
+
+
+
       '总部':     { inspection: true, inspection_edit: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+
+
+
+
 
 
 
@@ -2992,7 +5982,15 @@ const App = {
 
 
 
+
+
+
+
       '线下稽核': { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+
+
+
+
 
 
 
@@ -3000,7 +5998,15 @@ const App = {
 
 
 
+
+
+
+
       '客服':     { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+
+
+
+
 
 
 
@@ -3008,7 +6014,15 @@ const App = {
 
 
 
+
+
+
+
       '店长':     { inspection: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true },
+
+
+
+
 
 
 
@@ -3016,7 +6030,15 @@ const App = {
 
 
 
+
+
+
+
       '稽核':     { inspection: true, inspection_edit: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+
+
+
+
 
 
 
@@ -3024,7 +6046,15 @@ const App = {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -3032,7 +6062,15 @@ const App = {
 
 
 
+
+
+
+
       var perm = this.matrix[role];
+
+
+
+
 
 
 
@@ -3040,11 +6078,23 @@ const App = {
 
 
 
+
+
+
+
       return perm[module] === true;
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -3052,7 +6102,15 @@ const App = {
 
 
 
+
+
+
+
       '总部': '总部管理员', '线上稽核': '线上稽核员', '线下稽核': '线下稽核员', '稽核员': '稽核员',
+
+
+
+
 
 
 
@@ -3060,7 +6118,15 @@ const App = {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -3068,7 +6134,15 @@ const App = {
 
 
 
+
+
+
+
       '总部': '#c41a1a', '线上稽核': '#2563eb', '线下稽核': '#7c3aed', '稽核员': '#2563eb',
+
+
+
+
 
 
 
@@ -3076,11 +6150,27 @@ const App = {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3092,7 +6182,15 @@ const App = {
 
 
 
+
+
+
+
   async init() {
+
+
+
+
 
 
 
@@ -3100,7 +6198,15 @@ const App = {
 
 
 
+
+
+
+
     if (typeof supabase !== 'undefined') {
+
+
+
+
 
 
 
@@ -3108,7 +6214,19 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -3120,11 +6238,23 @@ const App = {
 
 
 
+
+
+
+
     this.bindHashChange();
 
 
 
+
+
+
+
     this.bindTabBar();
+
+
+
+
 
 
 
@@ -3136,7 +6266,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
     // 后台加载数据，完成后自动刷新当前页面
+
+
+
+
 
 
 
@@ -3144,7 +6286,15 @@ const App = {
 
 
 
+
+
+
+
     setTimeout(async function() {
+
+
+
+
 
 
 
@@ -3152,7 +6302,15 @@ const App = {
 
 
 
+
+
+
+
         var dataPromise = self.initData();
+
+
+
+
 
 
 
@@ -3160,7 +6318,15 @@ const App = {
 
 
 
+
+
+
+
           setTimeout(function() { reject(new Error('timeout')); }, 8000);
+
+
+
+
 
 
 
@@ -3168,7 +6334,15 @@ const App = {
 
 
 
+
+
+
+
         await Promise.race([dataPromise, timeout]);
+
+
+
+
 
 
 
@@ -3176,7 +6350,15 @@ const App = {
 
 
 
+
+
+
+
         console.warn('[App] 数据加载超时，使用本地缓存:', e.message);
+
+
+
+
 
 
 
@@ -3184,7 +6366,15 @@ const App = {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -3192,7 +6382,15 @@ const App = {
 
 
 
+
+
+
+
       var hash = (location.hash || '#home').replace('#', '');
+
+
+
+
 
 
 
@@ -3200,11 +6398,27 @@ const App = {
 
 
 
+
+
+
+
     }, 100);
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3216,7 +6430,15 @@ const App = {
 
 
 
+
+
+
+
   async initData() {
+
+
+
+
 
 
 
@@ -3224,7 +6446,15 @@ const App = {
 
 
 
+
+
+
+
       this.initLocalFallback();
+
+
+
+
 
 
 
@@ -3232,7 +6462,19 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -3244,7 +6486,15 @@ const App = {
 
 
 
+
+
+
+
       for (var t = 0; t < this.tables.length; t++) {
+
+
+
+
 
 
 
@@ -3252,7 +6502,15 @@ const App = {
 
 
 
+
+
+
+
         if (this.seedData[table] && this.seedData[table].length > 0) {
+
+
+
+
 
 
 
@@ -3260,7 +6518,15 @@ const App = {
 
 
 
+
+
+
+
           if (count === 0) {
+
+
+
+
 
 
 
@@ -3268,7 +6534,15 @@ const App = {
 
 
 
+
+
+
+
             await this.supabase.from(table).insert(this._snakeList(this.seedData[table]));
+
+
+
+
 
 
 
@@ -3276,7 +6550,15 @@ const App = {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -3284,7 +6566,15 @@ const App = {
 
 
 
+
+
+
+
       console.log('[Supabase] 种子数据初始化完成');
+
+
+
+
 
 
 
@@ -3292,7 +6582,15 @@ const App = {
 
 
 
+
+
+
+
       this.dataReady = true;
+
+
+
+
 
 
 
@@ -3300,7 +6598,15 @@ const App = {
 
 
 
+
+
+
+
       console.warn('[Supabase] 连接失败，回退 localStorage:', e.message);
+
+
+
+
 
 
 
@@ -3308,11 +6614,27 @@ const App = {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3324,7 +6646,15 @@ const App = {
 
 
 
+
+
+
+
   initLocalFallback() {
+
+
+
+
 
 
 
@@ -3332,7 +6662,15 @@ const App = {
 
 
 
+
+
+
+
       localStorage.setItem('nanchengxiang_stores', JSON.stringify(this.seedData.stores));
+
+
+
+
 
 
 
@@ -3340,7 +6678,15 @@ const App = {
 
 
 
+
+
+
+
       localStorage.setItem('nanchengxiang_region_coaches', JSON.stringify(this.seedData.region_coaches));
+
+
+
+
 
 
 
@@ -3348,7 +6694,15 @@ const App = {
 
 
 
+
+
+
+
       localStorage.setItem('nanchengxiang_complaints', JSON.stringify(this.seedData.complaints));
+
+
+
+
 
 
 
@@ -3356,7 +6710,15 @@ const App = {
 
 
 
+
+
+
+
       localStorage.setItem('nanchengxiang_offline_records', JSON.stringify(this.seedData.offline_records));
+
+
+
+
 
 
 
@@ -3364,7 +6726,15 @@ const App = {
 
 
 
+
+
+
+
       localStorage.setItem('nanchengxiang_inspection_results', JSON.stringify(this.seedData.inspection_results));
+
+
+
+
 
 
 
@@ -3372,7 +6742,15 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3380,7 +6758,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.users = JSON.parse(localStorage.getItem('nanchengxiang_users') || '[]');
+
+
+
+
 
 
 
@@ -3388,7 +6774,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.penalties = JSON.parse(localStorage.getItem('nanchengxiang_penalties') || '[]');
+
+
+
+
 
 
 
@@ -3396,7 +6790,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.online_records = JSON.parse(localStorage.getItem('nanchengxiang_online_records') || '[]');
+
+
+
+
 
 
 
@@ -3404,7 +6806,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.daily_reports = JSON.parse(localStorage.getItem('nanchengxiang_daily_reports') || '[]');
+
+
+
+
 
 
 
@@ -3412,7 +6822,15 @@ const App = {
 
 
 
+
+
+
+
     var localTemplates = localStorage.getItem('nanchengxiang_inspection_templates');
+
+
+
+
 
 
 
@@ -3420,7 +6838,15 @@ const App = {
 
 
 
+
+
+
+
     var localResults = localStorage.getItem('nanchengxiang_inspection_results');
+
+
+
+
 
 
 
@@ -3428,7 +6854,15 @@ const App = {
 
 
 
+
+
+
+
     var localIssues = localStorage.getItem('nanchengxiang_inspection_issues');
+
+
+
+
 
 
 
@@ -3436,11 +6870,27 @@ const App = {
 
 
 
+
+
+
+
     this.dataReady = true;
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3452,7 +6902,15 @@ const App = {
 
 
 
+
+
+
+
   async loadAll() {
+
+
+
+
 
 
 
@@ -3460,7 +6918,15 @@ const App = {
 
 
 
+
+
+
+
     for (var t = 0; t < this.tables.length; t++) {
+
+
+
+
 
 
 
@@ -3468,7 +6934,15 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3476,11 +6950,27 @@ const App = {
 
 
 
+
+
+
+
     this.dataReady = true;
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3492,7 +6982,15 @@ const App = {
 
 
 
+
+
+
+
     var allRows = [];
+
+
+
+
 
 
 
@@ -3500,7 +6998,15 @@ const App = {
 
 
 
+
+
+
+
     var limit = 1000;
+
+
+
+
 
 
 
@@ -3508,7 +7014,15 @@ const App = {
 
 
 
+
+
+
+
       var { data, error } = await this.supabase.from(table).select('*').range(from, from + limit - 1);
+
+
+
+
 
 
 
@@ -3516,7 +7030,15 @@ const App = {
 
 
 
+
+
+
+
       if (!data || data.length === 0) break;
+
+
+
+
 
 
 
@@ -3524,7 +7046,15 @@ const App = {
 
 
 
+
+
+
+
       allRows = allRows.concat(this._camelList(data));
+
+
+
+
 
 
 
@@ -3532,11 +7062,23 @@ const App = {
 
 
 
+
+
+
+
       from += limit;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3544,7 +7086,15 @@ const App = {
 
 
 
+
+
+
+
     // Supabase 返回空时用 localStorage 兜底
+
+
+
+
 
 
 
@@ -3552,7 +7102,15 @@ const App = {
 
 
 
+
+
+
+
       var localData = localStorage.getItem('nanchengxiang_' + table);
+
+
+
+
 
 
 
@@ -3560,7 +7118,15 @@ const App = {
 
 
 
+
+
+
+
         try { this.dataCache[table] = JSON.parse(localData); } catch (e) {}
+
+
+
+
 
 
 
@@ -3568,7 +7134,15 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3576,7 +7150,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.seedData[table] && this.seedData[table].length > 0) {
+
+
+
+
 
 
 
@@ -3584,7 +7166,15 @@ const App = {
 
 
 
+
+
+
+
       this.dataCache[table].forEach(function(r){ existingIds[r.id]=true; });
+
+
+
+
 
 
 
@@ -3592,7 +7182,15 @@ const App = {
 
 
 
+
+
+
+
         if (!existingIds[r.id]) { this.dataCache[table].push(r); }
+
+
+
+
 
 
 
@@ -3600,11 +7198,27 @@ const App = {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3616,7 +7230,15 @@ const App = {
 
 
 
+
+
+
+
   async refreshData() {
+
+
+
+
 
 
 
@@ -3624,7 +7246,15 @@ const App = {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -3632,7 +7262,15 @@ const App = {
 
 
 
+
+
+
+
       } catch (e) { /* 保持旧缓存 */ }
+
+
+
+
 
 
 
@@ -3640,7 +7278,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3652,7 +7302,15 @@ const App = {
 
 
 
+
+
+
+
   getStores()          { return this.dataCache.stores || []; },
+
+
+
+
 
 
 
@@ -3660,11 +7318,23 @@ const App = {
 
 
 
+
+
+
+
   getPenalties()       { return this.dataCache.penalties || []; },
 
 
 
+
+
+
+
   getComplaints()      { return this.dataCache.complaints || []; },
+
+
+
+
 
 
 
@@ -3676,7 +7346,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
   getAreaCoaches()   { return this.seedData.areaCoaches || []; },
+
+
+
+
 
 
 
@@ -3684,7 +7366,15 @@ const App = {
 
 
 
+
+
+
+
   getRegionCoaches()   { return this.dataCache.region_coaches || []; },
+
+
+
+
 
 
 
@@ -3692,11 +7382,23 @@ const App = {
 
 
 
-  getTemplates()      { return this.dataCache.inspection_templates || []; },
+
+
+
+
+  getTemplates()      { var d = this.dataCache.inspection_templates || []; if (d.length === 0 && this.seedData.inspection_templates && this.seedData.inspection_templates.length > 0) { this.dataCache.inspection_templates = JSON.parse(JSON.stringify(this.seedData.inspection_templates)); return this.dataCache.inspection_templates; } return d; },
+
+
+
+
 
 
 
   getResults()        { var d = this.dataCache.inspection_results || []; if (this.seedData.inspection_results && this.seedData.inspection_results.length > 0) { var ids={}; d.forEach(function(r){ids[r.id]=true}); this.seedData.inspection_results.forEach(function(r){if(!ids[r.id])d.push(r)}); } return d; },
+
+
+
+
 
 
 
@@ -3708,7 +7410,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
   async saveDailyReports(data) {
+
+
+
+
 
 
 
@@ -3716,11 +7430,23 @@ const App = {
 
 
 
+
+
+
+
     localStorage.setItem('nanchengxiang_daily_reports', JSON.stringify(data));
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3728,7 +7454,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('daily_reports').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3736,7 +7470,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -3744,7 +7486,15 @@ const App = {
 
 
 
+
+
+
+
   async saveTemplates(data) {
+
+
+
+
 
 
 
@@ -3752,11 +7502,23 @@ const App = {
 
 
 
+
+
+
+
     localStorage.setItem('nanchengxiang_inspection_templates', JSON.stringify(data));
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3764,7 +7526,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('inspection_templates').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3772,7 +7542,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -3780,7 +7558,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.inspection_results = data;
+
+
+
+
 
 
 
@@ -3788,7 +7574,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3796,7 +7590,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('inspection_results').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3804,7 +7606,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -3812,7 +7622,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.inspection_issues = data;
+
+
+
+
 
 
 
@@ -3820,7 +7638,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3828,7 +7654,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('inspection_issues').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3836,7 +7670,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -3848,7 +7694,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.penalties = data;
+
+
+
+
 
 
 
@@ -3856,7 +7710,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3864,7 +7726,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('penalties').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3872,7 +7742,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -3880,7 +7758,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.complaints = data;
+
+
+
+
 
 
 
@@ -3888,7 +7774,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3896,7 +7790,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('complaints').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3904,7 +7806,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -3912,7 +7822,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.online_records = data;
+
+
+
+
 
 
 
@@ -3920,7 +7838,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3928,7 +7854,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('online_records').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3936,7 +7870,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -3944,7 +7886,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.offline_records = data;
+
+
+
+
 
 
 
@@ -3952,7 +7902,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3960,7 +7918,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('offline_records').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -3968,7 +7934,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -3976,7 +7950,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.users = data;
+
+
+
+
 
 
 
@@ -3984,7 +7966,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -3992,7 +7982,15 @@ const App = {
 
 
 
+
+
+
+
         await this.supabase.from('users').delete().neq('id', '__none__');
+
+
+
+
 
 
 
@@ -4000,7 +7998,15 @@ const App = {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -4008,7 +8014,15 @@ const App = {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -4016,7 +8030,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4028,11 +8054,23 @@ const App = {
 
 
 
+
+
+
+
   async addUser(user) {
 
 
 
+
+
+
+
     var users = this.getUsers();
+
+
+
+
 
 
 
@@ -4040,11 +8078,23 @@ const App = {
 
 
 
+
+
+
+
     users.push(user);
 
 
 
+
+
+
+
     await this.saveUsers(users);
+
+
+
+
 
 
 
@@ -4052,7 +8102,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -4060,7 +8118,15 @@ const App = {
 
 
 
+
+
+
+
     var users = this.getUsers();
+
+
+
+
 
 
 
@@ -4068,7 +8134,15 @@ const App = {
 
 
 
+
+
+
+
     if (idx === -1) return;
+
+
+
+
 
 
 
@@ -4076,7 +8150,15 @@ const App = {
 
 
 
+
+
+
+
     await this.saveUsers(users);
+
+
+
+
 
 
 
@@ -4084,7 +8166,15 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -4092,7 +8182,15 @@ const App = {
 
 
 
+
+
+
+
     var users = this.getUsers();
+
+
+
+
 
 
 
@@ -4100,7 +8198,15 @@ const App = {
 
 
 
+
+
+
+
     if (!user) return;
+
+
+
+
 
 
 
@@ -4108,7 +8214,15 @@ const App = {
 
 
 
+
+
+
+
     var filtered = users.filter(function(u) { return u.id !== id; });
+
+
+
+
 
 
 
@@ -4116,11 +8230,23 @@ const App = {
 
 
 
+
+
+
+
     this.toast(name + ' 已删除');
 
 
 
+
+
+
+
   },
+
+
+
+
 
 
 
@@ -4128,7 +8254,15 @@ const App = {
 
 
 
+
+
+
+
     this.dataCache.stores = data;
+
+
+
+
 
 
 
@@ -4136,7 +8270,15 @@ const App = {
 
 
 
+
+
+
+
     if (this.supabase) {
+
+
+
+
 
 
 
@@ -4144,7 +8286,15 @@ const App = {
 
 
 
+
+
+
+
       if (data.length > 0) await this.supabase.from('stores').insert(this._snakeList(data));
+
+
+
+
 
 
 
@@ -4152,7 +8302,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4164,7 +8326,15 @@ const App = {
 
 
 
+
+
+
+
   bindHashChange() {
+
+
+
+
 
 
 
@@ -4172,7 +8342,15 @@ const App = {
 
 
 
+
+
+
+
     this.route();
+
+
+
+
 
 
 
@@ -4184,11 +8362,27 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
   async route() {
 
 
 
+
+
+
+
     var hash = location.hash.replace('#', '') || 'login';
+
+
+
+
 
 
 
@@ -4200,7 +8394,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
     if (!this.currentUser && hash !== 'login') {
+
+
+
+
 
 
 
@@ -4208,11 +8414,27 @@ const App = {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -4224,7 +8446,15 @@ const App = {
 
 
 
+
+
+
+
     if (hash !== 'login') {
+
+
+
+
 
 
 
@@ -4232,7 +8462,19 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -4248,7 +8490,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
     var page = document.getElementById('page-' + hash);
+
+
+
+
 
 
 
@@ -4256,7 +8510,15 @@ const App = {
 
 
 
+
+
+
+
       page.classList.add('active');
+
+
+
+
 
 
 
@@ -4264,7 +8526,15 @@ const App = {
 
 
 
+
+
+
+
         Pages[hash]();
+
+
+
+
 
 
 
@@ -4272,7 +8542,19 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -4284,7 +8566,15 @@ const App = {
 
 
 
+
+
+
+
     var inspectionSubPages = ['inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard'];
+
+
+
+
 
 
 
@@ -4292,7 +8582,15 @@ const App = {
 
 
 
+
+
+
+
       var highlightHash = inspectionSubPages.indexOf(hash) >= 0 ? 'inspection' : hash;
+
+
+
+
 
 
 
@@ -4300,7 +8598,19 @@ const App = {
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -4312,7 +8622,19 @@ const App = {
 
 
 
+
+
+
+
     tabbar.style.display = (hash === 'login' || hash === 'offline-inspect' || hash === 'admin') ? 'none' : 'flex';
+
+
+
+
+
+
+
+
 
 
 
@@ -4324,7 +8646,15 @@ const App = {
 
 
 
+
+
+
+
     // 权限过滤 Tab 栏
+
+
+
+
 
 
 
@@ -4332,7 +8662,15 @@ const App = {
 
 
 
+
+
+
+
       var role = this.currentUser.role;
+
+
+
+
 
 
 
@@ -4340,7 +8678,15 @@ const App = {
 
 
 
+
+
+
+
       var pageToModule = { 'inspection': 'inspection', 'daily': 'daily', 'penalty': 'penalty',
+
+
+
+
 
 
 
@@ -4348,7 +8694,15 @@ const App = {
 
 
 
+
+
+
+
                            'inspectionTemplates': 'inspection', 'inspectionFill': 'inspection_edit',
+
+
+
+
 
 
 
@@ -4356,7 +8710,15 @@ const App = {
 
 
 
+
+
+
+
                            'inspectionDashboard': 'inspection' };
+
+
+
+
 
 
 
@@ -4364,7 +8726,15 @@ const App = {
 
 
 
+
+
+
+
         var page = t.dataset.page;
+
+
+
+
 
 
 
@@ -4372,7 +8742,15 @@ const App = {
 
 
 
+
+
+
+
         if (!module) return;
+
+
+
+
 
 
 
@@ -4380,11 +8758,27 @@ const App = {
 
 
 
+
+
+
+
       });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -4396,7 +8790,15 @@ const App = {
 
 
 
+
+
+
+
       login: '南城香协作终端', home: '首页', inspection: '门店检查', 'offline-inspect': '线下门店检查',
+
+
+
+
 
 
 
@@ -4404,7 +8806,15 @@ const App = {
 
 
 
+
+
+
+
       daily: '稽核日报', task: '任务发布',
+
+
+
+
 
 
 
@@ -4412,7 +8822,15 @@ const App = {
 
 
 
+
+
+
+
       inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板'
+
+
+
+
 
 
 
@@ -4420,7 +8838,15 @@ const App = {
 
 
 
+
+
+
+
     document.getElementById('header-title').textContent = titleMap[hash] || '';
+
+
+
+
 
 
 
@@ -4428,7 +8854,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4440,7 +8878,15 @@ const App = {
 
 
 
+
+
+
+
     document.querySelectorAll('.tab-item').forEach(function(tab) {
+
+
+
+
 
 
 
@@ -4448,7 +8894,15 @@ const App = {
 
 
 
+
+
+
+
         location.hash = '#' + tab.dataset.page;
+
+
+
+
 
 
 
@@ -4456,11 +8910,27 @@ const App = {
 
 
 
+
+
+
+
     });
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4472,11 +8942,27 @@ const App = {
 
 
 
+
+
+
+
     location.hash = '#' + page;
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4488,7 +8974,15 @@ const App = {
 
 
 
+
+
+
+
   checkLogin() {
+
+
+
+
 
 
 
@@ -4496,7 +8990,15 @@ const App = {
 
 
 
+
+
+
+
     if (saved) {
+
+
+
+
 
 
 
@@ -4504,7 +9006,15 @@ const App = {
 
 
 
+
+
+
+
       location.hash = '#home';
+
+
+
+
 
 
 
@@ -4512,7 +9022,15 @@ const App = {
 
 
 
+
+
+
+
       location.hash = '#login';
+
+
+
+
 
 
 
@@ -4520,7 +9038,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4532,7 +9062,15 @@ const App = {
 
 
 
+
+
+
+
     var users = this.getUsers();
+
+
+
+
 
 
 
@@ -4540,7 +9078,15 @@ const App = {
 
 
 
+
+
+
+
     if (!user) {
+
+
+
+
 
 
 
@@ -4548,7 +9094,15 @@ const App = {
 
 
 
+
+
+
+
       user = seedUsers.find(function(u) { return u.id === userId; });
+
+
+
+
 
 
 
@@ -4556,7 +9110,15 @@ const App = {
 
 
 
+
+
+
+
     if (!user) return false;
+
+
+
+
 
 
 
@@ -4564,7 +9126,15 @@ const App = {
 
 
 
+
+
+
+
     localStorage.setItem('nanchengxiang_current_user', JSON.stringify(user));
+
+
+
+
 
 
 
@@ -4572,7 +9142,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4584,7 +9166,15 @@ const App = {
 
 
 
+
+
+
+
     this.currentUser = { id: 'admin', name: '预览模式', role: 'admin', area: '总部', storeId: '', store: '' };
+
+
+
+
 
 
 
@@ -4592,11 +9182,27 @@ const App = {
 
 
 
+
+
+
+
     localStorage.setItem('nanchengxiang_preview_mode', '1');
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4608,7 +9214,15 @@ const App = {
 
 
 
+
+
+
+
     this.currentUser = null;
+
+
+
+
 
 
 
@@ -4616,11 +9230,27 @@ const App = {
 
 
 
+
+
+
+
     location.hash = '#login';
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4632,7 +9262,15 @@ const App = {
 
 
 
+
+
+
+
   toast(msg) {
+
+
+
+
 
 
 
@@ -4640,7 +9278,15 @@ const App = {
 
 
 
+
+
+
+
     el.textContent = msg;
+
+
+
+
 
 
 
@@ -4648,11 +9294,27 @@ const App = {
 
 
 
+
+
+
+
     setTimeout(function() { el.classList.remove('show'); }, 2000);
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4664,7 +9326,15 @@ const App = {
 
 
 
+
+
+
+
   downloadTemplate(type) {
+
+
+
+
 
 
 
@@ -4672,7 +9342,15 @@ const App = {
 
 
 
+
+
+
+
     if (type === 'users') {
+
+
+
+
 
 
 
@@ -4680,7 +9358,15 @@ const App = {
 
 
 
+
+
+
+
       sample = ['u099','测试员工','店长','经营一区','FZ001','方庄店','13800000099'];
+
+
+
+
 
 
 
@@ -4688,7 +9374,15 @@ const App = {
 
 
 
+
+
+
+
       headers = ['id','name','district','adminArea','bizArea','region','manager','managerTitle','mode'];
+
+
+
+
 
 
 
@@ -4696,7 +9390,15 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -4704,7 +9406,15 @@ const App = {
 
 
 
+
+
+
+
     html += '<tr>' + headers.map(function(h) { return '<th>' + h + '</th>'; }).join('') + '</tr>';
+
+
+
+
 
 
 
@@ -4712,7 +9422,15 @@ const App = {
 
 
 
+
+
+
+
     html += '</table></body></html>';
+
+
+
+
 
 
 
@@ -4720,7 +9438,15 @@ const App = {
 
 
 
+
+
+
+
     var a = document.createElement('a');
+
+
+
+
 
 
 
@@ -4728,7 +9454,15 @@ const App = {
 
 
 
+
+
+
+
     a.download = type + '_template.xls';
+
+
+
+
 
 
 
@@ -4736,7 +9470,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4748,7 +9494,15 @@ const App = {
 
 
 
+
+
+
+
   importXLS(input, type) {
+
+
+
+
 
 
 
@@ -4756,7 +9510,15 @@ const App = {
 
 
 
+
+
+
+
     var file = input.files[0];
+
+
+
+
 
 
 
@@ -4764,7 +9526,15 @@ const App = {
 
 
 
+
+
+
+
     var reader = new FileReader();
+
+
+
+
 
 
 
@@ -4772,7 +9542,15 @@ const App = {
 
 
 
+
+
+
+
       var data = new Uint8Array(e.target.result);
+
+
+
+
 
 
 
@@ -4780,7 +9558,15 @@ const App = {
 
 
 
+
+
+
+
       var sheet = wb.Sheets[wb.SheetNames[0]];
+
+
+
+
 
 
 
@@ -4788,7 +9574,15 @@ const App = {
 
 
 
+
+
+
+
       if (rows.length < 2) { self.toast('文件为空或缺少表头'); return; }
+
+
+
+
 
 
 
@@ -4796,7 +9590,15 @@ const App = {
 
 
 
+
+
+
+
       var count = 0;
+
+
+
+
 
 
 
@@ -4808,7 +9610,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
       if (type === 'users') {
+
+
+
+
 
 
 
@@ -4816,7 +9630,15 @@ const App = {
 
 
 
+
+
+
+
         var existingIds = {};
+
+
+
+
 
 
 
@@ -4824,7 +9646,15 @@ const App = {
 
 
 
+
+
+
+
         for (var i = 0; i < dataRows.length; i++) {
+
+
+
+
 
 
 
@@ -4832,7 +9662,15 @@ const App = {
 
 
 
+
+
+
+
           var row = {};
+
+
+
+
 
 
 
@@ -4840,7 +9678,15 @@ const App = {
 
 
 
+
+
+
+
             row[headers[j]] = String(cols[j] || '').trim();
+
+
+
+
 
 
 
@@ -4848,7 +9694,15 @@ const App = {
 
 
 
+
+
+
+
           if (!row.id || !row.name) continue;
+
+
+
+
 
 
 
@@ -4856,7 +9710,15 @@ const App = {
 
 
 
+
+
+
+
           users.push({ id: row.id, name: row.name, role: row.role || '店长', phone: row.phone || '', area: row.area || '', storeId: row.storeId || '', store: row.store || '' });
+
+
+
+
 
 
 
@@ -4864,11 +9726,23 @@ const App = {
 
 
 
+
+
+
+
           count++;
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -4876,7 +9750,15 @@ const App = {
 
 
 
+
+
+
+
       } else if (type === 'stores') {
+
+
+
+
 
 
 
@@ -4884,7 +9766,15 @@ const App = {
 
 
 
+
+
+
+
         var existingStoreIds = {};
+
+
+
+
 
 
 
@@ -4892,7 +9782,15 @@ const App = {
 
 
 
+
+
+
+
         for (var i = 0; i < dataRows.length; i++) {
+
+
+
+
 
 
 
@@ -4900,7 +9798,15 @@ const App = {
 
 
 
+
+
+
+
           var row = {};
+
+
+
+
 
 
 
@@ -4908,7 +9814,15 @@ const App = {
 
 
 
+
+
+
+
             row[headers[j]] = String(cols[j] || '').trim();
+
+
+
+
 
 
 
@@ -4916,7 +9830,15 @@ const App = {
 
 
 
+
+
+
+
           if (!row.id || !row.name) continue;
+
+
+
+
 
 
 
@@ -4924,7 +9846,15 @@ const App = {
 
 
 
+
+
+
+
           stores.push({
+
+
+
+
 
 
 
@@ -4932,7 +9862,15 @@ const App = {
 
 
 
+
+
+
+
             bizArea: row.bizArea || '', region: row.region || '', manager: row.manager || '',
+
+
+
+
 
 
 
@@ -4940,7 +9878,15 @@ const App = {
 
 
 
+
+
+
+
           });
+
+
+
+
 
 
 
@@ -4948,7 +9894,15 @@ const App = {
 
 
 
+
+
+
+
           count++;
+
+
+
+
 
 
 
@@ -4956,7 +9910,15 @@ const App = {
 
 
 
+
+
+
+
         await self.saveStores(stores);
+
+
+
+
 
 
 
@@ -4964,7 +9926,15 @@ const App = {
 
 
 
+
+
+
+
       self.toast('成功导入 ' + count + ' 条数据');
+
+
+
+
 
 
 
@@ -4972,7 +9942,15 @@ const App = {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -4980,7 +9958,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -4992,7 +9982,15 @@ const App = {
 
 
 
+
+
+
+
   exportXLS(type) {
+
+
+
+
 
 
 
@@ -5000,7 +9998,15 @@ const App = {
 
 
 
+
+
+
+
     if (type === 'penalties') {
+
+
+
+
 
 
 
@@ -5008,7 +10014,15 @@ const App = {
 
 
 
+
+
+
+
       headers = ['id', 'storeId', 'store', 'region', 'district', 'manager', 'eventDate', 'event', 'category', 'level', 'source', 'inspector', 'personName', 'personLevel', 'personType', 'penaltyPerson', 'penaltyManager', 'survey', 'suggestion', 'policyRef', 'dutyPerson', 'dutyManager', 'dutyValue', 'dutyCoach', 'status'];
+
+
+
+
 
 
 
@@ -5016,7 +10030,15 @@ const App = {
 
 
 
+
+
+
+
       data = this.getComplaints();
+
+
+
+
 
 
 
@@ -5024,7 +10046,15 @@ const App = {
 
 
 
+
+
+
+
     } else if (type === 'users') {
+
+
+
+
 
 
 
@@ -5032,7 +10062,15 @@ const App = {
 
 
 
+
+
+
+
       headers = ['id', 'name', 'role', 'area', 'storeId', 'store', 'phone'];
+
+
+
+
 
 
 
@@ -5040,7 +10078,15 @@ const App = {
 
 
 
+
+
+
+
       data = [];
+
+
+
+
 
 
 
@@ -5048,7 +10094,15 @@ const App = {
 
 
 
+
+
+
+
       reports.forEach(function(r) {
+
+
+
+
 
 
 
@@ -5056,7 +10110,15 @@ const App = {
 
 
 
+
+
+
+
           data.push({
+
+
+
+
 
 
 
@@ -5064,7 +10126,15 @@ const App = {
 
 
 
+
+
+
+
             store: item.store, score: item.score, findings: item.findings
+
+
+
+
 
 
 
@@ -5072,11 +10142,23 @@ const App = {
 
 
 
+
+
+
+
         });
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -5084,7 +10166,15 @@ const App = {
 
 
 
+
+
+
+
     } else {
+
+
+
+
 
 
 
@@ -5092,7 +10182,15 @@ const App = {
 
 
 
+
+
+
+
       var penalties = this.getPenalties();
+
+
+
+
 
 
 
@@ -5100,7 +10198,15 @@ const App = {
 
 
 
+
+
+
+
       data = stores.map(function(s) {
+
+
+
+
 
 
 
@@ -5108,7 +10214,15 @@ const App = {
 
 
 
+
+
+
+
         var done = storePenalties.filter(function(p) { return p.status === '已闭环'; }).length;
+
+
+
+
 
 
 
@@ -5116,7 +10230,15 @@ const App = {
 
 
 
+
+
+
+
         var passed = storeComplaints.filter(function(c) { return c.status === '已申诉' && c.appealResult === '通过'; }).length;
+
+
+
+
 
 
 
@@ -5124,7 +10246,15 @@ const App = {
 
 
 
+
+
+
+
           storeId: s.id, store: s.name, district: s.district, region: s.region,
+
+
+
+
 
 
 
@@ -5132,7 +10262,15 @@ const App = {
 
 
 
+
+
+
+
           totalPenalties: storePenalties.length, closedPenalties: done,
+
+
+
+
 
 
 
@@ -5140,11 +10278,23 @@ const App = {
 
 
 
+
+
+
+
         };
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -5152,7 +10302,15 @@ const App = {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -5160,7 +10318,15 @@ const App = {
 
 
 
+
+
+
+
     data.forEach(function(row) {
+
+
+
+
 
 
 
@@ -5168,7 +10334,15 @@ const App = {
 
 
 
+
+
+
+
         return row[h] !== undefined ? row[h] : '';
+
+
+
+
 
 
 
@@ -5176,7 +10350,15 @@ const App = {
 
 
 
+
+
+
+
       rows.push(vals);
+
+
+
+
 
 
 
@@ -5184,7 +10366,15 @@ const App = {
 
 
 
+
+
+
+
     var ws = XLSX.utils.aoa_to_sheet(rows);
+
+
+
+
 
 
 
@@ -5192,7 +10382,15 @@ const App = {
 
 
 
+
+
+
+
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+
+
+
 
 
 
@@ -5200,7 +10398,15 @@ const App = {
 
 
 
+
+
+
+
     var blob = new Blob([wbout], { type: 'application/vnd.ms-excel' });
+
+
+
+
 
 
 
@@ -5208,7 +10414,15 @@ const App = {
 
 
 
+
+
+
+
     a.href = URL.createObjectURL(blob);
+
+
+
+
 
 
 
@@ -5216,7 +10430,15 @@ const App = {
 
 
 
+
+
+
+
     a.download = type + '_' + now.getFullYear() + ('0'+(now.getMonth()+1)).slice(-2) + ('0'+now.getDate()).slice(-2) + '.xls';
+
+
+
+
 
 
 
@@ -5224,11 +10446,27 @@ const App = {
 
 
 
+
+
+
+
     this.toast('导出成功');
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -5244,7 +10482,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
   // 渲染可搜索选择器HTML
+
+
+
+
 
 
 
@@ -5252,7 +10502,15 @@ const App = {
 
 
 
+
+
+
+
     placeholder = placeholder || '输入门店名称搜索...';
+
+
+
+
 
 
 
@@ -5260,7 +10518,15 @@ const App = {
 
 
 
+
+
+
+
     var sel = stores.find(function(s) { return s.id === selectedValue; });
+
+
+
+
 
 
 
@@ -5268,7 +10534,15 @@ const App = {
 
 
 
+
+
+
+
     var h = '<div class="search-select" id="' + id + '">';
+
+
+
+
 
 
 
@@ -5276,7 +10550,15 @@ const App = {
 
 
 
+
+
+
+
     h += '<div class="search-select-dropdown" style="display:none"></div>';
+
+
+
+
 
 
 
@@ -5284,11 +10566,27 @@ const App = {
 
 
 
+
+
+
+
     return h;
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -5300,7 +10598,15 @@ const App = {
 
 
 
+
+
+
+
   initStoreSelect(id, stores, onSelect) {
+
+
+
+
 
 
 
@@ -5308,7 +10614,15 @@ const App = {
 
 
 
+
+
+
+
     var container = document.getElementById(id);
+
+
+
+
 
 
 
@@ -5316,11 +10630,23 @@ const App = {
 
 
 
+
+
+
+
     var input = container.querySelector('.search-select-input');
 
 
 
+
+
+
+
     var dropdown = container.querySelector('.search-select-dropdown');
+
+
+
+
 
 
 
@@ -5332,7 +10658,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
     var filterTimer;
+
+
+
+
 
 
 
@@ -5340,7 +10678,15 @@ const App = {
 
 
 
+
+
+
+
       var kw = (keyword || '').toLowerCase().trim();
+
+
+
+
 
 
 
@@ -5348,7 +10694,15 @@ const App = {
 
 
 
+
+
+
+
         // 清空时展示全部（最多50条，提高性能）
+
+
+
+
 
 
 
@@ -5356,7 +10710,15 @@ const App = {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -5364,7 +10726,15 @@ const App = {
 
 
 
+
+
+
+
         return s.name.toLowerCase().indexOf(kw) >= 0 ||
+
+
+
+
 
 
 
@@ -5372,7 +10742,15 @@ const App = {
 
 
 
+
+
+
+
                s.district.toLowerCase().indexOf(kw) >= 0 ||
+
+
+
+
 
 
 
@@ -5380,7 +10758,15 @@ const App = {
 
 
 
+
+
+
+
                (s.manager && s.manager.toLowerCase().indexOf(kw) >= 0);
+
+
+
+
 
 
 
@@ -5388,7 +10774,15 @@ const App = {
 
 
 
+
+
+
+
       // 超过50条只显示前50
+
+
+
+
 
 
 
@@ -5396,7 +10790,15 @@ const App = {
 
 
 
+
+
+
+
       if (total > 50) filtered = filtered.slice(0, 50);
+
+
+
+
 
 
 
@@ -5404,7 +10806,15 @@ const App = {
 
 
 
+
+
+
+
         dropdown.innerHTML = '<div class="search-select-empty">无匹配门店</div>';
+
+
+
+
 
 
 
@@ -5412,7 +10822,15 @@ const App = {
 
 
 
+
+
+
+
         var html = '';
+
+
+
+
 
 
 
@@ -5420,7 +10838,15 @@ const App = {
 
 
 
+
+
+
+
           html += '<div class="search-select-hint">显示前50条，共' + total + '条，请继续输入缩小范围</div>';
+
+
+
+
 
 
 
@@ -5428,7 +10854,15 @@ const App = {
 
 
 
+
+
+
+
         filtered.forEach(function(s) {
+
+
+
+
 
 
 
@@ -5436,7 +10870,15 @@ const App = {
 
 
 
+
+
+
+
           html += '<span class="ssi-id">' + self._esc(s.id) + '</span>';
+
+
+
+
 
 
 
@@ -5444,7 +10886,15 @@ const App = {
 
 
 
+
+
+
+
           html += '<span class="ssi-meta">' + self._esc(s.district + ' · ' + s.region) + '</span>';
+
+
+
+
 
 
 
@@ -5452,7 +10902,15 @@ const App = {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -5464,7 +10922,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
         // 绑定点击
+
+
+
+
 
 
 
@@ -5472,7 +10942,15 @@ const App = {
 
 
 
+
+
+
+
           item.addEventListener('mousedown', function(e) {
+
+
+
+
 
 
 
@@ -5480,7 +10958,15 @@ const App = {
 
 
 
+
+
+
+
             var sid = item.dataset.id;
+
+
+
+
 
 
 
@@ -5488,7 +10974,15 @@ const App = {
 
 
 
+
+
+
+
             input.value = sid + '  ' + sname;
+
+
+
+
 
 
 
@@ -5496,7 +10990,15 @@ const App = {
 
 
 
+
+
+
+
             dropdown.style.display = 'none';
+
+
+
+
 
 
 
@@ -5504,7 +11006,15 @@ const App = {
 
 
 
+
+
+
+
             if (onSelect) onSelect(sid, sname);
+
+
+
+
 
 
 
@@ -5512,7 +11022,15 @@ const App = {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -5520,11 +11038,27 @@ const App = {
 
 
 
+
+
+
+
       dropdown.style.display = 'block';
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -5536,7 +11070,15 @@ const App = {
 
 
 
+
+
+
+
       // 聚焦时如果已有选中值，清空输入框方便重新搜索
+
+
+
+
 
 
 
@@ -5544,7 +11086,15 @@ const App = {
 
 
 
+
+
+
+
         input.value = '';
+
+
+
+
 
 
 
@@ -5552,11 +11102,27 @@ const App = {
 
 
 
+
+
+
+
       filter(input.value);
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -5568,7 +11134,15 @@ const App = {
 
 
 
+
+
+
+
       clearTimeout(filterTimer);
+
+
+
+
 
 
 
@@ -5576,7 +11150,19 @@ const App = {
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -5588,7 +11174,15 @@ const App = {
 
 
 
+
+
+
+
     document.addEventListener('click', function(e) {
+
+
+
+
 
 
 
@@ -5596,7 +11190,15 @@ const App = {
 
 
 
+
+
+
+
         dropdown.style.display = 'none';
+
+
+
+
 
 
 
@@ -5604,7 +11206,15 @@ const App = {
 
 
 
+
+
+
+
         if (!input.dataset.selected && stores.length > 0) {
+
+
+
+
 
 
 
@@ -5612,7 +11222,15 @@ const App = {
 
 
 
+
+
+
+
           if (!prev) {
+
+
+
+
 
 
 
@@ -5620,11 +11238,23 @@ const App = {
 
 
 
+
+
+
+
             self._markStoreSelectValid(container, false);
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -5632,7 +11262,15 @@ const App = {
 
 
 
+
+
+
+
           var sel = stores.find(function(s) { return s.id === input.dataset.selected; });
+
+
+
+
 
 
 
@@ -5640,7 +11278,15 @@ const App = {
 
 
 
+
+
+
+
             input.value = sel.id + '  ' + sel.name;
+
+
+
+
 
 
 
@@ -5648,7 +11294,15 @@ const App = {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -5656,7 +11310,15 @@ const App = {
 
 
 
+
+
+
+
         if (!input.dataset.selected || !input.value.trim()) {
+
+
+
+
 
 
 
@@ -5664,11 +11326,23 @@ const App = {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -5680,7 +11354,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
     // 初始状态：如果有默认值，显示
+
+
+
+
 
 
 
@@ -5688,7 +11374,15 @@ const App = {
 
 
 
+
+
+
+
       container.classList.add('selected');
+
+
+
+
 
 
 
@@ -5696,7 +11390,19 @@ const App = {
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -5708,7 +11414,15 @@ const App = {
 
 
 
+
+
+
+
   getStoreSelectValue(id) {
+
+
+
+
 
 
 
@@ -5716,11 +11430,27 @@ const App = {
 
 
 
+
+
+
+
     return input ? input.dataset.selected || '' : '';
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -5732,7 +11462,15 @@ const App = {
 
 
 
+
+
+
+
   resetStoreSelect(id) {
+
+
+
+
 
 
 
@@ -5740,7 +11478,15 @@ const App = {
 
 
 
+
+
+
+
     if (!container) return;
+
+
+
+
 
 
 
@@ -5748,7 +11494,15 @@ const App = {
 
 
 
+
+
+
+
     if (input) {
+
+
+
+
 
 
 
@@ -5756,7 +11510,15 @@ const App = {
 
 
 
+
+
+
+
       input.dataset.selected = '';
+
+
+
+
 
 
 
@@ -5764,11 +11526,27 @@ const App = {
 
 
 
+
+
+
+
     container.classList.remove('selected');
 
 
 
+
+
+
+
   },
+
+
+
+
+
+
+
+
 
 
 
@@ -5780,7 +11558,15 @@ const App = {
 
 
 
+
+
+
+
   _markStoreSelectValid(container, valid) {
+
+
+
+
 
 
 
@@ -5788,7 +11574,15 @@ const App = {
 
 
 
+
+
+
+
       container.classList.add('selected');
+
+
+
+
 
 
 
@@ -5796,7 +11590,15 @@ const App = {
 
 
 
+
+
+
+
     } else {
+
+
+
+
 
 
 
@@ -5804,7 +11606,15 @@ const App = {
 
 
 
+
+
+
+
       if (!container.querySelector('.search-select-input').value.trim()) {
+
+
+
+
 
 
 
@@ -5812,11 +11622,23 @@ const App = {
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -5828,7 +11650,19 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
   // HTML转义
+
+
+
+
 
 
 
@@ -5836,7 +11670,15 @@ const App = {
 
 
 
+
+
+
+
     if (!s) return '';
+
+
+
+
 
 
 
@@ -5844,7 +11686,15 @@ const App = {
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -5856,11 +11706,27 @@ const App = {
 
 
 
+
+
+
+
+
+
+
+
   /* 启动 */
 
 
 
+
+
+
+
 document.addEventListener('DOMContentLoaded', function() { App.init(); });
+
+
+
+
 
 
 
