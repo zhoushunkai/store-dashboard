@@ -2677,3 +2677,20 @@ body {
   background: var(--primary);
   color: #fff;
 }
+
+/* ===== 日报 AI 按钮增强 (OCR/语音) ===== */
+.daily-ai-btn-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+.daily-voice-active {
+  background: #e53935 !important;
+  border-color: #e53935 !important;
+  color: #fff !important;
+  animation: dailyVoicePulse 1.2s ease-in-out infinite;
+}
+@keyframes dailyVoicePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(229, 57, 53, 0); }
+}

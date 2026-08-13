@@ -5971,6 +5971,63 @@ Pages._switchDaily = function(mode) {
 
 
 
+Pages._preprocessImage = function(file) {
+  return new Promise(function(resolve, reject) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function() {
+      var maxSide = 2000;
+      var scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      var w = Math.round(img.width * scale);
+      var h = Math.round(img.height * scale);
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var imageData = ctx.getImageData(0, 0, w, h);
+      var d = imageData.data;
+      for (var i = 0; i < d.length; i += 4) {
+        var gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+        gray = (gray - 128) * 1.3 + 128;
+        if (gray < 0) gray = 0;
+        else if (gray > 255) gray = 255;
+        d[i] = gray;
+        d[i+1] = gray;
+        d[i+2] = gray;
+      }
+      ctx.putImageData(imageData, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve(canvas);
+    };
+    img.onerror = function() {
+      URL.revokeObjectURL(url);
+      reject(new Error('图片读取失败'));
+    };
+    img.src = url;
+  });
+};
+
+Pages._cleanOCRText = function(text) {
+  if (!text) return '';
+  return text.split('\n').map(function(line) { return line.trim(); }).filter(function(line) { return line.length > 0; }).join('\n');
+};
+
+Pages._setDailyAIBusy = function(index, busy) {
+  var row = document.getElementById('daily-row-' + index);
+  if (!row) return;
+  var btns = row.querySelectorAll('.daily-ai-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (busy) {
+      btns[i].classList.add('daily-ai-btn-disabled');
+      btns[i].setAttribute('disabled', 'disabled');
+    } else {
+      btns[i].classList.remove('daily-ai-btn-disabled');
+      btns[i].removeAttribute('disabled');
+    }
+  }
+};
+
 Pages._dailyOCR = function(index) {
   var input = document.getElementById('daily-findings-' + index);
   if (!input) return;
@@ -5983,28 +6040,40 @@ Pages._dailyOCR = function(index) {
   fileInput.onchange = function() {
     var file = fileInput.files[0];
     if (!file) { fileInput.remove(); return; }
-    App.toast('正在识别图片文字...');
+    App.toast('识别中，请确保图片正对文字、光线充足');
+    Pages._setDailyAIBusy(index, true);
     Pages._loadTesseract(function() {
       if (typeof Tesseract === 'undefined') {
         App.toast('OCR 引擎加载失败，请检查网络后重试');
+        Pages._setDailyAIBusy(index, false);
         fileInput.remove();
         return;
       }
-      Tesseract.recognize(file, 'chi_sim')
-        .then(function(res) {
-          var text = (res && res.data && res.data.text || '').trim();
-          if (text) {
-            input.value = input.value ? input.value + '\n' + text : text;
-            App.toast('已识别 ' + text.length + ' 字');
-          } else {
-            App.toast('未识别到文字，请重拍');
-          }
-          fileInput.remove();
-        })
-        .catch(function(err) {
-          App.toast('OCR 识别失败：' + (err && err.message ? err.message : '未知错误'));
-          fileInput.remove();
+      Pages._preprocessImage(file).then(function(canvas) {
+        return Tesseract.createWorker('chi_sim', 1, { logger: function() {} }).then(function(worker) {
+          return worker.setParameters({ tessedit_pageseg_mode: '6' }).then(function() {
+            return worker.recognize(canvas).then(function(res) {
+              return worker.terminate().then(function() {
+                return res;
+              });
+            });
+          });
         });
+      }).then(function(res) {
+        var text = Pages._cleanOCRText(res && res.data && res.data.text || '');
+        if (text) {
+          input.value = input.value ? input.value + '\n' + text : text;
+          App.toast('已识别 ' + text.length + ' 字');
+        } else {
+          App.toast('未识别到文字，请重拍');
+        }
+        Pages._setDailyAIBusy(index, false);
+        fileInput.remove();
+      }).catch(function(err) {
+        App.toast('OCR 识别失败：' + (err && err.message ? err.message : '未知错误'));
+        Pages._setDailyAIBusy(index, false);
+        fileInput.remove();
+      });
     });
   };
   fileInput.click();
@@ -6022,15 +6091,43 @@ Pages._loadTesseract = function(cb) {
 Pages._dailyVoice = function(index) {
   var input = document.getElementById('daily-findings-' + index);
   if (!input) return;
+  var ua = navigator.userAgent || '';
+  var isWeChat = /MicroMessenger/i.test(ua);
+  var isFirefox = /Firefox/i.test(ua);
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    App.toast('当前浏览器不支持语音输入，请使用 Chrome/Edge 或最新版手机浏览器');
+    if (isWeChat || isFirefox) {
+      App.toast('当前浏览器不支持语音输入，请点击右上角···在浏览器中打开后使用');
+    } else {
+      App.toast('当前浏览器不支持语音输入，请使用 Chrome 或 Safari 16+');
+    }
     return;
   }
-  var rec = new SR();
+  var rec;
+  try {
+    rec = new SR();
+  } catch (e) {
+    App.toast('语音识别初始化失败：' + (e && e.message ? e.message : '未知错误'));
+    return;
+  }
   rec.lang = 'zh-CN';
   rec.interimResults = false;
   rec.maxAlternatives = 1;
+  Pages._setDailyAIBusy(index, true);
+  var voiceBtn = document.getElementById('daily-voice-' + index);
+  if (voiceBtn) voiceBtn.classList.add('daily-voice-active');
+  var stopped = false;
+  var timer = setTimeout(function() {
+    try { rec.stop(); } catch (e) {}
+  }, 15000);
+  function finish() {
+    if (stopped) return;
+    stopped = true;
+    clearTimeout(timer);
+    Pages._setDailyAIBusy(index, false);
+    var vb = document.getElementById('daily-voice-' + index);
+    if (vb) vb.classList.remove('daily-voice-active');
+  }
   App.toast('请开始说话...');
   rec.onresult = function(e) {
     var text = '';
@@ -6044,9 +6141,25 @@ Pages._dailyVoice = function(index) {
     }
   };
   rec.onerror = function(e) {
-    App.toast('语音识别失败：' + (e && e.error ? e.error : '未知错误'));
+    var err = e && e.error ? e.error : '';
+    if (err === 'not-allowed' || err === 'service-not-allowed') {
+      App.toast('请开启麦克风权限后再试');
+    } else if (err === 'network') {
+      App.toast('语音服务不可达，建议使用 Chrome 或 Safari 16+ 并保持网络畅通');
+    } else {
+      App.toast('语音识别失败：' + err);
+    }
   };
-  rec.start();
+  rec.onend = function() {
+    finish();
+    App.toast('识别结束');
+  };
+  try {
+    rec.start();
+  } catch (e) {
+    finish();
+    App.toast('语音启动失败：' + (e && e.message ? e.message : '未知错误'));
+  }
 };
 
 Pages._dailyRow = function(index) {
@@ -6071,8 +6184,8 @@ Pages._dailyRow = function(index) {
 
   html += '<input type="text" class="form-input daily-findings" id="daily-findings-' + index + '" placeholder="发现问题">';
   html += '<div class="daily-ai-btns">';
-  html += '<button type="button" class="daily-ai-btn" onclick="Pages._dailyOCR(' + index + ')">\u{1F4F7} 拍照识别</button>';
-  html += '<button type="button" class="daily-ai-btn" onclick="Pages._dailyVoice(' + index + ')">\u{1F3A4} 语音输入</button>';
+  html += '<button type="button" class="daily-ai-btn" id="daily-ocr-' + index + '" onclick="Pages._dailyOCR(' + index + ')">\u{1F4F7} 拍照识别</button>';
+  html += '<button type="button" class="daily-ai-btn" id="daily-voice-' + index + '" onclick="Pages._dailyVoice(' + index + ')">\u{1F3A4} 语音输入</button>';
   html += '</div>';
 
 
