@@ -1655,13 +1655,16 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
     html += '<div class="board-detail-table" id="board-detail-' + name.replace(/'/g, "\\'") + '" style="display:none">';
     html += '<table class="m-table">';
-    html += '<thead><tr><th>日期</th><th>类型</th><th>门店</th><th>得分</th><th>发现问题</th><th>内容</th></tr></thead>';
+    html += '<thead><tr><th>日期</th><th>类型</th><th>门店</th><th>问题</th><th>操作</th></tr></thead>';
     html += '<tbody>';
     grp.forEach(function(r) {
       var typeLabel = r.type === 'online' ? '线上' : '线下';
-      (r.items||[]).forEach(function(item) {
-        html += '<tr><td>' + r.date + '</td><td>' + typeLabel + '</td><td>' + item.store + '</td><td>' + item.score + '</td><td>' + (item.findings||'') + '</td></tr>';
-      });
+      var rId = (r.id||'').replace(/'/g, "\\'");
+      var storeCount = (r.items||[]).length;
+      var issuesCount = r.issuesCount || 0;
+      html += '<tr class="dr-row" onclick="Pages._openDailyDetail(\'' + rId + '\')">';
+      html += '<td>' + r.date + '</td><td>' + typeLabel + '</td><td>' + storeCount + ' 家</td><td>' + issuesCount + ' 项</td><td class="dr-view">查看明细</td>';
+      html += '</tr>';
     });
     // work_records 台账行
     (personWork[name]||[]).forEach(function(w) {
@@ -1685,6 +1688,42 @@ Pages._toggleBoardDetail = function(name) {
   if (el) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
   }
+};
+
+/* ===== 单日日报详情弹窗 ===== */
+Pages._openDailyDetail = function(reportId) {
+  var reports = App.getDailyReports() || [];
+  var r = null;
+  for (var i = 0; i < reports.length; i++) {
+    if (reports[i].id === reportId) { r = reports[i]; break; }
+  }
+  if (!r) {
+    App.toast('未找到该日报记录');
+    return;
+  }
+  var typeLabel = r.type === 'online' ? '线上' : '线下';
+  var storeCount = (r.items||[]).length;
+  var issuesCount = r.issuesCount || 0;
+
+  var html = '<div class="modal-box dd-modal-box">';
+  html += '<div class="modal-title">日报详情</div>';
+  html += '<div class="dd-meta">' + r.inspector + ' · ' + r.date + ' · ' + typeLabel + ' · ' + storeCount + ' 家门店 · ' + issuesCount + ' 项问题</div>';
+  html += '<div class="dd-modal-body">';
+  html += '<table class="m-table dd-modal-table">';
+  html += '<thead><tr><th>门店</th><th>得分</th><th>发现问题</th></tr></thead>';
+  html += '<tbody>';
+  (r.items||[]).forEach(function(item) {
+    var findings = (item.findings||'').replace(/\n/g,'<br>');
+    html += '<tr><td>' + item.store + '</td><td>' + item.score + '</td><td class="dd-findings">' + findings + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += '</div>';
+  html += '<button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button>';
+  html += '</div>';
+
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
 };
 
 /* ==================== 稽核模板管理 ==================== */

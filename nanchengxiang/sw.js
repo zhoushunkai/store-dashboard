@@ -1,4 +1,4 @@
-const CACHE_NAME = 'v51';
+const CACHE_NAME = 'v52';
 
 
 
