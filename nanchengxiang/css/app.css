@@ -1199,6 +1199,16 @@ body {
 }
 
 .modal-overlay.show { display: flex; }
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.modal-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.modal-close { cursor: pointer; font-size: 20px; color: #999; line-height: 1; }
+.modal-body { font-size: 14px; color: #333; line-height: 1.6; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 
 .modal-box {
 
