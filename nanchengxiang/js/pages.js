@@ -5971,6 +5971,84 @@ Pages._switchDaily = function(mode) {
 
 
 
+Pages._dailyOCR = function(index) {
+  var input = document.getElementById('daily-findings-' + index);
+  if (!input) return;
+  var fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.capture = 'environment';
+  fileInput.style.display = 'none';
+  document.body.appendChild(fileInput);
+  fileInput.onchange = function() {
+    var file = fileInput.files[0];
+    if (!file) { fileInput.remove(); return; }
+    App.toast('正在识别图片文字...');
+    Pages._loadTesseract(function() {
+      if (typeof Tesseract === 'undefined') {
+        App.toast('OCR 引擎加载失败，请检查网络后重试');
+        fileInput.remove();
+        return;
+      }
+      Tesseract.recognize(file, 'chi_sim')
+        .then(function(res) {
+          var text = (res && res.data && res.data.text || '').trim();
+          if (text) {
+            input.value = input.value ? input.value + '\n' + text : text;
+            App.toast('已识别 ' + text.length + ' 字');
+          } else {
+            App.toast('未识别到文字，请重拍');
+          }
+          fileInput.remove();
+        })
+        .catch(function(err) {
+          App.toast('OCR 识别失败：' + (err && err.message ? err.message : '未知错误'));
+          fileInput.remove();
+        });
+    });
+  };
+  fileInput.click();
+};
+
+Pages._loadTesseract = function(cb) {
+  if (typeof Tesseract !== 'undefined') { cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  s.onload = function() { cb(); };
+  s.onerror = function() { cb(); };
+  document.head.appendChild(s);
+};
+
+Pages._dailyVoice = function(index) {
+  var input = document.getElementById('daily-findings-' + index);
+  if (!input) return;
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    App.toast('当前浏览器不支持语音输入，请使用 Chrome/Edge 或最新版手机浏览器');
+    return;
+  }
+  var rec = new SR();
+  rec.lang = 'zh-CN';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  App.toast('请开始说话...');
+  rec.onresult = function(e) {
+    var text = '';
+    for (var i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+    text = (text || '').trim();
+    if (text) {
+      input.value = input.value ? input.value + '\n' + text : text;
+      App.toast('已输入语音内容');
+    } else {
+      App.toast('未识别到语音');
+    }
+  };
+  rec.onerror = function(e) {
+    App.toast('语音识别失败：' + (e && e.error ? e.error : '未知错误'));
+  };
+  rec.start();
+};
+
 Pages._dailyRow = function(index) {
 
 
@@ -5992,6 +6070,10 @@ Pages._dailyRow = function(index) {
 
 
   html += '<input type="text" class="form-input daily-findings" id="daily-findings-' + index + '" placeholder="发现问题">';
+  html += '<div class="daily-ai-btns">';
+  html += '<button type="button" class="daily-ai-btn" onclick="Pages._dailyOCR(' + index + ')">\u{1F4F7} 拍照识别</button>';
+  html += '<button type="button" class="daily-ai-btn" onclick="Pages._dailyVoice(' + index + ')">\u{1F3A4} 语音输入</button>';
+  html += '</div>';
 
 
 
