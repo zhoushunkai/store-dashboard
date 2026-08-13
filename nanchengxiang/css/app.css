@@ -2655,3 +2655,25 @@ body {
 
 .wr-content { max-width: 300px; font-size: 11px; color: #666; line-height: 1.5; }
 
+/* 日报填写 OCR/语音输入按钮 */
+.daily-ai-btns {
+  display: flex;
+  gap: 6px;
+  flex: 1 1 100%;
+}
+.daily-ai-btn {
+  flex: 1;
+  padding: 7px 8px;
+  border: 1px solid var(--primary);
+  background: #fff;
+  color: var(--primary);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.daily-ai-btn:active {
+  background: var(--primary);
+  color: #fff;
+}
