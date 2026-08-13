@@ -3000,7 +3000,7 @@ const App = {
 
 
 
-      '总部':     { inspection: true, inspection_edit: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '总部':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
 
 
 
@@ -3008,7 +3008,7 @@ const App = {
 
 
 
-      '线上稽核': { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '线上稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
 
 
 
@@ -3016,7 +3016,7 @@ const App = {
 
 
 
-      '线下稽核': { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '线下稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
 
 
 
@@ -3024,7 +3024,7 @@ const App = {
 
 
 
-      '稽核员':   { inspection: true, inspection_edit: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
+      '稽核员':   { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true },
 
 
 
@@ -3032,7 +3032,7 @@ const App = {
 
 
 
-      '客服':     { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '客服':     { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
 
 
 
@@ -3040,7 +3040,7 @@ const App = {
 
 
 
-      '营运':     { inspection: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '营运':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
 
 
 
@@ -3048,7 +3048,7 @@ const App = {
 
 
 
-      '店长':     { inspection: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true },
+      '店长':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true },
 
 
 
@@ -3056,7 +3056,7 @@ const App = {
 
 
 
-      '区域教练': { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '区域教练': { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
 
 
 
@@ -3064,7 +3064,7 @@ const App = {
 
 
 
-      '稽核':     { inspection: true, inspection_edit: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
+      '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true },
 
 
 
@@ -3072,7 +3072,7 @@ const App = {
 
 
 
-      'admin':   { inspection: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true }
+      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true }
 
 
 
@@ -5736,7 +5736,7 @@ const App = {
 
 
 
-                           'inspectionResults': 'inspection', 'inspectionIssues': 'inspection',
+                           'inspectionResults': 'inspection_results', 'inspectionIssues': 'inspection',
 
 
 
@@ -5784,7 +5784,11 @@ const App = {
 
 
 
-        t.style.display = self.Permissions.canAccess(role, module) ? '' : 'none';
+        if (page === 'inspection') {
+          t.style.display = (self.Permissions.canAccess(role, 'inspection') || self.Permissions.canAccess(role, 'inspection_results')) ? '' : 'none';
+        } else {
+          t.style.display = self.Permissions.canAccess(role, module) ? '' : 'none';
+        }
 
 
 
