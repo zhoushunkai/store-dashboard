@@ -1,4 +1,8 @@
-const CACHE_NAME = 'v53';
+const CACHE_NAME = 'v54';
+
+
+
+
 
 
 
@@ -6,7 +10,15 @@ const ASSETS = [
 
 
 
+
+
+
+
   '/',
+
+
+
+
 
 
 
@@ -14,7 +26,15 @@ const ASSETS = [
 
 
 
+
+
+
+
   '/manifest.json',
+
+
+
+
 
 
 
@@ -22,7 +42,15 @@ const ASSETS = [
 
 
 
+
+
+
+
   '/icon-192.png',
+
+
+
+
 
 
 
@@ -30,7 +58,15 @@ const ASSETS = [
 
 
 
+
+
+
+
   '/css/app.css',
+
+
+
+
 
 
 
@@ -38,7 +74,15 @@ const ASSETS = [
 
 
 
+
+
+
+
   '/js/pages.js'
+
+
+
+
 
 
 
@@ -50,7 +94,19 @@ const ASSETS = [
 
 
 
+
+
+
+
+
+
+
+
 self.addEventListener('install', e => {
+
+
+
+
 
 
 
@@ -58,7 +114,15 @@ self.addEventListener('install', e => {
 
 
 
+
+
+
+
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+
+
+
+
 
 
 
@@ -66,11 +130,27 @@ self.addEventListener('install', e => {
 
 
 
+
+
+
+
   self.skipWaiting();
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -82,7 +162,15 @@ self.addEventListener('activate', e => {
 
 
 
+
+
+
+
   e.waitUntil(
+
+
+
+
 
 
 
@@ -90,7 +178,15 @@ self.addEventListener('activate', e => {
 
 
 
+
+
+
+
       keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+
+
+
+
 
 
 
@@ -98,7 +194,15 @@ self.addEventListener('activate', e => {
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -106,7 +210,19 @@ self.addEventListener('activate', e => {
 
 
 
+
+
+
+
 });
+
+
+
+
+
+
+
+
 
 
 
@@ -118,7 +234,15 @@ self.addEventListener('fetch', e => {
 
 
 
+
+
+
+
   e.respondWith(
+
+
+
+
 
 
 
@@ -126,11 +250,23 @@ self.addEventListener('fetch', e => {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 });
+
+
+
+
 
 
 
