@@ -1641,9 +1641,404 @@ Pages._inspectionSubTabs = function(user) {
     { id: 'inspectionFill', label: '稽核检查', show: App.Permissions.canAccess(user.role, 'inspection_edit') },
     { id: 'inspectionResults', label: '检查结果', show: App.Permissions.canAccess(user.role, 'inspection_results') },
     { id: 'inspectionIssues', label: '问题工单', show: App.Permissions.canAccess(user.role, 'inspection') },
+    { id: 'inspectionWorkbench', label: '工作台', show: App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results') },
     { id: 'inspectionDashboard', label: '稽核看板', show: App.Permissions.canAccess(user.role, 'inspection') }
   ];
 };
+
+/* ==================== 稽核工作台（B方向·问题驱动） ==================== */
+Pages._wbFilter = { storeId: '', region: '', days: 0 };
+
+Pages._wbCategoryKeywords = [
+  ['清洁/卫生', ['污渍','油渍','油垢','污垢','残渣','毛发','毛絮','垃圾','水垢','积水','灰尘','烟头','纸屑','清洁不到位','未清理','未清洁','未及时清洁','不干净','脏污','水印','水渍','蜘蛛网','苍蝇','蚊虫','飞虫','积灰','胶渍','胶痕','虫害','粘虫','卫生较差','残渍','异味','油污','除垢']],
+  ['操作规范/工器具', ['翻动','未处理','搅拌','抖动','溜边','锅圈','打散','浇油','焯水','煎制','热料包','下米','下绿豆','下配料','放油','接触','掉落','落入','入水','未用新碗','分装','称量','器具','工器具','专用','标准','超时','未达标','打烊','报损','过早','关火','消毒','预热','翻面','抓','夹子','锅','用手']],
+  ['储存/封口/加盖', ['封口','加盖','储存','保鲜盒','交叉污染','先进先出','混放','开封','封存','离地','落地','上冻','堆放','集中存放','存放','生熟']],
+  ['产品品质/断档', ['断档','出品','破损','冻伤','黄叶','黑叶','烂叶','发黄','汤汁','开叉','软榻','过少','规格','克数','参数','断供','断货','估清','缺货','不合格','品相','破皮','重量超标','漏签','蒸菜','午餐','晚餐','早餐']],
+  ['仪表/着装/佩戴', ['仪容仪表','工服','工牌','纽扣','耳钉','首饰','项链','手链','口罩','帽子','着装','佩戴','戴手套','摘帽','摘口罩','嚼东西']]
+];
+
+Pages._wbClassify = function(text) {
+  if (!text) return '其他';
+  for (var ci = 0; ci < Pages._wbCategoryKeywords.length; ci++) {
+    var cat = Pages._wbCategoryKeywords[ci];
+    for (var ki = 0; ki < cat[1].length; ki++) {
+      if (text.indexOf(cat[1][ki]) >= 0) return cat[0];
+    }
+  }
+  return '其他';
+};
+
+Pages._wbStoreName = function(sid) {
+  var stores = App.getStores() || [];
+  for (var i = 0; i < stores.length; i++) {
+    if (stores[i].id === sid) return stores[i].name || sid;
+  }
+  return sid;
+};
+
+Pages._wbIssuesText = function(iss) {
+  return iss.content || iss.description || '';
+};
+
+Pages.inspectionWorkbench = function() {
+  const el = document.getElementById('page-inspectionWorkbench');
+  if (!el) return;
+  const user = App.currentUser;
+  if (!user) return;
+
+  var canView = App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results');
+  var isStoreOwner = (user.role === '店长' && user.storeId);
+  if (!canView && !isStoreOwner) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var results = App.getResults() || [];
+  var issues = App.getIssues() || [];
+  var stores = App.getStores() || [];
+
+  // 店长仅本店
+  if (isStoreOwner) {
+    results = results.filter(function(r){ return r.storeId === user.storeId; });
+    issues = issues.filter(function(r){ return r.storeId === user.storeId; });
+  }
+
+  // 筛选
+  var f = Pages._wbFilter;
+  if (f.region) {
+    var regionStoreIds = {};
+    stores.forEach(function(s){ if (s.region === f.region || s.adminArea === f.region || s.bizArea === f.region) regionStoreIds[s.id] = 1; });
+    results = results.filter(function(r){ return regionStoreIds[r.storeId]; });
+    issues = issues.filter(function(r){ return regionStoreIds[r.storeId]; });
+  }
+  if (f.storeId) {
+    results = results.filter(function(r){ return r.storeId === f.storeId; });
+    issues = issues.filter(function(r){ return r.storeId === f.storeId; });
+  }
+  if (f.days > 0) {
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - f.days);
+    var cutoffStr = cutoff.toISOString().slice(0, 10);
+    results = results.filter(function(r){ return (r.date || '') >= cutoffStr; });
+    issues = issues.filter(function(r){ return (r.date || '') >= cutoffStr; });
+  }
+
+  // 门店映射
+  var storeMap = {};
+  stores.forEach(function(s){ storeMap[s.id] = s; });
+
+  // 1. 待整改事项
+  var pending = issues.filter(function(r){ return r.status === '待处理'; });
+  // 记录时间倒序：优先有 date 的（desc 型），content 型无 date 排后
+  pending.sort(function(a, b) {
+    var da = a.date || '0000-00-00';
+    var db = b.date || '0000-00-00';
+    if (da !== db) return da < db ? 1 : -1;
+    return 0;
+  });
+  var pendingTotal = pending.length;
+  var pendingTop3 = pending.slice(0, 3);
+
+  // 2. 最近检查得分最低 TOP5（每店最近一次，剔除0分）
+  var storeLatest = {};
+  results.forEach(function(r) {
+    var sid = r.storeId;
+    var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+    if (!score || score <= 0) return;
+    var prev = storeLatest[sid];
+    if (!prev || (r.date || '') > (prev.date || '')) {
+      storeLatest[sid] = { storeId: sid, score: score, date: r.date || '', resultId: r.id };
+    }
+  });
+  var top5 = Object.keys(storeLatest).map(function(sid){ return storeLatest[sid]; });
+  top5.sort(function(a, b) {
+    if (a.score !== b.score) return a.score - b.score;
+    return a.storeId < b.storeId ? -1 : 1;
+  });
+  top5 = top5.slice(0, 5);
+
+  // 3. 高频问题 TOP5（关键词归类）
+  var catCount = {};
+  issues.forEach(function(r) {
+    var c = Pages._wbClassify(Pages._wbIssuesText(r));
+    catCount[c] = (catCount[c] || 0) + 1;
+  });
+  var catArr = Object.keys(catCount).map(function(c){ return { name: c, count: catCount[c] }; });
+  catArr.sort(function(a, b) { return b.count - a.count; });
+  catArr = catArr.slice(0, 5);
+  var issueTotal = issues.length || 1;
+
+  // 4. 待处理问题门店 TOP5
+  var storePending = {};
+  pending.forEach(function(r) {
+    storePending[r.storeId] = (storePending[r.storeId] || 0) + 1;
+  });
+  var spArr = Object.keys(storePending).map(function(sid){ return { storeId: sid, count: storePending[sid] }; });
+  spArr.sort(function(a, b) { return b.count - a.count || (a.storeId < b.storeId ? -1 : 1); });
+  spArr = spArr.slice(0, 5);
+
+  // 5. 稽核员动态（按 inspector 聚合全部 results）
+  var inspMap = {};
+  results.forEach(function(r) {
+    var name = r.inspector || '未署名';
+    if (!inspMap[name]) inspMap[name] = { name: name, count: 0, sum: 0, valid: 0 };
+    inspMap[name].count++;
+    var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+    if (score > 0) { inspMap[name].sum += score; inspMap[name].valid++; }
+  });
+  var inspArr = Object.keys(inspMap).map(function(n){ return inspMap[n]; });
+  inspArr.sort(function(a, b) { return b.count - a.count; });
+  inspArr = inspArr.slice(0, 5);
+
+  // 筛选下拉选项
+  var storeOptions = '<option value="">全部门店</option>';
+  stores.slice().sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; }).forEach(function(s) {
+    storeOptions += '<option value="' + s.id + '"' + (f.storeId === s.id ? ' selected' : '') + '>' + s.name + '</option>';
+  });
+  var regionSet = {};
+  stores.forEach(function(s) {
+    var r = s.region || s.adminArea || s.bizArea || '';
+    if (r) regionSet[r] = 1;
+  });
+  var regionOptions = '<option value="">全部区域</option>';
+  Object.keys(regionSet).sort().forEach(function(r) {
+    regionOptions += '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>';
+  });
+  var daysOptions = '<option value="0">全部时间</option>';
+  [[7,'近7天'],[30,'近30天'],[90,'近90天']].forEach(function(o) {
+    daysOptions += '<option value="' + o[0] + '"' + (f.days === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+  });
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+  var html = '';
+  html += '<div class="sub-tabbar">';
+  var subHash = location.hash.replace('#', '');
+  Pages._inspectionSubTabs(user).forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="wb-header"><div class="wb-title">稽核工作台</div><div class="wb-date">' + dateStr + '</div></div>';
+
+  // 筛选栏
+  html += '<div class="wb-filter">';
+  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'storeId\', this.value)">' + storeOptions + '</select>';
+  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'region\', this.value)">' + regionOptions + '</select>';
+  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'days\', this.value)">' + daysOptions + '</select>';
+  html += '</div>';
+
+  // 待整改事项
+  html += '<div class="card wb-card wb-pending-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">待整改事项</span><span class="wb-badge-red" onclick="Pages._wbOpenPendingAll()">查看全部</span></div>';
+  html += '<div class="wb-pending-num">' + pendingTotal + '<span class="wb-pending-unit">项待处理</span></div>';
+  if (pendingTop3.length === 0) {
+    html += '<div class="wb-pending-empty">暂无待处理问题</div>';
+  } else {
+    pendingTop3.forEach(function(p) {
+      var txt = Pages._wbIssuesText(p);
+      html += '<div class="wb-pending-item" onclick="Pages._wbOpenStoreIssues(\'' + p.storeId + '\')">';
+      html += '<span class="wb-pending-store">' + Pages._wbStoreName(p.storeId) + '</span>';
+      html += '<span class="wb-pending-txt">' + txt + '</span>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 最近检查得分最低 TOP5
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">最近检查得分最低 TOP5</span></div>';
+  if (top5.length === 0) {
+    html += '<div class="wb-empty">暂无有效检查得分记录</div>';
+  } else {
+    html += '<table class="m-table wb-table"><thead><tr><th>#</th><th>门店</th><th>得分</th><th>日期</th></tr></thead><tbody>';
+    top5.forEach(function(t, idx) {
+      html += '<tr onclick="Pages._wbOpenStoreDetail(\'' + t.storeId + '\')">';
+      html += '<td>' + (idx+1) + '</td><td>' + Pages._wbStoreName(t.storeId) + '</td>';
+      html += '<td class="' + (t.score < 80 ? 'wb-score-low' : '') + '">' + t.score + '</td><td>' + t.date + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  // 高频问题 TOP5
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">高频问题 TOP5</span></div>';
+  if (catArr.length === 0) {
+    html += '<div class="wb-empty">暂无问题数据</div>';
+  } else {
+    catArr.forEach(function(c) {
+      var pct = Math.round(c.count / issueTotal * 100);
+      html += '<div class="wb-cat-row" onclick="Pages._wbOpenCategory(\'' + c.name + '\')">';
+      html += '<div class="wb-cat-line"><span class="wb-cat-name">' + c.name + '</span><span class="wb-cat-num">' + c.count + ' (' + pct + '%)</span></div>';
+      html += '<div class="wb-bar"><div class="wb-bar-inner" style="width:' + Math.min(100, pct) + '%"></div></div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 待处理问题门店 TOP5
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">待处理问题门店 TOP5</span></div>';
+  if (spArr.length === 0) {
+    html += '<div class="wb-empty">暂无待处理问题</div>';
+  } else {
+    spArr.forEach(function(s) {
+      html += '<div class="wb-sp-row" onclick="Pages._wbOpenStoreIssues(\'' + s.storeId + '\')">';
+      html += '<span class="wb-sp-name">' + Pages._wbStoreName(s.storeId) + '</span>';
+      html += '<span class="wb-sp-count' + (s.count >= 5 ? ' wb-sp-hot' : '') + '">' + s.count + ' 条</span>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 稽核员动态
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">稽核员动态</span></div>';
+  if (inspArr.length === 0) {
+    html += '<div class="wb-empty">暂无提交记录</div>';
+  } else {
+    html += '<div class="wb-insp-list">';
+    inspArr.forEach(function(i) {
+      var avg = i.valid > 0 ? (i.sum / i.valid) : 0;
+      var ok = i.valid > 0 && avg >= 90;
+      html += '<div class="wb-insp-row" onclick="Pages._wbOpenInspector(\'' + i.name.replace(/'/g, "\\'") + '\')">';
+      html += '<span class="wb-insp-avatar">' + i.name.charAt(0) + '</span>';
+      html += '<span class="wb-insp-info"><span class="wb-insp-name">' + i.name + '</span><span class="wb-insp-sub">提交 ' + i.count + ' 次 · 均分 ' + avg.toFixed(1) + '</span></span>';
+      html += '<span class="wb-insp-badge' + (ok ? ' wb-ok' : '') + '">' + (ok ? '达标' : '—') + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 底部注释
+  html += '<div class="wb-footnote">数据口径：得分=门店最近一次现场检查得分（百分制，剔除0分）；待处理=status 为「待处理」；高频问题按描述关键词互斥归类。</div>';
+
+  el.innerHTML = html;
+};
+
+Pages._wbSetFilter = function(key, val) {
+  Pages._wbFilter[key] = key === 'days' ? parseInt(val || '0', 10) : val;
+  Pages.inspectionWorkbench();
+};
+
+Pages._wbOpenPendingAll = function() {
+  var issues = App.getIssues() || [];
+  var pending = issues.filter(function(r){ return r.status === '待处理'; });
+  pending.sort(function(a, b) {
+    var da = a.date || '0000-00-00';
+    var db = b.date || '0000-00-00';
+    if (da !== db) return da < db ? 1 : -1;
+    return 0;
+  });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">待整改事项（' + pending.length + '）</div><div class="dd-modal-body">';
+  if (pending.length === 0) {
+    html += '<div class="wb-empty">暂无待处理问题</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th><th>状态</th></tr></thead><tbody>';
+    pending.forEach(function(p) {
+      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '待处理') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenStoreIssues = function(storeId) {
+  var issues = App.getIssues() || [];
+  var list = issues.filter(function(r){ return r.storeId === storeId; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无问题记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>问题</th><th>状态</th></tr></thead><tbody>';
+    list.forEach(function(p) {
+      html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '—') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenStoreDetail = function(storeId) {
+  var results = App.getResults() || [];
+  var issues = App.getIssues() || [];
+  var list = results.filter(function(r){ return r.storeId === storeId; });
+  list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 检查历史</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无检查记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>得分</th><th>稽核员</th></tr></thead><tbody>';
+    list.forEach(function(r) {
+      var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+      html += '<tr><td>' + r.date + '</td><td>' + score + '</td><td>' + (r.inspector || '—') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    var storeIssues = issues.filter(function(r){ return r.storeId === storeId; });
+    if (storeIssues.length > 0) {
+      html += '<div class="dd-meta" style="margin-top:10px">问题明细（' + storeIssues.length + '）</div><table class="m-table dd-modal-table"><tbody>';
+      storeIssues.forEach(function(p) {
+        html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenCategory = function(cat) {
+  var issues = App.getIssues() || [];
+  var list = issues.filter(function(r){ return Pages._wbClassify(Pages._wbIssuesText(r)) === cat; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + cat + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无问题记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th></tr></thead><tbody>';
+    list.forEach(function(p) {
+      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenInspector = function(name) {
+  var results = App.getResults() || [];
+  var list = results.filter(function(r){ return (r.inspector || '未署名') === name; });
+  list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + name + ' — 提交记录（' + list.length + '）</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无提交记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>门店</th><th>得分</th></tr></thead><tbody>';
+    list.forEach(function(r) {
+      var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+      html += '<tr><td>' + r.date + '</td><td>' + Pages._wbStoreName(r.storeId) + '</td><td>' + score + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
 
 Pages.inspection = function() {
 

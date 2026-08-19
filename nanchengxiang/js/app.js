@@ -5600,7 +5600,7 @@ const App = {
 
 
 
-    var inspectionSubPages = ['inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard'];
+    var inspectionSubPages = ['inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard', 'inspectionWorkbench'];
 
 
 
@@ -5744,7 +5744,7 @@ const App = {
 
 
 
-                           'inspectionDashboard': 'inspection' };
+                           'inspectionDashboard': 'inspection', 'inspectionWorkbench': 'inspection' };
 
 
 
@@ -5860,7 +5860,7 @@ const App = {
 
 
 
-      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板'
+      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台'
 
 
 
