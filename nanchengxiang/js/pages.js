@@ -12389,5 +12389,368 @@ Pages._drawInspLineChart = function(results) {
 
 };
 
+/* ==================== 供应链问题模块 ==================== */
+Pages._supplyTabs = [
+  { id: 'production', label: '生产', category: '生产' },
+  { id: 'purchase', label: '采购', category: '采购' },
+  { id: 'logistics', label: '物流', category: '物流' },
+  { id: 'vegetable', label: '净菜', category: '净菜' },
+  { id: 'board', label: '看板', category: '' }
+];
 
+Pages._supplyState = { tab: 'production', status: '全部', type: '全部' };
+
+Pages._supplyStatusClass = function(s) {
+  if (s === '已闭环') return 'sc-status-done';
+  if (s === '处理中') return 'sc-status-doing';
+  return 'sc-status-wait';
+};
+
+Pages._supplyEsc = function(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+};
+
+Pages.supplyChain = function() {
+  var el = document.getElementById('page-supplyChain');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'supply_chain')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var subHash = Pages._supplyState.tab;
+  var html = '';
+  html += '<div class="sub-tabbar sc-tabbar">';
+  Pages._supplyTabs.forEach(function(t) {
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" onclick="Pages._supplySetTab(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+  if (subHash === 'board') {
+    html += Pages._supplyRenderBoard(user);
+  } else {
+    html += Pages._supplyRenderCategory(user, subHash);
+  }
+
+  html += '<div class="sc-report-entry" onclick="Pages._supplyOpenReport(\'' + subHash + '\')"><span class="sc-report-plus">＋</span>上报问题</div>';
+
+  el.innerHTML = html;
+};
+
+Pages._supplySetTab = function(id) {
+  Pages._supplyState.tab = id;
+  Pages._supplyState.status = '全部';
+  Pages._supplyState.type = '全部';
+  Pages.supplyChain();
+};
+
+Pages._supplySetFilter = function(key, val) {
+  Pages._supplyState[key] = val;
+  Pages.supplyChain();
+};
+
+Pages._supplyRenderCategory = function(user, tabId) {
+  var cat = '';
+  Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
+  var all = App.getSupplyIssues() || [];
+  var list = all.filter(function(r) { return r.category === cat; });
+
+  var status = Pages._supplyState.status;
+  var type = Pages._supplyState.type;
+  if (status && status !== '全部') list = list.filter(function(r) { return r.status === status; });
+  if (type && type !== '全部') list = list.filter(function(r) { return r.type === type; });
+
+  var typeSet = {};
+  all.forEach(function(r) { if (r.category === cat && r.type) typeSet[r.type] = 1; });
+  var typeArr = Object.keys(typeSet).sort();
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+  var html = '';
+  html += '<div class="sc-head"><div class="sc-title">' + cat + '问题</div><div class="sc-date">' + dateStr + '</div></div>';
+
+  html += '<div class="sc-filter">';
+  html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'status\', this.value)">';
+  ['全部','待处理','处理中','已闭环'].forEach(function(s) {
+    html += '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
+  });
+  html += '</select>';
+  html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'type\', this.value)">';
+  html += '<option value="全部">全部类型</option>';
+  typeArr.forEach(function(t) {
+    html += '<option value="' + Pages._supplyEsc(t) + '"' + (type === t ? ' selected' : '') + '>' + Pages._supplyEsc(t) + '</option>';
+  });
+  html += '</select>';
+  html += '</div>';
+
+  var waitN = list.filter(function(r){ return r.status === '待处理'; }).length;
+  var doingN = list.filter(function(r){ return r.status === '处理中'; }).length;
+  var doneN = list.filter(function(r){ return r.status === '已闭环'; }).length;
+  html += '<div class="sc-mini-stats">';
+  html += '<div class="sc-mini"><span class="sc-mini-num">' + list.length + '</span><span class="sc-mini-label">共' + cat + '条</span></div>';
+  html += '<div class="sc-mini sc-mini-wait"><span class="sc-mini-num">' + waitN + '</span><span class="sc-mini-label">待处理</span></div>';
+  html += '<div class="sc-mini sc-mini-doing"><span class="sc-mini-num">' + doingN + '</span><span class="sc-mini-label">处理中</span></div>';
+  html += '<div class="sc-mini sc-mini-done"><span class="sc-mini-num">' + doneN + '</span><span class="sc-mini-label">已闭环</span></div>';
+  html += '</div>';
+
+  list.sort(function(a, b) { return (b.date || '') < (a.date || '') ? -1 : 1; });
+  if (list.length === 0) {
+    html += '<div class="card sc-card"><div class="sc-empty">暂无符合条件的问题</div></div>';
+  } else {
+    html += '<div class="sc-list">';
+    list.forEach(function(r) {
+      html += '<div class="card sc-card" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
+      html += '<div class="sc-card-top"><span class="sc-source">' + Pages._supplyEsc(r.source) + '</span>';
+      html += '<span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
+      if (r.product) html += '<div class="sc-product">' + Pages._supplyEsc(r.product) + '</div>';
+      html += '<div class="sc-issue">' + Pages._supplyEsc(r.issue) + '</div>';
+      html += '<div class="sc-card-bottom"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span><span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  return html;
+};
+
+Pages._supplyRenderBoard = function(user) {
+  var all = App.getSupplyIssues() || [];
+  var total = all.length;
+  var waitN = all.filter(function(r){ return r.status === '待处理'; }).length;
+  var doingN = all.filter(function(r){ return r.status === '处理中'; }).length;
+  var doneN = all.filter(function(r){ return r.status === '已闭环'; }).length;
+
+  var cats = ['生产','采购','物流','净菜'];
+  var catCount = {};
+  cats.forEach(function(c){ catCount[c] = all.filter(function(r){ return r.category === c; }).length; });
+
+  var typeCount = {};
+  all.forEach(function(r) { if (r.type) typeCount[r.type] = (typeCount[r.type] || 0) + 1; });
+  var typeArr = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
+
+  var srcCount = {};
+  all.forEach(function(r) { if (r.source) srcCount[r.source] = (srcCount[r.source] || 0) + 1; });
+  var srcArr = Object.keys(srcCount).map(function(k){ return { name: k, count: srcCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
+
+  var days = [];
+  var today = new Date();
+  for (var i = 13; i >= 0; i--) {
+    var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    days.push({ key: key, count: 0 });
+  }
+  all.forEach(function(r) {
+    if (!r.date) return;
+    for (var j = 0; j < days.length; j++) {
+      if (days[j].key === r.date) { days[j].count++; break; }
+    }
+  });
+  var maxDay = 1;
+  days.forEach(function(d){ if (d.count > maxDay) maxDay = d.count; });
+
+  var html = '';
+  html += '<div class="sc-head"><div class="sc-title">供应链问题看板</div></div>';
+
+  html += '<div class="sc-board-nums">';
+  html += '<div class="sc-num-card sc-num-total"><span class="sc-num-big">' + total + '</span><span class="sc-num-label">问题总数</span></div>';
+  html += '<div class="sc-num-card sc-num-wait"><span class="sc-num-big">' + waitN + '</span><span class="sc-num-label">待处理</span></div>';
+  html += '<div class="sc-num-card sc-num-doing"><span class="sc-num-big">' + doingN + '</span><span class="sc-num-label">处理中</span></div>';
+  html += '<div class="sc-num-card sc-num-done"><span class="sc-num-big">' + doneN + '</span><span class="sc-num-label">已闭环</span></div>';
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">各环节问题占比</div>';
+  cats.forEach(function(c) {
+    var n = catCount[c] || 0;
+    var pct = total > 0 ? Math.round(n / total * 100) : 0;
+    html += '<div class="sc-cat-row"><div class="sc-cat-line"><span class="sc-cat-name">' + c + '</span><span class="sc-cat-num">' + n + ' (' + pct + '%)</span></div>';
+    html += '<div class="sc-bar"><div class="sc-bar-inner" style="width:' + pct + '%"></div></div></div>';
+  });
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">高频问题类型 TOP5</div>';
+  if (typeArr.length === 0) {
+    html += '<div class="sc-empty">暂无数据</div>';
+  } else {
+    typeArr.forEach(function(t, idx) {
+      var pct = total > 0 ? Math.round(t.count / total * 100) : 0;
+      html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(t.name) + '</span><div class="sc-bar sc-bar-flex"><div class="sc-bar-inner sc-bar-type" style="width:' + pct + '%"></div></div><span class="sc-rank-num">' + t.count + '</span></div>';
+    });
+  }
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">反馈来源 TOP5</div>';
+  if (srcArr.length === 0) {
+    html += '<div class="sc-empty">暂无数据</div>';
+  } else {
+    srcArr.forEach(function(s, idx) {
+      html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(s.name) + '</span><span class="sc-rank-num">' + s.count + ' 条</span></div>';
+    });
+  }
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">每日趋势（近14天）</div>';
+  html += '<div class="sc-trend">';
+  days.forEach(function(d) {
+    var h = d.count > 0 ? Math.max(4, Math.round(d.count / maxDay * 60)) : 2;
+    html += '<div class="sc-trend-col"><div class="sc-trend-bar" style="height:' + h + 'px" title="' + d.key + ' ' + d.count + '条">' + (d.count > 0 ? d.count : '') + '</div><div class="sc-trend-day">' + d.key.slice(8) + '</div></div>';
+  });
+  html += '</div>';
+  html += '</div>';
+
+  var pending = all.filter(function(r){ return r.status === '待处理'; }).sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; }).slice(0, 5);
+  html += '<div class="card sc-card"><div class="sc-card-title">最新待处理</div>';
+  if (pending.length === 0) {
+    html += '<div class="sc-empty">暂无待处理问题</div>';
+  } else {
+    pending.forEach(function(r) {
+      html += '<div class="sc-pending-row" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
+      html += '<span class="sc-pending-cat">' + r.category + '</span>';
+      html += '<span class="sc-pending-txt">' + Pages._supplyEsc(r.issue) + '</span>';
+      html += '<span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  return html;
+};
+
+Pages._supplyOpenDetail = function(id) {
+  var all = App.getSupplyIssues() || [];
+  var r = null;
+  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+  if (!r) return;
+  var html = '';
+  html += '<div class="modal-header"><h3>问题详情</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
+  html += '<div class="sc-detail">';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">环节</span><span class="sc-detail-val">' + r.category + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">反馈来源</span><span class="sc-detail-val">' + Pages._supplyEsc(r.source) + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">产品</span><span class="sc-detail-val">' + Pages._supplyEsc(r.product || '-') + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">日期</span><span class="sc-detail-val">' + Pages._supplyEsc(r.date || '-') + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">类型</span><span class="sc-detail-val"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span></span></div>';
+  html += '<div class="sc-detail-block"><span class="sc-detail-label">问题描述</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.issue) + '</div></div>';
+  if (r.remark) html += '<div class="sc-detail-block"><span class="sc-detail-label">备注</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.remark) + '</div></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">状态</span><span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
+  if (r.handler) html += '<div class="sc-detail-row"><span class="sc-detail-label">处理人</span><span class="sc-detail-val">' + Pages._supplyEsc(r.handler) + '</span></div>';
+  if (r.result) html += '<div class="sc-detail-block"><span class="sc-detail-label">处理结果</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.result) + '</div></div>';
+
+  html += '<div class="sc-flow">';
+  if (r.status === '待处理') {
+    html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(App.currentUser ? (App.currentUser.name || '') : '') + '"></div>';
+    html += '<button class="btn sc-btn-main" onclick="Pages._supplyStart(\'' + id + '\')">开始处理</button>';
+  } else if (r.status === '处理中') {
+    html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(r.handler || '') + '"></div>';
+    html += '<div class="sc-flow-form"><textarea class="form-input sc-input sc-textarea" id="sc-result-' + id + '" placeholder="填写处理结果">' + Pages._supplyEsc(r.result || '') + '</textarea></div>';
+    html += '<button class="btn sc-btn-done" onclick="Pages._supplyFinish(\'' + id + '\')">完成闭环</button>';
+  } else {
+    html += '<div class="sc-closed-tip">该问题已闭环，如需重新处理请上报新问题</div>';
+  }
+  html += '</div>';
+
+  html += '<div style="margin-top:14px"><button class="btn btn-outline btn-sm" style="width:100%" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  html += '</div>';
+
+  document.querySelector('#modal-overlay .modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+};
+
+Pages._supplyStart = function(id) {
+  var all = App.getSupplyIssues() || [];
+  var r = null;
+  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+  if (!r) return;
+  var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
+  r.status = '处理中';
+  r.handler = handler || (App.currentUser ? (App.currentUser.name || '') : '');
+  App.saveSupplyIssues(all);
+  Pages._toast('已开始处理');
+  Pages._supplyOpenDetail(id);
+};
+
+Pages._supplyFinish = function(id) {
+  var all = App.getSupplyIssues() || [];
+  var r = null;
+  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+  if (!r) return;
+  var result = document.getElementById('sc-result-' + id) ? document.getElementById('sc-result-' + id).value.trim() : '';
+  var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
+  if (!result) {
+    Pages._toast('请填写处理结果');
+    return;
+  }
+  r.status = '已闭环';
+  r.result = result;
+  r.handler = handler || r.handler || (App.currentUser ? (App.currentUser.name || '') : '');
+  r.closeDate = new Date().toISOString().slice(0, 10);
+  App.saveSupplyIssues(all);
+  Pages._toast('已闭环');
+  Pages._supplyOpenDetail(id);
+};
+
+Pages._supplyOpenReport = function(tabId) {
+  var cat = '';
+  Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
+  var html = '';
+  html += '<div class="modal-header"><h3>上报问题</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
+  html += '<div class="sc-report-form">';
+  html += '<div class="sc-form-row"><label class="sc-form-label">环节</label><span class="sc-form-static">' + cat + '</span></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">反馈来源</label><input class="form-input sc-input" id="sc-r-source" placeholder="如：黄寺大街店 / 生产反馈"></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">产品</label><input class="form-input sc-input" id="sc-r-product" placeholder="如：小炒肉汁"></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">检查机会点</label><textarea class="form-input sc-input sc-textarea" id="sc-r-issue" placeholder="问题描述"></textarea></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">类型</label><input class="form-input sc-input" id="sc-r-type" placeholder="如：异物、少货、品质不佳"></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">备注</label><textarea class="form-input sc-input sc-textarea" id="sc-r-remark" placeholder="选填"></textarea></div>';
+  html += '<button class="btn sc-btn-main" style="width:100%;margin-top:6px" onclick="Pages._supplyDoReport(\'' + cat + '\')">提交上报</button>';
+  html += '</div>';
+  document.querySelector('#modal-overlay .modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+};
+
+Pages._supplyDoReport = function(cat) {
+  var source = document.getElementById('sc-r-source') ? document.getElementById('sc-r-source').value.trim() : '';
+  var product = document.getElementById('sc-r-product') ? document.getElementById('sc-r-product').value.trim() : '';
+  var issue = document.getElementById('sc-r-issue') ? document.getElementById('sc-r-issue').value.trim() : '';
+  var type = document.getElementById('sc-r-type') ? document.getElementById('sc-r-type').value.trim() : '';
+  var remark = document.getElementById('sc-r-remark') ? document.getElementById('sc-r-remark').value.trim() : '';
+  if (!source || !issue) {
+    Pages._toast('请填写反馈来源和问题描述');
+    return;
+  }
+  var all = App.getSupplyIssues() || [];
+  var maxId = 0;
+  all.forEach(function(r) {
+    var n = parseInt(String(r.id).replace(/\D/g, ''), 10);
+    if (!isNaN(n) && n > maxId) maxId = n;
+  });
+  var now = new Date();
+  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  var item = {
+    id: 'sp' + String(maxId + 1).padStart(4, '0'),
+    category: cat,
+    date: dateStr,
+    source: source,
+    product: product,
+    issue: issue,
+    type: type,
+    remark: remark,
+    status: '待处理',
+    result: '',
+    handler: ''
+  };
+  all.unshift(item);
+  App.saveSupplyIssues(all);
+  Pages._toast('上报成功');
+  document.getElementById('modal-overlay').classList.remove('show');
+  Pages.supplyChain();
+};
+
+Pages._toast = function(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
+};
 
