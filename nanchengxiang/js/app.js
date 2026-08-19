@@ -2104,6 +2104,28 @@ const App = {
 
 
 
+    tasks: [
+      { id: 't001', title: '次渠店整改复核', store: '次渠店', person: '钱磊', status: '进行中', dueDate: '2026-08-20', priority: '高', source: '稽核工单' },
+      { id: 't002', title: '8月第三周门店巡检计划', store: '', person: '钱磊', status: '待办', dueDate: '2026-08-21', priority: '中', source: '周计划' },
+      { id: 't003', title: '供应链采购问题跟进', store: '', person: '陶畅', status: '已完成', dueDate: '2026-08-18', priority: '中', source: '供应链工单' },
+      { id: 't004', title: '线上差评周报汇总', store: '', person: '刘畅', status: '已完成', dueDate: '2026-08-15', priority: '中', source: '周报' },
+      { id: 't005', title: '黄寺大街店卫生专项检查', store: '黄寺大街店', person: '范晓明', status: '进行中', dueDate: '2026-08-20', priority: '高', source: '稽核工单' },
+      { id: 't006', title: '望京花家地店复检', store: '望京花家地店', person: '马昕茹', status: '待办', dueDate: '2026-08-22', priority: '高', source: '稽核工单' },
+      { id: 't007', title: '8月门店得分数据汇总', store: '', person: '刘畅', status: '已完成', dueDate: '2026-08-16', priority: '中', source: '数据汇总' },
+      { id: 't008', title: '供应商资质复审', store: '', person: '陶畅', status: '进行中', dueDate: '2026-08-23', priority: '中', source: '供应链工单' },
+      { id: 't009', title: '海淀黄庄店服务培训验收', store: '海淀黄庄店', person: '马昕茹', status: '已完成', dueDate: '2026-08-14', priority: '中', source: '培训验收' },
+      { id: 't010', title: '处罚闭环抽查', store: '', person: '钱磊', status: '已完成', dueDate: '2026-08-17', priority: '中', source: '稽核工单' },
+      { id: 't011', title: '8月差评申诉材料整理', store: '', person: '客服小王', status: '待办', dueDate: '2026-08-24', priority: '低', source: '客服工单' },
+      { id: 't012', title: '冷链温控专项排查', store: '', person: '范晓明', status: '进行中', dueDate: '2026-08-25', priority: '高', source: '专项检查' },
+      { id: 't013', title: '昌平地铁店整改计划', store: '昌平地铁店', person: '陶畅', status: '已完成', dueDate: '2026-08-16', priority: '中', source: '稽核工单' },
+      { id: 't014', title: '区域教练月度总结', store: '', person: '营运李总', status: '待办', dueDate: '2026-08-28', priority: '中', source: '月度汇报' },
+      { id: 't015', title: '线上稽核模板更新', store: '', person: '刘畅', status: '已完成', dueDate: '2026-08-12', priority: '中', source: '模板维护' },
+      { id: 't016', title: '白纸坊店明厨亮灶检查', store: '白纸坊店', person: '范晓明', status: '进行中', dueDate: '2026-08-26', priority: '高', source: '稽核工单' },
+      { id: 't017', title: '8月新员工培训考核', store: '', person: '马昕茹', status: '已完成', dueDate: '2026-08-13', priority: '低', source: '培训计划' },
+      { id: 't018', title: '次渠店复检报告提交', store: '次渠店', person: '钱磊', status: '待办', dueDate: '2026-08-27', priority: '中', source: '稽核工单' }
+
+    ],
+
     onlineRecords: [
 
 
@@ -4394,6 +4416,8 @@ const App = {
 
   getPenalties()       { return this.dataCache.penalties || []; },
 
+  getTasks()           { let all = [...this.seedData.tasks]; let saved = safeGet('nanchengxiang_tasks'); if (Array.isArray(saved) && saved.length > 0) all = saved; return all; },
+
 
 
 
@@ -5657,6 +5681,8 @@ const App = {
 
     var inspectionSubPages = ['inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard', 'inspectionWorkbench'];
 
+    var dashboardSubPages = ['dashboard', 'complaintBoard', 'penaltyBoard', 'taskBoard'];
+
 
 
 
@@ -5672,6 +5698,7 @@ const App = {
 
 
       var highlightHash = inspectionSubPages.indexOf(hash) >= 0 ? 'inspection' : hash;
+      if (dashboardSubPages.indexOf(hash) >= 0) highlightHash = 'dashboard';
 
 
 
@@ -5915,7 +5942,7 @@ const App = {
 
 
 
-      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台', supplyChain: '供应链问题'
+      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台', supplyChain: '供应链问题', complaintBoard: '差评看板', penaltyBoard: '处罚看板', taskBoard: '任务看板'
 
 
 

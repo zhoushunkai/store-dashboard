@@ -4818,464 +4818,65 @@ Pages.dashboardMode = Pages.dashboardMode || 'mtd';
 
 
 Pages.dashboard = function() {
-
-
-
   const el = document.getElementById('page-dashboard');
-
-
-
   if (!el) return;
-
-
-
   const user = App.currentUser;
-
-
-
-
-
-
-
+  if (!user) return;
   if (!App.Permissions.canAccess(user.role, 'dashboard')) {
-
-
-
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
     return;
-
-
-
   }
 
-
-
-
-
-
-
-  const today = '2026-08-01';
-
-
-
-  const mode = Pages.dashboardMode;
-
-
-
-  const isToday = mode === 'today';
-
-
-
-
-
-
-
-  const stores = App.getStores();
-
-
-
-  const allPenalties = App.getPenalties();
-
-
-
-  const allComplaints = App.getComplaints();
-
-
-
-  const allOffline = App.getOfflineRecords();
-
-
-
-
-
-
-
-  const penalties = isToday ? allPenalties.filter(p => p.eventDate === today) : allPenalties;
-
-
-
-  const complaints = isToday ? allComplaints.filter(c => c.date === today) : allComplaints;
-
-
-
-  const offlineRecords = isToday ? allOffline.filter(r => r.date === today) : allOffline;
-
-
-
-
-
-
-
-  const totalPenalties = penalties.length;
-
-
-
-  const donePenalties = penalties.filter(p => p.status === '已闭环').length;
-
-
-
-  const overduePenalties = penalties.filter(p => p.status === '超时').length;
-
-
-
-  const pendingPenalties = totalPenalties - donePenalties - overduePenalties;
-
-
-
-  const closeRate = totalPenalties > 0 ? Math.round(donePenalties / totalPenalties * 100) : 0;
-
-
-
-  const totalStores = stores.length;
-
-
-
-  const totalComplaints = complaints.length;
-
-
-
-  const doneComplaints = complaints.filter(c => c.status !== '待申诉').length;
-
-
-
-  const appealRate = totalComplaints > 0 ? Math.round(doneComplaints / totalComplaints * 100) : 0;
-
-
-
-
-
-
-
-  // 门店得分排名
-
-
-
-  const storeScores = {};
-
-
-
-  offlineRecords.forEach(r => {
-
-
-
-    if (!storeScores[r.store]) storeScores[r.store] = [];
-
-
-
-    storeScores[r.store].push(r.score);
-
-
-
-  });
-
-
-
-  const ranking = Object.keys(storeScores).map(name => {
-
-
-
-    const avg = Math.round(storeScores[name].reduce((a,b)=>a+b,0) / storeScores[name].length);
-
-
-
-    return { name, avg };
-
-
-
-  }).sort((a,b) => b.avg - a.avg);
-
-
-
-
-
-
-
-  let html = '';
-
-
-
-
-
-
-
-  // 今日/MTD 切换
-
-
-
-  html += '<div class="db-toggle-bar">';
-
-
-
-  html += '<button class="db-toggle-btn' + (mode==='today'?' active':'') + '" onclick="Pages.switchDashboard(\'today\')">今日</button>';
-
-
-
-  html += '<button class="db-toggle-btn' + (mode==='mtd'?' active':'') + '" onclick="Pages.switchDashboard(\'mtd\')">全月 MTD</button>';
-
-
-
+  var complaints = App.getComplaints() || [];
+  var penalties = App.getPenalties() || [];
+  var issues = App.getIssues() || [];
+  var reports = App.getDailyReports() || [];
+
+  var now = new Date();
+  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var monthComplaints = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
+  var monthPenalties = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
+  var pendingIssues = issues.filter(function(r){ return r.status === '待处理'; });
+  var monthReports = reports.filter(function(r){ return (r.date || '').indexOf(curMonth) === 0; });
+  var inspectors = {};
+  monthReports.forEach(function(r){ if (r.inspector) inspectors[r.inspector] = 1; });
+  var inspectorCount = Object.keys(inspectors).length;
+  var monthAmount = 0;
+  monthPenalties.forEach(function(p){ monthAmount += Pages._pAmount(p); });
+
+  var html = '';
+  html += '<div class="sub-tabbar dcb-tabbar">';
+  html += '<div class="sub-tab-item active" onclick="Pages._gotoBoardTab(\'dashboard\')">看板中心</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'inspectionWorkbench\')">稽核看板</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'complaintBoard\')">差评看板</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'daily\')">日报看板</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'penaltyBoard\')">处罚看板</div>';
   html += '</div>';
 
-
-
-
-
-
-
-  // KPI 卡片区
-
-
-
-  html += '<div class="db-kpi-grid">';
-
-
-
-  html += dbKpiCard('门店总数', totalStores, '家', '#6366f1', 'M12 20l-8-8-4 4', "location.hash='#inspection'");
-
-
-
-  html += dbKpiCard('闭环率', closeRate, '%', '#10b981', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', "sessionStorage.setItem('db_readonly','1');location.hash='#penalty'");
-
-
-
-  html += dbKpiCard('差评追责率', appealRate, '%', '#f59e0b', 'M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122', "sessionStorage.setItem('db_readonly','1');location.hash='#complaint'");
-
-
-
-  html += dbKpiCard('待处理', pendingPenalties + overduePenalties, '项', '#ef4444', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', "sessionStorage.setItem('db_readonly','1');location.hash='#penalty'");
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 闭环率环形图
-
-
-
-  html += '<div class="db-card-3d" onclick="showClosureDetail(\'' + mode + '\')">';
-
-
-
-  html += '<div class="db-card-title" style="display:flex;justify-content:space-between">闭环追踪 <span style="font-size:10px;color:#6366f1">点击查看明细 \u203A</span></div>';
-
-
-
-  html += '<div class="db-ring-wrap">';
-
-
-
-  html += '<div class="db-ring" style="--p:' + closeRate + ';--c:#10b981">';
-
-
-
-  html += '<div class="db-ring-inner"><span class="db-ring-val">' + closeRate + '%</span><span class="db-ring-sub">' + donePenalties + '/' + totalPenalties + '</span></div>';
-
-
-
+  html += '<div class="dcb-wrap">';
+  html += '<div class="dcb-head"><div class="dcb-title">看板中心</div><div class="dcb-date">' + curMonth + ' · 数据实时更新</div></div>';
+  html += '<div class="dcb-grid">';
+  html += Pages._dcCard('inspectionWorkbench', '稽核待整改', pendingIssues.length, '项', '#e0342c', 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z', '待处理工单');
+  html += Pages._dcCard('complaintBoard', '差评', monthComplaints.length, '条', '#f59e0b', 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', '本月差评');
+  html += Pages._dcCard('daily', '日报', monthReports.length, '篇', '#3b82f6', 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z', inspectorCount + ' 位稽核员');
+  html += Pages._dcCard('penaltyBoard', '处罚', monthPenalties.length, '笔 · ¥' + monthAmount.toLocaleString(), '#8b5cf6', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', '本月处罚');
   html += '</div></div>';
-
-
-
-  html += '<div class="db-ring-legend"><span><i style="background:#10b981"></i>已闭环 ' + donePenalties + '</span><span><i style="background:#ef4444"></i>超时 ' + overduePenalties + '</span><span><i style="background:#f59e0b"></i>待补填 ' + pendingPenalties + '</span></div>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 门店排名柱状图
-
-
-
-  html += '<div class="db-card-3d">';
-
-
-
-  html += '<div class="db-card-title">门店得分 Top 5</div>';
-
-
-
-  html += '<div class="db-bar-chart">';
-
-
-
-  ranking.slice(0,5).forEach((item, i) => {
-
-
-
-    const h = item.avg;
-
-
-
-    const colors = [
-
-
-
-      'linear-gradient(180deg, #6366f1, #818cf8)',
-
-
-
-      'linear-gradient(180deg, #8b5cf6, #a78bfa)',
-
-
-
-      'linear-gradient(180deg, #10b981, #34d399)',
-
-
-
-      'linear-gradient(180deg, #f59e0b, #fbbf24)',
-
-
-
-      'linear-gradient(180deg, #ec4899, #f472b6)'
-
-
-
-    ];
-
-
-
-    html += '<div class="db-bar-col"><div class="db-bar-val">' + item.avg + '</div><div class="db-bar" style="height:' + h + 'px;background:' + colors[i] + '"></div><div class="db-bar-label">' + item.name.slice(0,3) + '</div></div>';
-
-
-
-  });
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  // 处罚 / 差评
-
-
-
-  html += '<div class="db-card-3d">';
-
-
-
-  html += '<div class="db-card-title">处罚 vs 差评</div>';
-
-
-
-  html += '<div class="db-vs-row">';
-
-
-
-  html += '<div class="db-vs-item" onclick="location.hash=\'#penalty\'" style="cursor:pointer;background:#fef2f2"><div class="db-vs-num" style="color:#ec4899">' + totalPenalties + '</div><div class="db-vs-label">处罚总数 \u203A</div></div>';
-
-
-
-  html += '<div class="db-vs-item" onclick="location.hash=\'#complaint\'" style="cursor:pointer;background:#eef2ff"><div class="db-vs-num" style="color:#6366f1">' + totalComplaints + '</div><div class="db-vs-label">差评总数 \u203A</div></div>';
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  // 整改率
-
-
-
-  html += '<div class="db-card-3d">';
-
-
-
-  html += '<div class="db-card-title">整改率</div>';
-
-
-
-  html += '<div class="db-gauge">';
-
-
-
-  html += '<div class="db-gauge-fill" style="width:' + closeRate + '%"></div>';
-
-
-
-  html += '<div class="db-gauge-label">' + closeRate + '%</div>';
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  // 门店排名表
-
-
-
-  html += '<div class="db-card-3d">';
-
-
-
-  html += '<div class="db-card-title">门店排名</div>';
-
-
-
-  ranking.forEach((item, i) => {
-
-
-
-    const medal = i===0?'\u{1F947}':i===1?'\u{1F948}':i===2?'\u{1F949}':'';
-
-
-
-    html += '<div class="db-rank-row"><span class="db-rank-idx">' + (i+1) + '</span><span>' + medal + ' ' + item.name + '</span><span class="db-rank-score">' + item.avg + '</span></div>';
-
-
-
-  });
-
-
-
-  html += '</div>';
-
-
-
-
-
-
 
   el.innerHTML = html;
-
-
-
 };
 
+Pages._gotoBoardTab = function(id) {
+  if (id === 'daily') {
+    Pages._dailyMode = 'board';
+    location.hash = '#daily';
+    return;
+  }
+  location.hash = '#' + id;
+};
 
-
-
-
-
+Pages._dcCard = function(id, title, value, unit, color, iconPath, sub) {
+  return '<div class="dcb-card" onclick="Pages._gotoBoardTab(\'' + id + '\')" style="--dc:' + color + '"><div class="dcb-card-top"><div class="dcb-card-icon" style="background:' + color + '1a;color:' + color + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="dcb-card-go" style="color:' + color + '">&#8250;</div></div><div class="dcb-card-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div><div class="dcb-card-title">' + title + '</div><div class="dcb-card-sub">' + sub + '</div></div>';
+};
 
 Pages.switchDashboard = function(mode) {
 
@@ -6018,27 +5619,57 @@ Pages._templateDelete = function(index) {
 
 
 Pages.task = function() {
-
-
-
   var el = document.getElementById('page-task');
-
-
-
   if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'task')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
 
+  var tasks = App.getTasks() || [];
+  tasks.sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); });
 
+  var html = '';
+  html += '<div class="page-title-bar"><span>任务列表</span><button class="btn btn-primary btn-sm" onclick="location.hash=\'#taskBoard\'">任务看板</button></div>';
+  html += '<div class="task-total">共 ' + tasks.length + ' 项任务 · ' + tasks.filter(function(t){ return t.status === '进行中'; }).length + ' 项进行中</div>';
 
-  el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>建设中</div></div>';
+  tasks.forEach(function(t) {
+    var tagCls = t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue');
+    var tagText = t.status === '进行中' ? '进行中' : t.status;
+    html += '<div class="list-item" onclick="Pages.showTaskDetail(\'' + t.id + '\')">';
+    html += '<div class="list-item-top"><span class="task-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="tag ' + tagCls + '">' + tagText + '</span></div>';
+    html += '<div class="task-sub">负责人：' + t.person + ' ｜ 截止：' + t.dueDate + (t.priority === '高' ? ' ｜ <span style="color:#e0342c">高优先级</span>' : '') + '</div>';
+    html += '</div>';
+  });
 
+  if (tasks.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无任务</div></div>';
+  }
 
-
+  el.innerHTML = html;
 };
 
-
-
-
-
+Pages.showTaskDetail = function(id) {
+  var tasks = App.getTasks() || [];
+  var t = tasks.find(function(x){ return x.id === id; });
+  if (!t) return;
+  var html = '<div class="modal-box">';
+  html += '<div class="modal-title">任务详情</div>';
+  html += '<p><b>任务：</b>' + t.title + '</p>';
+  if (t.store) html += '<p><b>门店：</b>' + t.store + '</p>';
+  html += '<p><b>负责人：</b>' + t.person + '</p>';
+  html += '<p><b>状态：</b><span class="tag ' + (t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue')) + '">' + t.status + '</span></p>';
+  html += '<p><b>截止日期：</b>' + t.dueDate + '</p>';
+  html += '<p><b>优先级：</b>' + t.priority + '</p>';
+  html += '<p><b>来源：</b>' + (t.source || '-') + '</p>';
+  html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
+  html += '</div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
 
 
 /* ==================== 稽核员日报 ==================== */
@@ -7184,7 +6815,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-    html += '<div class="board-inspector-card" onclick="Pages._toggleBoardDetail(\'' + name.replace(/'/g, "\\'") + '\')">';
+    html += '<div class="board-inspector-card" onclick="Pages._toggleBoardDetail(\'' + name.replace(/'/g, "\\\'") + '\')">';
 
 
 
@@ -7232,7 +6863,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-    html += '<div class="board-detail-table" id="board-detail-' + name.replace(/'/g, "\\'") + '" style="display:none">';
+    html += '<div class="board-detail-table" id="board-detail-' + name.replace(/'/g, "\\\'") + '" style="display:none">';
 
 
 
@@ -7256,7 +6887,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-      var rId = (r.id||'').replace(/'/g, "\\'");
+      var rId = (r.id||'').replace(/'/g, "\\\'");
 
 
 
@@ -12752,5 +12383,281 @@ Pages._toast = function(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 2000);
+};
+
+
+/* ==================== 看板中心 · 差评看板 ==================== */
+Pages._cType = function(c) {
+  var t = (c.opportunity || '') + ' ' + (c.content || '');
+  var rules = [
+    ['服务态度', ['服务','态度','店员','员工','不理','冷漠','回应','语气']],
+    ['出品/口味', ['咸','淡','味道','口味','好吃','难吃','菜','饭','汤','食材','变质','异味','口感','量少','不熟']],
+    ['环境/卫生', ['卫生','干净','脏','油渍','餐具','桌面','地面','苍蝇','虫','头发']],
+    ['出餐/配送', ['等','慢','上菜','外卖','漏送','打包','配送','迟到']]
+  ];
+  for (var i = 0; i < rules.length; i++) {
+    for (var j = 0; j < rules[i][1].length; j++) {
+      if (t.indexOf(rules[i][1][j]) >= 0) return rules[i][0];
+    }
+  }
+  return '其他';
+};
+
+Pages._bdTabs = function(activeId) {
+  var tabs = [
+    { id: 'dashboard', label: '看板中心' },
+    { id: 'inspectionWorkbench', label: '稽核看板' },
+    { id: 'complaintBoard', label: '差评看板' },
+    { id: 'daily', label: '日报看板' },
+    { id: 'penaltyBoard', label: '处罚看板' }
+  ];
+  var html = '<div class="sub-tabbar bd-tabbar">';
+  tabs.forEach(function(t) {
+    html += '<div class="sub-tab-item' + (t.id === activeId ? ' active' : '') + '" onclick="Pages._gotoBoardTab(\\\'' + t.id + '\\\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._bdDays = function(records, dateKeyFn) {
+  // 最近 10 天（含今日）
+  var days = [];
+  var now = new Date();
+  for (var i = 9; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    days.push({ label: String(d.getDate()), key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), count: 0, amount: 0 });
+  }
+  var map = {};
+  days.forEach(function(dd){ map[dd.key] = dd; });
+  records.forEach(function(r) {
+    var k = dateKeyFn(r);
+    if (map[k]) { map[k].count++; map[k].amount += Pages._pAmount(r); }
+  });
+  return days;
+};
+
+Pages._bdTrendHtml = function(days, color, valFn, valSuffix) {
+  var max = 1;
+  days.forEach(function(d){ var v = valFn(d); if (v > max) max = v; });
+  var html = '<div class="bd-trend">';
+  days.forEach(function(d) {
+    var v = valFn(d);
+    var h = Math.max(8, Math.round(v / max * 100));
+    html += '<div class="bd-trend-col"><div class="bd-trend-bar-wrap"><div class="bd-trend-bar" style="height:' + h + '%;background:' + color + '"></div></div><div class="bd-trend-val">' + v + (valSuffix || '') + '</div><div class="bd-trend-label">' + d.label + '</div></div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._bdRankHtml = function(rows, color) {
+  var medals = ['&#129351;', '&#129352;', '&#129353;'];
+  var html = '<div class="bd-rank">';
+  rows.forEach(function(r, i) {
+    html += '<div class="bd-rank-row"><span class="bd-rank-idx" style="background:' + (i < 3 ? color + '1a' : '#f1f5f9') + ';color:' + (i < 3 ? color : '#94a3b8') + '">' + (i < 3 ? medals[i] : (i + 1)) + '</span><span class="bd-rank-name">' + r.name + '</span><span class="bd-rank-val" style="color:' + color + '">' + r.val + '</span></div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._bdTypeHtml = function(rows, color, valKey) {
+  var total = 0;
+  rows.forEach(function(r){ total += r.count; });
+  if (total === 0) total = 1;
+  var html = '<div class="bd-type">';
+  rows.forEach(function(r) {
+    var w = Math.max(6, Math.round(r.count / total * 100));
+    html += '<div class="bd-type-row"><div class="bd-type-name">' + r.name + '</div><div class="bd-type-track"><div class="bd-type-fill" style="width:' + w + '%;background:' + color + '"></div></div><div class="bd-type-val">' + (valKey === 'amount' ? r.count + '笔 · ¥' + r.amount.toLocaleString() : r.count + '条') + '</div></div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._pAmount = function(p) {
+  if (!p) return 0;
+  var num = function(v) {
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string') {
+      var n = parseFloat(v.replace(/[^\d.]/g, ''));
+      return isNaN(n) ? 0 : n;
+    }
+    return 0;
+  };
+  if (p.dutyValue !== '' && p.dutyValue !== undefined && p.dutyValue !== null) {
+    var dv = num(p.dutyValue);
+    if (dv > 0) return dv;
+  }
+  return num(p.penaltyPerson) + num(p.penaltyManager);
+};
+
+Pages.complaintBoard = function() {
+  var el = document.getElementById('page-complaintBoard');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'dashboard')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var complaints = App.getComplaints() || [];
+  var now = new Date();
+  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var month = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
+  var pending = month.filter(function(c){ return c.status === '待处理'; });
+  var handled = month.filter(function(c){ return c.status !== '待处理'; });
+  var rate = month.length ? Math.round(handled.length / month.length * 100) : 0;
+
+  var days = Pages._bdDays(month, function(c){ return c.date || ''; });
+  var storeCount = {};
+  month.forEach(function(c){ storeCount[c.store] = (storeCount[c.store] || 0) + 1; });
+  var storeRank = Object.keys(storeCount).map(function(k){ return { name: k, val: storeCount[k] + '条' }; }).sort(function(a, b){ return b.val.localeCompare(a.val) || b.val.length - a.val.length; }).slice(0, 5);
+  var typeCount = {};
+  month.forEach(function(c){ var t = Pages._cType(c); typeCount[t] = (typeCount[t] || 0) + 1; });
+  var typeRows = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a, b){ return b.count - a.count; });
+  var latest = month.filter(function(c){ return c.status === '待处理'; }).sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); }).slice(0, 5);
+
+  var html = '';
+  html += Pages._bdTabs('complaintBoard');
+  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#e0342c,#f87171)">';
+  html += '<div class="bd-head-left"><div class="bd-title">差评看板</div><div class="bd-date">' + curMonth + '</div></div>';
+  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
+  html += '<div class="bd-stats">';
+  html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月差评</div></div>';
+  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pending.length + '</div><div class="bd-stat-label">待审核</div></div>';
+  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">处理率</div></div>';
+  html += '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">每日差评趋势</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#complaint\\\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">差评类型分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeRows, '#e0342c', 'count') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">最新待审核差评</div><div class="bd-list">';
+  if (latest.length === 0) {
+    html += '<div class="bd-empty">本月暂无待审核差评</div>';
+  }
+  latest.forEach(function(c) {
+    html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\\\'' + c.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
+  });
+  html += '</div></div></div>';
+
+  el.innerHTML = html;
+};
+
+Pages.penaltyBoard = function() {
+  var el = document.getElementById('page-penaltyBoard');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'dashboard')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var penalties = App.getPenalties() || [];
+  var now = new Date();
+  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var month = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
+  var totalAmount = 0;
+  month.forEach(function(p){ totalAmount += Pages._pAmount(p); });
+  var pendingFill = month.filter(function(p){ return p.status === '待补填'; });
+
+  var days = Pages._bdDays(month, function(p){ return p.eventDate || ''; });
+  var typeRows = {};
+  month.forEach(function(p) {
+    var k = p.category || '其他';
+    if (!typeRows[k]) typeRows[k] = { count: 0, amount: 0 };
+    typeRows[k].count++;
+    typeRows[k].amount += Pages._pAmount(p);
+  });
+  var typeList = Object.keys(typeRows).map(function(k){ return { name: k, count: typeRows[k].count, amount: typeRows[k].amount }; }).sort(function(a, b){ return b.count - a.count; });
+  var storeRows = {};
+  month.forEach(function(p) {
+    var k = p.store || '未知门店';
+    if (!storeRows[k]) storeRows[k] = { count: 0, amount: 0 };
+    storeRows[k].count++;
+    storeRows[k].amount += Pages._pAmount(p);
+  });
+  var storeRank = Object.keys(storeRows).map(function(k){ return { name: k, val: storeRows[k].count + '笔 · ¥' + storeRows[k].amount.toLocaleString() }; }).sort(function(a, b){ return b.val.length - a.val.length || b.val.localeCompare(a.val); }).slice(0, 5);
+  var latest = month.sort(function(a, b){ return (b.eventDate || '').localeCompare(a.eventDate || ''); }).slice(0, 5);
+
+  var html = '';
+  html += Pages._bdTabs('penaltyBoard');
+  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">';
+  html += '<div class="bd-head-left"><div class="bd-title">处罚看板</div><div class="bd-date">' + curMonth + '</div></div>';
+  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
+  html += '<div class="bd-stats">';
+  html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月处罚</div></div>';
+  html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">处罚金额</div></div>';
+  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pendingFill.length + '</div><div class="bd-stat-label">待补填</div></div>';
+  html += '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">处罚类型分布（含金额）</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeList, '#7c3aed', 'amount') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#penalty\\\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">每日处罚金额趋势</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">最新处罚记录</div><div class="bd-list">';
+  if (latest.length === 0) {
+    html += '<div class="bd-empty">本月暂无处罚记录</div>';
+  }
+  latest.forEach(function(p) {
+    var cls = p.status === '已闭环' ? 'bd-tag-green' : (p.status === '超时' ? 'bd-tag-red' : 'bd-tag-amber');
+    html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\\\'' + p.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
+  });
+  html += '</div></div></div>';
+
+  el.innerHTML = html;
+};
+
+Pages.taskBoard = function() {
+  var el = document.getElementById('page-taskBoard');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'task') && !App.Permissions.canAccess(user.role, 'dashboard')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var tasks = App.getTasks() || [];
+  var done = tasks.filter(function(t){ return t.status === '已完成'; });
+  var doing = tasks.filter(function(t){ return t.status === '进行中'; });
+  var todo = tasks.filter(function(t){ return t.status === '待办'; });
+  var rate = tasks.length ? Math.round(done.length / tasks.length * 100) : 0;
+
+  var statusRows = [
+    { name: '已完成', count: done.length },
+    { name: '进行中', count: doing.length },
+    { name: '待办', count: todo.length }
+  ];
+  var personRows = {};
+  tasks.forEach(function(t) {
+    var k = t.person || '未分配';
+    if (!personRows[k]) personRows[k] = { count: 0, done: 0 };
+    personRows[k].count++;
+    if (t.status === '已完成') personRows[k].done++;
+  });
+  var personRank = Object.keys(personRows).map(function(k){ return { name: k, val: personRows[k].done + '/' + personRows[k].count + ' 完成' }; }).sort(function(a, b){ return b.val.localeCompare(a.val); }).slice(0, 5);
+
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  var upcoming = tasks.filter(function(t){ return t.status !== '已完成' && (t.dueDate || '') >= todayStr; }).sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); }).slice(0, 5);
+
+  var html = '';
+  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#059669,#34d399)">';
+  html += '<div class="bd-head-left"><div class="bd-title">任务看板</div><div class="bd-date">' + todayStr + '</div></div>';
+  html += '<button class="bd-back" onclick="location.hash=\\\'#task\\\'">任务列表</button></div>';
+  html += '<div class="bd-stats">';
+  html += '<div class="bd-stat" style="--bd:#059669"><div class="bd-stat-num">' + tasks.length + '</div><div class="bd-stat-label">任务总数</div></div>';
+  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + doing.length + '</div><div class="bd-stat-label">进行中</div></div>';
+  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">完成率</div></div>';
+  html += '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">任务状态分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(statusRows, '#059669', 'count') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">各人任务量排行</div><div style="padding:12px 16px">' + Pages._bdRankHtml(personRank, '#059669') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">即将到期任务</div><div class="bd-list">';
+  if (upcoming.length === 0) {
+    html += '<div class="bd-empty">暂无即将到期任务</div>';
+  }
+  upcoming.forEach(function(t) {
+    html += '<div class="bd-item" onclick="Pages.showTaskDetail(\\\'' + t.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="bd-tag bd-tag-amber">' + t.status + '</span></div><div class="bd-item-sub">' + t.person + ' · 截止 ' + t.dueDate + (t.priority === '高' ? ' · <span style="color:#e0342c">高优先级</span>' : '') + '</div></div>';
+  });
+  html += '</div></div></div>';
+
+  el.innerHTML = html;
 };
 
