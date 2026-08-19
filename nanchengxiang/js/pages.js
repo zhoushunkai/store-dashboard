@@ -7586,6 +7586,15 @@ Pages.inspectionTemplates = function() {
 
 
   var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+  });
+  html += '</div>';
+
 
 
 
@@ -8730,6 +8739,15 @@ Pages.inspectionFill = function() {
 
 
   var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+  });
+  html += '</div>';
+
 
 
 
@@ -10197,6 +10215,15 @@ Pages.inspectionIssues = function() {
 
 
   var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+  });
+  html += '</div>';
+
 
 
 
@@ -11305,6 +11332,15 @@ Pages.inspectionDashboard = function() {
 
 
   var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+  });
+  html += '</div>';
+
 
 
 
