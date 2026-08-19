@@ -1646,6 +1646,13 @@ Pages._inspectionSubTabs = function(user) {
   ];
 };
 
+Pages._gotoSub = function(id) {
+  if (id === 'inspection') {
+    window.__inspectionExplicit = true;
+  }
+  location.hash = '#' + id;
+};
+
 /* ==================== 稽核工作台（B方向·问题驱动） ==================== */
 Pages._wbFilter = { storeId: '', region: '', days: 0 };
 
@@ -1838,7 +1845,7 @@ Pages.inspectionWorkbench = function() {
   var subHash = location.hash.replace('#', '');
   Pages._inspectionSubTabs(user).forEach(function(t) {
     if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
   });
   html += '</div>';
 
@@ -2142,7 +2149,7 @@ Pages.inspection = function() {
 
 
 
-  if (subHash === 'inspection') {
+  if (subHash === 'inspection' && !window.__inspectionExplicit) {
 
 
 
@@ -2174,7 +2181,7 @@ Pages.inspection = function() {
 
 
 
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
 
 
 
@@ -2376,17 +2383,9 @@ Pages.inspection = function() {
 
   el.innerHTML = html;
 
+  window.__inspectionExplicit = false;
 
-
-};
-
-
-
-
-
-
-
-// 照片捕获回调
+};// 照片捕获回调
 
 
 
@@ -7591,7 +7590,7 @@ Pages.inspectionTemplates = function() {
   html += '<div class="sub-tabbar">';
   subTabs.forEach(function(t) {
     if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
   });
   html += '</div>';
 
@@ -8744,7 +8743,7 @@ Pages.inspectionFill = function() {
   html += '<div class="sub-tabbar">';
   subTabs.forEach(function(t) {
     if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
   });
   html += '</div>';
 
@@ -9581,7 +9580,7 @@ Pages.inspectionResults = function() {
 
     if (!t.show) return;
 
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
 
   });
 
@@ -10220,7 +10219,7 @@ Pages.inspectionIssues = function() {
   html += '<div class="sub-tabbar">';
   subTabs.forEach(function(t) {
     if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
   });
   html += '</div>';
 
@@ -11337,7 +11336,7 @@ Pages.inspectionDashboard = function() {
   html += '<div class="sub-tabbar">';
   subTabs.forEach(function(t) {
     if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="location.hash=\'#' + t.id + '\'">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
   });
   html += '</div>';
 
