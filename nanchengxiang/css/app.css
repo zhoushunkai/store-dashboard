@@ -3072,7 +3072,7 @@ body {
 .header-logout { display: none; }
 
 @media (min-width: 1024px) {
-  body { background: #f1f5f9; }
+  body { background: #f1f5f9; max-width: none; margin: 0; }
 
   /* === PC 顶栏 === */
   .app-header {

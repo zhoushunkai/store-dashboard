@@ -8499,7 +8499,7 @@ const App = {
 
 
 
-    if (selectedValue) {
+    if (input.dataset.selected) {
 
 
 
