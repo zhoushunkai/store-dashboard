@@ -5740,6 +5740,8 @@ const App = {
 
     tabbar.style.display = (hash === 'login' || hash === 'offline-inspect' || hash === 'admin') ? 'none' : 'flex';
 
+    document.body.classList.toggle('no-tab', tabbar.style.display === 'none');
+
 
 
 
@@ -5959,6 +5961,17 @@ const App = {
 
 
     document.getElementById('header-title').textContent = titleMap[hash] || '';
+
+
+
+
+
+
+    var headerUser = document.getElementById('header-user');
+    if (headerUser) {
+      var cur = App.currentUser;
+      headerUser.textContent = cur ? (cur.name || '') + (cur.role ? ' · ' + cur.role : '') + (cur.area ? ' · ' + cur.area : '') : '';
+    }
 
 
 

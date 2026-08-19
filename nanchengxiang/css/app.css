@@ -3065,3 +3065,104 @@ body {
 .task-total { padding: 6px 16px 10px; font-size: 12px; color: #64748b; }
 .task-title { font-size: 14px; font-weight: 600; color: #1e293b; }
 .task-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+
+
+/* ==================== PC 适配 v63 ==================== */
+.header-user { display: none; }
+.header-logout { display: none; }
+
+@media (min-width: 1024px) {
+  body { background: #f1f5f9; }
+
+  /* === PC 顶栏 === */
+  .app-header {
+    left: 220px; right: 0; top: 0; max-width: none; margin: 0;
+    height: 56px; background: #fff; color: #111827;
+    border-bottom: 1px solid #e5e7eb; letter-spacing: 0;
+    justify-content: flex-start; padding: 0 24px; z-index: 120;
+  }
+  .app-header .header-back { display: none !important; }
+  .app-header #header-title { font-size: 17px; font-weight: 700; }
+  .header-user { display: block; margin-left: auto; font-size: 13px; color: #64748b; white-space: nowrap; }
+  .header-logout { display: block; margin-left: 14px; background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 13px; cursor: pointer; }
+  .header-logout:hover { opacity: 0.85; }
+
+  /* === 内容区 === */
+  .main-content { margin-left: 220px; padding-top: 56px; padding-bottom: 32px; }
+  .page { max-width: 1280px; margin: 0 auto; padding: 20px 28px 40px; }
+  .page .card { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+  /* === 左侧固定导航 === */
+  .tabbar {
+    left: 0; top: 0; right: auto; bottom: auto; width: 220px; height: 100vh;
+    max-width: none; margin: 0; padding: 0 0 var(--safe-bottom);
+    flex-direction: column; justify-content: flex-start; align-items: stretch;
+    background: #111827; border-top: none; border-right: 1px solid #1f2937;
+    overflow-y: auto;
+  }
+  .tabbar::before {
+    content: '南城香协作终端'; display: block; padding: 22px 20px 18px;
+    color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px;
+  }
+  .tabbar .tab-item {
+    flex: none; flex-direction: row; align-items: center; justify-content: flex-start;
+    gap: 12px; margin: 2px 12px; padding: 12px 16px; border-radius: 10px;
+    color: #9ca3af; font-size: 14px; font-weight: 500;
+  }
+  .tabbar .tab-item .tab-icon { font-size: 18px; margin-bottom: 0; }
+  .tabbar .tab-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .tabbar .tab-item.active { color: #fff; background: var(--primary); font-weight: 600; }
+  .tabbar .tab-item.active:hover { background: var(--primary); }
+
+  /* === 无 Tab 页面（登录 / 线下稽核 / 数据管理） === */
+  body.no-tab .app-header { left: 0; justify-content: center; }
+  body.no-tab .main-content { margin-left: 0; }
+  body.no-tab .header-user, body.no-tab .header-logout { display: none !important; }
+
+  /* === 二级页签吸顶对齐 PC 顶栏 === */
+  .sub-tabbar, .sc-tabbar { top: 56px; }
+
+  /* === 详情弹窗居中加宽 === */
+  .modal-overlay { padding: 24px; }
+  .modal-box { width: 90%; max-width: 720px; max-height: 86vh; border-radius: 14px; }
+  .dd-modal-box { max-width: 760px; }
+
+  /* === 看板中心：入口卡 4 列 === */
+  .dcb-wrap { padding: 20px 28px 40px; }
+  .dcb-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* === 通用看板：大数字与图表并排 === */
+  .bd-wrap { padding: 20px 28px 40px; }
+  .bd-stats { padding: 16px 0; gap: 14px; }
+  .bd-stat { padding: 18px 12px; }
+  .bd-stat-num { font-size: 32px; }
+  .bd-trend { height: 180px; }
+  .bd-rank { padding: 6px 16px 16px; }
+
+  #page-complaintBoard .bd-wrap, #page-penaltyBoard .bd-wrap, #page-taskBoard .bd-wrap {
+    display: flex; flex-wrap: wrap; gap: 16px;
+  }
+  #page-complaintBoard .bd-wrap > .bd-head, #page-penaltyBoard .bd-wrap > .bd-head, #page-taskBoard .bd-wrap > .bd-head,
+  #page-complaintBoard .bd-wrap > .bd-stats, #page-penaltyBoard .bd-wrap > .bd-stats, #page-taskBoard .bd-wrap > .bd-stats {
+    flex: 0 0 100%;
+  }
+  #page-complaintBoard .bd-wrap > .bd-card, #page-penaltyBoard .bd-wrap > .bd-card, #page-taskBoard .bd-wrap > .bd-card {
+    flex: 1 1 calc(33.333% - 12px); min-width: 280px; margin: 0;
+  }
+
+  /* === 供应链：看板数字 + 图表卡同屏 === */
+  #page-supplyChain .sc-board-nums { margin-bottom: 16px; }
+  #page-supplyChain .sc-board-nums ~ .card.sc-card {
+    display: inline-block; vertical-align: top; width: calc(50% - 10px);
+    margin: 0 5px 16px; max-width: none;
+  }
+  #page-supplyChain .sc-list { padding: 8px 16px 40px; }
+  .sc-report-entry { right: 28px; bottom: 28px; }
+
+  /* === 列表项横向多字段 === */
+  .list-item { padding: 14px 16px; }
+  .list-item .li-main { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .list-item .li-title { margin-bottom: 0; font-size: 14px; }
+  .list-item .li-sub { font-size: 13px; }
+}
