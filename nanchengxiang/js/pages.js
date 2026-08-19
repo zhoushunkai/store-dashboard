@@ -1651,10 +1651,13 @@ Pages._wbFilter = { storeId: '', region: '', days: 0 };
 
 Pages._wbCategoryKeywords = [
   ['清洁/卫生', ['污渍','油渍','油垢','污垢','残渣','毛发','毛絮','垃圾','水垢','积水','灰尘','烟头','纸屑','清洁不到位','未清理','未清洁','未及时清洁','不干净','脏污','水印','水渍','蜘蛛网','苍蝇','蚊虫','飞虫','积灰','胶渍','胶痕','虫害','粘虫','卫生较差','残渍','异味','油污','除垢']],
-  ['操作规范/工器具', ['翻动','未处理','搅拌','抖动','溜边','锅圈','打散','浇油','焯水','煎制','热料包','下米','下绿豆','下配料','放油','接触','掉落','落入','入水','未用新碗','分装','称量','器具','工器具','专用','标准','超时','未达标','打烊','报损','过早','关火','消毒','预热','翻面','抓','夹子','锅','用手']],
   ['储存/封口/加盖', ['封口','加盖','储存','保鲜盒','交叉污染','先进先出','混放','开封','封存','离地','落地','上冻','堆放','集中存放','存放','生熟']],
+  ['仪表/着装/佩戴', ['仪容仪表','工服','工牌','纽扣','耳钉','首饰','项链','手链','口罩','帽子','着装','佩戴','戴手套','摘帽','摘口罩','嚼东西']],
   ['产品品质/断档', ['断档','出品','破损','冻伤','黄叶','黑叶','烂叶','发黄','汤汁','开叉','软榻','过少','规格','克数','参数','断供','断货','估清','缺货','不合格','品相','破皮','重量超标','漏签','蒸菜','午餐','晚餐','早餐']],
-  ['仪表/着装/佩戴', ['仪容仪表','工服','工牌','纽扣','耳钉','首饰','项链','手链','口罩','帽子','着装','佩戴','戴手套','摘帽','摘口罩','嚼东西']]
+  ['设备/设施', ['设备','滤芯','净水','吊灯','空调','广告机','豆浆机','灭蝇灯','消毒柜','冰箱','制冰机','封膜机','洗碗机','饮水机','餐盘柜','排烟','开水器','风扇','照明','灯','虫']],
+  ['操作规范/工器具', ['翻动','未处理','搅拌','抖动','溜边','锅圈','打散','浇油','焯水','煎制','热料包','下米','下绿豆','下配料','放油','接触','掉落','落入','入水','未用新碗','分装','称量','器具','工器具','专用','标准','超时','未达标','打烊','报损','过早','关火','消毒','预热','翻面','抓','夹子','锅','用手']],
+  ['值班/制度/台账', ['手机','离岗','台账','SOP','抽查','晨检','知识','岗位标准','值班','顶岗','纪律','记录缺失','制度','不在岗','报修','更换','记录不完善']],
+  ['服务/话术', ['话术','迎宾','托盘','腰包','餐具','收餐','回餐','服务']]
 ];
 
 Pages._wbClassify = function(text) {
@@ -1678,6 +1681,20 @@ Pages._wbStoreName = function(sid) {
 
 Pages._wbIssuesText = function(iss) {
   return iss.content || iss.description || '';
+};
+
+Pages._wbIssuesItems = function(iss) {
+  if (iss.description) {
+    if (!/^\d+\./m.test(iss.description)) return [];
+    var items = iss.description.match(/[①②③④⑤⑥⑦⑧⑨⑩][^①-⑩]*/g) || [];
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i].trim();
+      if (it) out.push(it);
+    }
+    return out;
+  }
+  return (iss.content || '').trim() ? [iss.content.trim()] : [];
 };
 
 Pages.inspectionWorkbench = function() {
@@ -1759,14 +1776,18 @@ Pages.inspectionWorkbench = function() {
 
   // 3. 高频问题 TOP5（关键词归类）
   var catCount = {};
+  var catTotal = 0;
   issues.forEach(function(r) {
-    var c = Pages._wbClassify(Pages._wbIssuesText(r));
-    catCount[c] = (catCount[c] || 0) + 1;
+    Pages._wbIssuesItems(r).forEach(function(t) {
+      catTotal++;
+      var c = Pages._wbClassify(t);
+      catCount[c] = (catCount[c] || 0) + 1;
+    });
   });
   var catArr = Object.keys(catCount).map(function(c){ return { name: c, count: catCount[c] }; });
-  catArr.sort(function(a, b) { return b.count - a.count; });
+  catArr.sort(function(a, b) { return b.count - a.count || (a.name < b.name ? -1 : 1); });
   catArr = catArr.slice(0, 5);
-  var issueTotal = issues.length || 1;
+  var issueTotal = catTotal || 1;
 
   // 4. 待处理问题门店 TOP5
   var storePending = {};
@@ -2001,14 +2022,21 @@ Pages._wbOpenStoreDetail = function(storeId) {
 
 Pages._wbOpenCategory = function(cat) {
   var issues = App.getIssues() || [];
-  var list = issues.filter(function(r){ return Pages._wbClassify(Pages._wbIssuesText(r)) === cat; });
+  var list = [];
+  issues.forEach(function(r) {
+    Pages._wbIssuesItems(r).forEach(function(t) {
+      if (Pages._wbClassify(t) === cat) {
+        list.push({ storeId: r.storeId, text: t });
+      }
+    });
+  });
   var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + cat + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
   if (list.length === 0) {
     html += '<div class="wb-empty">暂无问题记录</div>';
   } else {
     html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th></tr></thead><tbody>';
     list.forEach(function(p) {
-      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td></tr>';
+      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + p.text + '</td></tr>';
     });
     html += '</tbody></table>';
   }
