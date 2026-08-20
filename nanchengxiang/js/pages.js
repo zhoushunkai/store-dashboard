@@ -1642,7 +1642,7 @@ Pages._inspectionSubTabs = function(user) {
     { id: 'inspectionResults', label: '检查结果', show: App.Permissions.canAccess(user.role, 'inspection_results') },
     { id: 'inspectionIssues', label: '问题工单', show: App.Permissions.canAccess(user.role, 'inspection') },
     { id: 'inspectionWorkbench', label: '工作台', show: App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results') },
-    { id: 'inspectionDashboard', label: '稽核看板', show: App.Permissions.canAccess(user.role, 'inspection') }
+
   ];
 };
 
