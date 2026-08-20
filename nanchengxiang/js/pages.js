@@ -2989,6 +2989,13 @@ Pages.submitOffline = function() {
 
 
 
+Pages._penaltyMode = Pages._penaltyMode || 'list';
+
+Pages._penaltySetTab = function(mode) {
+  Pages._penaltyMode = mode;
+  Pages.penalty();
+};
+
 Pages.penalty = function() {
 
 
@@ -3832,6 +3839,13 @@ Pages.closePenalty = function(id) {
 /* ---- 差评申诉页 ---- */
 
 
+
+Pages._complaintMode = Pages._complaintMode || 'list';
+
+Pages._complaintSetTab = function(mode) {
+  Pages._complaintMode = mode;
+  Pages.complaint();
+};
 
 Pages.complaint = function() {
 
@@ -5651,6 +5665,13 @@ Pages._templateDelete = function(index) {
 /* ==================== 任务发布 ==================== */
 
 
+
+Pages._taskMode = Pages._taskMode || 'list';
+
+Pages._taskSetTab = function(mode) {
+  Pages._taskMode = mode;
+  Pages.task();
+};
 
 Pages.task = function() {
   var el = document.getElementById('page-task');
