@@ -1,12494 +1,12538 @@
-/* ============================================
-
-
-
-   pages.js — 所有页面渲染函数
-
-
-
-   ============================================ */
-
-
-
-
-
-
-
-const Pages = {};
-
-
-
-
-
-
-
-/* ---- 登录页 ---- */
-
-
-
-Pages.login = function() {
-
-
-
-  const el = document.getElementById('page-login');
-
-
-
-  if (!el) return;
-
-
-
-
-
-
-
-  let html = '<div class="login-page">';
-
-
-
-  html += '<div class="login-logo">&#9749;</div>';
-
-
-
-  html += '<div class="login-title">南城香协作终端</div>';
-
-
-
-  html += '<div class="login-subtitle">门店协作管理平台</div>';
-
-
-
-
-
-
-
-  // 手机号登录表单
-
-
-
-  html += '<div class="phone-login-card">';
-
-
-
-  html += '<div class="card-title">手机号登录</div>';
-
-
-
-  html += '<div class="phone-input-group">';
-
-
-
-  html += '<span class="phone-prefix">+86</span>';
-
-
-
-  html += '<input type="tel" id="phone-input" class="phone-input" placeholder="请输入手机号" maxlength="11" value="' + (App._phoneLoginNumber || '') + '" oninput="Pages.onPhoneInput()">';
-
-
-
-  html += '</div>';
-
-
-
-  html += '<button class="sms-btn" id="sms-btn" onclick="Pages.doPhoneLogin()" disabled>登录</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  html += '<div class="login-divider"><span>或</span></div>';
-
-
-
-  html += '<button class="skip-btn" onclick="App.quickLogin(); location.hash=\'#home\';">跳过登录，直接预览首页</button>';
-
-
-
-  html += '</div>';
-
-
-
-  el.innerHTML = html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._phoneLoginNumber = '';
-
-
-
-
-
-
-
-Pages.onPhoneInput = function() {
-
-
-
-  var phone = document.getElementById('phone-input').value.replace(/\D/g,'');
-
-
-
-  var btn = document.getElementById('sms-btn');
-
-
-
-  btn.disabled = phone.length !== 11;
-
-
-
-  // 回车直接登录
-
-
-
-  if (phone.length === 11) {
-
-
-
-    document.getElementById('phone-input').onkeydown = function(e) {
-
-
-
-      if (e.key === 'Enter') Pages.doPhoneLogin();
-
-
-
-    };
-
-
-
-  }
-
-
-
-};
-
-
-
-
-
-
-
-Pages.doPhoneLogin = function() {
-
-
-
-  var phone = document.getElementById('phone-input').value.replace(/\D/g,'');
-
-
-
-  if (phone.length !== 11) { App.toast('请输入完整手机号'); return; }
-
-
-
-  Pages._phoneLoginNumber = phone;
-
-
-
-  App._phoneLoginNumber = phone;
-
-
-
-
-
-
-
-  // 数据尚未从云端同步完成时，等待后重试
-
-
-
-  if (!App.dataReady && App.supabase) {
-
-
-
-    var btn = document.getElementById('sms-btn');
-
-
-
-    if (btn) { btn.disabled = true; btn.textContent = '同步中...'; }
-
-
-
-    var retry = 0;
-
-
-
-    var self = this;
-
-
-
-    var timer = setInterval(function() {
-
-
-
-      retry++;
-
-
-
-      if (App.dataReady || retry > 40) {
-
-
-
-        clearInterval(timer);
-
-
-
-        if (btn) { btn.disabled = false; btn.textContent = '登录'; }
-
-
-
-        if (App.dataReady) {
-
-
-
-          self._doPhoneLoginCore(phone);
-
-
-
-        } else {
-
-
-
-          App.toast('数据同步超时，请刷新页面重试');
-
-
-
-        }
-
-
-
-      }
-
-
-
-    }, 500);
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  this._doPhoneLoginCore(phone);
-
-
-
-};
-
-
-
-
-
-
-
-Pages._doPhoneLoginCore = function(phone) {
-
-
-
-  var users = App.getUsers();
-
-
-
-  var user = null;
-
-
-
-  for (var i = 0; i < users.length; i++) {
-
-
-
-    if (users[i].phone === phone) {
-
-
-
-      user = users[i];
-
-
-
-      break;
-
-
-
-    }
-
-
-
-  }
-
-
-
-  if (!user) {
-
-
-
-    var seedUsers = App.seedData && App.seedData.users ? App.seedData.users : [];
-
-
-
-    for (var j = 0; j < seedUsers.length; j++) {
-
-
-
-      if (seedUsers[j].phone === phone) {
-
-
-
-        user = seedUsers[j];
-
-
-
-        break;
-
-
-
-      }
-
-
-
-    }
-
-
-
-    if (!user) {
-
-
-
-      App.toast('该手机号未注册，请联系管理员');
-
-
-
-      return;
-
-
-
-    }
-
-
-
-  }
-
-
-
-  if (App.login(user.id)) {
-
-
-
-    App.toast('登录成功');
-
-
-
-    location.hash = '#home';
-
-
-
-  }
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 首页 ---- */
-
-
-
-Pages.home = function() {
-
-
-
-  const el = document.getElementById('page-home');
-
-
-
-  if (!el) return;
-
-
-
-  const user = App.currentUser;
-
-
-
-  const stores = App.getStores();
-
-
-
-  const penalties = App.getPenalties();
-
-
-
-  const complaints = App.getComplaints();
-
-
-
-  const onlineRecords = App.getOnlineRecords();
-
-
-
-  const offlineRecords = App.getOfflineRecords();
-
-
-
-
-
-
-
-  let html = '';
-
-
-
-
-
-
-
-  /* 用户个人信息卡片 */
-
-
-
-  var roleNames = App.Permissions.roleNames;
-
-
-
-  var roleBadgeColors = App.Permissions.roleBadgeColors;
-
-
-
-  html += '<div class="user-profile">';
-
-
-
-  html += '<div class="user-avatar" style="background:' + (roleBadgeColors[user.role] || '#888') + '">' + (user.name || '?')[0] + '</div>';
-
-
-
-  html += '<div class="user-info-text">';
-
-
-
-  html += '<div class="user-name">' + (user.name || '未登录') + '</div>';
-
-
-
-  html += '<div class="user-role">' + (roleNames[user.role] || user.role) + '</div>';
-
-
-
-  if (user.store) {
-
-
-
-    html += '<div class="user-shop">' + user.store + '</div>';
-
-
-
-  } else if (user.area) {
-
-
-
-    html += '<div class="user-shop">管辖区域：' + user.area + '</div>';
-
-
-
-  }
-
-
-
-  html += '</div>';
-
-
-
-  html += '<div class="user-arrow" onclick="App.logout()" title="退出登录">\u{23FB}</div>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  if (user.role === '店长') {
-
-
-
-    // 店长看自己门店
-
-
-
-    const store = stores.find(s => s.id === user.storeId) || {};
-
-
-
-    const storePenalties = penalties.filter(p => p.storeId === user.storeId);
-
-
-
-    const storeComplaints = complaints.filter(c => c.storeId === user.storeId);
-
-
-
-    const pendingPenalty = storePenalties.filter(p => p.status === '待补填').length;
-
-
-
-    const pendingComplaint = storeComplaints.filter(c => c.status === '待处理').length;
-
-
-
-
-
-
-
-    // 找门店得分（从线下稽核记录）
-
-
-
-    const storeOffline = offlineRecords.filter(r => r.storeId === user.storeId);
-
-
-
-    const latestScore = storeOffline.length > 0 ? storeOffline[storeOffline.length - 1].score : 85;
-
-
-
-
-
-
-
-    html += '<div class="card">';
-
-
-
-    html += '<div class="card-title">\u{1F3EA} ' + (store.name || '') + '</div>';
-
-
-
-    const cls = latestScore >= 85 ? 'high' : (latestScore >= 70 ? 'mid' : 'low');
-
-
-
-    html += '<div class="score-circle ' + cls + '">' + latestScore + '</div>';
-
-
-
-    html += '<div style="text-align:center;color:var(--text-secondary);font-size:12px;">最新稽核得分</div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    html += '<div class="stats-row">';
-
-
-
-    html += '<div class="stat-card" onclick="location.hash=\'#penalty\'">';
-
-
-
-    html += '<div class="stat-num" style="color:' + (pendingPenalty > 0 ? 'var(--status-overdue)' : 'var(--primary)') + '">' + pendingPenalty + '</div>';
-
-
-
-    html += '<div class="stat-label">待处理处罚</div></div>';
-
-
-
-    html += '<div class="stat-card" onclick="location.hash=\'#complaint\'">';
-
-
-
-    html += '<div class="stat-num" style="color:' + (pendingComplaint > 0 ? 'var(--status-pending)' : 'var(--primary)') + '">' + pendingComplaint + '</div>';
-
-
-
-    html += '<div class="stat-label">待处理差评</div></div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    // 有待处理差评时醒目提示
-
-
-
-    if (pendingComplaint > 0) {
-
-
-
-      html += '<div class="alert-card" onclick="location.hash=\'#complaint\'">';
-
-
-
-      html += '<span class="alert-icon">\u{1F514}</span>';
-
-
-
-      html += '您有 <b>' + pendingComplaint + '</b> 条新差评待处理，请点击填写责任人并生成处罚';
-
-
-
-      html += '</div>';
-
-
-
-    }
-
-
-
-
-
-
-
-    html += '<div class="quick-entries">';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>检查结果</div>';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评申诉</div>';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-  } else if (user.role === '线上稽核' || user.role === '线下稽核') {
-
-
-
-    const todayRecords = user.role === '线上稽核'
-
-
-
-      ? onlineRecords.filter(r => r.inspector === user.name)
-
-
-
-      : offlineRecords.filter(r => r.inspector === user.name);
-
-
-
-    const todayCount = todayRecords.length;
-
-
-
-
-
-
-
-    html += '<div class="card">';
-
-
-
-    html += '<div class="card-title">\u{1F4C5} 今日工作</div>';
-
-
-
-    html += '<div class="stats-row">';
-
-
-
-    html += '<div class="stat-card"><div class="stat-num">' + todayCount + '</div><div class="stat-label">今日提交</div></div>';
-
-
-
-    html += '<div class="stat-card"><div class="stat-num">' + stores.length + '</div><div class="stat-label">管辖门店</div></div>';
-
-
-
-    html += '</div></div>';
-
-
-
-
-
-
-
-    html += '<div class="quick-entries">';
-
-
-
-    if (user.role === '线上稽核') {
-
-
-
-      html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4DD}</span>线上检查录入</div>';
-
-
-
-    } else {
-
-
-
-      html += '<div class="quick-entry" onclick="location.hash=\'#offline-inspect\'"><span class="qe-icon">\u{1F50D}</span>线下检查录入</div>';
-
-
-
-    }
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评申诉</div>';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-  } else if (user.role === '总部' || user.role === '区域教练' || user.role === 'admin' || user.role === '客服' || user.role === '营运') {
-
-
-
-    const totalPenalties = penalties.length;
-
-
-
-    const donePenalties = penalties.filter(p => p.status === '已闭环').length;
-
-
-
-    const totalComplaints = complaints.length;
-
-
-
-    const appealedComplaints = complaints.filter(c => c.status === '已申诉' && c.appealResult === '通过').length;
-
-
-
-
-
-
-
-    html += '<div class="stats-row">';
-
-
-
-    html += '<div class="stat-card"><div class="stat-num">' + stores.length + '</div><div class="stat-label">门店总数</div></div>';
-
-
-
-    html += '<div class="stat-card"><div class="stat-num">' + totalPenalties + '</div><div class="stat-label">处罚总数</div></div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    html += '<div class="stats-row">';
-
-
-
-    html += '<div class="stat-card"><div class="stat-num">' + donePenalties + '</div><div class="stat-label">已闭环处罚</div></div>';
-
-
-
-    html += '<div class="stat-card"><div class="stat-num">' + totalComplaints + '</div><div class="stat-label">差评总数</div></div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    html += '<div class="card">';
-
-
-
-    html += '<div class="card-title">闭环率</div>';
-
-
-
-    const closeRate = totalPenalties > 0 ? Math.round(donePenalties / totalPenalties * 100) : 0;
-
-
-
-    html += '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + closeRate + '%</div>';
-
-
-
-    html += '<div class="progress-bar"><div class="progress-fill green" style="width:' + closeRate + '%"></div></div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    html += '<div class="quick-entries">';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>领导看板</div>';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚管理</div>';
-
-
-
-    html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评审核</div>';
-
-
-
-    if (App.Permissions.canAccess(user.role, 'inspection')) {
-
-
-
-      html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4CB}</span>检查记录</div>';
-
-
-
-    }
-
-
-
-    if (user.role === '总部' || user.role === 'admin' || user.role === '客服') {
-
-
-
-      html += '<div class="quick-entry" onclick="location.hash=\'#admin\'"><span class="qe-icon">\u{2699}</span>数据管理</div>';
-
-
-
-    }
-
-
-
-    html += '</div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 数据管理页（总部专享：人员管理 + 导入导出） ---- */
-
-
-
-Pages.admin = function() {
-
-
-
-  var user = App.currentUser;
-
-
-
-  if (user.role !== '总部' && user.role !== 'admin' && user.role !== '客服') {
-
-
-
-    var el = document.getElementById('page-admin');
-
-
-
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>仅总部管理员可访问此页面</div></div>';
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  var html = '';
-
-
-
-
-
-
-
-  /* ===== 人员管理 ===== */
-
-
-
-  var users = App.getUsers();
-
-
-
-  html += '<div class="section-title">&#128101; 人员管理（' + users.length + '人）</div>';
-
-
-
-  html += '<div class="action-bar">';
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages._userForm()">+ 新增人员</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  if (users.length === 0) {
-
-
-
-    html += '<div class="empty-state">暂无人员数据</div>';
-
-
-
-  } else {
-
-
-
-    html += '<div class="user-list">';
-
-
-
-    var roleMap = App.Permissions.roleBadgeColors;
-
-
-
-    users.forEach(function(u) {
-
-
-
-      html += '<div class="user-row">';
-
-
-
-      html += '<div class="user-info">';
-
-
-
-      html += '<div class="user-name">' + u.name + '</div>';
-
-
-
-      html += '<div class="user-meta">';
-
-
-
-      html += '<span class="user-role-tag" style="background:' + (roleMap[u.role] || '#6b7280') + '">' + (App.Permissions.roleNames[u.role] || u.role) + '</span>';
-
-
-
-      if (u.store) html += '<span class="user-store">' + u.store + '</span>';
-
-
-
-      if (u.area) html += '<span class="user-area">' + u.area + '</span>';
-
-
-
-      html += '<span class="user-phone">' + (u.phone || '') + '</span>';
-
-
-
-      html += '</div></div>';
-
-
-
-      html += '<div class="user-actions">';
-
-
-
-      html += '<button class="btn btn-xs" onclick="Pages._userForm(\'' + u.id + '\')">编辑</button>';
-
-
-
-      html += '<button class="btn btn-xs btn-danger" onclick="Pages._userDelete(\'' + u.id + '\',\'' + u.name + '\')">删除</button>';
-
-
-
-      html += '</div></div>';
-
-
-
-    });
-
-
-
-    html += '</div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  /* ===== 数据导入 ===== */
-
-
-
-  html += '<div class="section-title" style="margin-top:24px">&#128229; 数据导入</div>';
-
-
-
-
-
-
-
-  html += '<div class="card">';
-
-
-
-  html += '<div class="card-title">导入人员</div>';
-
-
-
-  html += '<div class="card-desc">XLS 格式：id, 姓名, 角色(总部/线上稽核/线下稽核/区域教练/店长), 区域/区, 门店ID, 门店名, 手机号</div>';
-
-
-
-  html += '<div style="margin:8px 0"><button class="btn btn-xs btn-outline" onclick="App.downloadTemplate(\'users\')">下载人员模板</button></div>';
-
-
-
-  html += '<input type="file" accept=".xls,.xlsx" onchange="App.importXLS(this, \'users\')" style="display:none" id="file-users">';
-
-
-
-  html += '<button class="btn btn-primary" style="width:100%" onclick="document.getElementById(\'file-users\').click()">选择人员 XLS 并导入</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  html += '<div class="card">';
-
-
-
-  html += '<div class="card-title">导入门店</div>';
-
-
-
-  html += '<div class="card-desc">XLS 格式：门店ID, 门店名, 行政区, 行政区域, 经营区, 区域, 店长, 店长称谓, 经营模式</div>';
-
-
-
-  html += '<div style="margin:8px 0"><button class="btn btn-xs btn-outline" onclick="App.downloadTemplate(\'stores\')">下载门店模板</button></div>';
-
-
-
-  html += '<input type="file" accept=".xls,.xlsx" onchange="App.importXLS(this, \'stores\')" style="display:none" id="file-stores">';
-
-
-
-  html += '<button class="btn btn-primary" style="width:100%" onclick="document.getElementById(\'file-stores\').click()">选择门店 XLS 并导入</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  /* ===== 数据导出 ===== */
-
-
-
-  html += '<div class="section-title" style="margin-top:20px">&#128228; 数据导出</div>';
-
-
-
-
-
-
-
-  html += '<div class="card">';
-
-
-
-  html += '<div class="card-title">导出人员数据</div>';
-
-
-
-  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'users\')">下载人员 XLS</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  html += '<div class="card">';
-
-
-
-  html += '<div class="card-title">导出处罚数据</div>';
-
-
-
-  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'penalties\')">下载处罚 XLS</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  html += '<div class="card">';
-
-
-
-  html += '<div class="card-title">导出差评数据</div>';
-
-
-
-  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'complaints\')">下载差评 XLS</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  html += '<div class="card">';
-
-
-
-  html += '<div class="card-title">导出看板汇总</div>';
-
-
-
-  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'dashboard\')">下载看板 XLS</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  document.getElementById('page-admin').innerHTML = html;
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 人员表单弹窗 ---- */
-
-
-
-Pages._userForm = function(id) {
-
-
-
-  var users = App.getUsers();
-
-
-
-  var u = id ? users.find(function(x) { return x.id === id; }) : null;
-
-
-
-  var isEdit = !!u;
-
-
-
-  var title = isEdit ? '编辑人员' : '新增人员';
-
-
-
-
-
-
-
-  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
-
-
-
-  html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
-
-
-
-  html += '<div class="modal-body">';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label>姓名</label>';
-
-
-
-  html += '<input type="text" id="uf-name" class="form-input" value="' + (u ? u.name || '' : '') + '" placeholder="如：张三"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label>角色</label>';
-
-
-
-  html += '<select id="uf-role" class="form-input">';
-
-
-
-  ['总部', '线上稽核', '线下稽核', '区域教练', '店长', '客服', '营运'].forEach(function(r) {
-
-
-
-    var sel = (u && u.role === r) ? ' selected' : '';
-
-
-
-    html += '<option value="' + r + '"' + sel + '>' + r + '</option>';
-
-
-
-  });
-
-
-
-  html += '</select></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label>手机号</label>';
-
-
-
-  html += '<input type="tel" id="uf-phone" class="form-input" value="' + (u ? u.phone || '' : '') + '" placeholder="用于登录"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label>所属区域</label>';
-
-
-
-  html += '<input type="text" id="uf-area" class="form-input" value="' + (u ? u.area || '' : '') + '" placeholder="区域教练填写，如：经营一区"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label>绑定门店</label>';
-
-
-
-  html += App.renderStoreSelect('uf-storeId', stores, u ? u.storeId : '', '输入门店名称搜索...');
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-  html += '<div class="modal-footer">';
-
-
-
-  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages._userSave(\'' + (isEdit ? id : '') + '\')">保存</button>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  var overlay = div.firstElementChild;
-
-
-
-  document.body.appendChild(overlay);
-
-
-
-  overlay.offsetHeight;
-
-
-
-  overlay.classList.add('show');
-
-
-
-  App.initStoreSelect('uf-storeId', App.getStores());
-
-
-
-};
-
-
-
-
-
-
-
-Pages._userSave = async function(id) {
-
-
-
-  var name = (document.getElementById('uf-name') || {}).value || '';
-
-
-
-  var role = (document.getElementById('uf-role') || {}).value || '店长';
-
-
-
-  var phone = (document.getElementById('uf-phone') || {}).value || '';
-
-
-
-  var area = (document.getElementById('uf-area') || {}).value || '';
-
-
-
-  var storeId = App.getStoreSelectValue('uf-storeId');
-
-
-
-
-
-
-
-  if (!name.trim()) return App.toast('请输入姓名');
-
-
-
-
-
-
-
-  var storeName = '';
-
-
-
-  if (storeId) {
-
-
-
-    var stores = App.getStores();
-
-
-
-    var s = stores.find(function(x) { return x.id === storeId; });
-
-
-
-    if (s) storeName = s.name;
-
-
-
-  }
-
-
-
-
-
-
-
-  var data = { name: name.trim(), role: role, phone: phone.trim(), area: area.trim(), storeId: storeId, store: storeName };
-
-
-
-
-
-
-
-  var overlay = document.querySelector('.modal-overlay');
-
-
-
-  if (overlay) overlay.remove();
-
-
-
-
-
-
-
-  if (id) {
-
-
-
-    await App.updateUser(id, data);
-
-
-
-  } else {
-
-
-
-    await App.addUser(data);
-
-
-
-  }
-
-
-
-  Pages.admin();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._userDelete = async function(id, name) {
-
-
-
-  if (!confirm('确定删除「' + name + '」？此操作不可恢复。')) return;
-
-
-
-  await App.deleteUser(id);
-
-
-
-  Pages.admin();
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 门店检查页（线上组） ---- */
-
-
-
-Pages._inspectionSubTabs = function(user) {
-  return [
-    { id: 'inspection', label: '检查记录', show: App.Permissions.canAccess(user.role, 'inspection') },
-    { id: 'inspectionTemplates', label: '稽核模板', show: App.Permissions.canAccess(user.role, 'inspection') && (App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260') },
-    { id: 'inspectionFill', label: '稽核检查', show: App.Permissions.canAccess(user.role, 'inspection_edit') },
-    { id: 'inspectionResults', label: '检查结果', show: App.Permissions.canAccess(user.role, 'inspection_results') },
-    { id: 'inspectionIssues', label: '问题工单', show: App.Permissions.canAccess(user.role, 'inspection') },
-    { id: 'inspectionWorkbench', label: '工作台', show: App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results') },
-    { id: 'inspectionDashboard', label: '稽核看板', show: App.Permissions.canAccess(user.role, 'inspection') }
-  ];
-};
-
-Pages._gotoSub = function(id) {
-  if (id === 'inspection') {
-    window.__inspectionExplicit = true;
-  }
-  location.hash = '#' + id;
-};
-
-/* ==================== 稽核工作台（B方向·问题驱动） ==================== */
-Pages._wbFilter = { storeId: '', region: '', days: 0 };
-
-Pages._wbCategoryKeywords = [
-  ['清洁/卫生', ['污渍','油渍','油垢','污垢','残渣','毛发','毛絮','垃圾','水垢','积水','灰尘','烟头','纸屑','清洁不到位','未清理','未清洁','未及时清洁','不干净','脏污','水印','水渍','蜘蛛网','苍蝇','蚊虫','飞虫','积灰','胶渍','胶痕','虫害','粘虫','卫生较差','残渍','异味','油污','除垢']],
-  ['储存/封口/加盖', ['封口','加盖','储存','保鲜盒','交叉污染','先进先出','混放','开封','封存','离地','落地','上冻','堆放','集中存放','存放','生熟']],
-  ['仪表/着装/佩戴', ['仪容仪表','工服','工牌','纽扣','耳钉','首饰','项链','手链','口罩','帽子','着装','佩戴','戴手套','摘帽','摘口罩','嚼东西']],
-  ['产品品质/断档', ['断档','出品','破损','冻伤','黄叶','黑叶','烂叶','发黄','汤汁','开叉','软榻','过少','规格','克数','参数','断供','断货','估清','缺货','不合格','品相','破皮','重量超标','漏签','蒸菜','午餐','晚餐','早餐']],
-  ['设备/设施', ['设备','滤芯','净水','吊灯','空调','广告机','豆浆机','灭蝇灯','消毒柜','冰箱','制冰机','封膜机','洗碗机','饮水机','餐盘柜','排烟','开水器','风扇','照明','灯','虫']],
-  ['操作规范/工器具', ['翻动','未处理','搅拌','抖动','溜边','锅圈','打散','浇油','焯水','煎制','热料包','下米','下绿豆','下配料','放油','接触','掉落','落入','入水','未用新碗','分装','称量','器具','工器具','专用','标准','超时','未达标','打烊','报损','过早','关火','消毒','预热','翻面','抓','夹子','锅','用手']],
-  ['值班/制度/台账', ['手机','离岗','台账','SOP','抽查','晨检','知识','岗位标准','值班','顶岗','纪律','记录缺失','制度','不在岗','报修','更换','记录不完善']],
-  ['服务/话术', ['话术','迎宾','托盘','腰包','餐具','收餐','回餐','服务']]
-];
-
-Pages._wbClassify = function(text) {
-  if (!text) return '其他';
-  for (var ci = 0; ci < Pages._wbCategoryKeywords.length; ci++) {
-    var cat = Pages._wbCategoryKeywords[ci];
-    for (var ki = 0; ki < cat[1].length; ki++) {
-      if (text.indexOf(cat[1][ki]) >= 0) return cat[0];
-    }
-  }
-  return '其他';
-};
-
-Pages._wbStoreName = function(sid) {
-  var stores = App.getStores() || [];
-  for (var i = 0; i < stores.length; i++) {
-    if (stores[i].id === sid) return stores[i].name || sid;
-  }
-  return sid;
-};
-
-Pages._wbIssuesText = function(iss) {
-  return iss.content || iss.description || '';
-};
-
-Pages._wbIssuesItems = function(iss) {
-  if (iss.description) {
-    if (!/^\d+\./m.test(iss.description)) return [];
-    var items = iss.description.match(/[①②③④⑤⑥⑦⑧⑨⑩][^①-⑩]*/g) || [];
-    var out = [];
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i].trim();
-      if (it) out.push(it);
-    }
-    return out;
-  }
-  return (iss.content || '').trim() ? [iss.content.trim()] : [];
-};
-
-Pages.inspectionWorkbench = function() {
-  const el = document.getElementById('page-inspectionWorkbench');
-  if (!el) return;
-  const user = App.currentUser;
-  if (!user) return;
-
-  var canView = App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results');
-  var isStoreOwner = (user.role === '店长' && user.storeId);
-  if (!canView && !isStoreOwner) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-    return;
-  }
-
-  var results = App.getResults() || [];
-  var issues = App.getIssues() || [];
-  var stores = App.getStores() || [];
-
-  // 店长仅本店
-  if (isStoreOwner) {
-    results = results.filter(function(r){ return r.storeId === user.storeId; });
-    issues = issues.filter(function(r){ return r.storeId === user.storeId; });
-  }
-
-  // 筛选
-  var f = Pages._wbFilter;
-  if (f.region) {
-    var regionStoreIds = {};
-    stores.forEach(function(s){ if (s.region === f.region || s.adminArea === f.region || s.bizArea === f.region) regionStoreIds[s.id] = 1; });
-    results = results.filter(function(r){ return regionStoreIds[r.storeId]; });
-    issues = issues.filter(function(r){ return regionStoreIds[r.storeId]; });
-  }
-  if (f.storeId) {
-    results = results.filter(function(r){ return r.storeId === f.storeId; });
-    issues = issues.filter(function(r){ return r.storeId === f.storeId; });
-  }
-  if (f.days > 0) {
-    var cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - f.days);
-    var cutoffStr = cutoff.toISOString().slice(0, 10);
-    results = results.filter(function(r){ return (r.date || '') >= cutoffStr; });
-    issues = issues.filter(function(r){ return (r.date || '') >= cutoffStr; });
-  }
-
-  // 门店映射
-  var storeMap = {};
-  stores.forEach(function(s){ storeMap[s.id] = s; });
-
-  // 1. 待整改事项
-  var pending = issues.filter(function(r){ return r.status === '待处理'; });
-  // 记录时间倒序：优先有 date 的（desc 型），content 型无 date 排后
-  pending.sort(function(a, b) {
-    var da = a.date || '0000-00-00';
-    var db = b.date || '0000-00-00';
-    if (da !== db) return da < db ? 1 : -1;
-    return 0;
-  });
-  var pendingTotal = pending.length;
-  var pendingTop3 = pending.slice(0, 3);
-
-  // 2. 最近检查得分最低 TOP5（每店最近一次，剔除0分）
-  var storeLatest = {};
-  results.forEach(function(r) {
-    var sid = r.storeId;
-    var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
-    if (!score || score <= 0) return;
-    var prev = storeLatest[sid];
-    if (!prev || (r.date || '') > (prev.date || '')) {
-      storeLatest[sid] = { storeId: sid, score: score, date: r.date || '', resultId: r.id };
-    }
-  });
-  var top5 = Object.keys(storeLatest).map(function(sid){ return storeLatest[sid]; });
-  top5.sort(function(a, b) {
-    if (a.score !== b.score) return a.score - b.score;
-    return a.storeId < b.storeId ? -1 : 1;
-  });
-  top5 = top5.slice(0, 5);
-
-  // 3. 高频问题 TOP5（关键词归类）
-  var catCount = {};
-  var catTotal = 0;
-  issues.forEach(function(r) {
-    Pages._wbIssuesItems(r).forEach(function(t) {
-      catTotal++;
-      var c = Pages._wbClassify(t);
-      catCount[c] = (catCount[c] || 0) + 1;
-    });
-  });
-  var catArr = Object.keys(catCount).map(function(c){ return { name: c, count: catCount[c] }; });
-  catArr.sort(function(a, b) { return b.count - a.count || (a.name < b.name ? -1 : 1); });
-  catArr = catArr.slice(0, 5);
-  var issueTotal = catTotal || 1;
-
-  // 4. 待处理问题门店 TOP5
-  var storePending = {};
-  pending.forEach(function(r) {
-    storePending[r.storeId] = (storePending[r.storeId] || 0) + 1;
-  });
-  var spArr = Object.keys(storePending).map(function(sid){ return { storeId: sid, count: storePending[sid] }; });
-  spArr.sort(function(a, b) { return b.count - a.count || (a.storeId < b.storeId ? -1 : 1); });
-  spArr = spArr.slice(0, 5);
-
-  // 5. 稽核员动态（按 inspector 聚合全部 results）
-  var inspMap = {};
-  results.forEach(function(r) {
-    var name = r.inspector || '未署名';
-    if (!inspMap[name]) inspMap[name] = { name: name, count: 0, sum: 0, valid: 0 };
-    inspMap[name].count++;
-    var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
-    if (score > 0) { inspMap[name].sum += score; inspMap[name].valid++; }
-  });
-  var inspArr = Object.keys(inspMap).map(function(n){ return inspMap[n]; });
-  inspArr.sort(function(a, b) { return b.count - a.count; });
-  inspArr = inspArr.slice(0, 5);
-
-  // 筛选下拉选项
-  var storeOptions = '<option value="">全部门店</option>';
-  stores.slice().sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; }).forEach(function(s) {
-    storeOptions += '<option value="' + s.id + '"' + (f.storeId === s.id ? ' selected' : '') + '>' + s.name + '</option>';
-  });
-  var regionSet = {};
-  stores.forEach(function(s) {
-    var r = s.region || s.adminArea || s.bizArea || '';
-    if (r) regionSet[r] = 1;
-  });
-  var regionOptions = '<option value="">全部区域</option>';
-  Object.keys(regionSet).sort().forEach(function(r) {
-    regionOptions += '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>';
-  });
-  var daysOptions = '<option value="0">全部时间</option>';
-  [[7,'近7天'],[30,'近30天'],[90,'近90天']].forEach(function(o) {
-    daysOptions += '<option value="' + o[0] + '"' + (f.days === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
-  });
-
-  var today = new Date();
-  var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-
-  var html = '';
-  html += '<div class="sub-tabbar">';
-  var subHash = location.hash.replace('#', '');
-  Pages._inspectionSubTabs(user).forEach(function(t) {
-    if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-  });
-  html += '</div>';
-
-  html += '<div class="wb-header"><div class="wb-title">稽核工作台</div><div class="wb-date">' + dateStr + '</div></div>';
-
-  // 筛选栏
-  html += '<div class="wb-filter">';
-  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'storeId\', this.value)">' + storeOptions + '</select>';
-  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'region\', this.value)">' + regionOptions + '</select>';
-  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'days\', this.value)">' + daysOptions + '</select>';
-  html += '</div>';
-
-  // 待整改事项
-  html += '<div class="card wb-card wb-pending-card">';
-  html += '<div class="wb-card-head"><span class="wb-card-title">待整改事项</span><span class="wb-badge-red" onclick="Pages._wbOpenPendingAll()">查看全部</span></div>';
-  html += '<div class="wb-pending-num">' + pendingTotal + '<span class="wb-pending-unit">项待处理</span></div>';
-  if (pendingTop3.length === 0) {
-    html += '<div class="wb-pending-empty">暂无待处理问题</div>';
-  } else {
-    pendingTop3.forEach(function(p) {
-      var txt = Pages._wbIssuesText(p);
-      html += '<div class="wb-pending-item" onclick="Pages._wbOpenStoreIssues(\'' + p.storeId + '\')">';
-      html += '<span class="wb-pending-store">' + Pages._wbStoreName(p.storeId) + '</span>';
-      html += '<span class="wb-pending-txt">' + txt + '</span>';
-      html += '</div>';
-    });
-  }
-  html += '</div>';
-
-  // 最近检查得分最低 TOP5
-  html += '<div class="card wb-card">';
-  html += '<div class="wb-card-head"><span class="wb-card-title">最近检查得分最低 TOP5</span></div>';
-  if (top5.length === 0) {
-    html += '<div class="wb-empty">暂无有效检查得分记录</div>';
-  } else {
-    html += '<table class="m-table wb-table"><thead><tr><th>#</th><th>门店</th><th>得分</th><th>日期</th></tr></thead><tbody>';
-    top5.forEach(function(t, idx) {
-      html += '<tr onclick="Pages._wbOpenStoreDetail(\'' + t.storeId + '\')">';
-      html += '<td>' + (idx+1) + '</td><td>' + Pages._wbStoreName(t.storeId) + '</td>';
-      html += '<td class="' + (t.score < 80 ? 'wb-score-low' : '') + '">' + t.score + '</td><td>' + t.date + '</td></tr>';
-    });
-    html += '</tbody></table>';
-  }
-  html += '</div>';
-
-  // 高频问题 TOP5
-  html += '<div class="card wb-card">';
-  html += '<div class="wb-card-head"><span class="wb-card-title">高频问题 TOP5</span></div>';
-  if (catArr.length === 0) {
-    html += '<div class="wb-empty">暂无问题数据</div>';
-  } else {
-    catArr.forEach(function(c) {
-      var pct = Math.round(c.count / issueTotal * 100);
-      html += '<div class="wb-cat-row" onclick="Pages._wbOpenCategory(\'' + c.name + '\')">';
-      html += '<div class="wb-cat-line"><span class="wb-cat-name">' + c.name + '</span><span class="wb-cat-num">' + c.count + ' (' + pct + '%)</span></div>';
-      html += '<div class="wb-bar"><div class="wb-bar-inner" style="width:' + Math.min(100, pct) + '%"></div></div>';
-      html += '</div>';
-    });
-  }
-  html += '</div>';
-
-  // 待处理问题门店 TOP5
-  html += '<div class="card wb-card">';
-  html += '<div class="wb-card-head"><span class="wb-card-title">待处理问题门店 TOP5</span></div>';
-  if (spArr.length === 0) {
-    html += '<div class="wb-empty">暂无待处理问题</div>';
-  } else {
-    spArr.forEach(function(s) {
-      html += '<div class="wb-sp-row" onclick="Pages._wbOpenStoreIssues(\'' + s.storeId + '\')">';
-      html += '<span class="wb-sp-name">' + Pages._wbStoreName(s.storeId) + '</span>';
-      html += '<span class="wb-sp-count' + (s.count >= 5 ? ' wb-sp-hot' : '') + '">' + s.count + ' 条</span>';
-      html += '</div>';
-    });
-  }
-  html += '</div>';
-
-  // 稽核员动态
-  html += '<div class="card wb-card">';
-  html += '<div class="wb-card-head"><span class="wb-card-title">稽核员动态</span></div>';
-  if (inspArr.length === 0) {
-    html += '<div class="wb-empty">暂无提交记录</div>';
-  } else {
-    html += '<div class="wb-insp-list">';
-    inspArr.forEach(function(i) {
-      var avg = i.valid > 0 ? (i.sum / i.valid) : 0;
-      var ok = i.valid > 0 && avg >= 90;
-      html += '<div class="wb-insp-row" onclick="Pages._wbOpenInspector(\'' + i.name.replace(/'/g, "\\'") + '\')">';
-      html += '<span class="wb-insp-avatar">' + i.name.charAt(0) + '</span>';
-      html += '<span class="wb-insp-info"><span class="wb-insp-name">' + i.name + '</span><span class="wb-insp-sub">提交 ' + i.count + ' 次 · 均分 ' + avg.toFixed(1) + '</span></span>';
-      html += '<span class="wb-insp-badge' + (ok ? ' wb-ok' : '') + '">' + (ok ? '达标' : '—') + '</span>';
-      html += '</div>';
-    });
-    html += '</div>';
-  }
-  html += '</div>';
-
-  // 底部注释
-  html += '<div class="wb-footnote">数据口径：得分=门店最近一次现场检查得分（百分制，剔除0分）；待处理=status 为「待处理」；高频问题按描述关键词互斥归类。</div>';
-
-  el.innerHTML = html;
-};
-
-Pages._wbSetFilter = function(key, val) {
-  Pages._wbFilter[key] = key === 'days' ? parseInt(val || '0', 10) : val;
-  Pages.inspectionWorkbench();
-};
-
-Pages._wbOpenPendingAll = function() {
-  var issues = App.getIssues() || [];
-  var pending = issues.filter(function(r){ return r.status === '待处理'; });
-  pending.sort(function(a, b) {
-    var da = a.date || '0000-00-00';
-    var db = b.date || '0000-00-00';
-    if (da !== db) return da < db ? 1 : -1;
-    return 0;
-  });
-  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">待整改事项（' + pending.length + '）</div><div class="dd-modal-body">';
-  if (pending.length === 0) {
-    html += '<div class="wb-empty">暂无待处理问题</div>';
-  } else {
-    html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th><th>状态</th></tr></thead><tbody>';
-    pending.forEach(function(p) {
-      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '待处理') + '</td></tr>';
-    });
-    html += '</tbody></table>';
-  }
-  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
-  var modal = document.getElementById('modal-overlay');
-  modal.querySelector('.modal-box').outerHTML = html;
-  modal.classList.add('show');
-};
-
-Pages._wbOpenStoreIssues = function(storeId) {
-  var issues = App.getIssues() || [];
-  var list = issues.filter(function(r){ return r.storeId === storeId; });
-  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
-  if (list.length === 0) {
-    html += '<div class="wb-empty">暂无问题记录</div>';
-  } else {
-    html += '<table class="m-table dd-modal-table"><thead><tr><th>问题</th><th>状态</th></tr></thead><tbody>';
-    list.forEach(function(p) {
-      html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '—') + '</td></tr>';
-    });
-    html += '</tbody></table>';
-  }
-  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
-  var modal = document.getElementById('modal-overlay');
-  modal.querySelector('.modal-box').outerHTML = html;
-  modal.classList.add('show');
-};
-
-Pages._wbOpenStoreDetail = function(storeId) {
-  var results = App.getResults() || [];
-  var issues = App.getIssues() || [];
-  var list = results.filter(function(r){ return r.storeId === storeId; });
-  list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
-  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 检查历史</div><div class="dd-modal-body">';
-  if (list.length === 0) {
-    html += '<div class="wb-empty">暂无检查记录</div>';
-  } else {
-    html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>得分</th><th>稽核员</th></tr></thead><tbody>';
-    list.forEach(function(r) {
-      var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
-      html += '<tr><td>' + r.date + '</td><td>' + score + '</td><td>' + (r.inspector || '—') + '</td></tr>';
-    });
-    html += '</tbody></table>';
-    var storeIssues = issues.filter(function(r){ return r.storeId === storeId; });
-    if (storeIssues.length > 0) {
-      html += '<div class="dd-meta" style="margin-top:10px">问题明细（' + storeIssues.length + '）</div><table class="m-table dd-modal-table"><tbody>';
-      storeIssues.forEach(function(p) {
-        html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td></tr>';
-      });
-      html += '</tbody></table>';
-    }
-  }
-  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
-  var modal = document.getElementById('modal-overlay');
-  modal.querySelector('.modal-box').outerHTML = html;
-  modal.classList.add('show');
-};
-
-Pages._wbOpenCategory = function(cat) {
-  var issues = App.getIssues() || [];
-  var list = [];
-  issues.forEach(function(r) {
-    Pages._wbIssuesItems(r).forEach(function(t) {
-      if (Pages._wbClassify(t) === cat) {
-        list.push({ storeId: r.storeId, text: t });
-      }
-    });
-  });
-  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + cat + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
-  if (list.length === 0) {
-    html += '<div class="wb-empty">暂无问题记录</div>';
-  } else {
-    html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th></tr></thead><tbody>';
-    list.forEach(function(p) {
-      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + p.text + '</td></tr>';
-    });
-    html += '</tbody></table>';
-  }
-  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
-  var modal = document.getElementById('modal-overlay');
-  modal.querySelector('.modal-box').outerHTML = html;
-  modal.classList.add('show');
-};
-
-Pages._wbOpenInspector = function(name) {
-  var results = App.getResults() || [];
-  var list = results.filter(function(r){ return (r.inspector || '未署名') === name; });
-  list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
-  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + name + ' — 提交记录（' + list.length + '）</div><div class="dd-modal-body">';
-  if (list.length === 0) {
-    html += '<div class="wb-empty">暂无提交记录</div>';
-  } else {
-    html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>门店</th><th>得分</th></tr></thead><tbody>';
-    list.forEach(function(r) {
-      var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
-      html += '<tr><td>' + r.date + '</td><td>' + Pages._wbStoreName(r.storeId) + '</td><td>' + score + '</td></tr>';
-    });
-    html += '</tbody></table>';
-  }
-  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
-  var modal = document.getElementById('modal-overlay');
-  modal.querySelector('.modal-box').outerHTML = html;
-  modal.classList.add('show');
-};
-
-
-Pages.inspection = function() {
-
-
-
-  const el = document.getElementById('page-inspection');
-
-
-
-  if (!el) return;
-
-
-
-  const user = App.currentUser;
-
-
-
-  const stores = App.getStores();
-
-
-
-  const records = App.getOnlineRecords();
-
-
-
-
-
-
-
-  let html = '';
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'inspection')) {
-
-    if (user.role === '店长' && App.Permissions.canAccess(user.role, 'inspection_results')) {
-
-      location.hash = '#inspectionResults';
-
-      return;
-
-    }
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    el.innerHTML = html;
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  // 二级Tab栏
-
-
-
-  var subHash = location.hash.replace('#', '');
-
-
-
-  if (subHash === 'inspection' && !window.__inspectionExplicit) {
-
-
-
-    location.hash = '#inspectionTemplates';
-
-
-
-    return;
-
-
-
-  }
-
-
-
-  var subTabs = Pages._inspectionSubTabs(user);
-
-
-
-  html += '<div class="sub-tabbar">';
-
-
-
-  subTabs.forEach(function(t) {
-
-
-
-    if (!t.show) return;
-
-
-
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-
-
-
-  });
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 表单
-
-
-
-  html += '<div class="card"><div class="card-title">\u{1F4F7} 优化部稽核记录</div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">项目类型</label>';
-
-
-
-  html += '<select id="online-project" class="form-select">';
-
-
-
-  ['稽核员日报', '线上差评点评', '公众号留言投诉', '电话投诉', '舆情检查记录个数', '个人洞察'].forEach(t => {
-
-
-
-    html += '<option value="' + t + '">' + t + '</option>';
-
-
-
-  });
-
-
-
-  html += '</select></div>';
-
-
-
-
-
-
-
-  // 拍照OCR区域
-
-
-
-  html += '<div class="form-group"><label class="form-label">当日记录</label>';
-
-
-
-  html += '<div class="ocr-area">';
-
-
-
-  html += '<input type="file" id="ocr-camera" accept="image/*" capture="environment" style="display:none" onchange="Pages.onPhotoCapture(event)">';
-
-
-
-  html += '<button class="btn btn-outline" onclick="document.getElementById(\'ocr-camera\').click()">\u{1F4F8} 拍照识别</button>';
-
-
-
-  html += '<div id="ocr-preview" class="ocr-preview hidden"></div>';
-
-
-
-  html += '<div id="ocr-status" class="ocr-status hidden"></div>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '<textarea id="online-record" class="form-textarea" placeholder="拍照后自动识别，也可手动输入..."></textarea></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">反馈相关部门动作</label>';
-
-
-
-  html += '<input id="online-feedback-dept" class="form-input" placeholder="如：群内曝光、邮件通知区域经理"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">相关部门反馈</label>';
-
-
-
-  html += '<input id="online-dept-feedback" class="form-input" placeholder="如：顾客已谅解、已整改"></div>';
-
-
-
-
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages.submitOnline()">提交</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 已提交列表
-
-
-
-  html += '<div class="card"><div class="card-title">\u{1F4CB} 已提交记录</div>';
-
-
-
-  const userRecords = records.filter(r => r.inspector === user.name);
-
-
-
-  if (userRecords.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">\u{1F4C4}</div>暂无记录</div>';
-
-
-
-  } else {
-
-
-
-    userRecords.slice().reverse().forEach(r => {
-
-
-
-      html += '<div class="list-item">';
-
-
-
-      html += '<div class="li-main">';
-
-
-
-      html += '<div class="li-title">' + r.projectType + ' — ' + (r.store || '') + '</div>';
-
-
-
-      html += '<div class="li-sub">' + r.date + ' | ' + (r.record || '').substring(0, 40) + '...</div>';
-
-
-
-      html += '</div>';
-
-
-
-      html += '</div>';
-
-
-
-    });
-
-
-
-  }
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-  window.__inspectionExplicit = false;
-
-};// 照片捕获回调
-
-
-
-Pages.onPhotoCapture = function(event) {
-
-
-
-  const file = event.target.files[0];
-
-
-
-  if (!file) return;
-
-
-
-
-
-
-
-  // 显示预览
-
-
-
-  const reader = new FileReader();
-
-
-
-  reader.onload = function(e) {
-
-
-
-    const preview = document.getElementById('ocr-preview');
-
-
-
-    preview.innerHTML = '<img src="' + e.target.result + '" class="ocr-img"><button class="btn btn-primary ocr-detect-btn" onclick="Pages.doOCR(\'' + e.target.result + '\')">\u{1F50D} 开始识别文字</button>';
-
-
-
-    preview.classList.remove('hidden');
-
-
-
-  };
-
-
-
-  reader.readAsDataURL(file);
-
-
-
-};
-
-
-
-
-
-
-
-// OCR 识别
-
-
-
-Pages.doOCR = function(dataUrl) {
-
-
-
-  const status = document.getElementById('ocr-status');
-
-
-
-  status.innerHTML = '<span class="ocr-loading">\u23F3 正在识别文字...</span>';
-
-
-
-  status.classList.remove('hidden');
-
-
-
-
-
-
-
-  Tesseract.recognize(dataUrl, 'chi_sim+eng', {
-
-
-
-    logger: function(m) {
-
-
-
-      if (m.status === 'recognizing text') {
-
-
-
-        status.innerHTML = '<span class="ocr-loading">\u23F3 识别中... ' + Math.round(m.progress * 100) + '%</span>';
-
-
-
-      }
-
-
-
-    }
-
-
-
-  }).then(function(result) {
-
-
-
-    const text = result.data.text.trim();
-
-
-
-    document.getElementById('online-record').value = text;
-
-
-
-    status.innerHTML = '<span class="ocr-done">\u2705 识别完成，可修改后提交</span>';
-
-
-
-    App.toast('识别完成');
-
-
-
-  }).catch(function(err) {
-
-
-
-    status.innerHTML = '<span class="ocr-fail">\u274C 识别失败，请手动输入</span>';
-
-
-
-    console.error('OCR error:', err);
-
-
-
-  });
-
-
-
-};
-
-
-
-
-
-
-
-Pages.submitOnline = function() {
-
-
-
-  const user = App.currentUser;
-
-
-
-  const project = document.getElementById('online-project').value;
-
-
-
-  const record = document.getElementById('online-record').value.trim();
-
-
-
-  const feedbackDept = document.getElementById('online-feedback-dept').value.trim();
-
-
-
-  const deptFeedback = document.getElementById('online-dept-feedback').value.trim();
-
-
-
-
-
-
-
-  if (!record) { App.toast('请填写当日记录'); return; }
-
-
-
-
-
-
-
-  const records = App.getOnlineRecords();
-
-
-
-  const now = new Date();
-
-
-
-  const dateStr = now.getFullYear() + '-' +
-
-
-
-    String(now.getMonth() + 1).padStart(2, '0') + '-' +
-
-
-
-    String(now.getDate()).padStart(2, '0');
-
-
-
-
-
-
-
-  records.push({
-
-
-
-    id: 'o' + Date.now(),
-
-
-
-    inspector: user.name,
-
-
-
-    storeId: user.storeId || '',
-
-
-
-    store: user.store || '',
-
-
-
-    projectType: project,
-
-
-
-    record: record,
-
-
-
-    feedbackDept: feedbackDept,
-
-
-
-    deptFeedback: deptFeedback,
-
-
-
-    date: dateStr
-
-
-
-  });
-
-
-
-
-
-
-
-  App.saveOnlineRecords(records);
-
-
-
-  App.toast('提交成功');
-
-
-
-  Pages.inspection();
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 线下门店检查页 ---- */
-
-
-
-Pages['offline-inspect'] = function() {
-
-
-
-  const el = document.getElementById('page-offline-inspect');
-
-
-
-  if (!el) return;
-
-
-
-  const stores = App.getStores();
-
-
-
-  const records = App.getOfflineRecords();
-
-
-
-  const user = App.currentUser;
-
-
-
-
-
-
-
-  let html = '<div class="card"><div class="card-title">\u{1F50D} 线下门店检查</div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">门店</label>';
-
-
-
-  html += App.renderStoreSelect('offline-store', stores, '', '输入门店名称搜索...');
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">检查日期</label>';
-
-
-
-  html += '<input id="offline-date" type="date" class="form-input" value="' + new Date().toISOString().split('T')[0] + '"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">得分</label>';
-
-
-
-  html += '<input id="offline-score" type="number" class="form-input" placeholder="0-100" min="0" max="100" value="85"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">扣分项</label>';
-
-
-
-  html += '<textarea id="offline-deductions" class="form-textarea" placeholder="详细列出扣分项目和分值..."></textarea></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">照片（模拟）</label>';
-
-
-
-  html += '<input id="offline-photo" class="form-input" placeholder="暂不支持上传，此处留空"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">备注</label>';
-
-
-
-  html += '<textarea id="offline-note" class="form-textarea" placeholder="检查备注..."></textarea></div>';
-
-
-
-
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages.submitOffline()">提交检查</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 已提交
-
-
-
-  html += '<div class="card"><div class="card-title">提交记录</div>';
-
-
-
-  if (records.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">\u{1F4C4}</div>暂无记录</div>';
-
-
-
-  } else {
-
-
-
-    records.slice().reverse().forEach(r => {
-
-
-
-      html += '<div class="list-item">';
-
-
-
-      html += '<div class="li-main">';
-
-
-
-      html += '<div class="li-title">' + r.store + ' — 得分 ' + r.score + '</div>';
-
-
-
-      html += '<div class="li-sub">' + r.date + ' | 稽核员: ' + r.inspector + '</div>';
-
-
-
-      html += '</div></div>';
-
-
-
-    });
-
-
-
-  }
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-
-
-  App.initStoreSelect('offline-store', App.getStores());
-
-
-
-};
-
-
-
-
-
-
-
-Pages.submitOffline = function() {
-
-
-
-  const user = App.currentUser;
-
-
-
-  const storeId = App.getStoreSelectValue('offline-store');
-
-
-
-  const store = App.getStores().find(s => s.id === storeId);
-
-
-
-  const date = document.getElementById('offline-date').value;
-
-
-
-  const score = parseInt(document.getElementById('offline-score').value);
-
-
-
-  const deductions = document.getElementById('offline-deductions').value.trim();
-
-
-
-  const photo = document.getElementById('offline-photo').value.trim();
-
-
-
-  const note = document.getElementById('offline-note').value.trim();
-
-
-
-
-
-
-
-  if (!storeId || !date || isNaN(score)) { App.toast('请完善必填项'); return; }
-
-
-
-
-
-
-
-  const records = App.getOfflineRecords();
-
-
-
-  records.push({
-
-
-
-    id: 'of' + Date.now(),
-
-
-
-    inspector: user.name,
-
-
-
-    storeId: storeId,
-
-
-
-    store: store ? store.name : '',
-
-
-
-    date: date,
-
-
-
-    score: score,
-
-
-
-    deductions: deductions,
-
-
-
-    photo: photo,
-
-
-
-    note: note
-
-
-
-  });
-
-
-
-
-
-
-
-  App.saveOfflineRecords(records);
-
-
-
-  App.toast('提交成功');
-
-
-
-  Pages['offline-inspect']();
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 处罚登记页 ---- */
-
-
-
-Pages.penalty = function() {
-
-
-
-  const el = document.getElementById('page-penalty');
-
-
-
-  if (!el) return;
-
-
-
-  const user = App.currentUser;
-
-
-
-  const stores = App.getStores();
-
-
-
-  const penalties = App.getPenalties();
-
-
-
-  const districts = [...new Set(stores.map(s => s.district))];
-
-
-
-
-
-
-
-  let html = '';
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'penalty')) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    el.innerHTML = html;
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  if (App.Permissions.canAccess(user.role, 'penalty') && user.role !== '店长' && !sessionStorage.getItem('db_readonly')) {
-
-
-
-    // 完整表单 — 22个字段
-
-
-
-    html += '<div class="card"><div class="card-title">\u{26A0} 处罚登记</div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">区域</label>';
-
-
-
-    html += '<select id="pen-region" class="form-select" onchange="Pages.penaltyRegionChange()">';
-
-
-
-    html += '<option value="">请选择</option>';
-
-
-
-    districts.forEach(d => { html += '<option value="' + d + '">' + d + '</option>'; });
-
-
-
-    html += '</select></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">门店</label>';
-
-
-
-    html += App.renderStoreSelect('pen-store', stores, '', '输入门店名称搜索...');
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">门店第一负责人</label>';
-
-
-
-    html += '<input id="pen-manager" class="form-input" placeholder="自动填充"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">发生日期</label>';
-
-
-
-    html += '<input id="pen-event-date" type="date" class="form-input"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">具体事件</label>';
-
-
-
-    html += '<textarea id="pen-event" class="form-textarea" placeholder="事件描述..."></textarea></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">营运部调查结果</label>';
-
-
-
-    html += '<textarea id="pen-survey" class="form-textarea" placeholder="调查结论..."></textarea></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">建议处罚方案</label>';
-
-
-
-    html += '<input id="pen-suggestion" class="form-input" placeholder="处罚建议"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">稽核人员</label>';
-
-
-
-    html += '<input id="pen-inspector" class="form-input" value="' + user.name + '"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">奖惩制度条款</label>';
-
-
-
-    html += '<input id="pen-policy" class="form-input" placeholder="如：新奖惩制度第X条"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">当事人姓名</label>';
-
-
-
-    html += '<input id="pen-person-name" class="form-input"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">惩处等级</label>';
-
-
-
-    html += '<select id="pen-level" class="form-select">';
-
-
-
-    ['一级批评教育', '二级书面警告', '三级降职降薪', '经济处罚'].forEach(l => {
-
-
-
-      html += '<option value="' + l + '">' + l + '</option>';
-
-
-
-    });
-
-
-
-    html += '</select></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">违纪类型</label>';
-
-
-
-    html += '<select id="pen-type" class="form-select">';
-
-
-
-    ['纪律类', '管理失职', '食品安全', '运营类'].forEach(t => {
-
-
-
-      html += '<option value="' + t + '">' + t + '</option>';
-
-
-
-    });
-
-
-
-    html += '</select></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">经济处罚-当事人</label>';
-
-
-
-    html += '<input id="pen-eco-person" class="form-input" placeholder="金额或取消奖金"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">经济处罚-店长</label>';
-
-
-
-    html += '<input id="pen-eco-manager" class="form-input" placeholder="金额或取消奖金"></div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">来源</label>';
-
-
-
-    html += '<input id="pen-source" class="form-input" placeholder="现场稽核/线上差评/店长上报..."></div>';
-
-
-
-
-
-
-
-    html += '<button class="btn btn-primary" onclick="Pages.submitPenalty()">提交处罚记录</button>';
-
-
-
-    html += '</div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  // 列表
-
-
-
-  let listPenalties = penalties;
-
-
-
-  if (user.role === '店长') {
-
-
-
-    listPenalties = penalties.filter(p => p.storeId === user.storeId);
-
-
-
-  } else if (user.role === '区域教练') {
-
-
-
-    listPenalties = penalties.filter(p => {
-
-
-
-      const s = stores.find(x => x.name === p.store);
-
-
-
-      return s && s.region === user.area;
-
-
-
-    });
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '<div class="card"><div class="card-title">\u{1F4CB} 处罚记录（共 ' + listPenalties.length + ' 条）</div>';
-
-
-
-  if (listPenalties.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">\u{2705}</div>暂无处罚记录</div>';
-
-
-
-  } else {
-
-
-
-    listPenalties.slice().reverse().forEach(p => {
-
-
-
-      let tagClass = 'tag-pending';
-
-
-
-      if (p.status === '已闭环') tagClass = 'tag-done';
-
-
-
-      else if (p.status === '超时') tagClass = 'tag-overdue';
-
-
-
-      html += '<div class="list-item" onclick="Pages.showPenaltyDetail(\'' + p.id + '\')">';
-
-
-
-      html += '<div class="li-main">';
-
-
-
-      html += '<div class="li-title">' + p.store + ' | ' + p.event + '</div>';
-
-
-
-      html += '<div class="li-sub">' + p.eventDate + ' | <span class="tag ' + tagClass + '">' + p.status + '</span></div>';
-
-
-
-      html += '</div></div>';
-
-
-
-    });
-
-
-
-  }
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-
-
-  App.initStoreSelect('pen-store', stores, function(sid) {
-
-
-
-    var s = App.getStores().find(function(x) { return x.id === sid; });
-
-
-
-    document.getElementById('pen-manager').value = s ? (s.managerTitle ? s.managerTitle + s.manager : s.manager) : '';
-
-
-
-  });
-
-
-
-};
-
-
-
-
-
-
-
-Pages.penaltyRegionChange = function() {
-
-
-
-  const region = document.getElementById('pen-region').value;
-
-
-
-  const allStores = App.getStores();
-
-
-
-  const filtered = region ? allStores.filter(s => s.district === region) : allStores;
-
-
-
-  App.resetStoreSelect('pen-store');
-
-
-
-  App.initStoreSelect('pen-store', filtered, function(sid) {
-
-
-
-    var s = App.getStores().find(function(x) { return x.id === sid; });
-
-
-
-    document.getElementById('pen-manager').value = s ? (s.managerTitle ? s.managerTitle + s.manager : s.manager) : '';
-
-
-
-  });
-
-
-
-};
-
-
-
-
-
-
-
-Pages.submitPenalty = function() {
-
-
-
-  const storeId = App.getStoreSelectValue('pen-store');
-
-
-
-  const storeData = App.getStores().find(s => s.id === storeId);
-
-
-
-  const storeName = storeData ? storeData.name : '';
-
-
-
-
-
-
-
-  const penalties = App.getPenalties();
-
-
-
-  penalties.push({
-
-
-
-    id: 'p' + Date.now(),
-
-
-
-    storeId: storeId,
-
-
-
-    store: storeName,
-
-
-
-    region: storeData ? storeData.region : '',
-
-
-
-    district: storeData ? storeData.district : '',
-
-
-
-    manager: document.getElementById('pen-manager').value || (storeData ? storeData.manager : ''),
-
-
-
-    eventDate: document.getElementById('pen-event-date').value,
-
-
-
-    event: document.getElementById('pen-event').value.trim(),
-
-
-
-    category: document.getElementById('pen-type').value,
-
-
-
-    level: document.getElementById('pen-level').value,
-
-
-
-    source: document.getElementById('pen-source').value.trim(),
-
-
-
-    inspector: document.getElementById('pen-inspector').value.trim(),
-
-
-
-    personName: document.getElementById('pen-person-name').value.trim(),
-
-
-
-    personLevel: document.getElementById('pen-level').value,
-
-
-
-    personType: document.getElementById('pen-type').value,
-
-
-
-    penaltyPerson: document.getElementById('pen-eco-person').value.trim(),
-
-
-
-    penaltyManager: document.getElementById('pen-eco-manager').value.trim(),
-
-
-
-    survey: document.getElementById('pen-survey').value.trim(),
-
-
-
-    suggestion: document.getElementById('pen-suggestion').value.trim(),
-
-
-
-    policyRef: document.getElementById('pen-policy').value.trim(),
-
-
-
-    dutyPerson: '', dutyManager: '', dutyValue: '', dutyCoach: '',
-
-
-
-    status: '待补填'
-
-
-
-  });
-
-
-
-
-
-
-
-  App.savePenalties(penalties);
-
-
-
-  App.toast('处罚记录已提交');
-
-
-
-  Pages.penalty();
-
-
-
-};
-
-
-
-
-
-
-
-Pages.showPenaltyDetail = function(id) {
-
-
-
-  const penalties = App.getPenalties();
-
-
-
-  const p = penalties.find(x => x.id === id);
-
-
-
-  if (!p) return;
-
-
-
-
-
-
-
-  let html = '<div class="modal-box">';
-
-
-
-  html += '<div class="modal-title">处罚详情</div>';
-
-
-
-  html += '<p><b>门店：</b>' + p.store + '</p>';
-
-
-
-  html += '<p><b>日期：</b>' + p.eventDate + '</p>';
-
-
-
-  html += '<p><b>事件：</b>' + p.event + '</p>';
-
-
-
-  html += '<p><b>等级：</b><span class="tag tag-pending">' + p.level + '</span></p>';
-
-
-
-  html += '<p><b>类型：</b>' + p.category + '</p>';
-
-
-
-  html += '<p><b>状态：</b><span class="tag ' + (p.status === '已闭环' ? 'tag-done' : (p.status === '超时' ? 'tag-overdue' : 'tag-pending')) + '">' + p.status + '</span></p>';
-
-
-
-  if (p.survey) html += '<p><b>调查结果：</b>' + p.survey + '</p>';
-
-
-
-  if (p.policyRef) html += '<p><b>制度条款：</b>' + p.policyRef + '</p>';
-
-
-
-
-
-
-
-  if (p.status === '待补填') {
-
-
-
-    html += '<hr style="margin:12px 0;border-color:var(--border)">';
-
-
-
-    html += '<div class="form-group"><label class="form-label">责任人</label><input id="detail-duty-person" class="form-input" value="' + (p.dutyPerson || '') + '"></div>';
-
-
-
-    html += '<div class="form-group"><label class="form-label">整改措施</label><textarea id="detail-duty-value" class="form-textarea">' + (p.dutyValue || '') + '</textarea></div>';
-
-
-
-    html += '<button class="btn btn-success btn-sm" style="margin-right:8px" onclick="Pages.closePenalty(\'' + id + '\')">标记已闭环</button>';
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  const modal = document.getElementById('modal-overlay');
-
-
-
-  modal.querySelector('.modal-box').outerHTML = html;
-
-
-
-  modal.classList.add('show');
-
-
-
-};
-
-
-
-
-
-
-
-Pages.closePenalty = function(id) {
-
-
-
-  const penalties = App.getPenalties();
-
-
-
-  const p = penalties.find(x => x.id === id);
-
-
-
-  if (p) {
-
-
-
-    p.status = '已闭环';
-
-
-
-    p.dutyPerson = document.getElementById('detail-duty-person').value;
-
-
-
-    p.dutyValue = document.getElementById('detail-duty-value').value;
-
-
-
-    App.savePenalties(penalties);
-
-
-
-  }
-
-
-
-  App.toast('已标记为闭环');
-
-
-
-  document.getElementById('modal-overlay').classList.remove('show');
-
-
-
-  Pages.penalty();
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 差评申诉页 ---- */
-
-
-
-Pages.complaint = function() {
-
-
-
-  const el = document.getElementById('page-complaint');
-
-
-
-  if (!el) return;
-
-
-
-  const user = App.currentUser;
-
-
-
-  const stores = App.getStores();
-
-
-
-  const complaints = App.getComplaints();
-
-
-
-
-
-
-
-  let html = '';
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'complaint')) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    el.innerHTML = html;
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  // 表单（从看板跳转时不显示）
-
-
-
-  if (!sessionStorage.getItem('db_readonly')) {
-
-
-
-  // 表单
-
-
-
-  html += '<div class="card"><div class="card-title">\u{1F4AC} 差评录入</div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">门店</label>';
-
-
-
-  html += App.renderStoreSelect('comp-store', stores, '', '输入门店名称搜索...');
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">日期</label>';
-
-
-
-  html += '<input id="comp-date" type="date" class="form-input" value="' + new Date().toISOString().split('T')[0] + '"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">餐段</label>';
-
-
-
-  html += '<select id="comp-meal" class="form-select">';
-
-
-
-  ['早餐', '午餐', '晚餐', '未知'].forEach(m => { html += '<option>' + m + '</option>'; });
-
-
-
-  html += '</select></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">门店调查结果</label>';
-
-
-
-  html += '<textarea id="comp-content" class="form-textarea" placeholder="门店调查结果摘要..."></textarea></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">机会点</label>';
-
-
-
-  html += '<input id="comp-opportunity" class="form-input" placeholder="如：口味标准化/服务培训"></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">平台</label>';
-
-
-
-  html += '<select id="comp-platform" class="form-select">';
-
-
-
-  ['点评', '公众号'].forEach(p => { html += '<option>' + p + '</option>'; });
-
-
-
-  html += '</select></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">责任人</label>';
-
-
-
-  html += '<input id="comp-responsible" class="form-input" placeholder="责任人姓名"></div>';
-
-
-
-
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages.submitComplaint()">提交</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  } else {
-
-
-
-    sessionStorage.removeItem('db_readonly');
-
-
-
-  }
-
-
-
-  // 列表
-
-
-
-  let listComplaints = complaints;
-
-
-
-  if (user.role === '店长') {
-
-
-
-    listComplaints = complaints.filter(c => c.storeId === user.storeId);
-
-
-
-  } else if (user.role === '区域教练' && user.area) {
-
-
-
-    listComplaints = complaints.filter(c => stores.filter(s => s.region === user.area).some(s => s.id === c.storeId));
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '<div class="card"><div class="card-title">差评列表（共 ' + listComplaints.length + ' 条）</div>';
-
-
-
-  if (listComplaints.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">\u{1F4AD}</div>暂无差评</div>';
-
-
-
-  } else {
-
-
-
-    listComplaints.slice().reverse().forEach(c => {
-
-
-
-      let tagClass = 'tag-pending';
-
-
-
-      if (c.status === '待处理') tagClass = 'tag-warning';
-
-
-
-      else if (c.status === '已处理') tagClass = 'tag-done';
-
-
-
-      else if (c.status === '已申诉' && c.appealResult === '通过') tagClass = 'tag-done';
-
-
-
-      else if (c.status === '已驳回') tagClass = 'tag-overdue';
-
-
-
-
-
-
-
-      html += '<div class="list-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')">';
-
-
-
-      html += '<div class="li-main">';
-
-
-
-      html += '<div class="li-title">' + c.store + ' | ' + c.content.substring(0, 30) + '...</div>';
-
-
-
-      html += '<div class="li-sub">' + c.date + ' | <span class="tag ' + tagClass + '">' + c.status + '</span></div>';
-
-
-
-      html += '</div></div>';
-
-
-
-    });
-
-
-
-  }
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-
-
-  App.initStoreSelect('comp-store', stores);
-
-
-
-};
-
-
-
-
-
-
-
-Pages.submitComplaint = function() {
-
-
-
-  const storeId = App.getStoreSelectValue('comp-store');
-
-
-
-  const store = App.getStores().find(s => s.id === storeId);
-
-
-
-  const complaints = App.getComplaints();
-
-
-
-
-
-
-
-  complaints.push({
-
-
-
-    id: 'c' + Date.now(),
-
-
-
-    storeId: storeId,
-
-
-
-    store: store ? store.name : '',
-
-
-
-    date: document.getElementById('comp-date').value,
-
-
-
-    meal: document.getElementById('comp-meal').value,
-
-
-
-    content: document.getElementById('comp-content').value.trim(),
-
-
-
-    opportunity: document.getElementById('comp-opportunity').value.trim(),
-
-
-
-    platform: document.getElementById('comp-platform').value,
-
-
-
-    responsible: document.getElementById('comp-responsible').value.trim(),
-
-
-
-    responsibleTitle: '',
-
-
-
-    dutyManager: store ? store.manager : '',
-
-
-
-    status: '待处理',
-
-
-
-    appealContent: '',
-
-
-
-    appealResult: ''
-
-
-
-  });
-
-
-
-
-
-
-
-  App.saveComplaints(complaints);
-
-
-
-  App.toast('差评已录入');
-
-
-
-  Pages.complaint();
-
-
-
-};
-
-
-
-
-
-
-
-Pages.showComplaintDetail = function(id) {
-
-
-
-  const complaints = App.getComplaints();
-
-
-
-  const c = complaints.find(x => x.id === id);
-
-
-
-  if (!c) return;
-
-
-
-
-
-
-
-  let html = '<div class="modal-box">';
-
-
-
-  html += '<div class="modal-title">差评详情</div>';
-
-
-
-  html += '<p><b>门店：</b>' + c.store + '</p>';
-
-
-
-  html += '<p><b>日期：</b>' + c.date + ' | ' + c.meal + '</p>';
-
-
-
-  html += '<p><b>平台：</b>' + c.platform + '</p>';
-
-
-
-  html += '<p><b>内容：</b>' + c.content + '</p>';
-
-
-
-  html += '<p><b>机会点：</b>' + c.opportunity + '</p>';
-
-
-
-  html += '<p><b>责任人：</b>' + c.responsible + '</p>';
-
-
-
-  html += '<p><b>状态：</b>' + c.status + '</p>';
-
-
-
-
-
-
-
-  if (c.appealContent) html += '<p><b>申诉材料：</b>' + c.appealContent + '</p>';
-
-
-
-  if (c.appealResult) html += '<p><b>审核结果：</b>' + c.appealResult + '</p>';
-
-
-
-
-
-
-
-  const user = App.currentUser;
-
-
-
-
-
-
-
-  /* 待处理差评 → 店长填写责任人并生成处罚 */
-
-
-
-  if (c.status === '待处理' && user.role === '店长') {
-
-
-
-    html += '<hr style="margin:12px 0;border-color:var(--border)">';
-
-
-
-    html += '<div class="form-group"><label class="form-label">确认责任人</label><input id="detail-duty-name" class="form-input" value="' + (c.responsible || '') + '" placeholder="责任人姓名"></div>';
-
-
-
-    html += '<div class="form-group"><label class="form-label">责任人类型</label><select id="detail-duty-type" class="form-select"><option>店长</option><option>小时工</option><option>正式员工</option><option>管理者</option></select></div>';
-
-
-
-    html += '<div class="form-group"><label class="form-label">处罚等级</label><select id="detail-duty-level" class="form-select"><option>一级批评教育</option><option>二级书面警告</option><option>三级降职降薪</option><option>经济处罚</option></select></div>';
-
-
-
-    html += '<div class="form-group"><label class="form-label">经济处罚金额（元）</label><input id="detail-duty-amount" class="form-input" placeholder="如：200"></div>';
-
-
-
-    html += '<div class="form-group"><label class="form-label">调查结论</label><textarea id="detail-duty-survey" class="form-textarea" placeholder="简要描述调查结果..."></textarea></div>';
-
-
-
-    html += '<button class="btn btn-primary btn-sm" style="width:100%" onclick="Pages.resolveComplaint(\'' + id + '\')">确认责任人并生成处罚</button>';
-
-
-
-  }
-
-
-
-
-
-
-
-  /* 申诉流程 */
-
-
-
-  if (c.status === '待申诉' && (user.role === '店长' || user.role === '总部' || user.role === '客服' || user.role === '营运')) {
-
-
-
-    html += '<hr style="margin:12px 0;border-color:var(--border)">';
-
-
-
-    html += '<div class="form-group"><label class="form-label">申诉内容</label><textarea id="detail-appeal" class="form-textarea" placeholder="申诉理由和材料..."></textarea></div>';
-
-
-
-    if (user.role === '店长') {
-
-
-
-      html += '<button class="btn btn-primary btn-sm" onclick="Pages.submitAppeal(\'' + id + '\')">提交申诉</button>';
-
-
-
-    } else {
-
-
-
-      html += '<button class="btn btn-success btn-sm" style="margin-right:8px" onclick="Pages.reviewAppeal(\'' + id + '\',\'通过\')">审核通过</button>';
-
-
-
-      html += '<button class="btn btn-danger btn-sm" onclick="Pages.reviewAppeal(\'' + id + '\',\'驳回\')">驳回</button>';
-
-
-
-    }
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  const modal = document.getElementById('modal-overlay');
-
-
-
-  modal.querySelector('.modal-box').outerHTML = html;
-
-
-
-  modal.classList.add('show');
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 店长处理差评：填责任人并生成处罚 ---- */
-
-
-
-Pages.resolveComplaint = async function(id) {
-
-
-
-  var complaints = App.getComplaints();
-
-
-
-  var c = complaints.find(function(x) { return x.id === id; });
-
-
-
-  if (!c) return;
-
-
-
-
-
-
-
-  var dutyName = document.getElementById('detail-duty-name').value.trim();
-
-
-
-  var dutyType = document.getElementById('detail-duty-type').value;
-
-
-
-  var dutyLevel = document.getElementById('detail-duty-level').value;
-
-
-
-  var dutyAmount = document.getElementById('detail-duty-amount').value.trim();
-
-
-
-  var dutySurvey = document.getElementById('detail-duty-survey').value.trim();
-
-
-
-
-
-
-
-  if (!dutyName) { App.toast('请填写责任人'); return; }
-
-
-
-
-
-
-
-  // 更新差评状态
-
-
-
-  c.responsible = dutyName;
-
-
-
-  c.responsibleTitle = dutyType;
-
-
-
-  c.status = '已处理';
-
-
-
-  await App.saveComplaints(complaints);
-
-
-
-
-
-
-
-  // 自动生成处罚记录
-
-
-
-  var stores = App.getStores();
-
-
-
-  var store = stores.find(function(s) { return s.id === c.storeId; }) || {};
-
-
-
-  var penalties = App.getPenalties();
-
-
-
-  penalties.push({
-
-
-
-    id: 'p' + Date.now(),
-
-
-
-    storeId: c.storeId,
-
-
-
-    store: c.store,
-
-
-
-    region: store.region || '',
-
-
-
-    district: store.district || '',
-
-
-
-    manager: store.manager || '',
-
-
-
-    eventDate: c.date,
-
-
-
-    event: '差评：' + c.content.substring(0, 40),
-
-
-
-    category: dutyType,
-
-
-
-    level: dutyLevel,
-
-
-
-    source: '线上差评',
-
-
-
-    inspector: App.currentUser.name,
-
-
-
-    personName: dutyName,
-
-
-
-    personLevel: dutyLevel,
-
-
-
-    personType: dutyType,
-
-
-
-    penaltyPerson: dutyAmount,
-
-
-
-    penaltyManager: '',
-
-
-
-    survey: dutySurvey || '差评核查',
-
-
-
-    suggestion: dutyLevel + (dutyAmount ? '，经济处罚' + dutyAmount + '元' : ''),
-
-
-
-    policyRef: '差评处理流程',
-
-
-
-    dutyPerson: dutyName,
-
-
-
-    dutyManager: store.manager || '',
-
-
-
-    dutyValue: dutyAmount,
-
-
-
-    dutyCoach: '',
-
-
-
-    status: '已闭环'
-
-
-
-  });
-
-
-
-  await App.savePenalties(penalties);
-
-
-
-
-
-
-
-  App.toast('已生成处罚记录');
-
-
-
-  document.getElementById('modal-overlay').classList.remove('show');
-
-
-
-  Pages.complaint();
-
-
-
-};
-
-
-
-
-
-
-
-Pages.submitAppeal = function(id) {
-
-
-
-  const complaints = App.getComplaints();
-
-
-
-  const c = complaints.find(x => x.id === id);
-
-
-
-  if (c) {
-
-
-
-    c.status = '申诉中';
-
-
-
-    c.appealContent = document.getElementById('detail-appeal').value;
-
-
-
-    App.saveComplaints(complaints);
-
-
-
-  }
-
-
-
-  App.toast('申诉已提交');
-
-
-
-  document.getElementById('modal-overlay').classList.remove('show');
-
-
-
-  Pages.complaint();
-
-
-
-};
-
-
-
-
-
-
-
-Pages.reviewAppeal = function(id, result) {
-
-
-
-  const complaints = App.getComplaints();
-
-
-
-  const c = complaints.find(x => x.id === id);
-
-
-
-  if (c) {
-
-
-
-    c.status = result === '通过' ? '已申诉' : '已驳回';
-
-
-
-    c.appealResult = result;
-
-
-
-    if (!c.appealContent) c.appealContent = document.getElementById('detail-appeal') ? document.getElementById('detail-appeal').value : '';
-
-
-
-    App.saveComplaints(complaints);
-
-
-
-  }
-
-
-
-  App.toast('审核' + result);
-
-
-
-  document.getElementById('modal-overlay').classList.remove('show');
-
-
-
-  Pages.complaint();
-
-
-
-};
-
-
-
-
-
-
-
-/* ---- 领导看板页 ---- */
-
-
-
-Pages.dashboardMode = Pages.dashboardMode || 'mtd';
-
-
-
-
-
-
-
-Pages.dashboard = function() {
-  const el = document.getElementById('page-dashboard');
-  if (!el) return;
-  const user = App.currentUser;
-  if (!user) return;
-  if (!App.Permissions.canAccess(user.role, 'dashboard')) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-    return;
-  }
-
-  var complaints = App.getComplaints() || [];
-  var penalties = App.getPenalties() || [];
-  var issues = App.getIssues() || [];
-  var reports = App.getDailyReports() || [];
-
-  var now = new Date();
-  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  var monthComplaints = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
-  var monthPenalties = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
-  var pendingIssues = issues.filter(function(r){ return r.status === '待处理'; });
-  var monthReports = reports.filter(function(r){ return (r.date || '').indexOf(curMonth) === 0; });
-  var inspectors = {};
-  monthReports.forEach(function(r){ if (r.inspector) inspectors[r.inspector] = 1; });
-  var inspectorCount = Object.keys(inspectors).length;
-  var monthAmount = 0;
-  monthPenalties.forEach(function(p){ monthAmount += Pages._pAmount(p); });
-
-  var html = '';
-  html += '<div class="sub-tabbar dcb-tabbar">';
-  html += '<div class="sub-tab-item active" onclick="Pages._gotoBoardTab(\'dashboard\')">看板中心</div>';
-  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'inspectionWorkbench\')">稽核看板</div>';
-  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'complaintBoard\')">差评看板</div>';
-  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'daily\')">日报看板</div>';
-  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'penaltyBoard\')">处罚看板</div>';
-  html += '</div>';
-
-  html += '<div class="dcb-wrap">';
-  html += '<div class="dcb-head"><div class="dcb-title">看板中心</div><div class="dcb-date">' + curMonth + ' · 数据实时更新</div></div>';
-  html += '<div class="dcb-grid">';
-  html += Pages._dcCard('inspectionWorkbench', '稽核待整改', pendingIssues.length, '项', '#e0342c', 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z', '待处理工单');
-  html += Pages._dcCard('complaintBoard', '差评', monthComplaints.length, '条', '#f59e0b', 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', '本月差评');
-  html += Pages._dcCard('daily', '日报', monthReports.length, '篇', '#3b82f6', 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z', inspectorCount + ' 位稽核员');
-  html += Pages._dcCard('penaltyBoard', '处罚', monthPenalties.length, '笔 · ¥' + monthAmount.toLocaleString(), '#8b5cf6', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', '本月处罚');
-  html += '</div></div>';
-
-  el.innerHTML = html;
-};
-
-Pages._gotoBoardTab = function(id) {
-  if (id === 'daily') {
-    Pages._dailyMode = 'board';
-    location.hash = '#daily';
-    return;
-  }
-  location.hash = '#' + id;
-};
-
-Pages._dcCard = function(id, title, value, unit, color, iconPath, sub) {
-  return '<div class="dcb-card" onclick="Pages._gotoBoardTab(\'' + id + '\')" style="--dc:' + color + '"><div class="dcb-card-top"><div class="dcb-card-icon" style="background:' + color + '1a;color:' + color + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="dcb-card-go" style="color:' + color + '">&#8250;</div></div><div class="dcb-card-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div><div class="dcb-card-title">' + title + '</div><div class="dcb-card-sub">' + sub + '</div></div>';
-};
-
-Pages.switchDashboard = function(mode) {
-
-
-
-  Pages.dashboardMode = mode;
-
-
-
-  Pages.dashboard();
-
-
-
-};
-
-
-
-
-
-
-
-function dbKpiCard(title, value, unit, color, iconPath, onclick) {
-
-
-
-  return '<div class="db-kpi-card' + (onclick ? ' db-kpi-card-link' : '') + '"' + (onclick ? ' onclick="' + onclick + '"' : '') + '><div class="db-kpi-icon" style="background:' + color + '20;color:' + color + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="db-kpi-body"><div class="db-kpi-title">' + title + (onclick ? ' <span style="font-size:9px;opacity:0.5">›</span>' : '') + '</div><div class="db-kpi-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div></div></div>';
-
-
-
-}
-
-
-
-
-
-
-
-/* ---- 闭环追踪明细弹窗 ---- */
-
-
-
-function showClosureDetail(mode) {
-
-
-
-  var today = '2026-08-01';
-
-
-
-  var allPenalties = App.getPenalties();
-
-
-
-  var penalties = (mode === 'today') ? allPenalties.filter(function(p) { return p.eventDate === today; }) : allPenalties;
-
-
-
-  var closed = penalties.filter(function(p) { return p.status === '已闭环'; });
-
-
-
-  var overdue = penalties.filter(function(p) { return p.status === '超时'; });
-
-
-
-  var pending = penalties.filter(function(p) { return p.status === '待补填'; });
-
-
-
-
-
-
-
-  var html = '<div class="closure-overlay" onclick="this.remove()"><div class="closure-modal" onclick="event.stopPropagation()">';
-
-
-
-  html += '<div class="closure-close" onclick="this.parentElement.parentElement.remove()">&times;</div>';
-
-
-
-  html += '<div class="closure-title">闭环追踪明细</div>';
-
-
-
-
-
-
-
-  function section(color, label, items) {
-
-
-
-    var s = '<div class="closure-section"><div class="closure-section-hd" style="color:' + color + '"><span class="closure-dot" style="background:' + color + '"></span>' + label + '（' + items.length + '）</div>';
-
-
-
-    if (!items.length) { s += '<div class="closure-empty">暂无</div>'; }
-
-
-
-    else {
-
-
-
-      items.forEach(function(p) {
-
-
-
-        s += '<div class="closure-row" onclick="closeModalAndGo(\'#penalty\')"><span class="closure-store">' + p.store + '</span><span class="closure-event">' + p.event + '</span><span class="closure-date">' + (p.eventDate || '') + '</span></div>';
-
-
-
-      });
-
-
-
-    }
-
-
-
-    s += '</div>';
-
-
-
-    return s;
-
-
-
-  }
-
-
-
-
-
-
-
-  html += section('#10b981', '已闭环', closed);
-
-
-
-  html += section('#ef4444', '超时', overdue);
-
-
-
-  html += section('#f59e0b', '待补填', pending);
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  document.body.appendChild(div.firstElementChild);
-
-
-
-}
-
-
-
-
-
-
-
-function closeModalAndGo(hash) {
-
-
-
-  var overlay = document.querySelector('.closure-overlay');
-
-
-
-  if (overlay) overlay.remove();
-
-
-
-  location.hash = hash;
-
-
-
-}
-
-
-
-
-
-
-
-/* ==================== 通知模板 ==================== */
-
-
-
-Pages.template = function() {
-
-
-
-  var container = document.getElementById('page-template');
-
-
-
-  var templates = App.dataCache.notices || [];
-
-
-
-  var html = '<div class="template-page">';
-
-
-
-
-
-
-
-  // 头部统计
-
-
-
-  html += '<div class="stats-row">';
-
-
-
-  html += '<div class="stat-item"><span class="stat-num">' + templates.length + '</span><span class="stat-label">模板总数</span></div>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 操作栏
-
-
-
-  html += '<div class="action-bar">';
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages._templateForm()">+ 新建模板</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 模板列表
-
-
-
-  if (templates.length === 0) {
-
-
-
-    html += '<div class="empty-state">暂无通知模板，点击上方按钮创建</div>';
-
-
-
-  } else {
-
-
-
-    html += '<div class="template-list">';
-
-
-
-    templates.forEach(function(t, i) {
-
-
-
-      var typeLabel = t.type === 'penalty' ? '处罚通知' : t.type === 'inspect' ? '检查通知' : t.type === 'complaint' ? '申诉通知' : '通用通知';
-
-
-
-      var typeColor = t.type === 'penalty' ? '#ef4444' : t.type === 'inspect' ? '#3b82f6' : t.type === 'complaint' ? '#f59e0b' : '#6b7280';
-
-
-
-      html += '<div class="template-card">';
-
-
-
-      html += '<div class="template-head">';
-
-
-
-      html += '<span class="template-name">' + (t.name || '未命名') + '</span>';
-
-
-
-      html += '<span class="template-type" style="background:' + typeColor + '">' + typeLabel + '</span>';
-
-
-
-      html += '</div>';
-
-
-
-      html += '<div class="template-preview">' + (t.content || '').replace(/\{(\w+)\}/g, '<em>{$1}</em>') + '</div>';
-
-
-
-      html += '<div class="template-actions">';
-
-
-
-      html += '<button class="btn btn-sm" onclick="Pages._templateForm(' + i + ')">编辑</button>';
-
-
-
-      html += '<button class="btn btn-sm btn-danger" onclick="Pages._templateDelete(' + i + ')">删除</button>';
-
-
-
-      html += '</div>';
-
-
-
-      html += '</div>';
-
-
-
-    });
-
-
-
-    html += '</div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-  container.innerHTML = html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._templateForm = function(index) {
-
-
-
-  var templates = App.dataCache.notices || [];
-
-
-
-  var t = (index !== undefined && index >= 0) ? templates[index] : null;
-
-
-
-  var isEdit = !!t;
-
-
-
-  var title = isEdit ? '编辑模板' : '新建模板';
-
-
-
-
-
-
-
-  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
-
-
-
-  html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
-
-
-
-  html += '<div class="modal-body">';
-
-
-
-
-
-
-
-  // 模板名称
-
-
-
-  html += '<div class="form-group"><label>模板名称</label>';
-
-
-
-  html += '<input type="text" id="tpl-name" class="form-input" value="' + (t ? t.name || '' : '') + '" placeholder="如：处罚通知-门店"></div>';
-
-
-
-
-
-
-
-  // 类型选择
-
-
-
-  html += '<div class="form-group"><label>适用场景</label>';
-
-
-
-  html += '<select id="tpl-type" class="form-input">';
-
-
-
-  var types = [
-
-
-
-    { v: 'penalty', l: '处罚通知' },
-
-
-
-    { v: 'inspect', l: '检查通知' },
-
-
-
-    { v: 'complaint', l: '申诉通知' },
-
-
-
-    { v: 'general', l: '通用通知' }
-
-
-
-  ];
-
-
-
-  types.forEach(function(ty) {
-
-
-
-    var sel = (t && t.type === ty.v) ? ' selected' : '';
-
-
-
-    html += '<option value="' + ty.v + '"' + sel + '>' + ty.l + '</option>';
-
-
-
-  });
-
-
-
-  html += '</select></div>';
-
-
-
-
-
-
-
-  // 模板内容
-
-
-
-  html += '<div class="form-group"><label>模板内容 <span class="hint">可用变量：{门店名称} {日期} {检查人} {扣分项} {处罚金额} {申诉内容}</span></label>';
-
-
-
-  html += '<textarea id="tpl-content" class="form-input" rows="8" placeholder="如：{门店名称} 于 {日期} 被检查发现 {扣分项}，处罚 {处罚金额} 元...">' + (t ? t.content || '' : '') + '</textarea></div>';
-
-
-
-
-
-
-
-  // 预览
-
-
-
-  html += '<div class="form-group"><label>变量说明</label>';
-
-
-
-  html += '<div class="var-hints">';
-
-
-
-  html += '<code>{门店名称}</code><code>{日期}</code><code>{检查人}</code><code>{扣分项}</code>';
-
-
-
-  html += '<code>{处罚金额}</code><code>{申诉内容}</code><code>{检查得分}</code><code>{整改期限}</code>';
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-  html += '<div class="modal-footer">';
-
-
-
-  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages._templateSave(' + (isEdit ? index : -1) + ')">保存</button>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  var overlay = div.firstElementChild;
-
-
-
-  document.body.appendChild(overlay);
-
-
-
-  overlay.offsetHeight;
-
-
-
-  overlay.classList.add('show');
-
-
-
-};
-
-
-
-
-
-
-
-Pages._templateSave = function(index) {
-
-
-
-  var name = (document.getElementById('tpl-name') || {}).value || '';
-
-
-
-  var type = (document.getElementById('tpl-type') || {}).value || 'general';
-
-
-
-  var content = (document.getElementById('tpl-content') || {}).value || '';
-
-
-
-
-
-
-
-  if (!name.trim()) return App.toast('请输入模板名称');
-
-
-
-  if (!content.trim()) return App.toast('请输入模板内容');
-
-
-
-
-
-
-
-  var templates = App.dataCache.notices || [];
-
-
-
-  var tpl = { name: name.trim(), type: type, content: content.trim() };
-
-
-
-
-
-
-
-  if (index >= 0) {
-
-
-
-    templates[index] = tpl;
-
-
-
-  } else {
-
-
-
-    templates.push(tpl);
-
-
-
-  }
-
-
-
-
-
-
-
-  App.dataCache.notices = templates;
-
-
-
-  localStorage.setItem('nanchengxiang_notices', JSON.stringify(templates));
-
-
-
-  App.toast(index >= 0 ? '模板已更新' : '模板已创建');
-
-
-
-
-
-
-
-  var overlay = document.querySelector('.modal-overlay');
-
-
-
-  if (overlay) overlay.remove();
-
-
-
-  Pages.template();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._templateDelete = function(index) {
-
-
-
-  if (!confirm('确定删除该模板？')) return;
-
-
-
-  var templates = App.dataCache.notices || [];
-
-
-
-  templates.splice(index, 1);
-
-
-
-  App.dataCache.notices = templates;
-
-
-
-  localStorage.setItem('nanchengxiang_notices', JSON.stringify(templates));
-
-
-
-  App.toast('模板已删除');
-
-
-
-  Pages.template();
-
-
-
-};
-
-
-
-
-
-
-
-/* ==================== 任务发布 ==================== */
-
-
-
-Pages.task = function() {
-  var el = document.getElementById('page-task');
-  if (!el) return;
-  var user = App.currentUser;
-  if (!user) return;
-  if (!App.Permissions.canAccess(user.role, 'task')) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-    return;
-  }
-
-  var tasks = App.getTasks() || [];
-  tasks.sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); });
-
-  var html = '';
-  html += '<div class="page-title-bar"><span>任务列表</span><button class="btn btn-primary btn-sm" onclick="location.hash=\'#taskBoard\'">任务看板</button></div>';
-  html += '<div class="task-total">共 ' + tasks.length + ' 项任务 · ' + tasks.filter(function(t){ return t.status === '进行中'; }).length + ' 项进行中</div>';
-
-  tasks.forEach(function(t) {
-    var tagCls = t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue');
-    var tagText = t.status === '进行中' ? '进行中' : t.status;
-    html += '<div class="list-item" onclick="Pages.showTaskDetail(\'' + t.id + '\')">';
-    html += '<div class="list-item-top"><span class="task-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="tag ' + tagCls + '">' + tagText + '</span></div>';
-    html += '<div class="task-sub">负责人：' + t.person + ' ｜ 截止：' + t.dueDate + (t.priority === '高' ? ' ｜ <span style="color:#e0342c">高优先级</span>' : '') + '</div>';
-    html += '</div>';
-  });
-
-  if (tasks.length === 0) {
-    html += '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无任务</div></div>';
-  }
-
-  el.innerHTML = html;
-};
-
-Pages.showTaskDetail = function(id) {
-  var tasks = App.getTasks() || [];
-  var t = tasks.find(function(x){ return x.id === id; });
-  if (!t) return;
-  var html = '<div class="modal-box">';
-  html += '<div class="modal-title">任务详情</div>';
-  html += '<p><b>任务：</b>' + t.title + '</p>';
-  if (t.store) html += '<p><b>门店：</b>' + t.store + '</p>';
-  html += '<p><b>负责人：</b>' + t.person + '</p>';
-  html += '<p><b>状态：</b><span class="tag ' + (t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue')) + '">' + t.status + '</span></p>';
-  html += '<p><b>截止日期：</b>' + t.dueDate + '</p>';
-  html += '<p><b>优先级：</b>' + t.priority + '</p>';
-  html += '<p><b>来源：</b>' + (t.source || '-') + '</p>';
-  html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
-  html += '</div>';
-  var modal = document.getElementById('modal-overlay');
-  modal.querySelector('.modal-box').outerHTML = html;
-  modal.classList.add('show');
-};
-
-
-/* ==================== 稽核员日报 ==================== */
-
-
-
-Pages._dailyMode = 'fill'; // 'fill' | 'board'
-
-
-
-
-
-
-
-Pages.daily = function() {
-
-
-
-  var el = document.getElementById('page-daily');
-
-
-
-  if (!el) return;
-
-
-
-  var user = App.currentUser;
-
-
-
-  var stores = App.getStores();
-
-
-
-  var reports = App.getDailyReports();
-
-
-
-  var mode = Pages._dailyMode;
-
-
-
-  var now = new Date();
-
-
-
-  var today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-
-
-
-
-
-
-
-  var html = '';
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'daily')) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    el.innerHTML = html;
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  // 模式切换
-
-
-
-  html += '<div class="daily-mode-bar">';
-
-
-
-  html += '<button class="daily-mode-btn' + (mode==='fill'?' active':'') + '" onclick="Pages._switchDaily(\'fill\')">填写日报</button>';
-
-
-
-  html += '<button class="daily-mode-btn' + (mode==='board'?' active':'') + '" onclick="Pages._switchDaily(\'board\')">日报看板</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  if (mode === 'fill') {
-
-
-
-    // ===== 填写日报 =====
-
-
-
-    html += '<div class="card">';
-
-
-
-    html += '<div class="card-title">稽核员日报</div>';
-
-
-
-
-
-
-
-    html += '<div class="daily-meta">';
-
-
-
-    html += '<span>稽核员：<b>' + user.name + '</b></span>';
-
-
-
-    html += '<span>日期：<b>' + today + '</b></span>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    html += '<div class="form-group"><label class="form-label">稽核类型</label>';
-
-
-
-    html += '<div class="daily-type-radios">';
-
-
-
-    html += '<label class="radio-label"><input type="radio" name="daily-type" value="online" checked onchange="Pages._dailyTypeChange()"> 线上稽核</label>';
-
-
-
-    html += '<label class="radio-label"><input type="radio" name="daily-type" value="offline" onchange="Pages._dailyTypeChange()"> 线下稽核</label>';
-
-
-
-    html += '</div></div>';
-
-
-
-
-
-
-
-    html += '<div id="daily-items-container">';
-
-
-
-    html += Pages._dailyRow(1);
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    html += '<button class="daily-add-btn" id="daily-add-btn" onclick="Pages._dailyAddRow()">+ 添加门店</button>';
-
-
-
-    html += '<button class="btn btn-primary" style="margin-top:12px" onclick="Pages.submitDaily()">提交日报</button>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    // 已提交列表
-
-
-
-    var userReports = reports.filter(function(r) { return r.inspector === user.name; }).reverse();
-
-
-
-    html += '<div class="card"><div class="card-title">已提交日报（' + userReports.length + '）</div>';
-
-
-
-    if (userReports.length === 0) {
-
-
-
-      html += '<div class="empty-state"><div class="empty-icon">&#128196;</div>暂无日报</div>';
-
-
-
-    } else {
-
-
-
-      userReports.forEach(function(r) {
-
-
-
-        var typeLabel = r.type === 'online' ? '线上' : '线下';
-
-
-
-        html += '<div class="list-item" onclick="Pages._toggleDailyDetail(\'' + r.id + '\')">';
-
-
-
-        html += '<div class="li-main">';
-
-
-
-        html += '<div class="li-title">' + r.date + ' | ' + typeLabel + '稽核 | ' + (r.items||[]).length + '家门店</div>';
-
-
-
-        html += '<div class="li-sub">稽核员：' + r.inspector + '</div>';
-
-
-
-        html += '</div></div>';
-
-
-
-        html += '<div id="daily-detail-' + r.id + '" class="daily-detail" style="display:none">';
-
-
-
-        (r.items||[]).forEach(function(item) {
-
-
-
-          html += '<div class="daily-detail-row"><span class="ddr-store">' + item.store + '</span><span class="ddr-score">' + item.score + '分</span><span class="ddr-findings">' + (item.findings||'无') + '</span></div>';
-
-
-
-        });
-
-
-
-        html += '</div>';
-
-
-
-      });
-
-
-
-    }
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-  } else {
-
-
-
-    // ===== 日报看板 =====
-
-
-
-    var workRecords = App.getWorkRecords();
-
-
-
-    html += Pages._renderDailyBoard(reports, stores, workRecords);
-
-
-
-  }
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-
-
-  App.initStoreSelect('daily-store-1', App.getStores());
-
-
-
-};
-
-
-
-
-
-
-
-Pages._switchDaily = function(mode) {
-
-
-
-  Pages._dailyMode = mode;
-
-
-
-  Pages.daily();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._preprocessImage = function(file) {
-  return new Promise(function(resolve, reject) {
-    var url = URL.createObjectURL(file);
-    var img = new Image();
-    img.onload = function() {
-      var maxSide = 2000;
-      var scale = Math.min(1, maxSide / Math.max(img.width, img.height));
-      var w = Math.round(img.width * scale);
-      var h = Math.round(img.height * scale);
-      var canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      var imageData = ctx.getImageData(0, 0, w, h);
-      var d = imageData.data;
-      for (var i = 0; i < d.length; i += 4) {
-        var gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-        gray = (gray - 128) * 1.3 + 128;
-        if (gray < 0) gray = 0;
-        else if (gray > 255) gray = 255;
-        d[i] = gray;
-        d[i+1] = gray;
-        d[i+2] = gray;
-      }
-      ctx.putImageData(imageData, 0, 0);
-      URL.revokeObjectURL(url);
-      resolve(canvas);
-    };
-    img.onerror = function() {
-      URL.revokeObjectURL(url);
-      reject(new Error('图片读取失败'));
-    };
-    img.src = url;
-  });
-};
-
-Pages._cleanOCRText = function(text) {
-  if (!text) return '';
-  return text.split('\n').map(function(line) { return line.trim(); }).filter(function(line) { return line.length > 0; }).join('\n');
-};
-
-Pages._setDailyAIBusy = function(index, busy) {
-  var row = document.getElementById('daily-row-' + index);
-  if (!row) return;
-  var btns = row.querySelectorAll('.daily-ai-btn');
-  for (var i = 0; i < btns.length; i++) {
-    if (busy) {
-      btns[i].classList.add('daily-ai-btn-disabled');
-      btns[i].setAttribute('disabled', 'disabled');
-    } else {
-      btns[i].classList.remove('daily-ai-btn-disabled');
-      btns[i].removeAttribute('disabled');
-    }
-  }
-};
-
-Pages._dailyOCR = function(index) {
-  var input = document.getElementById('daily-findings-' + index);
-  if (!input) return;
-  var fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-  fileInput.capture = 'environment';
-  fileInput.style.display = 'none';
-  document.body.appendChild(fileInput);
-  fileInput.onchange = function() {
-    var file = fileInput.files[0];
-    if (!file) { fileInput.remove(); return; }
-    App.toast('识别中，请确保图片正对文字、光线充足');
-    Pages._setDailyAIBusy(index, true);
-    Pages._loadTesseract(function() {
-      if (typeof Tesseract === 'undefined') {
-        App.toast('OCR 引擎加载失败，请检查网络后重试');
-        Pages._setDailyAIBusy(index, false);
-        fileInput.remove();
-        return;
-      }
-      Pages._preprocessImage(file).then(function(canvas) {
-        return Tesseract.createWorker('chi_sim', 1, { logger: function() {} }).then(function(worker) {
-          return worker.setParameters({ tessedit_pageseg_mode: '6' }).then(function() {
-            return worker.recognize(canvas).then(function(res) {
-              return worker.terminate().then(function() {
-                return res;
-              });
-            });
-          });
-        });
-      }).then(function(res) {
-        var text = Pages._cleanOCRText(res && res.data && res.data.text || '');
-        if (text) {
-          input.value = input.value ? input.value + '\n' + text : text;
-          App.toast('已识别 ' + text.length + ' 字');
-        } else {
-          App.toast('未识别到文字，请重拍');
-        }
-        Pages._setDailyAIBusy(index, false);
-        fileInput.remove();
-      }).catch(function(err) {
-        App.toast('OCR 识别失败：' + (err && err.message ? err.message : '未知错误'));
-        Pages._setDailyAIBusy(index, false);
-        fileInput.remove();
-      });
-    });
-  };
-  fileInput.click();
-};
-
-Pages._loadTesseract = function(cb) {
-  if (typeof Tesseract !== 'undefined') { cb(); return; }
-  var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-  s.onload = function() { cb(); };
-  s.onerror = function() { cb(); };
-  document.head.appendChild(s);
-};
-
-Pages._dailyVoice = function(index) {
-  var input = document.getElementById('daily-findings-' + index);
-  if (!input) return;
-  var ua = navigator.userAgent || '';
-  var isWeChat = /MicroMessenger/i.test(ua);
-  var isFirefox = /Firefox/i.test(ua);
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    if (isWeChat || isFirefox) {
-      App.toast('当前浏览器不支持语音输入，请点击右上角···在浏览器中打开后使用');
-    } else {
-      App.toast('当前浏览器不支持语音输入，请使用 Chrome 或 Safari 16+');
-    }
-    return;
-  }
-  var rec;
-  try {
-    rec = new SR();
-  } catch (e) {
-    App.toast('语音识别初始化失败：' + (e && e.message ? e.message : '未知错误'));
-    return;
-  }
-  rec.lang = 'zh-CN';
-  rec.interimResults = false;
-  rec.maxAlternatives = 1;
-  Pages._setDailyAIBusy(index, true);
-  var voiceBtn = document.getElementById('daily-voice-' + index);
-  if (voiceBtn) voiceBtn.classList.add('daily-voice-active');
-  var stopped = false;
-  var timer = setTimeout(function() {
-    try { rec.stop(); } catch (e) {}
-  }, 15000);
-  function finish() {
-    if (stopped) return;
-    stopped = true;
-    clearTimeout(timer);
-    Pages._setDailyAIBusy(index, false);
-    var vb = document.getElementById('daily-voice-' + index);
-    if (vb) vb.classList.remove('daily-voice-active');
-  }
-  App.toast('请开始说话...');
-  rec.onresult = function(e) {
-    var text = '';
-    for (var i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
-    text = (text || '').trim();
-    if (text) {
-      input.value = input.value ? input.value + '\n' + text : text;
-      App.toast('已输入语音内容');
-    } else {
-      App.toast('未识别到语音');
-    }
-  };
-  rec.onerror = function(e) {
-    var err = e && e.error ? e.error : '';
-    if (err === 'not-allowed' || err === 'service-not-allowed') {
-      App.toast('请开启麦克风权限后再试');
-    } else if (err === 'network') {
-      App.toast('语音服务不可达，建议使用 Chrome 或 Safari 16+ 并保持网络畅通');
-    } else {
-      App.toast('语音识别失败：' + err);
-    }
-  };
-  rec.onend = function() {
-    finish();
-    App.toast('识别结束');
-  };
-  try {
-    rec.start();
-  } catch (e) {
-    finish();
-    App.toast('语音启动失败：' + (e && e.message ? e.message : '未知错误'));
-  }
-};
-
-Pages._dailyRow = function(index) {
-
-
-
-  var stores = App.getStores();
-
-
-
-  var html = '<div class="daily-row" id="daily-row-' + index + '">';
-
-
-
-  html += App.renderStoreSelect('daily-store-' + index, stores, '', '搜索门店...');
-
-
-
-  html += '<input type="number" class="form-input daily-score" id="daily-score-' + index + '" placeholder="得分" min="0" max="100">';
-
-
-
-  html += '<input type="text" class="form-input daily-findings" id="daily-findings-' + index + '" placeholder="发现问题">';
-  html += '<div class="daily-ai-btns">';
-  html += '<button type="button" class="daily-ai-btn" id="daily-ocr-' + index + '" onclick="Pages._dailyOCR(' + index + ')">\u{1F4F7} 拍照识别</button>';
-  html += '<button type="button" class="daily-ai-btn" id="daily-voice-' + index + '" onclick="Pages._dailyVoice(' + index + ')">\u{1F3A4} 语音输入</button>';
-  html += '</div>';
-
-
-
-  if (index > 1) {
-
-
-
-    html += '<button class="daily-del-btn" onclick="Pages._dailyRemoveRow(' + index + ')">&#10005;</button>';
-
-
-
-  }
-
-
-
-  html += '</div>';
-
-
-
-  return html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._dailyTypeChange = function() {
-
-
-
-  var type = document.querySelector('input[name="daily-type"]:checked').value;
-
-
-
-  var max = type === 'online' ? 8 : 5;
-
-
-
-  var currentRows = document.querySelectorAll('.daily-row').length;
-
-
-
-  var btn = document.getElementById('daily-add-btn');
-
-
-
-  if (btn) btn.disabled = currentRows >= max;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._dailyAddRow = function() {
-
-
-
-  var type = document.querySelector('input[name="daily-type"]:checked').value;
-
-
-
-  var max = type === 'online' ? 8 : 5;
-
-
-
-  var rows = document.querySelectorAll('.daily-row');
-
-
-
-  if (rows.length >= max) return;
-
-
-
-  var nextIndex = rows.length + 1;
-
-
-
-  var html = Pages._dailyRow(nextIndex);
-
-
-
-  var container = document.getElementById('daily-items-container');
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  container.appendChild(div.firstElementChild);
-
-
-
-  App.initStoreSelect('daily-store-' + nextIndex, App.getStores());
-
-
-
-  if (rows.length + 1 >= max) {
-
-
-
-    document.getElementById('daily-add-btn').disabled = true;
-
-
-
-  }
-
-
-
-};
-
-
-
-
-
-
-
-Pages._dailyRemoveRow = function(index) {
-
-
-
-  var row = document.getElementById('daily-row-' + index);
-
-
-
-  if (row) row.remove();
-
-
-
-  var type = document.querySelector('input[name="daily-type"]:checked').value;
-
-
-
-  var max = type === 'online' ? 8 : 5;
-
-
-
-  var currentRows = document.querySelectorAll('.daily-row').length;
-
-
-
-  var btn = document.getElementById('daily-add-btn');
-
-
-
-  if (btn) btn.disabled = currentRows >= max;
-
-
-
-};
-
-
-
-
-
-
-
-Pages.submitDaily = function() {
-
-
-
-  var user = App.currentUser;
-
-
-
-  var typeEl = document.querySelector('input[name="daily-type"]:checked');
-
-
-
-  var type = typeEl ? typeEl.value : 'online';
-
-
-
-  var now = new Date();
-
-
-
-  var date = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-
-
-
-
-
-
-
-  var items = [];
-
-
-
-  var rows = document.querySelectorAll('.daily-row');
-
-
-
-  for (var i = 0; i < rows.length; i++) {
-
-
-
-    var idx = i + 1;
-
-
-
-    var storeId = App.getStoreSelectValue('daily-store-' + idx);
-
-
-
-    var storeData = App.getStores().find(function(s) { return s.id === storeId; });
-
-
-
-    var store = storeData ? storeData.name : '';
-
-
-
-    var scoreEl = document.getElementById('daily-score-' + idx);
-
-
-
-    var findingsEl = document.getElementById('daily-findings-' + idx);
-
-
-
-    var score = scoreEl ? parseInt(scoreEl.value) : NaN;
-
-
-
-    var findings = findingsEl ? findingsEl.value.trim() : '';
-
-
-
-    if (!store) { App.toast('第' + idx + '行请选择门店'); return; }
-
-
-
-    if (isNaN(score) || score < 0 || score > 100) { App.toast('第' + idx + '行得分需在0-100之间'); return; }
-
-
-
-    items.push({ store: store, score: score, findings: findings });
-
-
-
-  }
-
-
-
-
-
-
-
-  if (items.length === 0) { App.toast('请至少添加一条门店记录'); return; }
-
-
-
-
-
-
-
-  var reports = App.getDailyReports();
-
-
-
-  reports.push({
-
-
-
-    id: 'dr' + Date.now(),
-
-
-
-    inspector: user.name,
-
-
-
-    date: date,
-
-
-
-    type: type,
-
-
-
-    items: items
-
-
-
-  });
-
-
-
-
-
-
-
-  App.saveDailyReports(reports);
-
-
-
-  App.toast('日报已提交');
-
-
-
-  Pages.daily();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._toggleDailyDetail = function(id) {
-
-
-
-  var el = document.getElementById('daily-detail-' + id);
-
-
-
-  if (el) {
-
-
-
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
-
-
-
-  }
-
-
-
-};
-
-
-
-
-
-
-
-/* ===== 日报看板渲染 ===== */
-
-
-
-Pages._dailyBoardPeriod = 'all'; // 'week' | 'month' | 'all'
-
-
-
-
-
-
-
-Pages._renderDailyBoard = function(reports, stores, workRecords) {
-
-
-
-  var html = '';
-
-
-
-  var now = new Date();
-
-
-
-
-
-
-
-  // 时间筛选
-
-
-
-  html += '<div class="db-toggle-bar">';
-
-
-
-  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='week'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'week\')">本周</button>';
-
-
-
-  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='month'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'month\')">本月</button>';
-
-
-
-  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='all'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'all\')">全部</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 按period过滤
-
-
-
-  var filtered = reports;
-
-
-
-  if (Pages._dailyBoardPeriod === 'week') {
-
-
-
-    var weekStart = new Date(now);
-
-
-
-    weekStart.setDate(now.getDate() - now.getDay());
-
-
-
-    weekStart.setHours(0,0,0,0);
-
-
-
-    filtered = reports.filter(function(r) { return new Date(r.date) >= weekStart; });
-
-
-
-  } else if (Pages._dailyBoardPeriod === 'month') {
-
-
-
-    var monthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
-
-
-
-    filtered = reports.filter(function(r) { return r.date >= monthStart; });
-
-
-
-  }
-
-
-
-
-
-
-
-  // 按稽核员分组
-
-
-
-  var groups = {};
-
-
-
-  filtered.forEach(function(r) {
-
-
-
-    if (!groups[r.inspector]) groups[r.inspector] = [];
-
-
-
-    groups[r.inspector].push(r);
-
-
-
-  });
-
-
-
-
-
-
-
-  // work_records 按人分组
-
-
-
-  var personWork = {};
-
-
-
-  (workRecords||[]).forEach(function(w) {
-
-
-
-    if (!personWork[w.user]) personWork[w.user] = [];
-
-
-
-    personWork[w.user].push(w);
-
-
-
-  });
-
-
-
-  // 确保只在 work_records 中出现的人也纳入看板
-
-
-
-  Object.keys(personWork).forEach(function(u) {
-
-
-
-    if (!groups[u]) groups[u] = [];
-
-
-
-  });
-
-
-
-
-
-
-
-  var inspectorNames = Object.keys(groups).sort();
-
-
-
-  if (inspectorNames.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128202;</div>暂无日报数据</div>';
-
-
-
-    return html;
-
-
-
-  }
-
-
-
-
-
-
-
-  inspectorNames.forEach(function(name) {
-
-
-
-    var grp = groups[name];
-
-
-
-    var totalShops = 0;
-
-
-
-    grp.forEach(function(r) { totalShops += (r.items||[]).length; });
-
-
-
-
-
-
-
-    html += '<div class="board-inspector-card" onclick="Pages._toggleBoardDetail(\'' + name.replace(/'/g, "\\\'") + '\')">';
-
-
-
-    html += '<div class="bic-header">';
-
-
-
-    html += '<div class="bic-avatar">' + (name||'?')[0] + '</div>';
-
-
-
-    html += '<div class="bic-info">';
-
-
-
-    html += '<div class="bic-name">' + name + '</div>';
-
-
-
-    var wrCount = (personWork[name]||[]).length;
-
-
-
-    var statsText = '日报 ' + grp.length + ' 份 | 累计检查 ' + totalShops + ' 家门店';
-
-
-
-    if (wrCount > 0) statsText += ' | 工作台账 ' + wrCount + ' 条';
-
-
-
-    html += '<div class="bic-stats">' + statsText + '</div>';
-
-
-
-    html += '</div><div class="bic-arrow">&#9660;</div>';
-
-
-
-    html += '</div>';
-
-
-
-
-
-
-
-    html += '<div class="board-detail-table" id="board-detail-' + name.replace(/'/g, "\\\'") + '" style="display:none">';
-
-
-
-    html += '<table class="m-table">';
-
-
-
-    html += '<thead><tr><th>日期</th><th>类型</th><th>门店</th><th>问题</th><th>操作</th></tr></thead>';
-
-
-
-    html += '<tbody>';
-
-
-
-    grp.forEach(function(r) {
-
-
-
-      var typeLabel = r.type === 'online' ? '线上' : '线下';
-
-
-
-      var rId = (r.id||'').replace(/'/g, "\\\'");
-
-
-
-      var storeCount = (r.items||[]).length;
-
-
-
-      var issuesCount = r.issuesCount || 0;
-
-
-
-      html += '<tr class="dr-row" onclick="Pages._openDailyDetail(\'' + rId + '\')">';
-
-
-
-      html += '<td>' + r.date + '</td><td>' + typeLabel + '</td><td>' + storeCount + ' 家</td><td>' + issuesCount + ' 项</td><td class="dr-view">查看明细</td>';
-
-
-
-      html += '</tr>';
-
-
-
-    });
-
-
-
-    // work_records 台账行
-
-
-
-    (personWork[name]||[]).forEach(function(w) {
-
-
-
-      var tagColor = w.type === '客诉' ? '#e74c3c' : '#8e44ad';
-
-
-
-      html += '<tr class="wr-row"><td>' + w.date + '</td><td><span class="wr-tag" style="background:' + tagColor + '">' + w.type + '</span></td><td colspan="2">' + w.summary + '</td><td class="wr-content">' + (w.detail&&w.detail.content?w.detail.content.replace(/\n/g,'<br>') : '') + '</td></tr>';
-
-
-
-    });
-
-
-
-
-
-
-
-    html += '</tbody></table></div></div>';
-
-
-
-  });
-
-
-
-
-
-
-
-  return html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._switchBoardPeriod = function(period) {
-
-
-
-  Pages._dailyBoardPeriod = period;
-
-
-
-  Pages.daily();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._toggleBoardDetail = function(name) {
-
-
-
-  var el = document.getElementById('board-detail-' + name);
-
-
-
-  if (el) {
-
-
-
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
-
-
-
-  }
-
-
-
-};
-
-
-
-
-
-
-
-/* ===== 单日日报详情弹窗 ===== */
-
-
-
-Pages._openDailyDetail = function(reportId) {
-
-
-
-  var reports = App.getDailyReports() || [];
-
-
-
-  var r = null;
-
-
-
-  for (var i = 0; i < reports.length; i++) {
-
-
-
-    if (reports[i].id === reportId) { r = reports[i]; break; }
-
-
-
-  }
-
-
-
-  if (!r) {
-
-
-
-    App.toast('未找到该日报记录');
-
-
-
-    return;
-
-
-
-  }
-
-
-
-  var typeLabel = r.type === 'online' ? '线上' : '线下';
-
-
-
-  var storeCount = (r.items||[]).length;
-
-
-
-  var issuesCount = r.issuesCount || 0;
-
-
-
-
-
-
-
-  var html = '<div class="modal-box dd-modal-box">';
-
-
-
-  html += '<div class="modal-title">日报详情</div>';
-
-
-
-  html += '<div class="dd-meta">' + r.inspector + ' · ' + r.date + ' · ' + typeLabel + ' · ' + storeCount + ' 家门店 · ' + issuesCount + ' 项问题</div>';
-
-
-
-  html += '<div class="dd-modal-body">';
-
-
-
-  html += '<table class="m-table dd-modal-table">';
-
-
-
-  html += '<thead><tr><th>门店</th><th>得分</th><th>发现问题</th></tr></thead>';
-
-
-
-  html += '<tbody>';
-
-
-
-  (r.items||[]).forEach(function(item) {
-
-
-
-    var findings = (item.findings||'').replace(/\n/g,'<br>');
-
-
-
-    html += '<tr><td>' + item.store + '</td><td>' + item.score + '</td><td class="dd-findings">' + findings + '</td></tr>';
-
-
-
-  });
-
-
-
-  html += '</tbody></table>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '<button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  var modal = document.getElementById('modal-overlay');
-
-
-
-  modal.querySelector('.modal-box').outerHTML = html;
-
-
-
-  modal.classList.add('show');
-
-
-
-};
-
-
-
-
-
-
-
-/* ==================== 稽核模板管理 ==================== */
-
-
-
-Pages._tplEditMode = false;
-
-
-
-Pages._tplEditId = null;
-
-
-
-
-
-
-
-Pages.inspectionTemplates = function() {
-
-
-
-  var el = document.getElementById('page-inspectionTemplates');
-
-
-
-  if (!el) return;
-
-
-
-  var user = App.currentUser;
-
-
-
-  var templates = App.getTemplates();
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'inspection') || (App.currentUser.phone !== '13581922077' && App.currentUser.phone !== '15081280260')) {
-
-
-
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前账号无权限访问此页面</div></div>';
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  var html = '';
-  var subHash = location.hash.replace('#', '');
-  var subTabs = Pages._inspectionSubTabs(user);
-  html += '<div class="sub-tabbar">';
-  subTabs.forEach(function(t) {
-    if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-  });
-  html += '</div>';
-
-
-
-
-  html += '<div class="card"><div class="card-title">稽核模板管理</div>';
-
-
-
-
-
-
-
-  // 操作栏
-
-
-
-  html += '<div class="action-bar">';
-
-
-
-  html += '<button class="btn btn-primary btn-sm" onclick="Pages._tplShowForm()">+ 新建模板</button>';
-
-
-
-  html += '<button class="btn btn-sm" onclick="document.getElementById(\'tpl-excel-input\').click()">导入Excel</button>';
-
-
-
-  html += '<button class="btn btn-sm" onclick="Pages._tplExportExcel()">导出Excel</button>';
-
-
-
-  html += '<input type="file" id="tpl-excel-input" accept=".xlsx,.xls" style="display:none" onchange="Pages._tplImportExcel(this)">';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 模板列表
-
-
-
-  if (templates.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128196;</div><div>暂无稽核模板，点击上方按钮创建或导入</div></div>';
-
-
-
-  } else {
-
-
-
-    html += '<div class="table-container"><table><thead><tr>';
-
-
-
-    html += '<th>模板名</th><th>版本</th><th>检查项数</th><th>状态</th><th>创建时间</th><th>操作</th>';
-
-
-
-    html += '</tr></thead><tbody>';
-
-
-
-    templates.forEach(function(t) {
-
-
-
-      var statusLabel = t.isActive !== false ? '启用' : '停用';
-
-
-
-      var statusColor = t.isActive !== false ? '#10b981' : '#ef4444';
-
-
-
-      var itemCount = (t.items && Array.isArray(t.items)) ? t.items.length : 0;
-
-
-
-      html += '<tr>';
-
-
-
-      html += '<td>' + (t.name || '未命名') + '</td>';
-
-
-
-      html += '<td>v' + (t.version || 1) + '</td>';
-
-
-
-      html += '<td>' + itemCount + '</td>';
-
-
-
-      html += '<td><span style="color:' + statusColor + '">' + statusLabel + '</span></td>';
-
-
-
-      html += '<td>' + (t.createdAt || '') + '</td>';
-
-
-
-      html += '<td>';
-
-
-
-      html += '<button class="btn btn-sm" onclick="Pages._tplEdit(\'' + t.id + '\')">编辑</button>';
-
-
-
-      if (App.Permissions.canAccess(user.role, 'inspection_edit')) html += '<button class="btn btn-sm btn-primary" onclick="Pages._tplStartCheck(\'' + t.id + '\')">一键检查</button>';
-
-
-
-      html += '<button class="btn btn-sm" onclick="Pages._tplToggle(\'' + t.id + '\')">' + (t.isActive !== false ? '停用' : '启用') + '</button>';
-
-
-
-      html += '</td></tr>';
-
-
-
-    });
-
-
-
-    html += '</tbody></table></div>';
-
-
-
-  }
-
-
-
-  html += '</div>';
-
-
-
-  el.innerHTML = html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplShowForm = function() {
-
-
-
-  Pages._tplEditMode = false;
-
-
-
-  Pages._tplEditId = null;
-
-
-
-  Pages._tplRenderForm('新建稽核模板', { name: '', items: [] });
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplEdit = function(id) {
-
-
-
-  var templates = App.getTemplates();
-
-
-
-  var t = templates.find(function(x) { return x.id === id; });
-
-
-
-  if (!t) return;
-
-
-
-  Pages._tplEditMode = true;
-
-
-
-  Pages._tplEditId = id;
-
-
-
-  Pages._tplRenderForm('编辑稽核模板', t);
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplRenderForm = function(title, tpl) {
-
-
-
-  var items = tpl.items || [];
-
-
-
-  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" style="max-width:700px" onclick="event.stopPropagation()">';
-
-
-
-  html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
-
-
-
-  html += '<div class="modal-body">';
-
-
-
-  html += '<div class="form-group"><label class="form-label">模板名称</label>';
-
-
-
-  html += '<input type="text" id="tpl-form-name" class="form-input" value="' + (tpl.name || '') + '" placeholder="如：门店卫生检查表"></div>';
-
-
-
-  html += '<div class="form-group"><label class="form-label">检查项目</label>';
-
-
-
-  html += '<div id="tpl-items-container">';
-
-
-
-  items.forEach(function(item, i) {
-
-
-
-    html += Pages._tplItemRow(i, item);
-
-
-
-  });
-
-
-
-  html += '</div>';
-
-
-
-  html += '<button class="btn btn-sm" style="margin-top:8px" onclick="Pages._tplAddItem()">+ 添加检查项</button>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '<div class="modal-footer">';
-
-
-
-  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages._tplSave()">保存模板</button>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '</div></div>';
-
-
-
-
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  var overlay = div.firstElementChild;
-
-
-
-  document.body.appendChild(overlay);
-
-
-
-  overlay.offsetHeight;
-
-
-
-  overlay.classList.add('show');
-
-
-
-  Pages._tplItemCount = items.length;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplItemCount = 0;
-
-
-
-
-
-
-
-Pages._tplItemRow = function(index, item) {
-
-
-
-  item = item || {};
-
-
-
-  var html = '<div class="tpl-item-row" id="tpl-item-' + index + '" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">';
-
-
-
-  html += '<input type="text" class="form-input" placeholder="类别" value="' + (item.category || '') + '" style="flex:1" data-field="category">';
-
-
-
-  html += '<input type="text" class="form-input" placeholder="检查内容" value="' + (item.content || '') + '" style="flex:2" data-field="content">';
-
-
-
-  html += '<input type="number" class="form-input" placeholder="标准分" value="' + (item.score || '') + '" style="flex:0.8" data-field="score" min="0">';
-
-
-
-  html += '<input type="text" class="form-input" placeholder="扣分标准" value="' + (item.deductRule || '') + '" style="flex:1.5" data-field="deductRule">';
-
-
-
-  html += '<button class="btn btn-sm btn-danger" onclick="Pages._tplRemoveItem(' + index + ')">&#10005;</button>';
-
-
-
-  html += '</div>';
-
-
-
-  return html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplAddItem = function() {
-
-
-
-  var idx = Pages._tplItemCount;
-
-
-
-  Pages._tplItemCount++;
-
-
-
-  var container = document.getElementById('tpl-items-container');
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = Pages._tplItemRow(idx, {});
-
-
-
-  container.appendChild(div.firstElementChild);
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplRemoveItem = function(index) {
-
-
-
-  var row = document.getElementById('tpl-item-' + index);
-
-
-
-  if (row) row.remove();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplSave = function() {
-
-
-
-  var name = (document.getElementById('tpl-form-name') || {}).value || '';
-
-
-
-  if (!name.trim()) { App.toast('请输入模板名称'); return; }
-
-
-
-
-
-
-
-  var items = [];
-
-
-
-  var rows = document.querySelectorAll('.tpl-item-row');
-
-
-
-  rows.forEach(function(row, i) {
-
-
-
-    var category = (row.querySelector('[data-field="category"]') || {}).value || '';
-
-
-
-    var content = (row.querySelector('[data-field="content"]') || {}).value || '';
-
-
-
-    var score = parseInt((row.querySelector('[data-field="score"]') || {}).value) || 0;
-
-
-
-    var deductRule = (row.querySelector('[data-field="deductRule"]') || {}).value || '';
-
-
-
-    if (content.trim()) {
-
-
-
-      items.push({ index: i, category: category, content: content, score: score, deductRule: deductRule });
-
-
-
-    }
-
-
-
-  });
-
-
-
-
-
-
-
-  if (items.length === 0) { App.toast('请至少添加一个检查项'); return; }
-
-
-
-
-
-
-
-  var templates = App.getTemplates();
-
-
-
-  var now = new Date();
-
-
-
-  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-
-
-
-
-
-
-
-  if (Pages._tplEditMode && Pages._tplEditId) {
-
-
-
-    var tpl = templates.find(function(x) { return x.id === Pages._tplEditId; });
-
-
-
-    if (tpl) {
-
-
-
-      tpl.name = name.trim();
-
-
-
-      tpl.items = items;
-
-
-
-      tpl.version = (tpl.version || 1) + 1;
-
-
-
-      tpl.updatedAt = dateStr;
-
-
-
-    }
-
-
-
-  } else {
-
-
-
-    templates.push({
-
-
-
-      id: 'tpl' + Date.now(),
-
-
-
-      name: name.trim(),
-
-
-
-      version: 1,
-
-
-
-      items: items,
-
-
-
-      isActive: true,
-
-
-
-      createdAt: dateStr,
-
-
-
-      updatedAt: dateStr
-
-
-
-    });
-
-
-
-  }
-
-
-
-
-
-
-
-  App.saveTemplates(templates);
-
-
-
-  App.toast('模板已保存');
-
-
-
-
-
-
-
-  var overlay = document.querySelector('.modal-overlay');
-
-
-
-  if (overlay) overlay.remove();
-
-
-
-  Pages.inspectionTemplates();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplExportExcel = function() {
-
-
-
-  var templates = App.getTemplates();
-
-
-
-  if (templates.length === 0) { App.toast('暂无模板可导出'); return; }
-
-
-
-
-
-
-
-  if (templates.length === 1) {
-
-
-
-    // 单模板直接导出
-
-
-
-    var t = templates[0];
-
-
-
-    var rows = [['类别', '检查项目', '分值', '扣分标准']];
-
-
-
-    (t.items || []).forEach(function(it) {
-
-
-
-      rows.push([it.category || '', it.content || '', it.score || 0, it.deductRule || '']);
-
-
-
-    });
-
-
-
-    var ws = XLSX.utils.aoa_to_sheet(rows);
-
-
-
-    ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
-
-
-
-    var wb = XLSX.utils.book_new();
-
-
-
-    XLSX.utils.book_append_sheet(wb, ws, t.name || '模板');
-
-
-
-    XLSX.writeFile(wb, (t.name || '稽核模板') + '.xlsx');
-
-
-
-  } else {
-
-
-
-    // 多模板每模板一个Sheet
-
-
-
-    var wb = XLSX.utils.book_new();
-
-
-
-    templates.forEach(function(t) {
-
-
-
-      var rows = [['类别', '检查项目', '分值', '扣分标准']];
-
-
-
-      (t.items || []).forEach(function(it) {
-
-
-
-        rows.push([it.category || '', it.content || '', it.score || 0, it.deductRule || '']);
-
-
-
-      });
-
-
-
-      var ws = XLSX.utils.aoa_to_sheet(rows);
-
-
-
-      ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
-
-
-
-      var name = (t.name || '模板').substring(0, 31);
-
-
-
-      XLSX.utils.book_append_sheet(wb, ws, name);
-
-
-
-    });
-
-
-
-    XLSX.writeFile(wb, '稽核模板导出.xlsx');
-
-
-
-  }
-
-
-
-  App.toast('导出完成');
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplStartCheck = function(tplId) {
-
-
-
-  Pages._fillTemplateId = tplId;
-
-
-
-  location.hash = '#inspectionFill';
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplToggle = function(id) {
-
-
-
-  var templates = App.getTemplates();
-
-
-
-  var t = templates.find(function(x) { return x.id === id; });
-
-
-
-  if (t) {
-
-
-
-    t.isActive = !(t.isActive !== false);
-
-
-
-    App.saveTemplates(templates);
-
-
-
-    App.toast(t.isActive !== false ? '已启用' : '已停用');
-
-
-
-    Pages.inspectionTemplates();
-
-
-
-  }
-
-
-
-};
-
-
-
-
-
-
-
-Pages._tplImportExcel = function(input) {
-
-
-
-  var file = input.files[0];
-
-
-
-  if (!file) return;
-
-
-
-  var reader = new FileReader();
-
-
-
-  reader.onload = function(e) {
-
-
-
-    var data = new Uint8Array(e.target.result);
-
-
-
-    var wb = XLSX.read(data, { type: 'array' });
-
-
-
-    var sheet = wb.Sheets[wb.SheetNames[0]];
-
-
-
-    var rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-
-
-    if (rows.length < 2) { App.toast('文件为空或缺少表头'); return; }
-
-
-
-    var headers = rows[0].map(function(h) { return String(h).trim(); });
-
-
-
-    var catIdx = -1, contIdx = -1, scoreIdx = -1, ruleIdx = -1;
-
-
-
-    headers.forEach(function(h, i) {
-
-
-
-      if (h.indexOf('类别') >= 0 || h.indexOf('分类') >= 0) catIdx = i;
-
-
-
-      if (h.indexOf('项目') >= 0 || h.indexOf('内容') >= 0 || h.indexOf('检查') >= 0) contIdx = i;
-
-
-
-      if (h.indexOf('分') >= 0 && h.indexOf('扣') < 0) scoreIdx = i;
-
-
-
-      if (h.indexOf('扣') >= 0 || h.indexOf('标准') >= 0) ruleIdx = i;
-
-
-
-    });
-
-
-
-    if (contIdx < 0) { App.toast('未识别到"检查项目"列，请检查表头'); return; }
-
-
-
-
-
-
-
-    var items = [];
-
-
-
-    for (var r = 1; r < rows.length; r++) {
-
-
-
-      var cols = rows[r];
-
-
-
-      var category = catIdx >= 0 ? String(cols[catIdx] || '').trim() : '';
-
-
-
-      var content = String(cols[contIdx] || '').trim();
-
-
-
-      if (!content) continue;
-
-
-
-      var score = scoreIdx >= 0 ? (parseInt(cols[scoreIdx]) || 0) : 0;
-
-
-
-      var deductRule = ruleIdx >= 0 ? String(cols[ruleIdx] || '').trim() : '';
-
-
-
-      items.push({ index: r - 1, category: category, content: content, score: score, deductRule: deductRule });
-
-
-
-    }
-
-
-
-
-
-
-
-    if (items.length === 0) { App.toast('未解析到有效的检查项'); return; }
-
-
-
-
-
-
-
-    var now = new Date();
-
-
-
-    var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-
-
-
-    var name = file.name.replace(/\.(xlsx|xls)$/i, '');
-
-
-
-    var templates = App.getTemplates();
-
-
-
-    templates.push({
-
-
-
-      id: 'tpl' + Date.now(),
-
-
-
-      name: name,
-
-
-
-      version: 1,
-
-
-
-      items: items,
-
-
-
-      isActive: true,
-
-
-
-      createdAt: dateStr,
-
-
-
-      updatedAt: dateStr
-
-
-
-    });
-
-
-
-    App.saveTemplates(templates);
-
-
-
-    App.toast('导入成功，共 ' + items.length + ' 个检查项');
-
-
-
-    Pages.inspectionTemplates();
-
-
-
-  };
-
-
-
-  reader.readAsArrayBuffer(file);
-
-
-
-  input.value = '';
-
-
-
-};
-
-
-
-
-
-
-
-/* ==================== 稽核填写 ==================== */
-
-
-
-Pages._fillTemplateId = '';
-
-
-
-Pages._fillStoreId = '';
-
-
-
-Pages._dbTplFilter = '';
-
-
-
-Pages._fillDraft = false;
-
-
-
-
-
-
-
-Pages.inspectionFill = function() {
-
-
-
-  var el = document.getElementById('page-inspectionFill');
-
-
-
-  if (!el) return;
-
-
-
-  var user = App.currentUser;
-
-
-
-  var stores = App.getStores();
-
-
-
-  var templates = App.getTemplates().filter(function(t) { return t.isActive !== false; });
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'inspection_edit')) {
-
-
-
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  var html = '';
-  var subHash = location.hash.replace('#', '');
-  var subTabs = Pages._inspectionSubTabs(user);
-  html += '<div class="sub-tabbar">';
-  subTabs.forEach(function(t) {
-    if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-  });
-  html += '</div>';
-
-
-
-
-  html += '<div class="card"><div class="card-title">稽核检查</div>';
-
-
-
-
-
-
-
-  // 选模板 + 选门店
-
-
-
-  html += '<div class="form-group"><label class="form-label">选择模板</label>';
-
-
-
-  html += '<select id="fill-template" class="form-input" onchange="Pages._fillOnTemplateChange()">';
-
-
-
-  html += '<option value="">-- 请选择 --</option>';
-
-
-
-  templates.forEach(function(t) {
-
-
-
-    var sel = Pages._fillTemplateId === t.id ? ' selected' : '';
-
-
-
-    html += '<option value="' + t.id + '"' + sel + '>' + t.name + ' (v' + (t.version||1) + ', ' + (t.items||[]).length + '项)</option>';
-
-
-
-  });
-
-
-
-  html += '</select></div>';
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">选择门店</label>';
-
-
-
-  html += App.renderStoreSelect('fill-store', stores, Pages._fillStoreId, '搜索门店...');
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 如果已选模板，显示检查表单
-
-
-
-  if (Pages._fillTemplateId) {
-
-
-
-    var tpl = templates.find(function(t) { return t.id === Pages._fillTemplateId; });
-
-
-
-    if (tpl && tpl.items) {
-
-
-
-      html += '<div class="table-container"><table><thead><tr>';
-
-
-
-      html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th>';
-
-
-
-      html += '</tr></thead><tbody id="fill-items-body">';
-
-
-
-      tpl.items.forEach(function(item, i) {
-
-
-
-        html += '<tr class="fill-item-row" data-index="' + i + '" data-score="' + (item.score||0) + '">';
-
-
-
-        html += '<td>' + (i+1) + '</td>';
-
-
-
-        html += '<td>' + (item.category || '') + '</td>';
-
-
-
-        html += '<td>' + (item.content || '') + '</td>';
-
-
-
-        html += '<td class="fill-std-score">' + (item.score||0) + '</td>';
-
-
-
-        html += '<td><input type="number" class="form-input fill-actual" value="' + (item.score||0) + '" min="0" max="' + (item.score||0) + '" style="width:60px" onchange="Pages._fillCalcScore()"></td>';
-
-
-
-        html += '<td><input type="text" class="form-input fill-deduct-reason" placeholder="扣分原因" style="width:120px" oninput="Pages._fillOnDeductInput(this)"></td>';
-
-
-
-        html += '<td><input type="text" class="form-input fill-remark" placeholder="备注" style="width:100px"></td>';
-
-
-
-        html += '</tr>';
-
-
-
-      });
-
-
-
-      html += '</tbody></table></div>';
-
-
-
-
-
-
-
-      var totalScore = tpl.items.reduce(function(s, item) { return s + (item.score||0); }, 0);
-
-
-
-      html += '<div style="margin-top:8px;font-weight:bold">总分：<span id="fill-total-score" style="color:#c41a1a">' + totalScore + '</span> / ' + totalScore + '</div>';
-
-
-
-
-
-
-
-      html += '<div style="margin-top:12px;display:flex;gap:8px">';
-
-
-
-      html += '<button class="btn btn-primary" onclick="Pages._fillSubmit(false)">提交检查</button>';
-
-
-
-      html += '<button class="btn" onclick="Pages._fillSubmit(true)">保存草稿</button>';
-
-
-
-      html += '</div>';
-
-
-
-    }
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-  el.innerHTML = html;
-
-
-
-
-
-
-
-  if (Pages._fillTemplateId) {
-
-
-
-    App.initStoreSelect('fill-store', stores, function(sid) { Pages._fillStoreId = sid; });
-
-
-
-  }
-
-
-
-};
-
-
-
-
-
-
-
-Pages._fillOnTemplateChange = function() {
-
-
-
-  Pages._fillTemplateId = document.getElementById('fill-template').value;
-
-
-
-  Pages.inspectionFill();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._fillCalcScore = function() {
-
-
-
-  var rows = document.querySelectorAll('.fill-item-row');
-
-
-
-  var total = 0, maxTotal = 0;
-
-
-
-  rows.forEach(function(row) {
-
-
-
-    var stdScore = parseInt(row.dataset.score) || 0;
-
-
-
-    var actual = parseInt((row.querySelector('.fill-actual')||{}).value);
-
-
-
-    maxTotal += stdScore;
-
-
-
-    if (!isNaN(actual)) total += actual; else total += stdScore;
-
-
-
-  });
-
-
-
-  var el = document.getElementById('fill-total-score');
-
-
-
-  if (el) el.textContent = total;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._fillOnDeductInput = function(input) {
-
-
-
-  var row = input.closest('.fill-item-row');
-
-
-
-  if (!row) return;
-
-
-
-  var stdScore = parseInt(row.dataset.score) || 0;
-
-
-
-  var reason = input.value.trim();
-
-
-
-  var actualEl = row.querySelector('.fill-actual');
-
-
-
-  if (reason && actualEl) {
-
-
-
-    // 用户输入扣分原因时自动将实际得分设为标准分-1，用户可继续调整
-
-
-
-    if (parseInt(actualEl.value) >= stdScore) {
-
-
-
-      actualEl.value = Math.max(0, stdScore - 1);
-
-
-
-    }
-
-
-
-  }
-
-
-
-  Pages._fillCalcScore();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._fillSubmit = async function(isDraft) {
-
-
-
-  var tplId = Pages._fillTemplateId || document.getElementById('fill-template').value;
-
-
-
-  var storeId = Pages._fillStoreId || App.getStoreSelectValue('fill-store');
-
-
-
-  if (!tplId) { App.toast('请选择模板'); return; }
-
-
-
-  if (!storeId) { App.toast('请选择门店'); return; }
-
-
-
-
-
-
-
-  var templates = App.getTemplates();
-
-
-
-  var tpl = templates.find(function(t) { return t.id === tplId; });
-
-
-
-  if (!tpl) { App.toast('模板不存在'); return; }
-
-
-
-
-
-
-
-  var stores = App.getStores();
-
-
-
-  var store = stores.find(function(s) { return s.id === storeId; });
-
-
-
-  var storeName = store ? store.name : storeId;
-
-
-
-
-
-
-
-  var rows = document.querySelectorAll('.fill-item-row');
-
-
-
-  var details = [];
-
-
-
-  var totalScore = 0, maxScore = 0;
-
-
-
-
-
-
-
-  rows.forEach(function(row, i) {
-
-
-
-    var item = tpl.items[i] || {};
-
-
-
-    var stdScore = item.score || 0;
-
-
-
-    var actualEl = row.querySelector('.fill-actual');
-
-
-
-    var actual = actualEl ? parseInt(actualEl.value) : stdScore;
-
-
-
-    if (isNaN(actual)) actual = stdScore;
-
-
-
-    var deductReason = (row.querySelector('.fill-deduct-reason')||{}).value || '';
-
-
-
-    var remark = (row.querySelector('.fill-remark')||{}).value || '';
-
-
-
-
-
-
-
-    maxScore += stdScore;
-
-
-
-    totalScore += actual;
-
-
-
-
-
-
-
-    details.push({
-
-
-
-      index: i,
-
-
-
-      category: item.category || '',
-
-
-
-      content: item.content || '',
-
-
-
-      stdScore: stdScore,
-
-
-
-      actualScore: actual,
-
-
-
-      deductReason: deductReason,
-
-
-
-      remark: remark
-
-
-
-    });
-
-
-
-  });
-
-
-
-
-
-
-
-  var now = new Date();
-
-
-
-  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-
-
-
-  var user = App.currentUser;
-
-
-
-
-
-
-
-  var resultId = 'ir' + Date.now();
-
-
-
-  var result = {
-
-
-
-    id: resultId,
-
-
-
-    storeId: storeId,
-
-
-
-    store: storeName,
-
-
-
-    templateId: tplId,
-
-
-
-    templateName: tpl.name,
-
-
-
-    date: dateStr,
-
-
-
-    inspector: user.name,
-
-
-
-    totalScore: totalScore,
-
-
-
-    maxScore: maxScore,
-
-
-
-    details: details,
-
-
-
-    status: isDraft ? '草稿' : '已完成',
-
-    locked: !isDraft
-
-
-
-  };
-
-
-
-
-
-
-
-  var results = App.getResults();
-
-
-
-  results.push(result);
-
-
-
-  await App.saveResults(results);
-
-
-
-
-
-
-
-  // 非草稿：扣分项生成 issues
-
-
-
-  if (!isDraft) {
-
-
-
-    var issues = App.getIssues();
-
-
-
-    details.forEach(function(d) {
-
-
-
-      if (d.actualScore < d.stdScore) {
-
-
-
-        issues.push({
-
-
-
-          id: 'is' + Date.now() + '_' + d.index,
-
-
-
-          resultId: resultId,
-
-
-
-          storeId: storeId,
-
-
-
-          store: storeName,
-
-
-
-          templateId: tplId,
-
-
-
-          templateName: tpl.name,
-
-
-
-          date: dateStr,
-
-
-
-          inspector: user.name,
-
-
-
-          category: d.category,
-
-
-
-          content: d.content,
-
-
-
-          stdScore: d.stdScore,
-
-
-
-          actualScore: d.actualScore,
-
-
-
-          deductReason: d.deductReason,
-
-
-
-          status: '待处理',
-
-
-
-          fixAction: '',
-
-
-
-          appealContent: '',
-
-
-
-          appealResult: ''
-
-
-
-        });
-
-
-
-      }
-
-
-
-    });
-
-
-
-    await App.saveIssues(issues);
-
-
-
-  }
-
-
-
-
-
-
-
-  App.toast(isDraft ? '草稿已保存' : '检查已提交');
-
-
-
-  Pages._fillTemplateId = '';
-
-
-
-  Pages._fillStoreId = '';
-
-
-
-  Pages.inspectionFill();
-
-
-
-};
-
-
-
-
-
-
-
-/* ==================== 检查结果列表 ==================== */
-
-
-
-Pages.inspectionResults = function() {
-
-
-
-  var el = document.getElementById('page-inspectionResults');
-
-
-
-  if (!el) return;
-
-
-
-  var user = App.currentUser;
-
-
-
-  var results = App.getResults();
-
-
-
-  var stores = App.getStores();
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'inspection_results')) {
-
-
-
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  // 店长只看自己门店
-
-
-
-  if (user.role === '店长' && user.storeId) {
-
-
-
-    results = results.filter(function(r) { return r.storeId === user.storeId; });
-
-
-
-  }
-
-
-
-
-
-
-
-  var html = '';
-
-  var subHash = location.hash.replace('#', '');
-
-  var subTabs = Pages._inspectionSubTabs(user);
-
-  html += '<div class="sub-tabbar">';
-
-  subTabs.forEach(function(t) {
-
-    if (!t.show) return;
-
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-
-  });
-
-  html += '</div>';
-
-  html += '<div class="card"><div class="card-title">检查结果</div>';
-
-
-
-
-
-
-
-  // 筛选栏
-
-
-
-  html += '<div class="form-group" style="display:flex;gap:8px;flex-wrap:wrap">';
-
-
-
-  html += '<select id="res-filter-store" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()"><option value="">全部门店</option>';
-
-
-
-  var storeSet = {};
-
-
-
-  results.forEach(function(r) { storeSet[r.storeId] = r.store; });
-
-
-
-  Object.keys(storeSet).forEach(function(sid) {
-
-
-
-    html += '<option value="' + sid + '">' + storeSet[sid] + '</option>';
-
-
-
-  });
-
-
-
-  html += '</select>';
-
-
-
-  html += '<input type="date" id="res-filter-date" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()">';
-
-
-
-  html += '<select id="res-filter-tpl" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()"><option value="">全部模板</option>';
-
-
-
-  var tplSet = {};
-
-
-
-  results.forEach(function(r) { tplSet[r.templateId] = r.templateName; });
-
-
-
-  Object.keys(tplSet).forEach(function(tid) {
-
-
-
-    html += '<option value="' + tid + '">' + tplSet[tid] + '</option>';
-
-
-
-  });
-
-
-
-  html += '</select>';
-
-
-
-  html += '<button class="btn btn-sm" onclick="Pages._exportResults()">导出Excel</button>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  if (results.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128202;</div><div>暂无检查结果</div></div>';
-
-
-
-  } else {
-
-
-
-    html += '<div class="table-container"><table><thead><tr>';
-
-
-
-    html += '<th>门店</th><th>模板</th><th>日期</th><th>稽核员</th><th>总分</th><th>状态</th><th>操作</th>';
-
-
-
-    html += '</tr></thead><tbody id="res-tbody">';
-
-
-
-    results.reverse().forEach(function(r) {
-
-
-
-      html += '<tr class="res-row" data-store="' + (r.storeId||'') + '" data-date="' + (r.date||'') + '" data-tpl="' + (r.templateId||'') + '">';
-
-
-
-      html += '<td>' + (r.store || '') + '</td>';
-
-
-
-      html += '<td>' + (r.templateName || '') + '</td>';
-
-
-
-      html += '<td>' + (r.date || '') + '</td>';
-
-
-
-      html += '<td>' + (r.inspector || '') + '</td>';
-
-
-
-      html += '<td><b>' + (r.totalScore || 0) + '</b> / ' + (r.maxScore || 0) + '</td>';
-
-
-
-      var statusColor = r.status === '已完成' ? '#10b981' : '#f59e0b';
-
-
-
-      html += '<td><span style="color:' + statusColor + '">' + (r.status || '') + '</span></td>';
-
-
-
-      html += '<td>';
-      html += '<button class="btn btn-sm" onclick="Pages._showResultDetail(\'' + r.id + '\')">详情</button>';
-      var isHQ = App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260';
-      var canEdit = App.Permissions.canAccess(user.role, 'inspection_edit');
-      var sameDay = r.locked !== false && r.date === Pages._todayStr();
-      if (canEdit && (isHQ || sameDay)) {
-        html += ' <button class="btn btn-sm btn-outline" onclick="Pages._withdrawResult(\'' + r.id + '\')">撤回</button>';
-      }
-      html += '</td>';
-
-
-
-      html += '</tr>';
-
-
-
-    });
-
-
-
-    html += '</tbody></table></div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-  el.innerHTML = html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._filterResults = function() {
-
-
-
-  var storeFilter = (document.getElementById('res-filter-store')||{}).value || '';
-
-
-
-  var dateFilter = (document.getElementById('res-filter-date')||{}).value || '';
-
-
-
-  var tplFilter = (document.getElementById('res-filter-tpl')||{}).value || '';
-
-
-
-
-
-
-
-  document.querySelectorAll('.res-row').forEach(function(row) {
-
-
-
-    var show = true;
-
-
-
-    if (storeFilter && row.dataset.store !== storeFilter) show = false;
-
-
-
-    if (dateFilter && row.dataset.date !== dateFilter) show = false;
-
-
-
-    if (tplFilter && row.dataset.tpl !== tplFilter) show = false;
-
-
-
-    row.style.display = show ? '' : 'none';
-
-
-
-  });
-
-
-
-};
-
-
-
-
-
-
-
-Pages._todayStr = function() {
-  var n = new Date();
-  return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
-};
-
-Pages._withdrawResult = function(id) {
-  var results = App.getResults();
-  var r = results.find(function(x) { return x.id === id; });
-  if (!r) return;
-  var isHQ = App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260';
-  var canWithdraw = App.Permissions.canAccess(App.currentUser.role, 'inspection_edit') && (isHQ || (r.locked !== false && r.date === Pages._todayStr()));
-  if (!canWithdraw) { App.toast('该记录已过当天，不可撤回'); return; }
-  var overlay = document.getElementById('modal-overlay');
-  if (!overlay) return;
-  overlay.querySelector('.modal-box').outerHTML = '<div class="modal-box" style="max-width:480px" onclick="event.stopPropagation()">' +
-    '<div class="modal-header"><h3>撤回检查记录</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>' +
-    '<div class="modal-body"><p>确定撤回该条检查记录吗？</p><p style="color:#666;font-size:13px">门店：' + (r.store||'') + ' ｜ 日期：' + (r.date||'') + ' ｜ 稽核员：' + (r.inspector||'') + '</p><p style="color:#f59e0b;font-size:13px">撤回将删除此条记录及关联问题工单，且不可恢复。</p></div>' +
-    '<div class="modal-footer"><button class="btn" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">取消</button> ' +
-    '<button class="btn btn-danger" onclick="Pages._doWithdraw(\'' + id + '\')">确认撤回</button></div></div>';
-  overlay.classList.add('show');
-};
-
-Pages._doWithdraw = function(id) {
-  var results = App.getResults();
-  var idx = results.findIndex(function(x) { return x.id === id; });
-  if (idx < 0) { App.toast('记录不存在'); return; }
-  var r = results[idx];
-  results.splice(idx, 1);
-  App.saveResults(results);
-  if (App.getIssues && App.saveIssues) {
-    var issues = App.getIssues().filter(function(iss) { return iss.resultId !== id; });
-    App.saveIssues(issues);
-  }
-  var overlay = document.getElementById('modal-overlay');
-  if (overlay) overlay.classList.remove('show');
-  App.toast('已撤回该条检查记录');
-  if (location.hash.replace('#','') === 'inspectionResults') {
-    Pages.inspectionResults();
-  } else {
-    location.hash = '#inspectionResults';
-  }
-};
-
-Pages._showResultDetail = function(id) {
-
-
-
-  var results = App.getResults();
-
-
-
-  var r = results.find(function(x) { return x.id === id; });
-
-
-
-  if (!r) return;
-
-
-
-
-
-
-
-  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" style="max-width:700px" onclick="event.stopPropagation()">';
-
-
-
-  html += '<div class="modal-header"><h3>检查详情</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
-
-
-
-  html += '<div class="modal-body">';
-
-
-
-  html += '<p><b>门店：</b>' + (r.store||'') + ' &nbsp; <b>模板：</b>' + (r.templateName||'') + '</p>';
-
-
-
-  html += '<p><b>日期：</b>' + (r.date||'') + ' &nbsp; <b>稽核员：</b>' + (r.inspector||'') + '</p>';
-
-
-
-  html += '<p><b>总分：</b>' + (r.totalScore||0) + ' / ' + (r.maxScore||0) + '</p>';
-
-
-
-
-
-
-
-  html += '<div class="table-container"><table><thead><tr>';
-
-
-
-  html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th>';
-
-
-
-  html += '</tr></thead><tbody>';
-
-
-
-  (r.details||[]).forEach(function(d, i) {
-
-
-
-    var isDeduct = d.actualScore < d.stdScore;
-
-
-
-    html += '<tr' + (isDeduct ? ' style="background:#fef2f2"' : '') + '>';
-
-
-
-    html += '<td>' + (i+1) + '</td>';
-
-
-
-    html += '<td>' + (d.category||'') + '</td>';
-
-
-
-    html += '<td>' + (d.content||'') + '</td>';
-
-
-
-    html += '<td>' + (d.stdScore||0) + '</td>';
-
-
-
-    html += '<td style="color:' + (isDeduct ? '#ef4444' : '#10b981') + '">' + (d.actualScore||0) + '</td>';
-
-
-
-    html += '<td>' + (d.deductReason||'') + '</td>';
-
-
-
-    html += '<td>' + (d.remark||'') + '</td>';
-
-
-
-    html += '</tr>';
-
-
-
-  });
-
-
-
-  html += '</tbody></table></div>';
-
-
-
-  html += '</div></div></div>';
-
-
-
-
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  var overlay = div.firstElementChild;
-
-
-
-  document.body.appendChild(overlay);
-
-
-
-  overlay.offsetHeight;
-
-
-
-  overlay.classList.add('show');
-
-
-
-};
-
-
-
-
-
-
-
-Pages._exportResults = function() {
-
-
-
-  var results = App.getResults();
-
-
-
-  if (results.length === 0) { App.toast('无数据可导出'); return; }
-
-
-
-
-
-
-
-  var rows = [['门店', '模板', '日期', '稽核员', '总分', '满分', '状态', '序号', '类别', '检查内容', '标准分', '实际得分', '扣分原因', '备注']];
-
-
-
-  results.forEach(function(r) {
-
-
-
-    (r.details||[]).forEach(function(d, i) {
-
-
-
-      rows.push([r.store||'', r.templateName||'', r.date||'', r.inspector||'',
-
-
-
-        r.totalScore||0, r.maxScore||0, r.status||'',
-
-
-
-        i+1, d.category||'', d.content||'', d.stdScore||0, d.actualScore||0, d.deductReason||'', d.remark||'']);
-
-
-
-    });
-
-
-
-  });
-
-
-
-
-
-
-
-  var ws = XLSX.utils.aoa_to_sheet(rows);
-
-
-
-  var wb = XLSX.utils.book_new();
-
-
-
-  XLSX.utils.book_append_sheet(wb, ws, '检查结果');
-
-
-
-  var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-
-
-
-  var blob = new Blob([wbout], { type: 'application/vnd.ms-excel' });
-
-
-
-  var a = document.createElement('a');
-
-
-
-  a.href = URL.createObjectURL(blob);
-
-
-
-  var now = new Date();
-
-
-
-  a.download = 'inspection_results_' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '.xlsx';
-
-
-
-  a.click();
-
-
-
-  App.toast('导出成功');
-
-
-
-};
-
-
-
-
-
-
-
-/* ==================== 问题工单 ==================== */
-
-
-
-Pages._issueFilter = 'all';
-
-
-
-
-
-
-
-Pages.inspectionIssues = function() {
-
-
-
-  var el = document.getElementById('page-inspectionIssues');
-
-
-
-  if (!el) return;
-
-
-
-  var user = App.currentUser;
-
-
-
-  var issues = App.getIssues();
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'inspection')) {
-
-
-
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  // 店长只看自己门店
-
-
-
-  if (user.role === '店长' && user.storeId) {
-
-
-
-    issues = issues.filter(function(is) { return is.storeId === user.storeId; });
-
-
-
-  }
-
-
-
-
-
-
-
-  var html = '';
-  var subHash = location.hash.replace('#', '');
-  var subTabs = Pages._inspectionSubTabs(user);
-  html += '<div class="sub-tabbar">';
-  subTabs.forEach(function(t) {
-    if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-  });
-  html += '</div>';
-
-
-
-
-  html += '<div class="card"><div class="card-title">问题工单</div>';
-
-
-
-
-
-
-
-  // 筛选
-
-
-
-  html += '<div class="db-toggle-bar">';
-
-
-
-  var statuses = [
-
-
-
-    { v: 'all', l: '全部' },
-
-
-
-    { v: '待处理', l: '待处理' },
-
-
-
-    { v: '已整改', l: '已整改' },
-
-
-
-    { v: '已闭环', l: '已闭环' },
-
-
-
-    { v: '申诉中', l: '申诉中' }
-
-
-
-  ];
-
-
-
-  statuses.forEach(function(s) {
-
-
-
-    html += '<button class="db-toggle-btn' + (Pages._issueFilter === s.v ? ' active' : '') + '" onclick="Pages._setIssueFilter(\'' + s.v + '\')">' + s.l + '</button>';
-
-
-
-  });
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 统计
-
-
-
-  var pending = issues.filter(function(is) { return is.status === '待处理'; }).length;
-
-
-
-  var fixed = issues.filter(function(is) { return is.status === '已整改'; }).length;
-
-
-
-  var closed = issues.filter(function(is) { return is.status === '已闭环'; }).length;
-
-
-
-  var appealing = issues.filter(function(is) { return is.status === '申诉中'; }).length;
-
-
-
-  var total = issues.length;
-
-
-
-  var fixRate = total > 0 ? Math.round((fixed + closed) / total * 100) : 0;
-
-
-
-
-
-
-
-  html += '<div class="stats-row">';
-
-
-
-  html += '<div class="stat-item"><span class="stat-num" style="color:#ef4444">' + pending + '</span><span class="stat-label">待处理</span></div>';
-
-
-
-  html += '<div class="stat-item"><span class="stat-num" style="color:#f59e0b">' + fixed + '</span><span class="stat-label">已整改</span></div>';
-
-
-
-  html += '<div class="stat-item"><span class="stat-num" style="color:#10b981">' + closed + '</span><span class="stat-label">已闭环</span></div>';
-
-
-
-  html += '<div class="stat-item"><span class="stat-num" style="color:#6366f1">' + appealing + '</span><span class="stat-label">申诉中</span></div>';
-
-
-
-  html += '<div class="stat-item"><span class="stat-num">' + fixRate + '%</span><span class="stat-label">整改率</span></div>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 批量操作栏（管理角色 + 已整改筛选时显示）
-
-
-
-  var isManager = (user.role === '总部' || user.role === '稽核' || user.role === '稽核员' || user.role === '线上稽核' || user.role === '线下稽核');
-
-
-
-  if (isManager && Pages._issueFilter === '已整改') {
-
-
-
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
-
-
-
-    html += '<label style="cursor:pointer;font-size:12px;user-select:none"><input type="checkbox" id="issue-select-all" onchange="Pages._issueSelectAll()"> 全选</label>';
-
-
-
-    html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueBatchClose()">批量关闭所选</button>';
-
-
-
-    html += '</div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  var filtered = issues;
-
-
-
-  if (Pages._issueFilter !== 'all') {
-
-
-
-    filtered = issues.filter(function(is) { return is.status === Pages._issueFilter; });
-
-
-
-  }
-
-
-
-
-
-
-
-  if (filtered.length === 0) {
-
-
-
-    html += '<div class="empty-state"><div class="empty-icon">&#128221;</div><div>暂无问题工单</div></div>';
-
-
-
-  } else {
-
-
-
-    filtered.reverse().forEach(function(is) {
-
-
-
-      var statusColor = is.status === '待处理' ? '#ef4444' : is.status === '已整改' ? '#f59e0b' : is.status === '已闭环' ? '#10b981' : '#6366f1';
-
-
-
-      html += '<div class="list-item" style="border-left:3px solid ' + statusColor + '">';
-
-
-
-      if (isManager && is.status === '已整改') {
-
-
-
-        html += '<input type="checkbox" class="issue-checkbox" data-id="' + is.id + '" style="margin-right:8px;flex-shrink:0">';
-
-
-
-      }
-
-
-
-      html += '<div class="li-main">';
-
-
-
-      html += '<div class="li-title">[' + (is.store||'') + '] ' + (is.content||'') + '</div>';
-
-
-
-      html += '<div class="li-sub">' + (is.date||'') + ' | ' + (is.category||'') + ' | 扣' + ((is.stdScore||0) - (is.actualScore||0)) + '分 | ' + (is.deductReason||'') + '</div>';
-
-
-
-      html += '<div class="li-sub">稽核员：' + (is.inspector||'') + ' | 状态：<span style="color:' + statusColor + '">' + (is.status||'') + '</span></div>';
-
-
-
-      if (is.fixAction) html += '<div class="li-sub">整改措施：' + is.fixAction + '</div>';
-
-
-
-      html += '</div>';
-
-
-
-
-
-
-
-      // 操作按钮
-
-
-
-      html += '<div class="li-actions" style="margin-top:6px">';
-
-
-
-      if (user.role === '店长' && is.status === '待处理') {
-
-
-
-        html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueFix(\'' + is.id + '\')">填写整改</button>';
-
-
-
-        html += '<button class="btn btn-sm" onclick="Pages._issueAppeal(\'' + is.id + '\')">申诉</button>';
-
-
-
-      }
-
-
-
-      if (user.role === '店长' && is.status === '已闭环') {
-
-
-
-        html += '<button class="btn btn-sm" onclick="Pages._issueAppeal(\'' + is.id + '\')">申诉</button>';
-
-
-
-      }
-
-
-
-      if ((user.role === '总部' || user.role === '稽核' || user.role === '稽核员' || user.role === '线上稽核' || user.role === '线下稽核')) {
-
-
-
-        if (is.status === '已整改') {
-
-
-
-          html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueVerify(\'' + is.id + '\', \'closed\')">审核通过</button>';
-
-
-
-          html += '<button class="btn btn-sm btn-danger" onclick="Pages._issueVerify(\'' + is.id + '\', \'reject\')">驳回</button>';
-
-
-
-        }
-
-
-
-        if (is.status === '申诉中') {
-
-
-
-          html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueReviewAppeal(\'' + is.id + '\', \'通过\')">申诉通过</button>';
-
-
-
-          html += '<button class="btn btn-sm btn-danger" onclick="Pages._issueReviewAppeal(\'' + is.id + '\', \'驳回\')">申诉驳回</button>';
-
-
-
-        }
-
-
-
-      }
-
-
-
-      html += '</div>';
-
-
-
-      html += '</div>';
-
-
-
-    });
-
-
-
-  }
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-  el.innerHTML = html;
-
-
-
-};
-
-
-
-
-
-
-
-Pages._setIssueFilter = function(filter) {
-
-
-
-  Pages._issueFilter = filter;
-
-
-
-  Pages.inspectionIssues();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueSelectAll = function() {
-
-
-
-  var checked = document.getElementById('issue-select-all').checked;
-
-
-
-  document.querySelectorAll('.issue-checkbox').forEach(function(cb) { cb.checked = checked; });
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueBatchClose = function() {
-
-
-
-  var checked = document.querySelectorAll('.issue-checkbox:checked');
-
-
-
-  if (checked.length === 0) { App.toast('请先勾选要关闭的工单'); return; }
-
-
-
-  if (!confirm('确定要批量关闭 ' + checked.length + ' 个工单吗？')) return;
-
-
-
-  var ids = [];
-
-
-
-  checked.forEach(function(cb) { ids.push(cb.dataset.id); });
-
-
-
-  var issues = App.getIssues();
-
-
-
-  issues.forEach(function(is) {
-
-
-
-    if (ids.indexOf(is.id) >= 0 && is.status === '已整改') {
-
-
-
-      is.status = '已闭环';
-
-
-
-      is.closedAt = new Date().toISOString().slice(0,10);
-
-
-
-    }
-
-
-
-  });
-
-
-
-  App.saveIssues();
-
-
-
-  Pages.inspectionIssues();
-
-
-
-  App.toast('已批量关闭 ' + ids.length + ' 个工单');
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueFix = function(id) {
-
-
-
-  var issues = App.getIssues();
-
-
-
-  var is = issues.find(function(x) { return x.id === id; });
-
-
-
-  if (!is) return;
-
-
-
-
-
-
-
-  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
-
-
-
-  html += '<div class="modal-header"><h3>填写整改措施</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
-
-
-
-  html += '<div class="modal-body">';
-
-
-
-  html += '<p><b>问题：</b>' + (is.content||'') + '（' + (is.store||'') + '）</p>';
-
-
-
-  html += '<div class="form-group"><label class="form-label">整改措施</label>';
-
-
-
-  html += '<textarea id="issue-fix-action" class="form-input" rows="4" placeholder="请描述整改措施..."></textarea></div>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '<div class="modal-footer">';
-
-
-
-  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages._issueFixSubmit(\'' + id + '\')">提交整改</button>';
-
-
-
-  html += '</div></div></div>';
-
-
-
-
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  document.body.appendChild(div.firstElementChild).classList.add('show');
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueFixSubmit = async function(id) {
-
-
-
-  var action = (document.getElementById('issue-fix-action')||{}).value || '';
-
-
-
-  if (!action.trim()) { App.toast('请填写整改措施'); return; }
-
-
-
-  var issues = App.getIssues();
-
-
-
-  var is = issues.find(function(x) { return x.id === id; });
-
-
-
-  if (is) {
-
-
-
-    is.fixAction = action.trim();
-
-
-
-    is.status = '已整改';
-
-
-
-    await App.saveIssues(issues);
-
-
-
-    App.toast('整改已提交');
-
-
-
-  }
-
-
-
-  document.querySelector('.modal-overlay').remove();
-
-
-
-  Pages.inspectionIssues();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueVerify = async function(id, action) {
-
-
-
-  var issues = App.getIssues();
-
-
-
-  var is = issues.find(function(x) { return x.id === id; });
-
-
-
-  if (!is) return;
-
-
-
-
-
-
-
-  if (action === 'closed') {
-
-
-
-    is.status = '已闭环';
-
-
-
-    App.toast('已审核通过');
-
-
-
-  } else {
-
-
-
-    is.status = '待处理';
-
-
-
-    is.fixAction = '';
-
-
-
-    App.toast('已驳回，退回待处理');
-
-
-
-  }
-
-
-
-  await App.saveIssues(issues);
-
-
-
-  Pages.inspectionIssues();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueAppeal = function(id) {
-
-
-
-  var issues = App.getIssues();
-
-
-
-  var is = issues.find(function(x) { return x.id === id; });
-
-
-
-  if (!is) return;
-
-
-
-
-
-
-
-  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
-
-
-
-  html += '<div class="modal-header"><h3>提交申诉</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
-
-
-
-  html += '<div class="modal-body">';
-
-
-
-  html += '<p><b>问题：</b>' + (is.content||'') + '（' + (is.store||'') + '）</p>';
-
-
-
-  html += '<div class="form-group"><label class="form-label">申诉内容</label>';
-
-
-
-  html += '<textarea id="issue-appeal-content" class="form-input" rows="4" placeholder="请描述申诉理由..."></textarea></div>';
-
-
-
-  html += '</div>';
-
-
-
-  html += '<div class="modal-footer">';
-
-
-
-  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
-
-
-
-  html += '<button class="btn btn-primary" onclick="Pages._issueAppealSubmit(\'' + id + '\')">提交申诉</button>';
-
-
-
-  html += '</div></div></div>';
-
-
-
-
-
-
-
-  var div = document.createElement('div');
-
-
-
-  div.innerHTML = html;
-
-
-
-  document.body.appendChild(div.firstElementChild).classList.add('show');
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueAppealSubmit = async function(id) {
-
-
-
-  var content = (document.getElementById('issue-appeal-content')||{}).value || '';
-
-
-
-  if (!content.trim()) { App.toast('请填写申诉内容'); return; }
-
-
-
-  var issues = App.getIssues();
-
-
-
-  var is = issues.find(function(x) { return x.id === id; });
-
-
-
-  if (is) {
-
-
-
-    is.status = '申诉中';
-
-
-
-    is.appealContent = content.trim();
-
-
-
-    await App.saveIssues(issues);
-
-
-
-    App.toast('申诉已提交');
-
-
-
-  }
-
-
-
-  document.querySelector('.modal-overlay').remove();
-
-
-
-  Pages.inspectionIssues();
-
-
-
-};
-
-
-
-
-
-
-
-Pages._issueReviewAppeal = async function(id, result) {
-
-
-
-  var issues = App.getIssues();
-
-
-
-  var is = issues.find(function(x) { return x.id === id; });
-
-
-
-  if (is) {
-
-
-
-    is.status = result === '通过' ? '已闭环' : '待处理';
-
-
-
-    is.appealResult = result;
-
-
-
-    await App.saveIssues(issues);
-
-
-
-    App.toast('申诉审核' + result);
-
-
-
-  }
-
-
-
-  Pages.inspectionIssues();
-
-
-
-};
-
-
-
-
-
-
-
-/* ==================== 稽核看板 ==================== */
-
-
-
-Pages.inspectionDashboard = function() {
-
-
-
-  var el = document.getElementById('page-inspectionDashboard');
-
-
-
-  if (!el) return;
-
-
-
-  var user = App.currentUser;
-
-
-
-
-
-
-
-  if (!App.Permissions.canAccess(user.role, 'inspection')) {
-
-
-
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-    return;
-
-
-
-  }
-
-
-
-
-
-
-
-  var results = App.getResults();
-
-
-
-  var issues = App.getIssues();
-
-
-
-  var stores = App.getStores();
-
-
-
-
-
-
-
-  var now = new Date();
-
-
-
-  var monthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
-
-
-
-
-
-
-
-  var monthResults = results.filter(function(r) { return r.date >= monthStart; });
-
-
-
-  var monthIssues = issues.filter(function(is) { return is.date >= monthStart; });
-
-
-
-
-
-
-
-  var checkCount = monthResults.length;
-
-
-
-  var avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
-
-
-
-  var issueCount = monthIssues.length;
-
-
-
-  var fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
-
-
-
-  var fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
-
-
-
-
-
-
-
-  // 门店筛选（持久化到 Pages 上，切换后重绘；店长强制锁定本人门店）
-
-
-
-  var storeFilter = (user.role === '店长' && user.storeId) ? user.storeId : (Pages._dbStoreFilter || '');
-
-
-
-  if (storeFilter) {
-
-
-
-    results = results.filter(function(r) { return r.storeId === storeFilter; });
-
-
-
-    issues = issues.filter(function(is) { return is.storeId === storeFilter; });
-
-
-
-    monthResults = monthResults.filter(function(r) { return r.storeId === storeFilter; });
-
-
-
-    monthIssues = monthIssues.filter(function(is) { return is.storeId === storeFilter; });
-
-
-
-    checkCount = monthResults.length;
-
-
-
-    avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
-
-
-
-    issueCount = monthIssues.length;
-
-
-
-    fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
-
-
-
-    fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
-
-
-
-  }
-
-
-
-
-
-
-
-  // 模板筛选（与门店筛选叠加）
-
-
-
-  var tplFilter = Pages._dbTplFilter || '';
-
-
-
-  if (tplFilter) {
-
-
-
-    results = results.filter(function(r) { return r.templateId === tplFilter; });
-
-
-
-    issues = issues.filter(function(is) { return is.templateId === tplFilter; });
-
-
-
-    monthResults = monthResults.filter(function(r) { return r.templateId === tplFilter; });
-
-
-
-    monthIssues = monthIssues.filter(function(is) { return is.templateId === tplFilter; });
-
-
-
-    checkCount = monthResults.length;
-
-
-
-    avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
-
-
-
-    issueCount = monthIssues.length;
-
-
-
-    fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
-
-
-
-    fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
-
-
-
-  }
-
-
-
-
-
-
-
-  var html = '';
-  var subHash = location.hash.replace('#', '');
-  var subTabs = Pages._inspectionSubTabs(user);
-  html += '<div class="sub-tabbar">';
-  subTabs.forEach(function(t) {
-    if (!t.show) return;
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-  });
-  html += '</div>';
-
-
-
-
-
-
-
-
-  // 门店筛选下拉（店长不显示，自动锁定；其他角色使用全量门店列表）
-
-
-
-  if (user.role !== '店长') {
-
-
-
-    var storeEntries = (App.getStores() || []).sort(function(a,b) { return (a.name||'').localeCompare(b.name||'', 'zh'); });
-
-
-
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
-
-
-
-    html += '<label style="font-size:13px;white-space:nowrap">门店筛选：</label>';
-
-
-
-    html += '<select id="db-store-filter" class="form-input" style="max-width:200px" onchange="Pages._dbStoreFilter=this.value;Pages.inspectionDashboard()">';
-
-
-
-    html += '<option value="">全部门店</option>';
-
-
-
-    storeEntries.forEach(function(s) {
-
-
-
-      html += '<option value="' + (s.id||s.storeId) + '"' + (storeFilter === (s.id||s.storeId) ? ' selected' : '') + '>' + (s.name||s.store) + '</option>';
-
-
-
-    });
-
-
-
-    html += '</select>';
-
-
-
-    html += '</div>';
-
-
-
-    // 模板筛选
-
-
-
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
-
-
-
-    html += '<label style="font-size:13px;white-space:nowrap">模板筛选：</label>';
-
-
-
-    html += '<select id="db-tpl-filter" class="form-input" style="max-width:200px" onchange="Pages._dbTplFilter=this.value;Pages.inspectionDashboard()">';
-
-
-
-    html += '<option value="">全部模板</option>';
-
-
-
-    (App.getTemplates() || []).forEach(function(t) {
-
-
-
-      html += '<option value="' + t.id + '"' + (tplFilter === t.id ? ' selected' : '') + '>' + (t.name||t.id) + '</option>';
-
-
-
-    });
-
-
-
-    html += '</select>';
-
-
-
-    html += '</div>';
-
-
-
-  } else {
-
-
-
-    var myStore = (App.getStores() || []).find(function(s) { return (s.id||s.storeId) === (user.storeId||''); });
-
-
-
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:#6b7280">';
-
-
-
-    html += '当前门店：<b style="color:#111">' + ((myStore && (myStore.name||myStore.store)) || user.store || user.storeId || '') + '</b>';
-
-
-
-    html += '</div>';
-
-
-
-    // 模板筛选
-
-
-
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
-
-
-
-    html += '<label style="font-size:13px;white-space:nowrap">模板筛选：</label>';
-
-
-
-    html += '<select id="db-tpl-filter" class="form-input" style="max-width:200px" onchange="Pages._dbTplFilter=this.value;Pages.inspectionDashboard()">';
-
-
-
-    html += '<option value="">全部模板</option>';
-
-
-
-    (App.getTemplates() || []).forEach(function(t) {
-
-
-
-      html += '<option value="' + t.id + '"' + (tplFilter === t.id ? ' selected' : '') + '>' + (t.name||t.id) + '</option>';
-
-
-
-    });
-
-
-
-    html += '</select>';
-
-
-
-    html += '</div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  // KPI 卡片
-
-
-
-  html += '<div class="db-kpi-grid">';
-
-
-
-  html += dbKpiCard('本月检查', checkCount, '次', '#6366f1', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5v2h6V5');
-
-
-
-  html += dbKpiCard('平均分', avgScore, '分', '#10b981', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z');
-
-
-
-  html += dbKpiCard('问题数', issueCount, '项', '#ef4444', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z');
-
-
-
-  html += dbKpiCard('整改率', fixRate, '%', '#f59e0b', 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15');
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 门店得分柱状图
-
-
-
-  html += '<div class="db-card-3d"><div class="db-card-title">近期门店得分对比</div>';
-
-
-
-  html += '<canvas id="insp-bar-chart" width="600" height="200" style="width:100%;max-width:600px;height:200px"></canvas>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 问题分类饼图
-
-
-
-  html += '<div class="db-card-3d" style="display:inline-block;width:48%;vertical-align:top"><div class="db-card-title">问题分类分布</div>';
-
-
-
-  html += '<canvas id="insp-pie-chart" width="250" height="250" style="width:100%;max-width:250px;height:250px"></canvas>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 月度趋势折线图
-
-
-
-  html += '<div class="db-card-3d" style="display:inline-block;width:48%;vertical-align:top"><div class="db-card-title">月度趋势</div>';
-
-
-
-  html += '<canvas id="insp-line-chart" width="250" height="250" style="width:100%;max-width:250px;height:250px"></canvas>';
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-  // 机会点：本月 Top 扣分项
-
-
-
-  var topDeducts = monthIssues.map(function(is) {
-
-
-
-    return { content: is.content, category: is.category, deduct: (is.stdScore||0) - (is.actualScore||0), reason: is.deductReason };
-
-
-
-  }).sort(function(a,b) { return b.deduct - a.deduct; }).slice(0, 5);
-
-
-
-  if (topDeducts.length > 0) {
-
-
-
-    html += '<div class="db-card-3d" style="margin-top:16px"><div class="db-card-title">本月机会点（Top 扣分项）</div>';
-
-
-
-    html += '<div class="table-container" style="margin-top:8px"><table><thead><tr>';
-
-
-
-    html += '<th style="width:55%">检查项目</th><th style="width:15%">类别</th><th style="width:10%">扣分</th><th style="width:20%">扣分原因</th>';
-
-
-
-    html += '</tr></thead><tbody>';
-
-
-
-    topDeducts.forEach(function(d, i) {
-
-
-
-      var barW = Math.round((d.deduct / topDeducts[0].deduct) * 80);
-
-
-
-      html += '<tr>';
-
-
-
-      html += '<td><div style="position:relative">';
-
-
-
-      html += '<div style="position:absolute;left:0;top:0;bottom:0;background:#fecaca;border-radius:2px;width:' + barW + '%"></div>';
-
-
-
-      html += '<span style="position:relative">' + (d.content||'') + '</span></div></td>';
-
-
-
-      html += '<td>' + (d.category||'') + '</td>';
-
-
-
-      html += '<td style="color:#ef4444;font-weight:600">-' + d.deduct + '分</td>';
-
-
-
-      html += '<td style="font-size:11px;color:#6b7280">' + (d.reason||'') + '</td>';
-
-
-
-      html += '</tr>';
-
-
-
-    });
-
-
-
-    html += '</tbody></table></div></div>';
-
-
-
-  }
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-
-
-
-
-
-
-  // 延迟绘制图表
-
-
-
-  setTimeout(function() {
-
-
-
-    Pages._drawInspBarChart(results, stores);
-
-
-
-    Pages._drawInspPieChart(issues);
-
-
-
-    Pages._drawInspLineChart(results);
-
-
-
-  }, 100);
-
-
-
-};
-
-
-
-
-
-
-
-Pages._drawInspBarChart = function(results, stores) {
-
-
-
-  var canvas = document.getElementById('insp-bar-chart');
-
-
-
-  if (!canvas) return;
-
-
-
-  var ctx = canvas.getContext('2d');
-
-
-
-  var W = canvas.width, H = canvas.height;
-
-
-
-  ctx.clearRect(0, 0, W, H);
-
-
-
-
-
-
-
-  // 按门店聚合
-
-
-
-  var storeScores = {};
-
-
-
-  results.forEach(function(r) {
-
-
-
-    if (!storeScores[r.storeId]) storeScores[r.storeId] = { name: r.store, scores: [] };
-
-
-
-    storeScores[r.storeId].scores.push(r.totalScore||0);
-
-
-
-  });
-
-
-
-
-
-
-
-  var entries = Object.values(storeScores).map(function(s) {
-
-
-
-    return { name: s.name, avg: Math.round(s.scores.reduce(function(a,b){return a+b;},0) / s.scores.length) };
-
-
-
-  }).sort(function(a,b) { return b.avg - a.avg; }).slice(0, 8);
-
-
-
-
-
-
-
-  if (entries.length === 0) return;
-
-
-
-
-
-
-
-  var pad = { top: 20, bottom: 40, left: 40, right: 10 };
-
-
-
-  var chartW = W - pad.left - pad.right;
-
-
-
-  var chartH = H - pad.top - pad.bottom;
-
-
-
-  var barW = chartW / entries.length * 0.6;
-
-
-
-  var gap = chartW / entries.length * 0.4;
-
-
-
-  var maxVal = Math.max.apply(null, entries.map(function(e) { return e.avg; })) || 100;
-
-
-
-
-
-
-
-  // 坐标轴
-
-
-
-  ctx.strokeStyle = '#ddd';
-
-
-
-  ctx.lineWidth = 1;
-
-
-
-  ctx.beginPath();
-
-
-
-  ctx.moveTo(pad.left, pad.top);
-
-
-
-  ctx.lineTo(pad.left, pad.top + chartH);
-
-
-
-  ctx.lineTo(pad.left + chartW, pad.top + chartH);
-
-
-
-  ctx.stroke();
-
-
-
-
-
-
-
-  // 柱状图
-
-
-
-  var colors = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ec4899','#3b82f6','#ef4444','#14b8a6'];
-
-
-
-  entries.forEach(function(e, i) {
-
-
-
-    var barH = (e.avg / maxVal) * chartH;
-
-
-
-    var x = pad.left + i * (barW + gap) + gap / 2;
-
-
-
-    var y = pad.top + chartH - barH;
-
-
-
-    ctx.fillStyle = colors[i % colors.length];
-
-
-
-    ctx.fillRect(x, y, barW, barH);
-
-
-
-    // 分值
-
-
-
-    ctx.fillStyle = '#333';
-
-
-
-    ctx.font = '10px sans-serif';
-
-
-
-    ctx.textAlign = 'center';
-
-
-
-    ctx.fillText(e.avg, x + barW/2, y - 4);
-
-
-
-    // 标签
-
-
-
-    ctx.fillText((e.name||'').length > 4 ? (e.name||'').substring(0,4) : (e.name||''), x + barW/2, pad.top + chartH + 16);
-
-
-
-  });
-
-
-
-};
-
-
-
-
-
-
-
-Pages._drawInspPieChart = function(issues) {
-
-
-
-  var canvas = document.getElementById('insp-pie-chart');
-
-
-
-  if (!canvas) return;
-
-
-
-  var ctx = canvas.getContext('2d');
-
-
-
-  var W = canvas.width, H = canvas.height;
-
-
-
-  ctx.clearRect(0, 0, W, H);
-
-
-
-
-
-
-
-  // 按分类聚合
-
-
-
-  var cats = {};
-
-
-
-  issues.forEach(function(is) {
-
-
-
-    var cat = is.category || '其他';
-
-
-
-    cats[cat] = (cats[cat] || 0) + 1;
-
-
-
-  });
-
-
-
-
-
-
-
-  var entries = Object.keys(cats).map(function(k) { return { name: k, count: cats[k] }; });
-
-
-
-  if (entries.length === 0) return;
-
-
-
-
-
-
-
-  var total = entries.reduce(function(s,e) { return s + e.count; }, 0);
-
-
-
-  var colors = ['#6366f1','#ef4444','#f59e0b','#10b981','#ec4899','#8b5cf6','#14b8a6','#3b82f6'];
-
-
-
-  var cx = W/2, cy = H/2, r = Math.min(cx, cy) - 10;
-
-
-
-  var startAngle = -Math.PI / 2;
-
-
-
-
-
-
-
-  entries.forEach(function(e, i) {
-
-
-
-    var sliceAngle = (e.count / total) * 2 * Math.PI;
-
-
-
-    ctx.beginPath();
-
-
-
-    ctx.moveTo(cx, cy);
-
-
-
-    ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
-
-
-
-    ctx.closePath();
-
-
-
-    ctx.fillStyle = colors[i % colors.length];
-
-
-
-    ctx.fill();
-
-
-
-    ctx.strokeStyle = '#fff';
-
-
-
-    ctx.lineWidth = 2;
-
-
-
-    ctx.stroke();
-
-
-
-
-
-
-
-    // 标签
-
-
-
-    var midAngle = startAngle + sliceAngle / 2;
-
-
-
-    var lx = cx + Math.cos(midAngle) * (r * 0.7);
-
-
-
-    var ly = cy + Math.sin(midAngle) * (r * 0.7);
-
-
-
-    ctx.fillStyle = '#fff';
-
-
-
-    ctx.font = '10px sans-serif';
-
-
-
-    ctx.textAlign = 'center';
-
-
-
-    ctx.fillText(e.count, lx, ly - 5);
-
-
-
-    ctx.fillText(e.name.length > 4 ? e.name.substring(0,4) : e.name, lx, ly + 10);
-
-
-
-
-
-
-
-    startAngle += sliceAngle;
-
-
-
-  });
-
-
-
-};
-
-
-
-
-
-
-
-Pages._drawInspLineChart = function(results) {
-
-
-
-  var canvas = document.getElementById('insp-line-chart');
-
-
-
-  if (!canvas) return;
-
-
-
-  var ctx = canvas.getContext('2d');
-
-
-
-  var W = canvas.width, H = canvas.height;
-
-
-
-  ctx.clearRect(0, 0, W, H);
-
-
-
-
-
-
-
-  // 按月份聚合
-
-
-
-  var months = {};
-
-
-
-  results.forEach(function(r) {
-
-
-
-    var m = (r.date||'').substring(0, 7);
-
-
-
-    if (!months[m]) months[m] = { total: 0, count: 0 };
-
-
-
-    months[m].total += (r.totalScore||0);
-
-
-
-    months[m].count += 1;
-
-
-
-  });
-
-
-
-
-
-
-
-  var entries = Object.keys(months).sort().slice(-6).map(function(k) {
-
-
-
-    return { month: k, avg: Math.round(months[k].total / months[k].count) };
-
-
-
-  });
-
-
-
-
-
-
-
-  if (entries.length < 2) return;
-
-
-
-
-
-
-
-  var pad = { top: 20, bottom: 35, left: 35, right: 10 };
-
-
-
-  var chartW = W - pad.left - pad.right;
-
-
-
-  var chartH = H - pad.top - pad.bottom;
-
-
-
-  var minVal = Math.min.apply(null, entries.map(function(e) { return e.avg; })) - 5;
-
-
-
-  var maxVal = Math.max.apply(null, entries.map(function(e) { return e.avg; })) + 5;
-
-
-
-  if (maxVal <= minVal) maxVal = minVal + 10;
-
-
-
-
-
-
-
-  // 坐标轴
-
-
-
-  ctx.strokeStyle = '#ddd';
-
-
-
-  ctx.beginPath();
-
-
-
-  ctx.moveTo(pad.left, pad.top);
-
-
-
-  ctx.lineTo(pad.left, pad.top + chartH);
-
-
-
-  ctx.lineTo(pad.left + chartW, pad.top + chartH);
-
-
-
-  ctx.stroke();
-
-
-
-
-
-
-
-  // 折线
-
-
-
-  ctx.strokeStyle = '#6366f1';
-
-
-
-  ctx.lineWidth = 2;
-
-
-
-  ctx.beginPath();
-
-
-
-  entries.forEach(function(e, i) {
-
-
-
-    var x = pad.left + (i / (entries.length - 1)) * chartW;
-
-
-
-    var y = pad.top + chartH - ((e.avg - minVal) / (maxVal - minVal)) * chartH;
-
-
-
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-
-
-
-  });
-
-
-
-  ctx.stroke();
-
-
-
-
-
-
-
-  // 数据点
-
-
-
-  ctx.fillStyle = '#6366f1';
-
-
-
-  entries.forEach(function(e, i) {
-
-
-
-    var x = pad.left + (i / (entries.length - 1)) * chartW;
-
-
-
-    var y = pad.top + chartH - ((e.avg - minVal) / (maxVal - minVal)) * chartH;
-
-
-
-    ctx.beginPath();
-
-
-
-    ctx.arc(x, y, 3, 0, 2*Math.PI);
-
-
-
-    ctx.fill();
-
-
-
-    ctx.fillStyle = '#333';
-
-
-
-    ctx.font = '10px sans-serif';
-
-
-
-    ctx.textAlign = 'center';
-
-
-
-    ctx.fillText(e.avg, x, y - 8);
-
-
-
-    ctx.fillText((e.month||'').substring(5), x, pad.top + chartH + 14);
-
-
-
-    ctx.fillStyle = '#6366f1';
-
-
-
-  });
-
-
-
-};
-
-/* ==================== 供应链问题模块 ==================== */
-Pages._supplyTabs = [
-  { id: 'production', label: '生产', category: '生产' },
-  { id: 'purchase', label: '采购', category: '采购' },
-  { id: 'logistics', label: '物流', category: '物流' },
-  { id: 'vegetable', label: '净菜', category: '净菜' },
-  { id: 'board', label: '看板', category: '' }
-];
-
-Pages._supplyState = { tab: 'production', status: '全部', type: '全部' };
-
-Pages._supplyStatusClass = function(s) {
-  if (s === '已闭环') return 'sc-status-done';
-  if (s === '处理中') return 'sc-status-doing';
-  return 'sc-status-wait';
-};
-
-Pages._supplyEsc = function(s) {
-  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-};
-
-Pages.supplyChain = function() {
-  var el = document.getElementById('page-supplyChain');
-  if (!el) return;
-  var user = App.currentUser;
-  if (!user) return;
-  if (!App.Permissions.canAccess(user.role, 'supply_chain')) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-    return;
-  }
-
-  var subHash = Pages._supplyState.tab;
-  var html = '';
-  html += '<div class="sub-tabbar sc-tabbar">';
-  Pages._supplyTabs.forEach(function(t) {
-    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" onclick="Pages._supplySetTab(\'' + t.id + '\')">' + t.label + '</div>';
-  });
-  html += '</div>';
-
-  if (subHash === 'board') {
-    html += Pages._supplyRenderBoard(user);
-  } else {
-    html += Pages._supplyRenderCategory(user, subHash);
-  }
-
-  html += '<div class="sc-report-entry" onclick="Pages._supplyOpenReport(\'' + subHash + '\')"><span class="sc-report-plus">＋</span>上报问题</div>';
-
-  el.innerHTML = html;
-};
-
-Pages._supplySetTab = function(id) {
-  Pages._supplyState.tab = id;
-  Pages._supplyState.status = '全部';
-  Pages._supplyState.type = '全部';
-  Pages.supplyChain();
-};
-
-Pages._supplySetFilter = function(key, val) {
-  Pages._supplyState[key] = val;
-  Pages.supplyChain();
-};
-
-Pages._supplyRenderCategory = function(user, tabId) {
-  var cat = '';
-  Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
-  var all = App.getSupplyIssues() || [];
-  var list = all.filter(function(r) { return r.category === cat; });
-
-  var status = Pages._supplyState.status;
-  var type = Pages._supplyState.type;
-  if (status && status !== '全部') list = list.filter(function(r) { return r.status === status; });
-  if (type && type !== '全部') list = list.filter(function(r) { return r.type === type; });
-
-  var typeSet = {};
-  all.forEach(function(r) { if (r.category === cat && r.type) typeSet[r.type] = 1; });
-  var typeArr = Object.keys(typeSet).sort();
-
-  var today = new Date();
-  var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-
-  var html = '';
-  html += '<div class="sc-head"><div class="sc-title">' + cat + '问题</div><div class="sc-date">' + dateStr + '</div></div>';
-
-  html += '<div class="sc-filter">';
-  html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'status\', this.value)">';
-  ['全部','待处理','处理中','已闭环'].forEach(function(s) {
-    html += '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
-  });
-  html += '</select>';
-  html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'type\', this.value)">';
-  html += '<option value="全部">全部类型</option>';
-  typeArr.forEach(function(t) {
-    html += '<option value="' + Pages._supplyEsc(t) + '"' + (type === t ? ' selected' : '') + '>' + Pages._supplyEsc(t) + '</option>';
-  });
-  html += '</select>';
-  html += '</div>';
-
-  var waitN = list.filter(function(r){ return r.status === '待处理'; }).length;
-  var doingN = list.filter(function(r){ return r.status === '处理中'; }).length;
-  var doneN = list.filter(function(r){ return r.status === '已闭环'; }).length;
-  html += '<div class="sc-mini-stats">';
-  html += '<div class="sc-mini"><span class="sc-mini-num">' + list.length + '</span><span class="sc-mini-label">共' + cat + '条</span></div>';
-  html += '<div class="sc-mini sc-mini-wait"><span class="sc-mini-num">' + waitN + '</span><span class="sc-mini-label">待处理</span></div>';
-  html += '<div class="sc-mini sc-mini-doing"><span class="sc-mini-num">' + doingN + '</span><span class="sc-mini-label">处理中</span></div>';
-  html += '<div class="sc-mini sc-mini-done"><span class="sc-mini-num">' + doneN + '</span><span class="sc-mini-label">已闭环</span></div>';
-  html += '</div>';
-
-  list.sort(function(a, b) { return (b.date || '') < (a.date || '') ? -1 : 1; });
-  if (list.length === 0) {
-    html += '<div class="card sc-card"><div class="sc-empty">暂无符合条件的问题</div></div>';
-  } else {
-    html += '<div class="sc-list">';
-    list.forEach(function(r) {
-      html += '<div class="card sc-card" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
-      html += '<div class="sc-card-top"><span class="sc-source">' + Pages._supplyEsc(r.source) + '</span>';
-      html += '<span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
-      if (r.product) html += '<div class="sc-product">' + Pages._supplyEsc(r.product) + '</div>';
-      html += '<div class="sc-issue">' + Pages._supplyEsc(r.issue) + '</div>';
-      html += '<div class="sc-card-bottom"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span><span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span></div>';
-      html += '</div>';
-    });
-    html += '</div>';
-  }
-
-  return html;
-};
-
-Pages._supplyRenderBoard = function(user) {
-  var all = App.getSupplyIssues() || [];
-  var total = all.length;
-  var waitN = all.filter(function(r){ return r.status === '待处理'; }).length;
-  var doingN = all.filter(function(r){ return r.status === '处理中'; }).length;
-  var doneN = all.filter(function(r){ return r.status === '已闭环'; }).length;
-
-  var cats = ['生产','采购','物流','净菜'];
-  var catCount = {};
-  cats.forEach(function(c){ catCount[c] = all.filter(function(r){ return r.category === c; }).length; });
-
-  var typeCount = {};
-  all.forEach(function(r) { if (r.type) typeCount[r.type] = (typeCount[r.type] || 0) + 1; });
-  var typeArr = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
-
-  var srcCount = {};
-  all.forEach(function(r) { if (r.source) srcCount[r.source] = (srcCount[r.source] || 0) + 1; });
-  var srcArr = Object.keys(srcCount).map(function(k){ return { name: k, count: srcCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
-
-  var days = [];
-  var today = new Date();
-  for (var i = 13; i >= 0; i--) {
-    var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-    var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    days.push({ key: key, count: 0 });
-  }
-  all.forEach(function(r) {
-    if (!r.date) return;
-    for (var j = 0; j < days.length; j++) {
-      if (days[j].key === r.date) { days[j].count++; break; }
-    }
-  });
-  var maxDay = 1;
-  days.forEach(function(d){ if (d.count > maxDay) maxDay = d.count; });
-
-  var html = '';
-  html += '<div class="sc-head"><div class="sc-title">供应链问题看板</div></div>';
-
-  html += '<div class="sc-board-nums">';
-  html += '<div class="sc-num-card sc-num-total"><span class="sc-num-big">' + total + '</span><span class="sc-num-label">问题总数</span></div>';
-  html += '<div class="sc-num-card sc-num-wait"><span class="sc-num-big">' + waitN + '</span><span class="sc-num-label">待处理</span></div>';
-  html += '<div class="sc-num-card sc-num-doing"><span class="sc-num-big">' + doingN + '</span><span class="sc-num-label">处理中</span></div>';
-  html += '<div class="sc-num-card sc-num-done"><span class="sc-num-big">' + doneN + '</span><span class="sc-num-label">已闭环</span></div>';
-  html += '</div>';
-
-  html += '<div class="card sc-card"><div class="sc-card-title">各环节问题占比</div>';
-  cats.forEach(function(c) {
-    var n = catCount[c] || 0;
-    var pct = total > 0 ? Math.round(n / total * 100) : 0;
-    html += '<div class="sc-cat-row"><div class="sc-cat-line"><span class="sc-cat-name">' + c + '</span><span class="sc-cat-num">' + n + ' (' + pct + '%)</span></div>';
-    html += '<div class="sc-bar"><div class="sc-bar-inner" style="width:' + pct + '%"></div></div></div>';
-  });
-  html += '</div>';
-
-  html += '<div class="card sc-card"><div class="sc-card-title">高频问题类型 TOP5</div>';
-  if (typeArr.length === 0) {
-    html += '<div class="sc-empty">暂无数据</div>';
-  } else {
-    typeArr.forEach(function(t, idx) {
-      var pct = total > 0 ? Math.round(t.count / total * 100) : 0;
-      html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(t.name) + '</span><div class="sc-bar sc-bar-flex"><div class="sc-bar-inner sc-bar-type" style="width:' + pct + '%"></div></div><span class="sc-rank-num">' + t.count + '</span></div>';
-    });
-  }
-  html += '</div>';
-
-  html += '<div class="card sc-card"><div class="sc-card-title">反馈来源 TOP5</div>';
-  if (srcArr.length === 0) {
-    html += '<div class="sc-empty">暂无数据</div>';
-  } else {
-    srcArr.forEach(function(s, idx) {
-      html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(s.name) + '</span><span class="sc-rank-num">' + s.count + ' 条</span></div>';
-    });
-  }
-  html += '</div>';
-
-  html += '<div class="card sc-card"><div class="sc-card-title">每日趋势（近14天）</div>';
-  html += '<div class="sc-trend">';
-  days.forEach(function(d) {
-    var h = d.count > 0 ? Math.max(4, Math.round(d.count / maxDay * 60)) : 2;
-    html += '<div class="sc-trend-col"><div class="sc-trend-bar" style="height:' + h + 'px" title="' + d.key + ' ' + d.count + '条">' + (d.count > 0 ? d.count : '') + '</div><div class="sc-trend-day">' + d.key.slice(8) + '</div></div>';
-  });
-  html += '</div>';
-  html += '</div>';
-
-  var pending = all.filter(function(r){ return r.status === '待处理'; }).sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; }).slice(0, 5);
-  html += '<div class="card sc-card"><div class="sc-card-title">最新待处理</div>';
-  if (pending.length === 0) {
-    html += '<div class="sc-empty">暂无待处理问题</div>';
-  } else {
-    pending.forEach(function(r) {
-      html += '<div class="sc-pending-row" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
-      html += '<span class="sc-pending-cat">' + r.category + '</span>';
-      html += '<span class="sc-pending-txt">' + Pages._supplyEsc(r.issue) + '</span>';
-      html += '<span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span>';
-      html += '</div>';
-    });
-  }
-  html += '</div>';
-
-  return html;
-};
-
-Pages._supplyOpenDetail = function(id) {
-  var all = App.getSupplyIssues() || [];
-  var r = null;
-  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
-  if (!r) return;
-  var html = '';
-  html += '<div class="modal-header"><h3>问题详情</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
-  html += '<div class="sc-detail">';
-  html += '<div class="sc-detail-row"><span class="sc-detail-label">环节</span><span class="sc-detail-val">' + r.category + '</span></div>';
-  html += '<div class="sc-detail-row"><span class="sc-detail-label">反馈来源</span><span class="sc-detail-val">' + Pages._supplyEsc(r.source) + '</span></div>';
-  html += '<div class="sc-detail-row"><span class="sc-detail-label">产品</span><span class="sc-detail-val">' + Pages._supplyEsc(r.product || '-') + '</span></div>';
-  html += '<div class="sc-detail-row"><span class="sc-detail-label">日期</span><span class="sc-detail-val">' + Pages._supplyEsc(r.date || '-') + '</span></div>';
-  html += '<div class="sc-detail-row"><span class="sc-detail-label">类型</span><span class="sc-detail-val"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span></span></div>';
-  html += '<div class="sc-detail-block"><span class="sc-detail-label">问题描述</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.issue) + '</div></div>';
-  if (r.remark) html += '<div class="sc-detail-block"><span class="sc-detail-label">备注</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.remark) + '</div></div>';
-  html += '<div class="sc-detail-row"><span class="sc-detail-label">状态</span><span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
-  if (r.handler) html += '<div class="sc-detail-row"><span class="sc-detail-label">处理人</span><span class="sc-detail-val">' + Pages._supplyEsc(r.handler) + '</span></div>';
-  if (r.result) html += '<div class="sc-detail-block"><span class="sc-detail-label">处理结果</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.result) + '</div></div>';
-
-  html += '<div class="sc-flow">';
-  if (r.status === '待处理') {
-    html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(App.currentUser ? (App.currentUser.name || '') : '') + '"></div>';
-    html += '<button class="btn sc-btn-main" onclick="Pages._supplyStart(\'' + id + '\')">开始处理</button>';
-  } else if (r.status === '处理中') {
-    html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(r.handler || '') + '"></div>';
-    html += '<div class="sc-flow-form"><textarea class="form-input sc-input sc-textarea" id="sc-result-' + id + '" placeholder="填写处理结果">' + Pages._supplyEsc(r.result || '') + '</textarea></div>';
-    html += '<button class="btn sc-btn-done" onclick="Pages._supplyFinish(\'' + id + '\')">完成闭环</button>';
-  } else {
-    html += '<div class="sc-closed-tip">该问题已闭环，如需重新处理请上报新问题</div>';
-  }
-  html += '</div>';
-
-  html += '<div style="margin-top:14px"><button class="btn btn-outline btn-sm" style="width:100%" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
-  html += '</div>';
-
-  document.querySelector('#modal-overlay .modal-box').innerHTML = html;
-  document.getElementById('modal-overlay').classList.add('show');
-};
-
-Pages._supplyStart = function(id) {
-  var all = App.getSupplyIssues() || [];
-  var r = null;
-  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
-  if (!r) return;
-  var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
-  r.status = '处理中';
-  r.handler = handler || (App.currentUser ? (App.currentUser.name || '') : '');
-  App.saveSupplyIssues(all);
-  Pages._toast('已开始处理');
-  Pages._supplyOpenDetail(id);
-};
-
-Pages._supplyFinish = function(id) {
-  var all = App.getSupplyIssues() || [];
-  var r = null;
-  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
-  if (!r) return;
-  var result = document.getElementById('sc-result-' + id) ? document.getElementById('sc-result-' + id).value.trim() : '';
-  var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
-  if (!result) {
-    Pages._toast('请填写处理结果');
-    return;
-  }
-  r.status = '已闭环';
-  r.result = result;
-  r.handler = handler || r.handler || (App.currentUser ? (App.currentUser.name || '') : '');
-  r.closeDate = new Date().toISOString().slice(0, 10);
-  App.saveSupplyIssues(all);
-  Pages._toast('已闭环');
-  Pages._supplyOpenDetail(id);
-};
-
-Pages._supplyOpenReport = function(tabId) {
-  var cat = '';
-  Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
-  var html = '';
-  html += '<div class="modal-header"><h3>上报问题</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
-  html += '<div class="sc-report-form">';
-  html += '<div class="sc-form-row"><label class="sc-form-label">环节</label><span class="sc-form-static">' + cat + '</span></div>';
-  html += '<div class="sc-form-row"><label class="sc-form-label">反馈来源</label><input class="form-input sc-input" id="sc-r-source" placeholder="如：黄寺大街店 / 生产反馈"></div>';
-  html += '<div class="sc-form-row"><label class="sc-form-label">产品</label><input class="form-input sc-input" id="sc-r-product" placeholder="如：小炒肉汁"></div>';
-  html += '<div class="sc-form-row"><label class="sc-form-label">检查机会点</label><textarea class="form-input sc-input sc-textarea" id="sc-r-issue" placeholder="问题描述"></textarea></div>';
-  html += '<div class="sc-form-row"><label class="sc-form-label">类型</label><input class="form-input sc-input" id="sc-r-type" placeholder="如：异物、少货、品质不佳"></div>';
-  html += '<div class="sc-form-row"><label class="sc-form-label">备注</label><textarea class="form-input sc-input sc-textarea" id="sc-r-remark" placeholder="选填"></textarea></div>';
-  html += '<button class="btn sc-btn-main" style="width:100%;margin-top:6px" onclick="Pages._supplyDoReport(\'' + cat + '\')">提交上报</button>';
-  html += '</div>';
-  document.querySelector('#modal-overlay .modal-box').innerHTML = html;
-  document.getElementById('modal-overlay').classList.add('show');
-};
-
-Pages._supplyDoReport = function(cat) {
-  var source = document.getElementById('sc-r-source') ? document.getElementById('sc-r-source').value.trim() : '';
-  var product = document.getElementById('sc-r-product') ? document.getElementById('sc-r-product').value.trim() : '';
-  var issue = document.getElementById('sc-r-issue') ? document.getElementById('sc-r-issue').value.trim() : '';
-  var type = document.getElementById('sc-r-type') ? document.getElementById('sc-r-type').value.trim() : '';
-  var remark = document.getElementById('sc-r-remark') ? document.getElementById('sc-r-remark').value.trim() : '';
-  if (!source || !issue) {
-    Pages._toast('请填写反馈来源和问题描述');
-    return;
-  }
-  var all = App.getSupplyIssues() || [];
-  var maxId = 0;
-  all.forEach(function(r) {
-    var n = parseInt(String(r.id).replace(/\D/g, ''), 10);
-    if (!isNaN(n) && n > maxId) maxId = n;
-  });
-  var now = new Date();
-  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-  var item = {
-    id: 'sp' + String(maxId + 1).padStart(4, '0'),
-    category: cat,
-    date: dateStr,
-    source: source,
-    product: product,
-    issue: issue,
-    type: type,
-    remark: remark,
-    status: '待处理',
-    result: '',
-    handler: ''
-  };
-  all.unshift(item);
-  App.saveSupplyIssues(all);
-  Pages._toast('上报成功');
-  document.getElementById('modal-overlay').classList.remove('show');
-  Pages.supplyChain();
-};
-
-Pages._toast = function(msg) {
-  var t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 2000);
-};
-
-
-/* ==================== 看板中心 · 差评看板 ==================== */
-Pages._cType = function(c) {
-  var t = (c.opportunity || '') + ' ' + (c.content || '');
-  var rules = [
-    ['服务态度', ['服务','态度','店员','员工','不理','冷漠','回应','语气']],
-    ['出品/口味', ['咸','淡','味道','口味','好吃','难吃','菜','饭','汤','食材','变质','异味','口感','量少','不熟']],
-    ['环境/卫生', ['卫生','干净','脏','油渍','餐具','桌面','地面','苍蝇','虫','头发']],
-    ['出餐/配送', ['等','慢','上菜','外卖','漏送','打包','配送','迟到']]
-  ];
-  for (var i = 0; i < rules.length; i++) {
-    for (var j = 0; j < rules[i][1].length; j++) {
-      if (t.indexOf(rules[i][1][j]) >= 0) return rules[i][0];
-    }
-  }
-  return '其他';
-};
-
-Pages._bdTabs = function(activeId) {
-  var tabs = [
-    { id: 'dashboard', label: '看板中心' },
-    { id: 'inspectionWorkbench', label: '稽核看板' },
-    { id: 'complaintBoard', label: '差评看板' },
-    { id: 'daily', label: '日报看板' },
-    { id: 'penaltyBoard', label: '处罚看板' }
-  ];
-  var html = '<div class="sub-tabbar bd-tabbar">';
-  tabs.forEach(function(t) {
-    html += '<div class="sub-tab-item' + (t.id === activeId ? ' active' : '') + '" onclick="Pages._gotoBoardTab(\\\'' + t.id + '\\\')">' + t.label + '</div>';
-  });
-  html += '</div>';
-  return html;
-};
-
-Pages._bdDays = function(records, dateKeyFn) {
-  // 最近 10 天（含今日）
-  var days = [];
-  var now = new Date();
-  for (var i = 9; i >= 0; i--) {
-    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    days.push({ label: String(d.getDate()), key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), count: 0, amount: 0 });
-  }
-  var map = {};
-  days.forEach(function(dd){ map[dd.key] = dd; });
-  records.forEach(function(r) {
-    var k = dateKeyFn(r);
-    if (map[k]) { map[k].count++; map[k].amount += Pages._pAmount(r); }
-  });
-  return days;
-};
-
-Pages._bdTrendHtml = function(days, color, valFn, valSuffix) {
-  var max = 1;
-  days.forEach(function(d){ var v = valFn(d); if (v > max) max = v; });
-  var html = '<div class="bd-trend">';
-  days.forEach(function(d) {
-    var v = valFn(d);
-    var h = Math.max(8, Math.round(v / max * 100));
-    html += '<div class="bd-trend-col"><div class="bd-trend-bar-wrap"><div class="bd-trend-bar" style="height:' + h + '%;background:' + color + '"></div></div><div class="bd-trend-val">' + v + (valSuffix || '') + '</div><div class="bd-trend-label">' + d.label + '</div></div>';
-  });
-  html += '</div>';
-  return html;
-};
-
-Pages._bdRankHtml = function(rows, color) {
-  var medals = ['&#129351;', '&#129352;', '&#129353;'];
-  var html = '<div class="bd-rank">';
-  rows.forEach(function(r, i) {
-    html += '<div class="bd-rank-row"><span class="bd-rank-idx" style="background:' + (i < 3 ? color + '1a' : '#f1f5f9') + ';color:' + (i < 3 ? color : '#94a3b8') + '">' + (i < 3 ? medals[i] : (i + 1)) + '</span><span class="bd-rank-name">' + r.name + '</span><span class="bd-rank-val" style="color:' + color + '">' + r.val + '</span></div>';
-  });
-  html += '</div>';
-  return html;
-};
-
-Pages._bdTypeHtml = function(rows, color, valKey) {
-  var total = 0;
-  rows.forEach(function(r){ total += r.count; });
-  if (total === 0) total = 1;
-  var html = '<div class="bd-type">';
-  rows.forEach(function(r) {
-    var w = Math.max(6, Math.round(r.count / total * 100));
-    html += '<div class="bd-type-row"><div class="bd-type-name">' + r.name + '</div><div class="bd-type-track"><div class="bd-type-fill" style="width:' + w + '%;background:' + color + '"></div></div><div class="bd-type-val">' + (valKey === 'amount' ? r.count + '笔 · ¥' + r.amount.toLocaleString() : r.count + '条') + '</div></div>';
-  });
-  html += '</div>';
-  return html;
-};
-
-Pages._pAmount = function(p) {
-  if (!p) return 0;
-  var num = function(v) {
-    if (typeof v === 'number') return v;
-    if (typeof v === 'string') {
-      var n = parseFloat(v.replace(/[^\d.]/g, ''));
-      return isNaN(n) ? 0 : n;
-    }
-    return 0;
-  };
-  if (p.dutyValue !== '' && p.dutyValue !== undefined && p.dutyValue !== null) {
-    var dv = num(p.dutyValue);
-    if (dv > 0) return dv;
-  }
-  return num(p.penaltyPerson) + num(p.penaltyManager);
-};
-
+/* ============================================
+
+
+
+   pages.js — 所有页面渲染函数
+
+
+
+   ============================================ */
+
+
+
+
+
+
+
+const Pages = {};
+
+
+
+
+
+
+
+/* ---- 登录页 ---- */
+
+
+
+Pages.login = function() {
+
+
+
+  const el = document.getElementById('page-login');
+
+
+
+  if (!el) return;
+
+
+
+
+
+
+
+  let html = '<div class="login-page">';
+
+
+
+  html += '<div class="login-logo">&#9749;</div>';
+
+
+
+  html += '<div class="login-title">南城香协作终端</div>';
+
+
+
+  html += '<div class="login-subtitle">门店协作管理平台</div>';
+
+
+
+
+
+
+
+  // 手机号登录表单
+
+
+
+  html += '<div class="phone-login-card">';
+
+
+
+  html += '<div class="card-title">手机号登录</div>';
+
+
+
+  html += '<div class="phone-input-group">';
+
+
+
+  html += '<span class="phone-prefix">+86</span>';
+
+
+
+  html += '<input type="tel" id="phone-input" class="phone-input" placeholder="请输入手机号" maxlength="11" value="' + (App._phoneLoginNumber || '') + '" oninput="Pages.onPhoneInput()">';
+
+
+
+  html += '</div>';
+
+
+
+  html += '<button class="sms-btn" id="sms-btn" onclick="Pages.doPhoneLogin()" disabled>登录</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  html += '<div class="login-divider"><span>或</span></div>';
+
+
+
+  html += '<button class="skip-btn" onclick="App.quickLogin(); location.hash=\'#home\';">跳过登录，直接预览首页</button>';
+
+
+
+  html += '</div>';
+
+
+
+  el.innerHTML = html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._phoneLoginNumber = '';
+
+
+
+
+
+
+
+Pages.onPhoneInput = function() {
+
+
+
+  var phone = document.getElementById('phone-input').value.replace(/\D/g,'');
+
+
+
+  var btn = document.getElementById('sms-btn');
+
+
+
+  btn.disabled = phone.length !== 11;
+
+
+
+  // 回车直接登录
+
+
+
+  if (phone.length === 11) {
+
+
+
+    document.getElementById('phone-input').onkeydown = function(e) {
+
+
+
+      if (e.key === 'Enter') Pages.doPhoneLogin();
+
+
+
+    };
+
+
+
+  }
+
+
+
+};
+
+
+
+
+
+
+
+Pages.doPhoneLogin = function() {
+
+
+
+  var phone = document.getElementById('phone-input').value.replace(/\D/g,'');
+
+
+
+  if (phone.length !== 11) { App.toast('请输入完整手机号'); return; }
+
+
+
+  Pages._phoneLoginNumber = phone;
+
+
+
+  App._phoneLoginNumber = phone;
+
+
+
+
+
+
+
+  // 数据尚未从云端同步完成时，等待后重试
+
+
+
+  if (!App.dataReady && App.supabase) {
+
+
+
+    var btn = document.getElementById('sms-btn');
+
+
+
+    if (btn) { btn.disabled = true; btn.textContent = '同步中...'; }
+
+
+
+    var retry = 0;
+
+
+
+    var self = this;
+
+
+
+    var timer = setInterval(function() {
+
+
+
+      retry++;
+
+
+
+      if (App.dataReady || retry > 40) {
+
+
+
+        clearInterval(timer);
+
+
+
+        if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+
+
+
+        if (App.dataReady) {
+
+
+
+          self._doPhoneLoginCore(phone);
+
+
+
+        } else {
+
+
+
+          App.toast('数据同步超时，请刷新页面重试');
+
+
+
+        }
+
+
+
+      }
+
+
+
+    }, 500);
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  this._doPhoneLoginCore(phone);
+
+
+
+};
+
+
+
+
+
+
+
+Pages._doPhoneLoginCore = function(phone) {
+
+
+
+  var users = App.getUsers();
+
+
+
+  var user = null;
+
+
+
+  for (var i = 0; i < users.length; i++) {
+
+
+
+    if (users[i].phone === phone) {
+
+
+
+      user = users[i];
+
+
+
+      break;
+
+
+
+    }
+
+
+
+  }
+
+
+
+  if (!user) {
+
+
+
+    var seedUsers = App.seedData && App.seedData.users ? App.seedData.users : [];
+
+
+
+    for (var j = 0; j < seedUsers.length; j++) {
+
+
+
+      if (seedUsers[j].phone === phone) {
+
+
+
+        user = seedUsers[j];
+
+
+
+        break;
+
+
+
+      }
+
+
+
+    }
+
+
+
+    if (!user) {
+
+
+
+      App.toast('该手机号未注册，请联系管理员');
+
+
+
+      return;
+
+
+
+    }
+
+
+
+  }
+
+
+
+  if (App.login(user.id)) {
+
+
+
+    App.toast('登录成功');
+
+
+
+    location.hash = '#home';
+
+
+
+  }
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 首页 ---- */
+
+
+
+Pages.home = function() {
+
+
+
+  const el = document.getElementById('page-home');
+
+
+
+  if (!el) return;
+
+
+
+  const user = App.currentUser;
+
+
+
+  const stores = App.getStores();
+
+
+
+  const penalties = App.getPenalties();
+
+
+
+  const complaints = App.getComplaints();
+
+
+
+  const onlineRecords = App.getOnlineRecords();
+
+
+
+  const offlineRecords = App.getOfflineRecords();
+
+
+
+
+
+
+
+  let html = '';
+
+
+
+
+
+
+
+  /* 用户个人信息卡片 */
+
+
+
+  var roleNames = App.Permissions.roleNames;
+
+
+
+  var roleBadgeColors = App.Permissions.roleBadgeColors;
+
+
+
+  html += '<div class="user-profile">';
+
+
+
+  html += '<div class="user-avatar" style="background:' + (roleBadgeColors[user.role] || '#888') + '">' + (user.name || '?')[0] + '</div>';
+
+
+
+  html += '<div class="user-info-text">';
+
+
+
+  html += '<div class="user-name">' + (user.name || '未登录') + '</div>';
+
+
+
+  html += '<div class="user-role">' + (roleNames[user.role] || user.role) + '</div>';
+
+
+
+  if (user.store) {
+
+
+
+    html += '<div class="user-shop">' + user.store + '</div>';
+
+
+
+  } else if (user.area) {
+
+
+
+    html += '<div class="user-shop">管辖区域：' + user.area + '</div>';
+
+
+
+  }
+
+
+
+  html += '</div>';
+
+
+
+  html += '<div class="user-arrow" onclick="App.logout()" title="退出登录">\u{23FB}</div>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  if (user.role === '店长') {
+
+
+
+    // 店长看自己门店
+
+
+
+    const store = stores.find(s => s.id === user.storeId) || {};
+
+
+
+    const storePenalties = penalties.filter(p => p.storeId === user.storeId);
+
+
+
+    const storeComplaints = complaints.filter(c => c.storeId === user.storeId);
+
+
+
+    const pendingPenalty = storePenalties.filter(p => p.status === '待补填').length;
+
+
+
+    const pendingComplaint = storeComplaints.filter(c => c.status === '待处理').length;
+
+
+
+
+
+
+
+    // 找门店得分（从线下稽核记录）
+
+
+
+    const storeOffline = offlineRecords.filter(r => r.storeId === user.storeId);
+
+
+
+    const latestScore = storeOffline.length > 0 ? storeOffline[storeOffline.length - 1].score : 85;
+
+
+
+
+
+
+
+    html += '<div class="card">';
+
+
+
+    html += '<div class="card-title">\u{1F3EA} ' + (store.name || '') + '</div>';
+
+
+
+    const cls = latestScore >= 85 ? 'high' : (latestScore >= 70 ? 'mid' : 'low');
+
+
+
+    html += '<div class="score-circle ' + cls + '">' + latestScore + '</div>';
+
+
+
+    html += '<div style="text-align:center;color:var(--text-secondary);font-size:12px;">最新稽核得分</div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    html += '<div class="stats-row">';
+
+
+
+    html += '<div class="stat-card" onclick="location.hash=\'#penalty\'">';
+
+
+
+    html += '<div class="stat-num" style="color:' + (pendingPenalty > 0 ? 'var(--status-overdue)' : 'var(--primary)') + '">' + pendingPenalty + '</div>';
+
+
+
+    html += '<div class="stat-label">待处理处罚</div></div>';
+
+
+
+    html += '<div class="stat-card" onclick="location.hash=\'#complaint\'">';
+
+
+
+    html += '<div class="stat-num" style="color:' + (pendingComplaint > 0 ? 'var(--status-pending)' : 'var(--primary)') + '">' + pendingComplaint + '</div>';
+
+
+
+    html += '<div class="stat-label">待处理差评</div></div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    // 有待处理差评时醒目提示
+
+
+
+    if (pendingComplaint > 0) {
+
+
+
+      html += '<div class="alert-card" onclick="location.hash=\'#complaint\'">';
+
+
+
+      html += '<span class="alert-icon">\u{1F514}</span>';
+
+
+
+      html += '您有 <b>' + pendingComplaint + '</b> 条新差评待处理，请点击填写责任人并生成处罚';
+
+
+
+      html += '</div>';
+
+
+
+    }
+
+
+
+
+
+
+
+    html += '<div class="quick-entries">';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>检查结果</div>';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评申诉</div>';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+  } else if (user.role === '线上稽核' || user.role === '线下稽核') {
+
+
+
+    const todayRecords = user.role === '线上稽核'
+
+
+
+      ? onlineRecords.filter(r => r.inspector === user.name)
+
+
+
+      : offlineRecords.filter(r => r.inspector === user.name);
+
+
+
+    const todayCount = todayRecords.length;
+
+
+
+
+
+
+
+    html += '<div class="card">';
+
+
+
+    html += '<div class="card-title">\u{1F4C5} 今日工作</div>';
+
+
+
+    html += '<div class="stats-row">';
+
+
+
+    html += '<div class="stat-card"><div class="stat-num">' + todayCount + '</div><div class="stat-label">今日提交</div></div>';
+
+
+
+    html += '<div class="stat-card"><div class="stat-num">' + stores.length + '</div><div class="stat-label">管辖门店</div></div>';
+
+
+
+    html += '</div></div>';
+
+
+
+
+
+
+
+    html += '<div class="quick-entries">';
+
+
+
+    if (user.role === '线上稽核') {
+
+
+
+      html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4DD}</span>线上检查录入</div>';
+
+
+
+    } else {
+
+
+
+      html += '<div class="quick-entry" onclick="location.hash=\'#offline-inspect\'"><span class="qe-icon">\u{1F50D}</span>线下检查录入</div>';
+
+
+
+    }
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评申诉</div>';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+  } else if (user.role === '总部' || user.role === '区域教练' || user.role === 'admin' || user.role === '客服' || user.role === '营运') {
+
+
+
+    const totalPenalties = penalties.length;
+
+
+
+    const donePenalties = penalties.filter(p => p.status === '已闭环').length;
+
+
+
+    const totalComplaints = complaints.length;
+
+
+
+    const appealedComplaints = complaints.filter(c => c.status === '已申诉' && c.appealResult === '通过').length;
+
+
+
+
+
+
+
+    html += '<div class="stats-row">';
+
+
+
+    html += '<div class="stat-card"><div class="stat-num">' + stores.length + '</div><div class="stat-label">门店总数</div></div>';
+
+
+
+    html += '<div class="stat-card"><div class="stat-num">' + totalPenalties + '</div><div class="stat-label">处罚总数</div></div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    html += '<div class="stats-row">';
+
+
+
+    html += '<div class="stat-card"><div class="stat-num">' + donePenalties + '</div><div class="stat-label">已闭环处罚</div></div>';
+
+
+
+    html += '<div class="stat-card"><div class="stat-num">' + totalComplaints + '</div><div class="stat-label">差评总数</div></div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    html += '<div class="card">';
+
+
+
+    html += '<div class="card-title">闭环率</div>';
+
+
+
+    const closeRate = totalPenalties > 0 ? Math.round(donePenalties / totalPenalties * 100) : 0;
+
+
+
+    html += '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + closeRate + '%</div>';
+
+
+
+    html += '<div class="progress-bar"><div class="progress-fill green" style="width:' + closeRate + '%"></div></div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    html += '<div class="quick-entries">';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>领导看板</div>';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚管理</div>';
+
+
+
+    html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评审核</div>';
+
+
+
+    if (App.Permissions.canAccess(user.role, 'inspection')) {
+
+
+
+      html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4CB}</span>检查记录</div>';
+
+
+
+    }
+
+
+
+    if (user.role === '总部' || user.role === 'admin' || user.role === '客服') {
+
+
+
+      html += '<div class="quick-entry" onclick="location.hash=\'#admin\'"><span class="qe-icon">\u{2699}</span>数据管理</div>';
+
+
+
+    }
+
+
+
+    html += '</div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  el.innerHTML = html;
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 数据管理页（总部专享：人员管理 + 导入导出） ---- */
+
+
+
+Pages.admin = function() {
+
+
+
+  var user = App.currentUser;
+
+
+
+  if (user.role !== '总部' && user.role !== 'admin' && user.role !== '客服') {
+
+
+
+    var el = document.getElementById('page-admin');
+
+
+
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>仅总部管理员可访问此页面</div></div>';
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  var html = '';
+
+
+
+
+
+
+
+  /* ===== 人员管理 ===== */
+
+
+
+  var users = App.getUsers();
+
+
+
+  html += '<div class="section-title">&#128101; 人员管理（' + users.length + '人）</div>';
+
+
+
+  html += '<div class="action-bar">';
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages._userForm()">+ 新增人员</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  if (users.length === 0) {
+
+
+
+    html += '<div class="empty-state">暂无人员数据</div>';
+
+
+
+  } else {
+
+
+
+    html += '<div class="user-list">';
+
+
+
+    var roleMap = App.Permissions.roleBadgeColors;
+
+
+
+    users.forEach(function(u) {
+
+
+
+      html += '<div class="user-row">';
+
+
+
+      html += '<div class="user-info">';
+
+
+
+      html += '<div class="user-name">' + u.name + '</div>';
+
+
+
+      html += '<div class="user-meta">';
+
+
+
+      html += '<span class="user-role-tag" style="background:' + (roleMap[u.role] || '#6b7280') + '">' + (App.Permissions.roleNames[u.role] || u.role) + '</span>';
+
+
+
+      if (u.store) html += '<span class="user-store">' + u.store + '</span>';
+
+
+
+      if (u.area) html += '<span class="user-area">' + u.area + '</span>';
+
+
+
+      html += '<span class="user-phone">' + (u.phone || '') + '</span>';
+
+
+
+      html += '</div></div>';
+
+
+
+      html += '<div class="user-actions">';
+
+
+
+      html += '<button class="btn btn-xs" onclick="Pages._userForm(\'' + u.id + '\')">编辑</button>';
+
+
+
+      html += '<button class="btn btn-xs btn-danger" onclick="Pages._userDelete(\'' + u.id + '\',\'' + u.name + '\')">删除</button>';
+
+
+
+      html += '</div></div>';
+
+
+
+    });
+
+
+
+    html += '</div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  /* ===== 数据导入 ===== */
+
+
+
+  html += '<div class="section-title" style="margin-top:24px">&#128229; 数据导入</div>';
+
+
+
+
+
+
+
+  html += '<div class="card">';
+
+
+
+  html += '<div class="card-title">导入人员</div>';
+
+
+
+  html += '<div class="card-desc">XLS 格式：id, 姓名, 角色(总部/线上稽核/线下稽核/区域教练/店长), 区域/区, 门店ID, 门店名, 手机号</div>';
+
+
+
+  html += '<div style="margin:8px 0"><button class="btn btn-xs btn-outline" onclick="App.downloadTemplate(\'users\')">下载人员模板</button></div>';
+
+
+
+  html += '<input type="file" accept=".xls,.xlsx" onchange="App.importXLS(this, \'users\')" style="display:none" id="file-users">';
+
+
+
+  html += '<button class="btn btn-primary" style="width:100%" onclick="document.getElementById(\'file-users\').click()">选择人员 XLS 并导入</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  html += '<div class="card">';
+
+
+
+  html += '<div class="card-title">导入门店</div>';
+
+
+
+  html += '<div class="card-desc">XLS 格式：门店ID, 门店名, 行政区, 行政区域, 经营区, 区域, 店长, 店长称谓, 经营模式</div>';
+
+
+
+  html += '<div style="margin:8px 0"><button class="btn btn-xs btn-outline" onclick="App.downloadTemplate(\'stores\')">下载门店模板</button></div>';
+
+
+
+  html += '<input type="file" accept=".xls,.xlsx" onchange="App.importXLS(this, \'stores\')" style="display:none" id="file-stores">';
+
+
+
+  html += '<button class="btn btn-primary" style="width:100%" onclick="document.getElementById(\'file-stores\').click()">选择门店 XLS 并导入</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  /* ===== 数据导出 ===== */
+
+
+
+  html += '<div class="section-title" style="margin-top:20px">&#128228; 数据导出</div>';
+
+
+
+
+
+
+
+  html += '<div class="card">';
+
+
+
+  html += '<div class="card-title">导出人员数据</div>';
+
+
+
+  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'users\')">下载人员 XLS</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  html += '<div class="card">';
+
+
+
+  html += '<div class="card-title">导出处罚数据</div>';
+
+
+
+  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'penalties\')">下载处罚 XLS</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  html += '<div class="card">';
+
+
+
+  html += '<div class="card-title">导出差评数据</div>';
+
+
+
+  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'complaints\')">下载差评 XLS</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  html += '<div class="card">';
+
+
+
+  html += '<div class="card-title">导出看板汇总</div>';
+
+
+
+  html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'dashboard\')">下载看板 XLS</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  document.getElementById('page-admin').innerHTML = html;
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 人员表单弹窗 ---- */
+
+
+
+Pages._userForm = function(id) {
+
+
+
+  var users = App.getUsers();
+
+
+
+  var u = id ? users.find(function(x) { return x.id === id; }) : null;
+
+
+
+  var isEdit = !!u;
+
+
+
+  var title = isEdit ? '编辑人员' : '新增人员';
+
+
+
+
+
+
+
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
+
+
+
+  html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+  html += '<div class="modal-body">';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label>姓名</label>';
+
+
+
+  html += '<input type="text" id="uf-name" class="form-input" value="' + (u ? u.name || '' : '') + '" placeholder="如：张三"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label>角色</label>';
+
+
+
+  html += '<select id="uf-role" class="form-input">';
+
+
+
+  ['总部', '线上稽核', '线下稽核', '区域教练', '店长', '客服', '营运'].forEach(function(r) {
+
+
+
+    var sel = (u && u.role === r) ? ' selected' : '';
+
+
+
+    html += '<option value="' + r + '"' + sel + '>' + r + '</option>';
+
+
+
+  });
+
+
+
+  html += '</select></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label>手机号</label>';
+
+
+
+  html += '<input type="tel" id="uf-phone" class="form-input" value="' + (u ? u.phone || '' : '') + '" placeholder="用于登录"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label>所属区域</label>';
+
+
+
+  html += '<input type="text" id="uf-area" class="form-input" value="' + (u ? u.area || '' : '') + '" placeholder="区域教练填写，如：经营一区"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label>绑定门店</label>';
+
+
+
+  html += App.renderStoreSelect('uf-storeId', stores, u ? u.storeId : '', '输入门店名称搜索...');
+
+
+
+
+
+
+
+  html += '</div>';
+
+
+
+  html += '<div class="modal-footer">';
+
+
+
+  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages._userSave(\'' + (isEdit ? id : '') + '\')">保存</button>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '</div></div>';
+
+
+
+
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  var overlay = div.firstElementChild;
+
+
+
+  document.body.appendChild(overlay);
+
+
+
+  overlay.offsetHeight;
+
+
+
+  overlay.classList.add('show');
+
+
+
+  App.initStoreSelect('uf-storeId', App.getStores());
+
+
+
+};
+
+
+
+
+
+
+
+Pages._userSave = async function(id) {
+
+
+
+  var name = (document.getElementById('uf-name') || {}).value || '';
+
+
+
+  var role = (document.getElementById('uf-role') || {}).value || '店长';
+
+
+
+  var phone = (document.getElementById('uf-phone') || {}).value || '';
+
+
+
+  var area = (document.getElementById('uf-area') || {}).value || '';
+
+
+
+  var storeId = App.getStoreSelectValue('uf-storeId');
+
+
+
+
+
+
+
+  if (!name.trim()) return App.toast('请输入姓名');
+
+
+
+
+
+
+
+  var storeName = '';
+
+
+
+  if (storeId) {
+
+
+
+    var stores = App.getStores();
+
+
+
+    var s = stores.find(function(x) { return x.id === storeId; });
+
+
+
+    if (s) storeName = s.name;
+
+
+
+  }
+
+
+
+
+
+
+
+  var data = { name: name.trim(), role: role, phone: phone.trim(), area: area.trim(), storeId: storeId, store: storeName };
+
+
+
+
+
+
+
+  var overlay = document.querySelector('.modal-overlay');
+
+
+
+  if (overlay) overlay.remove();
+
+
+
+
+
+
+
+  if (id) {
+
+
+
+    await App.updateUser(id, data);
+
+
+
+  } else {
+
+
+
+    await App.addUser(data);
+
+
+
+  }
+
+
+
+  Pages.admin();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._userDelete = async function(id, name) {
+
+
+
+  if (!confirm('确定删除「' + name + '」？此操作不可恢复。')) return;
+
+
+
+  await App.deleteUser(id);
+
+
+
+  Pages.admin();
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 门店检查页（线上组） ---- */
+
+
+
+Pages._inspectionSubTabs = function(user) {
+  return [
+    { id: 'inspection', label: '检查记录', show: App.Permissions.canAccess(user.role, 'inspection') },
+    { id: 'inspectionTemplates', label: '稽核模板', show: App.Permissions.canAccess(user.role, 'inspection') && (App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260') },
+    { id: 'inspectionFill', label: '稽核检查', show: App.Permissions.canAccess(user.role, 'inspection_edit') },
+    { id: 'inspectionResults', label: '检查结果', show: App.Permissions.canAccess(user.role, 'inspection_results') },
+    { id: 'inspectionIssues', label: '问题工单', show: App.Permissions.canAccess(user.role, 'inspection') },
+    { id: 'inspectionWorkbench', label: '工作台', show: App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results') },
+    { id: 'inspectionDashboard', label: '稽核看板', show: App.Permissions.canAccess(user.role, 'inspection') }
+  ];
+};
+
+Pages._gotoSub = function(id) {
+  if (id === 'inspection') {
+    window.__inspectionExplicit = true;
+  }
+  location.hash = '#' + id;
+};
+
+/* ==================== 稽核工作台（B方向·问题驱动） ==================== */
+Pages._wbFilter = { storeId: '', region: '', days: 0 };
+
+Pages._wbCategoryKeywords = [
+  ['清洁/卫生', ['污渍','油渍','油垢','污垢','残渣','毛发','毛絮','垃圾','水垢','积水','灰尘','烟头','纸屑','清洁不到位','未清理','未清洁','未及时清洁','不干净','脏污','水印','水渍','蜘蛛网','苍蝇','蚊虫','飞虫','积灰','胶渍','胶痕','虫害','粘虫','卫生较差','残渍','异味','油污','除垢']],
+  ['储存/封口/加盖', ['封口','加盖','储存','保鲜盒','交叉污染','先进先出','混放','开封','封存','离地','落地','上冻','堆放','集中存放','存放','生熟']],
+  ['仪表/着装/佩戴', ['仪容仪表','工服','工牌','纽扣','耳钉','首饰','项链','手链','口罩','帽子','着装','佩戴','戴手套','摘帽','摘口罩','嚼东西']],
+  ['产品品质/断档', ['断档','出品','破损','冻伤','黄叶','黑叶','烂叶','发黄','汤汁','开叉','软榻','过少','规格','克数','参数','断供','断货','估清','缺货','不合格','品相','破皮','重量超标','漏签','蒸菜','午餐','晚餐','早餐']],
+  ['设备/设施', ['设备','滤芯','净水','吊灯','空调','广告机','豆浆机','灭蝇灯','消毒柜','冰箱','制冰机','封膜机','洗碗机','饮水机','餐盘柜','排烟','开水器','风扇','照明','灯','虫']],
+  ['操作规范/工器具', ['翻动','未处理','搅拌','抖动','溜边','锅圈','打散','浇油','焯水','煎制','热料包','下米','下绿豆','下配料','放油','接触','掉落','落入','入水','未用新碗','分装','称量','器具','工器具','专用','标准','超时','未达标','打烊','报损','过早','关火','消毒','预热','翻面','抓','夹子','锅','用手']],
+  ['值班/制度/台账', ['手机','离岗','台账','SOP','抽查','晨检','知识','岗位标准','值班','顶岗','纪律','记录缺失','制度','不在岗','报修','更换','记录不完善']],
+  ['服务/话术', ['话术','迎宾','托盘','腰包','餐具','收餐','回餐','服务']]
+];
+
+Pages._wbClassify = function(text) {
+  if (!text) return '其他';
+  for (var ci = 0; ci < Pages._wbCategoryKeywords.length; ci++) {
+    var cat = Pages._wbCategoryKeywords[ci];
+    for (var ki = 0; ki < cat[1].length; ki++) {
+      if (text.indexOf(cat[1][ki]) >= 0) return cat[0];
+    }
+  }
+  return '其他';
+};
+
+Pages._wbStoreName = function(sid) {
+  var stores = App.getStores() || [];
+  for (var i = 0; i < stores.length; i++) {
+    if (stores[i].id === sid) return stores[i].name || sid;
+  }
+  return sid;
+};
+
+Pages._wbIssuesText = function(iss) {
+  return iss.content || iss.description || '';
+};
+
+Pages._wbIssuesItems = function(iss) {
+  if (iss.description) {
+    if (!/^\d+\./m.test(iss.description)) return [];
+    var items = iss.description.match(/[①②③④⑤⑥⑦⑧⑨⑩][^①-⑩]*/g) || [];
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i].trim();
+      if (it) out.push(it);
+    }
+    return out;
+  }
+  return (iss.content || '').trim() ? [iss.content.trim()] : [];
+};
+
+Pages.inspectionWorkbench = function() {
+  const el = document.getElementById('page-inspectionWorkbench');
+  if (!el) return;
+  const user = App.currentUser;
+  if (!user) return;
+
+  var canView = App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results');
+  var isStoreOwner = (user.role === '店长' && user.storeId);
+  if (!canView && !isStoreOwner) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var results = App.getResults() || [];
+  var issues = App.getIssues() || [];
+  var stores = App.getStores() || [];
+
+  // 店长仅本店
+  if (isStoreOwner) {
+    results = results.filter(function(r){ return r.storeId === user.storeId; });
+    issues = issues.filter(function(r){ return r.storeId === user.storeId; });
+  }
+
+  // 筛选
+  var f = Pages._wbFilter;
+  if (f.region) {
+    var regionStoreIds = {};
+    stores.forEach(function(s){ if (s.region === f.region || s.adminArea === f.region || s.bizArea === f.region) regionStoreIds[s.id] = 1; });
+    results = results.filter(function(r){ return regionStoreIds[r.storeId]; });
+    issues = issues.filter(function(r){ return regionStoreIds[r.storeId]; });
+  }
+  if (f.storeId) {
+    results = results.filter(function(r){ return r.storeId === f.storeId; });
+    issues = issues.filter(function(r){ return r.storeId === f.storeId; });
+  }
+  if (f.days > 0) {
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - f.days);
+    var cutoffStr = cutoff.toISOString().slice(0, 10);
+    results = results.filter(function(r){ return (r.date || '') >= cutoffStr; });
+    issues = issues.filter(function(r){ return (r.date || '') >= cutoffStr; });
+  }
+
+  // 门店映射
+  var storeMap = {};
+  stores.forEach(function(s){ storeMap[s.id] = s; });
+
+  // 1. 待整改事项
+  var pending = issues.filter(function(r){ return r.status === '待处理'; });
+  // 记录时间倒序：优先有 date 的（desc 型），content 型无 date 排后
+  pending.sort(function(a, b) {
+    var da = a.date || '0000-00-00';
+    var db = b.date || '0000-00-00';
+    if (da !== db) return da < db ? 1 : -1;
+    return 0;
+  });
+  var pendingTotal = pending.length;
+  var pendingTop3 = pending.slice(0, 3);
+
+  // 2. 最近检查得分最低 TOP5（每店最近一次，剔除0分）
+  var storeLatest = {};
+  results.forEach(function(r) {
+    var sid = r.storeId;
+    var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+    if (!score || score <= 0) return;
+    var prev = storeLatest[sid];
+    if (!prev || (r.date || '') > (prev.date || '')) {
+      storeLatest[sid] = { storeId: sid, score: score, date: r.date || '', resultId: r.id };
+    }
+  });
+  var top5 = Object.keys(storeLatest).map(function(sid){ return storeLatest[sid]; });
+  top5.sort(function(a, b) {
+    if (a.score !== b.score) return a.score - b.score;
+    return a.storeId < b.storeId ? -1 : 1;
+  });
+  top5 = top5.slice(0, 5);
+
+  // 3. 高频问题 TOP5（关键词归类）
+  var catCount = {};
+  var catTotal = 0;
+  issues.forEach(function(r) {
+    Pages._wbIssuesItems(r).forEach(function(t) {
+      catTotal++;
+      var c = Pages._wbClassify(t);
+      catCount[c] = (catCount[c] || 0) + 1;
+    });
+  });
+  var catArr = Object.keys(catCount).map(function(c){ return { name: c, count: catCount[c] }; });
+  catArr.sort(function(a, b) { return b.count - a.count || (a.name < b.name ? -1 : 1); });
+  catArr = catArr.slice(0, 5);
+  var issueTotal = catTotal || 1;
+
+  // 4. 待处理问题门店 TOP5
+  var storePending = {};
+  pending.forEach(function(r) {
+    storePending[r.storeId] = (storePending[r.storeId] || 0) + 1;
+  });
+  var spArr = Object.keys(storePending).map(function(sid){ return { storeId: sid, count: storePending[sid] }; });
+  spArr.sort(function(a, b) { return b.count - a.count || (a.storeId < b.storeId ? -1 : 1); });
+  spArr = spArr.slice(0, 5);
+
+  // 5. 稽核员动态（按 inspector 聚合全部 results）
+  var inspMap = {};
+  results.forEach(function(r) {
+    var name = r.inspector || '未署名';
+    if (!inspMap[name]) inspMap[name] = { name: name, count: 0, sum: 0, valid: 0 };
+    inspMap[name].count++;
+    var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+    if (score > 0) { inspMap[name].sum += score; inspMap[name].valid++; }
+  });
+  var inspArr = Object.keys(inspMap).map(function(n){ return inspMap[n]; });
+  inspArr.sort(function(a, b) { return b.count - a.count; });
+  inspArr = inspArr.slice(0, 5);
+
+  // 筛选下拉选项
+  var storeOptions = '<option value="">全部门店</option>';
+  stores.slice().sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; }).forEach(function(s) {
+    storeOptions += '<option value="' + s.id + '"' + (f.storeId === s.id ? ' selected' : '') + '>' + s.name + '</option>';
+  });
+  var regionSet = {};
+  stores.forEach(function(s) {
+    var r = s.region || s.adminArea || s.bizArea || '';
+    if (r) regionSet[r] = 1;
+  });
+  var regionOptions = '<option value="">全部区域</option>';
+  Object.keys(regionSet).sort().forEach(function(r) {
+    regionOptions += '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>';
+  });
+  var daysOptions = '<option value="0">全部时间</option>';
+  [[7,'近7天'],[30,'近30天'],[90,'近90天']].forEach(function(o) {
+    daysOptions += '<option value="' + o[0] + '"' + (f.days === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+  });
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+  var html = '';
+  html += '<div class="sub-tabbar">';
+  var subHash = location.hash.replace('#', '');
+  Pages._inspectionSubTabs(user).forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="wb-header"><div class="wb-title">稽核工作台</div><div class="wb-date">' + dateStr + '</div></div>';
+
+  // 筛选栏
+  html += '<div class="wb-filter">';
+  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'storeId\', this.value)">' + storeOptions + '</select>';
+  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'region\', this.value)">' + regionOptions + '</select>';
+  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'days\', this.value)">' + daysOptions + '</select>';
+  html += '</div>';
+
+  // 待整改事项
+  html += '<div class="card wb-card wb-pending-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">待整改事项</span><span class="wb-badge-red" onclick="Pages._wbOpenPendingAll()">查看全部</span></div>';
+  html += '<div class="wb-pending-num">' + pendingTotal + '<span class="wb-pending-unit">项待处理</span></div>';
+  if (pendingTop3.length === 0) {
+    html += '<div class="wb-pending-empty">暂无待处理问题</div>';
+  } else {
+    pendingTop3.forEach(function(p) {
+      var txt = Pages._wbIssuesText(p);
+      html += '<div class="wb-pending-item" onclick="Pages._wbOpenStoreIssues(\'' + p.storeId + '\')">';
+      html += '<span class="wb-pending-store">' + Pages._wbStoreName(p.storeId) + '</span>';
+      html += '<span class="wb-pending-txt">' + txt + '</span>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 最近检查得分最低 TOP5
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">最近检查得分最低 TOP5</span></div>';
+  if (top5.length === 0) {
+    html += '<div class="wb-empty">暂无有效检查得分记录</div>';
+  } else {
+    html += '<table class="m-table wb-table"><thead><tr><th>#</th><th>门店</th><th>得分</th><th>日期</th></tr></thead><tbody>';
+    top5.forEach(function(t, idx) {
+      html += '<tr onclick="Pages._wbOpenStoreDetail(\'' + t.storeId + '\')">';
+      html += '<td>' + (idx+1) + '</td><td>' + Pages._wbStoreName(t.storeId) + '</td>';
+      html += '<td class="' + (t.score < 80 ? 'wb-score-low' : '') + '">' + t.score + '</td><td>' + t.date + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div>';
+
+  // 高频问题 TOP5
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">高频问题 TOP5</span></div>';
+  if (catArr.length === 0) {
+    html += '<div class="wb-empty">暂无问题数据</div>';
+  } else {
+    catArr.forEach(function(c) {
+      var pct = Math.round(c.count / issueTotal * 100);
+      html += '<div class="wb-cat-row" onclick="Pages._wbOpenCategory(\'' + c.name + '\')">';
+      html += '<div class="wb-cat-line"><span class="wb-cat-name">' + c.name + '</span><span class="wb-cat-num">' + c.count + ' (' + pct + '%)</span></div>';
+      html += '<div class="wb-bar"><div class="wb-bar-inner" style="width:' + Math.min(100, pct) + '%"></div></div>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 待处理问题门店 TOP5
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">待处理问题门店 TOP5</span></div>';
+  if (spArr.length === 0) {
+    html += '<div class="wb-empty">暂无待处理问题</div>';
+  } else {
+    spArr.forEach(function(s) {
+      html += '<div class="wb-sp-row" onclick="Pages._wbOpenStoreIssues(\'' + s.storeId + '\')">';
+      html += '<span class="wb-sp-name">' + Pages._wbStoreName(s.storeId) + '</span>';
+      html += '<span class="wb-sp-count' + (s.count >= 5 ? ' wb-sp-hot' : '') + '">' + s.count + ' 条</span>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 稽核员动态
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">稽核员动态</span></div>';
+  if (inspArr.length === 0) {
+    html += '<div class="wb-empty">暂无提交记录</div>';
+  } else {
+    html += '<div class="wb-insp-list">';
+    inspArr.forEach(function(i) {
+      var avg = i.valid > 0 ? (i.sum / i.valid) : 0;
+      var ok = i.valid > 0 && avg >= 90;
+      html += '<div class="wb-insp-row" onclick="Pages._wbOpenInspector(\'' + i.name.replace(/'/g, "\\'") + '\')">';
+      html += '<span class="wb-insp-avatar">' + i.name.charAt(0) + '</span>';
+      html += '<span class="wb-insp-info"><span class="wb-insp-name">' + i.name + '</span><span class="wb-insp-sub">提交 ' + i.count + ' 次 · 均分 ' + avg.toFixed(1) + '</span></span>';
+      html += '<span class="wb-insp-badge' + (ok ? ' wb-ok' : '') + '">' + (ok ? '达标' : '—') + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // 底部注释
+  html += '<div class="wb-footnote">数据口径：得分=门店最近一次现场检查得分（百分制，剔除0分）；待处理=status 为「待处理」；高频问题按描述关键词互斥归类。</div>';
+
+  el.innerHTML = html;
+};
+
+Pages._wbSetFilter = function(key, val) {
+  Pages._wbFilter[key] = key === 'days' ? parseInt(val || '0', 10) : val;
+  Pages.inspectionWorkbench();
+};
+
+Pages._wbOpenPendingAll = function() {
+  var issues = App.getIssues() || [];
+  var pending = issues.filter(function(r){ return r.status === '待处理'; });
+  pending.sort(function(a, b) {
+    var da = a.date || '0000-00-00';
+    var db = b.date || '0000-00-00';
+    if (da !== db) return da < db ? 1 : -1;
+    return 0;
+  });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">待整改事项（' + pending.length + '）</div><div class="dd-modal-body">';
+  if (pending.length === 0) {
+    html += '<div class="wb-empty">暂无待处理问题</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th><th>状态</th></tr></thead><tbody>';
+    pending.forEach(function(p) {
+      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '待处理') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenStoreIssues = function(storeId) {
+  var issues = App.getIssues() || [];
+  var list = issues.filter(function(r){ return r.storeId === storeId; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无问题记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>问题</th><th>状态</th></tr></thead><tbody>';
+    list.forEach(function(p) {
+      html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '—') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenStoreDetail = function(storeId) {
+  var results = App.getResults() || [];
+  var issues = App.getIssues() || [];
+  var list = results.filter(function(r){ return r.storeId === storeId; });
+  list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 检查历史</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无检查记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>得分</th><th>稽核员</th></tr></thead><tbody>';
+    list.forEach(function(r) {
+      var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+      html += '<tr><td>' + r.date + '</td><td>' + score + '</td><td>' + (r.inspector || '—') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    var storeIssues = issues.filter(function(r){ return r.storeId === storeId; });
+    if (storeIssues.length > 0) {
+      html += '<div class="dd-meta" style="margin-top:10px">问题明细（' + storeIssues.length + '）</div><table class="m-table dd-modal-table"><tbody>';
+      storeIssues.forEach(function(p) {
+        html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td></tr>';
+      });
+      html += '</tbody></table>';
+    }
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenCategory = function(cat) {
+  var issues = App.getIssues() || [];
+  var list = [];
+  issues.forEach(function(r) {
+    Pages._wbIssuesItems(r).forEach(function(t) {
+      if (Pages._wbClassify(t) === cat) {
+        list.push({ storeId: r.storeId, text: t });
+      }
+    });
+  });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + cat + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无问题记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th></tr></thead><tbody>';
+    list.forEach(function(p) {
+      html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + p.text + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+Pages._wbOpenInspector = function(name) {
+  var results = App.getResults() || [];
+  var list = results.filter(function(r){ return (r.inspector || '未署名') === name; });
+  list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + name + ' — 提交记录（' + list.length + '）</div><div class="dd-modal-body">';
+  if (list.length === 0) {
+    html += '<div class="wb-empty">暂无提交记录</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>门店</th><th>得分</th></tr></thead><tbody>';
+    list.forEach(function(r) {
+      var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+      html += '<tr><td>' + r.date + '</td><td>' + Pages._wbStoreName(r.storeId) + '</td><td>' + score + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+
+Pages.inspection = function() {
+
+
+
+  const el = document.getElementById('page-inspection');
+
+
+
+  if (!el) return;
+
+
+
+  const user = App.currentUser;
+
+
+
+  const stores = App.getStores();
+
+
+
+  const records = App.getOnlineRecords();
+
+
+
+
+
+
+
+  let html = '';
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'inspection')) {
+
+    if (user.role === '店长' && App.Permissions.canAccess(user.role, 'inspection_results')) {
+
+      location.hash = '#inspectionResults';
+
+      return;
+
+    }
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    el.innerHTML = html;
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  // 二级Tab栏
+
+
+
+  var subHash = location.hash.replace('#', '');
+
+
+
+  if (subHash === 'inspection' && !window.__inspectionExplicit) {
+
+
+
+    location.hash = '#inspectionTemplates';
+
+
+
+    return;
+
+
+
+  }
+
+
+
+  var subTabs = Pages._inspectionSubTabs(user);
+
+
+
+  html += '<div class="sub-tabbar">';
+
+
+
+  subTabs.forEach(function(t) {
+
+
+
+    if (!t.show) return;
+
+
+
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+
+
+
+  });
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 表单
+
+
+
+  html += '<div class="card"><div class="card-title">\u{1F4F7} 优化部稽核记录</div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">项目类型</label>';
+
+
+
+  html += '<select id="online-project" class="form-select">';
+
+
+
+  ['稽核员日报', '线上差评点评', '公众号留言投诉', '电话投诉', '舆情检查记录个数', '个人洞察'].forEach(t => {
+
+
+
+    html += '<option value="' + t + '">' + t + '</option>';
+
+
+
+  });
+
+
+
+  html += '</select></div>';
+
+
+
+
+
+
+
+  // 拍照OCR区域
+
+
+
+  html += '<div class="form-group"><label class="form-label">当日记录</label>';
+
+
+
+  html += '<div class="ocr-area">';
+
+
+
+  html += '<input type="file" id="ocr-camera" accept="image/*" capture="environment" style="display:none" onchange="Pages.onPhotoCapture(event)">';
+
+
+
+  html += '<button class="btn btn-outline" onclick="document.getElementById(\'ocr-camera\').click()">\u{1F4F8} 拍照识别</button>';
+
+
+
+  html += '<div id="ocr-preview" class="ocr-preview hidden"></div>';
+
+
+
+  html += '<div id="ocr-status" class="ocr-status hidden"></div>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '<textarea id="online-record" class="form-textarea" placeholder="拍照后自动识别，也可手动输入..."></textarea></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">反馈相关部门动作</label>';
+
+
+
+  html += '<input id="online-feedback-dept" class="form-input" placeholder="如：群内曝光、邮件通知区域经理"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">相关部门反馈</label>';
+
+
+
+  html += '<input id="online-dept-feedback" class="form-input" placeholder="如：顾客已谅解、已整改"></div>';
+
+
+
+
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages.submitOnline()">提交</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 已提交列表
+
+
+
+  html += '<div class="card"><div class="card-title">\u{1F4CB} 已提交记录</div>';
+
+
+
+  const userRecords = records.filter(r => r.inspector === user.name);
+
+
+
+  if (userRecords.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">\u{1F4C4}</div>暂无记录</div>';
+
+
+
+  } else {
+
+
+
+    userRecords.slice().reverse().forEach(r => {
+
+
+
+      html += '<div class="list-item">';
+
+
+
+      html += '<div class="li-main">';
+
+
+
+      html += '<div class="li-title">' + r.projectType + ' — ' + (r.store || '') + '</div>';
+
+
+
+      html += '<div class="li-sub">' + r.date + ' | ' + (r.record || '').substring(0, 40) + '...</div>';
+
+
+
+      html += '</div>';
+
+
+
+      html += '</div>';
+
+
+
+    });
+
+
+
+  }
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  el.innerHTML = html;
+
+  window.__inspectionExplicit = false;
+
+};// 照片捕获回调
+
+
+
+Pages.onPhotoCapture = function(event) {
+
+
+
+  const file = event.target.files[0];
+
+
+
+  if (!file) return;
+
+
+
+
+
+
+
+  // 显示预览
+
+
+
+  const reader = new FileReader();
+
+
+
+  reader.onload = function(e) {
+
+
+
+    const preview = document.getElementById('ocr-preview');
+
+
+
+    preview.innerHTML = '<img src="' + e.target.result + '" class="ocr-img"><button class="btn btn-primary ocr-detect-btn" onclick="Pages.doOCR(\'' + e.target.result + '\')">\u{1F50D} 开始识别文字</button>';
+
+
+
+    preview.classList.remove('hidden');
+
+
+
+  };
+
+
+
+  reader.readAsDataURL(file);
+
+
+
+};
+
+
+
+
+
+
+
+// OCR 识别
+
+
+
+Pages.doOCR = function(dataUrl) {
+
+
+
+  const status = document.getElementById('ocr-status');
+
+
+
+  status.innerHTML = '<span class="ocr-loading">\u23F3 正在识别文字...</span>';
+
+
+
+  status.classList.remove('hidden');
+
+
+
+
+
+
+
+  Tesseract.recognize(dataUrl, 'chi_sim+eng', {
+
+
+
+    logger: function(m) {
+
+
+
+      if (m.status === 'recognizing text') {
+
+
+
+        status.innerHTML = '<span class="ocr-loading">\u23F3 识别中... ' + Math.round(m.progress * 100) + '%</span>';
+
+
+
+      }
+
+
+
+    }
+
+
+
+  }).then(function(result) {
+
+
+
+    const text = result.data.text.trim();
+
+
+
+    document.getElementById('online-record').value = text;
+
+
+
+    status.innerHTML = '<span class="ocr-done">\u2705 识别完成，可修改后提交</span>';
+
+
+
+    App.toast('识别完成');
+
+
+
+  }).catch(function(err) {
+
+
+
+    status.innerHTML = '<span class="ocr-fail">\u274C 识别失败，请手动输入</span>';
+
+
+
+    console.error('OCR error:', err);
+
+
+
+  });
+
+
+
+};
+
+
+
+
+
+
+
+Pages.submitOnline = function() {
+
+
+
+  const user = App.currentUser;
+
+
+
+  const project = document.getElementById('online-project').value;
+
+
+
+  const record = document.getElementById('online-record').value.trim();
+
+
+
+  const feedbackDept = document.getElementById('online-feedback-dept').value.trim();
+
+
+
+  const deptFeedback = document.getElementById('online-dept-feedback').value.trim();
+
+
+
+
+
+
+
+  if (!record) { App.toast('请填写当日记录'); return; }
+
+
+
+
+
+
+
+  const records = App.getOnlineRecords();
+
+
+
+  const now = new Date();
+
+
+
+  const dateStr = now.getFullYear() + '-' +
+
+
+
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+
+
+
+    String(now.getDate()).padStart(2, '0');
+
+
+
+
+
+
+
+  records.push({
+
+
+
+    id: 'o' + Date.now(),
+
+
+
+    inspector: user.name,
+
+
+
+    storeId: user.storeId || '',
+
+
+
+    store: user.store || '',
+
+
+
+    projectType: project,
+
+
+
+    record: record,
+
+
+
+    feedbackDept: feedbackDept,
+
+
+
+    deptFeedback: deptFeedback,
+
+
+
+    date: dateStr
+
+
+
+  });
+
+
+
+
+
+
+
+  App.saveOnlineRecords(records);
+
+
+
+  App.toast('提交成功');
+
+
+
+  Pages.inspection();
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 线下门店检查页 ---- */
+
+
+
+Pages['offline-inspect'] = function() {
+
+
+
+  const el = document.getElementById('page-offline-inspect');
+
+
+
+  if (!el) return;
+
+
+
+  const stores = App.getStores();
+
+
+
+  const records = App.getOfflineRecords();
+
+
+
+  const user = App.currentUser;
+
+
+
+
+
+
+
+  let html = '<div class="card"><div class="card-title">\u{1F50D} 线下门店检查</div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">门店</label>';
+
+
+
+  html += App.renderStoreSelect('offline-store', stores, '', '输入门店名称搜索...');
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">检查日期</label>';
+
+
+
+  html += '<input id="offline-date" type="date" class="form-input" value="' + new Date().toISOString().split('T')[0] + '"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">得分</label>';
+
+
+
+  html += '<input id="offline-score" type="number" class="form-input" placeholder="0-100" min="0" max="100" value="85"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">扣分项</label>';
+
+
+
+  html += '<textarea id="offline-deductions" class="form-textarea" placeholder="详细列出扣分项目和分值..."></textarea></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">照片（模拟）</label>';
+
+
+
+  html += '<input id="offline-photo" class="form-input" placeholder="暂不支持上传，此处留空"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">备注</label>';
+
+
+
+  html += '<textarea id="offline-note" class="form-textarea" placeholder="检查备注..."></textarea></div>';
+
+
+
+
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages.submitOffline()">提交检查</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 已提交
+
+
+
+  html += '<div class="card"><div class="card-title">提交记录</div>';
+
+
+
+  if (records.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">\u{1F4C4}</div>暂无记录</div>';
+
+
+
+  } else {
+
+
+
+    records.slice().reverse().forEach(r => {
+
+
+
+      html += '<div class="list-item">';
+
+
+
+      html += '<div class="li-main">';
+
+
+
+      html += '<div class="li-title">' + r.store + ' — 得分 ' + r.score + '</div>';
+
+
+
+      html += '<div class="li-sub">' + r.date + ' | 稽核员: ' + r.inspector + '</div>';
+
+
+
+      html += '</div></div>';
+
+
+
+    });
+
+
+
+  }
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  el.innerHTML = html;
+
+
+
+  App.initStoreSelect('offline-store', App.getStores());
+
+
+
+};
+
+
+
+
+
+
+
+Pages.submitOffline = function() {
+
+
+
+  const user = App.currentUser;
+
+
+
+  const storeId = App.getStoreSelectValue('offline-store');
+
+
+
+  const store = App.getStores().find(s => s.id === storeId);
+
+
+
+  const date = document.getElementById('offline-date').value;
+
+
+
+  const score = parseInt(document.getElementById('offline-score').value);
+
+
+
+  const deductions = document.getElementById('offline-deductions').value.trim();
+
+
+
+  const photo = document.getElementById('offline-photo').value.trim();
+
+
+
+  const note = document.getElementById('offline-note').value.trim();
+
+
+
+
+
+
+
+  if (!storeId || !date || isNaN(score)) { App.toast('请完善必填项'); return; }
+
+
+
+
+
+
+
+  const records = App.getOfflineRecords();
+
+
+
+  records.push({
+
+
+
+    id: 'of' + Date.now(),
+
+
+
+    inspector: user.name,
+
+
+
+    storeId: storeId,
+
+
+
+    store: store ? store.name : '',
+
+
+
+    date: date,
+
+
+
+    score: score,
+
+
+
+    deductions: deductions,
+
+
+
+    photo: photo,
+
+
+
+    note: note
+
+
+
+  });
+
+
+
+
+
+
+
+  App.saveOfflineRecords(records);
+
+
+
+  App.toast('提交成功');
+
+
+
+  Pages['offline-inspect']();
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 处罚登记页 ---- */
+
+
+
+Pages.penalty = function() {
+
+
+
+  const el = document.getElementById('page-penalty');
+
+
+
+  if (!el) return;
+
+
+
+  const user = App.currentUser;
+
+
+
+  const stores = App.getStores();
+
+
+
+  const penalties = App.getPenalties();
+
+
+
+  const districts = [...new Set(stores.map(s => s.district))];
+
+
+
+
+
+
+
+  let html = '';
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'penalty')) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    el.innerHTML = html;
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  // 模块内子页签：处罚登记 / 看板
+  html += '<div class="sub-tabbar dcb-tabbar">';
+  html += '<div class="sub-tab-item' + (Pages._penaltyMode === 'board' ? '' : ' active') + '" onclick="Pages._penaltySetTab(\'list\')">处罚登记</div>';
+  html += '<div class="sub-tab-item' + (Pages._penaltyMode === 'board' ? ' active' : '') + '" onclick="Pages._penaltySetTab(\'board\')">看板</div>';
+  html += '</div>';
+
+  if (Pages._penaltyMode === 'board') {
+    html += Pages._penaltyBoardHtml();
+    el.innerHTML = html;
+    return;
+  }
+
+  if (App.Permissions.canAccess(user.role, 'penalty') && user.role !== '店长' && !sessionStorage.getItem('db_readonly')) {
+
+
+
+    // 完整表单 — 22个字段
+
+
+
+    html += '<div class="card"><div class="card-title">\u{26A0} 处罚登记</div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">区域</label>';
+
+
+
+    html += '<select id="pen-region" class="form-select" onchange="Pages.penaltyRegionChange()">';
+
+
+
+    html += '<option value="">请选择</option>';
+
+
+
+    districts.forEach(d => { html += '<option value="' + d + '">' + d + '</option>'; });
+
+
+
+    html += '</select></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">门店</label>';
+
+
+
+    html += App.renderStoreSelect('pen-store', stores, '', '输入门店名称搜索...');
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">门店第一负责人</label>';
+
+
+
+    html += '<input id="pen-manager" class="form-input" placeholder="自动填充"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">发生日期</label>';
+
+
+
+    html += '<input id="pen-event-date" type="date" class="form-input"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">具体事件</label>';
+
+
+
+    html += '<textarea id="pen-event" class="form-textarea" placeholder="事件描述..."></textarea></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">营运部调查结果</label>';
+
+
+
+    html += '<textarea id="pen-survey" class="form-textarea" placeholder="调查结论..."></textarea></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">建议处罚方案</label>';
+
+
+
+    html += '<input id="pen-suggestion" class="form-input" placeholder="处罚建议"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">稽核人员</label>';
+
+
+
+    html += '<input id="pen-inspector" class="form-input" value="' + user.name + '"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">奖惩制度条款</label>';
+
+
+
+    html += '<input id="pen-policy" class="form-input" placeholder="如：新奖惩制度第X条"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">当事人姓名</label>';
+
+
+
+    html += '<input id="pen-person-name" class="form-input"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">惩处等级</label>';
+
+
+
+    html += '<select id="pen-level" class="form-select">';
+
+
+
+    ['一级批评教育', '二级书面警告', '三级降职降薪', '经济处罚'].forEach(l => {
+
+
+
+      html += '<option value="' + l + '">' + l + '</option>';
+
+
+
+    });
+
+
+
+    html += '</select></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">违纪类型</label>';
+
+
+
+    html += '<select id="pen-type" class="form-select">';
+
+
+
+    ['纪律类', '管理失职', '食品安全', '运营类'].forEach(t => {
+
+
+
+      html += '<option value="' + t + '">' + t + '</option>';
+
+
+
+    });
+
+
+
+    html += '</select></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">经济处罚-当事人</label>';
+
+
+
+    html += '<input id="pen-eco-person" class="form-input" placeholder="金额或取消奖金"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">经济处罚-店长</label>';
+
+
+
+    html += '<input id="pen-eco-manager" class="form-input" placeholder="金额或取消奖金"></div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">来源</label>';
+
+
+
+    html += '<input id="pen-source" class="form-input" placeholder="现场稽核/线上差评/店长上报..."></div>';
+
+
+
+
+
+
+
+    html += '<button class="btn btn-primary" onclick="Pages.submitPenalty()">提交处罚记录</button>';
+
+
+
+    html += '</div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  // 列表
+
+
+
+  let listPenalties = penalties;
+
+
+
+  if (user.role === '店长') {
+
+
+
+    listPenalties = penalties.filter(p => p.storeId === user.storeId);
+
+
+
+  } else if (user.role === '区域教练') {
+
+
+
+    listPenalties = penalties.filter(p => {
+
+
+
+      const s = stores.find(x => x.name === p.store);
+
+
+
+      return s && s.region === user.area;
+
+
+
+    });
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '<div class="card"><div class="card-title">\u{1F4CB} 处罚记录（共 ' + listPenalties.length + ' 条）</div>';
+
+
+
+  if (listPenalties.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">\u{2705}</div>暂无处罚记录</div>';
+
+
+
+  } else {
+
+
+
+    listPenalties.slice().reverse().forEach(p => {
+
+
+
+      let tagClass = 'tag-pending';
+
+
+
+      if (p.status === '已闭环') tagClass = 'tag-done';
+
+
+
+      else if (p.status === '超时') tagClass = 'tag-overdue';
+
+
+
+      html += '<div class="list-item" onclick="Pages.showPenaltyDetail(\'' + p.id + '\')">';
+
+
+
+      html += '<div class="li-main">';
+
+
+
+      html += '<div class="li-title">' + p.store + ' | ' + p.event + '</div>';
+
+
+
+      html += '<div class="li-sub">' + p.eventDate + ' | <span class="tag ' + tagClass + '">' + p.status + '</span></div>';
+
+
+
+      html += '</div></div>';
+
+
+
+    });
+
+
+
+  }
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  el.innerHTML = html;
+
+
+
+  App.initStoreSelect('pen-store', stores, function(sid) {
+
+
+
+    var s = App.getStores().find(function(x) { return x.id === sid; });
+
+
+
+    document.getElementById('pen-manager').value = s ? (s.managerTitle ? s.managerTitle + s.manager : s.manager) : '';
+
+
+
+  });
+
+
+
+};
+
+
+
+
+
+
+
+Pages.penaltyRegionChange = function() {
+
+
+
+  const region = document.getElementById('pen-region').value;
+
+
+
+  const allStores = App.getStores();
+
+
+
+  const filtered = region ? allStores.filter(s => s.district === region) : allStores;
+
+
+
+  App.resetStoreSelect('pen-store');
+
+
+
+  App.initStoreSelect('pen-store', filtered, function(sid) {
+
+
+
+    var s = App.getStores().find(function(x) { return x.id === sid; });
+
+
+
+    document.getElementById('pen-manager').value = s ? (s.managerTitle ? s.managerTitle + s.manager : s.manager) : '';
+
+
+
+  });
+
+
+
+};
+
+
+
+
+
+
+
+Pages.submitPenalty = function() {
+
+
+
+  const storeId = App.getStoreSelectValue('pen-store');
+
+
+
+  const storeData = App.getStores().find(s => s.id === storeId);
+
+
+
+  const storeName = storeData ? storeData.name : '';
+
+
+
+
+
+
+
+  const penalties = App.getPenalties();
+
+
+
+  penalties.push({
+
+
+
+    id: 'p' + Date.now(),
+
+
+
+    storeId: storeId,
+
+
+
+    store: storeName,
+
+
+
+    region: storeData ? storeData.region : '',
+
+
+
+    district: storeData ? storeData.district : '',
+
+
+
+    manager: document.getElementById('pen-manager').value || (storeData ? storeData.manager : ''),
+
+
+
+    eventDate: document.getElementById('pen-event-date').value,
+
+
+
+    event: document.getElementById('pen-event').value.trim(),
+
+
+
+    category: document.getElementById('pen-type').value,
+
+
+
+    level: document.getElementById('pen-level').value,
+
+
+
+    source: document.getElementById('pen-source').value.trim(),
+
+
+
+    inspector: document.getElementById('pen-inspector').value.trim(),
+
+
+
+    personName: document.getElementById('pen-person-name').value.trim(),
+
+
+
+    personLevel: document.getElementById('pen-level').value,
+
+
+
+    personType: document.getElementById('pen-type').value,
+
+
+
+    penaltyPerson: document.getElementById('pen-eco-person').value.trim(),
+
+
+
+    penaltyManager: document.getElementById('pen-eco-manager').value.trim(),
+
+
+
+    survey: document.getElementById('pen-survey').value.trim(),
+
+
+
+    suggestion: document.getElementById('pen-suggestion').value.trim(),
+
+
+
+    policyRef: document.getElementById('pen-policy').value.trim(),
+
+
+
+    dutyPerson: '', dutyManager: '', dutyValue: '', dutyCoach: '',
+
+
+
+    status: '待补填'
+
+
+
+  });
+
+
+
+
+
+
+
+  App.savePenalties(penalties);
+
+
+
+  App.toast('处罚记录已提交');
+
+
+
+  Pages.penalty();
+
+
+
+};
+
+
+
+
+
+
+
+Pages.showPenaltyDetail = function(id) {
+
+
+
+  const penalties = App.getPenalties();
+
+
+
+  const p = penalties.find(x => x.id === id);
+
+
+
+  if (!p) return;
+
+
+
+
+
+
+
+  let html = '<div class="modal-box">';
+
+
+
+  html += '<div class="modal-title">处罚详情</div>';
+
+
+
+  html += '<p><b>门店：</b>' + p.store + '</p>';
+
+
+
+  html += '<p><b>日期：</b>' + p.eventDate + '</p>';
+
+
+
+  html += '<p><b>事件：</b>' + p.event + '</p>';
+
+
+
+  html += '<p><b>等级：</b><span class="tag tag-pending">' + p.level + '</span></p>';
+
+
+
+  html += '<p><b>类型：</b>' + p.category + '</p>';
+
+
+
+  html += '<p><b>状态：</b><span class="tag ' + (p.status === '已闭环' ? 'tag-done' : (p.status === '超时' ? 'tag-overdue' : 'tag-pending')) + '">' + p.status + '</span></p>';
+
+
+
+  if (p.survey) html += '<p><b>调查结果：</b>' + p.survey + '</p>';
+
+
+
+  if (p.policyRef) html += '<p><b>制度条款：</b>' + p.policyRef + '</p>';
+
+
+
+
+
+
+
+  if (p.status === '待补填') {
+
+
+
+    html += '<hr style="margin:12px 0;border-color:var(--border)">';
+
+
+
+    html += '<div class="form-group"><label class="form-label">责任人</label><input id="detail-duty-person" class="form-input" value="' + (p.dutyPerson || '') + '"></div>';
+
+
+
+    html += '<div class="form-group"><label class="form-label">整改措施</label><textarea id="detail-duty-value" class="form-textarea">' + (p.dutyValue || '') + '</textarea></div>';
+
+
+
+    html += '<button class="btn btn-success btn-sm" style="margin-right:8px" onclick="Pages.closePenalty(\'' + id + '\')">标记已闭环</button>';
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  const modal = document.getElementById('modal-overlay');
+
+
+
+  modal.querySelector('.modal-box').outerHTML = html;
+
+
+
+  modal.classList.add('show');
+
+
+
+};
+
+
+
+
+
+
+
+Pages.closePenalty = function(id) {
+
+
+
+  const penalties = App.getPenalties();
+
+
+
+  const p = penalties.find(x => x.id === id);
+
+
+
+  if (p) {
+
+
+
+    p.status = '已闭环';
+
+
+
+    p.dutyPerson = document.getElementById('detail-duty-person').value;
+
+
+
+    p.dutyValue = document.getElementById('detail-duty-value').value;
+
+
+
+    App.savePenalties(penalties);
+
+
+
+  }
+
+
+
+  App.toast('已标记为闭环');
+
+
+
+  document.getElementById('modal-overlay').classList.remove('show');
+
+
+
+  Pages.penalty();
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 差评申诉页 ---- */
+
+
+
+Pages.complaint = function() {
+
+
+
+  const el = document.getElementById('page-complaint');
+
+
+
+  if (!el) return;
+
+
+
+  const user = App.currentUser;
+
+
+
+  const stores = App.getStores();
+
+
+
+  const complaints = App.getComplaints();
+
+
+
+
+
+
+
+  let html = '';
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'complaint')) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    el.innerHTML = html;
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  // 模块内子页签：差评列表 / 看板
+  html += '<div class="sub-tabbar dcb-tabbar">';
+  html += '<div class="sub-tab-item' + (Pages._complaintMode === 'board' ? '' : ' active') + '" onclick="Pages._complaintSetTab(\'list\')">差评列表</div>';
+  html += '<div class="sub-tab-item' + (Pages._complaintMode === 'board' ? ' active' : '') + '" onclick="Pages._complaintSetTab(\'board\')">看板</div>';
+  html += '</div>';
+
+  if (Pages._complaintMode === 'board') {
+    html += Pages._complaintBoardHtml();
+    el.innerHTML = html;
+    return;
+  }
+
+  // 表单（从看板跳转时不显示）
+
+
+
+  if (!sessionStorage.getItem('db_readonly')) {
+
+
+
+  // 表单
+
+
+
+  html += '<div class="card"><div class="card-title">\u{1F4AC} 差评录入</div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">门店</label>';
+
+
+
+  html += App.renderStoreSelect('comp-store', stores, '', '输入门店名称搜索...');
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">日期</label>';
+
+
+
+  html += '<input id="comp-date" type="date" class="form-input" value="' + new Date().toISOString().split('T')[0] + '"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">餐段</label>';
+
+
+
+  html += '<select id="comp-meal" class="form-select">';
+
+
+
+  ['早餐', '午餐', '晚餐', '未知'].forEach(m => { html += '<option>' + m + '</option>'; });
+
+
+
+  html += '</select></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">门店调查结果</label>';
+
+
+
+  html += '<textarea id="comp-content" class="form-textarea" placeholder="门店调查结果摘要..."></textarea></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">机会点</label>';
+
+
+
+  html += '<input id="comp-opportunity" class="form-input" placeholder="如：口味标准化/服务培训"></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">平台</label>';
+
+
+
+  html += '<select id="comp-platform" class="form-select">';
+
+
+
+  ['点评', '公众号'].forEach(p => { html += '<option>' + p + '</option>'; });
+
+
+
+  html += '</select></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">责任人</label>';
+
+
+
+  html += '<input id="comp-responsible" class="form-input" placeholder="责任人姓名"></div>';
+
+
+
+
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages.submitComplaint()">提交</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  } else {
+
+
+
+    sessionStorage.removeItem('db_readonly');
+
+
+
+  }
+
+
+
+  // 列表
+
+
+
+  let listComplaints = complaints;
+
+
+
+  if (user.role === '店长') {
+
+
+
+    listComplaints = complaints.filter(c => c.storeId === user.storeId);
+
+
+
+  } else if (user.role === '区域教练' && user.area) {
+
+
+
+    listComplaints = complaints.filter(c => stores.filter(s => s.region === user.area).some(s => s.id === c.storeId));
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '<div class="card"><div class="card-title">差评列表（共 ' + listComplaints.length + ' 条）</div>';
+
+
+
+  if (listComplaints.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">\u{1F4AD}</div>暂无差评</div>';
+
+
+
+  } else {
+
+
+
+    listComplaints.slice().reverse().forEach(c => {
+
+
+
+      let tagClass = 'tag-pending';
+
+
+
+      if (c.status === '待处理') tagClass = 'tag-warning';
+
+
+
+      else if (c.status === '已处理') tagClass = 'tag-done';
+
+
+
+      else if (c.status === '已申诉' && c.appealResult === '通过') tagClass = 'tag-done';
+
+
+
+      else if (c.status === '已驳回') tagClass = 'tag-overdue';
+
+
+
+
+
+
+
+      html += '<div class="list-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')">';
+
+
+
+      html += '<div class="li-main">';
+
+
+
+      html += '<div class="li-title">' + c.store + ' | ' + c.content.substring(0, 30) + '...</div>';
+
+
+
+      html += '<div class="li-sub">' + c.date + ' | <span class="tag ' + tagClass + '">' + c.status + '</span></div>';
+
+
+
+      html += '</div></div>';
+
+
+
+    });
+
+
+
+  }
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  el.innerHTML = html;
+
+
+
+  App.initStoreSelect('comp-store', stores);
+
+
+
+};
+
+
+
+
+
+
+
+Pages.submitComplaint = function() {
+
+
+
+  const storeId = App.getStoreSelectValue('comp-store');
+
+
+
+  const store = App.getStores().find(s => s.id === storeId);
+
+
+
+  const complaints = App.getComplaints();
+
+
+
+
+
+
+
+  complaints.push({
+
+
+
+    id: 'c' + Date.now(),
+
+
+
+    storeId: storeId,
+
+
+
+    store: store ? store.name : '',
+
+
+
+    date: document.getElementById('comp-date').value,
+
+
+
+    meal: document.getElementById('comp-meal').value,
+
+
+
+    content: document.getElementById('comp-content').value.trim(),
+
+
+
+    opportunity: document.getElementById('comp-opportunity').value.trim(),
+
+
+
+    platform: document.getElementById('comp-platform').value,
+
+
+
+    responsible: document.getElementById('comp-responsible').value.trim(),
+
+
+
+    responsibleTitle: '',
+
+
+
+    dutyManager: store ? store.manager : '',
+
+
+
+    status: '待处理',
+
+
+
+    appealContent: '',
+
+
+
+    appealResult: ''
+
+
+
+  });
+
+
+
+
+
+
+
+  App.saveComplaints(complaints);
+
+
+
+  App.toast('差评已录入');
+
+
+
+  Pages.complaint();
+
+
+
+};
+
+
+
+
+
+
+
+Pages.showComplaintDetail = function(id) {
+
+
+
+  const complaints = App.getComplaints();
+
+
+
+  const c = complaints.find(x => x.id === id);
+
+
+
+  if (!c) return;
+
+
+
+
+
+
+
+  let html = '<div class="modal-box">';
+
+
+
+  html += '<div class="modal-title">差评详情</div>';
+
+
+
+  html += '<p><b>门店：</b>' + c.store + '</p>';
+
+
+
+  html += '<p><b>日期：</b>' + c.date + ' | ' + c.meal + '</p>';
+
+
+
+  html += '<p><b>平台：</b>' + c.platform + '</p>';
+
+
+
+  html += '<p><b>内容：</b>' + c.content + '</p>';
+
+
+
+  html += '<p><b>机会点：</b>' + c.opportunity + '</p>';
+
+
+
+  html += '<p><b>责任人：</b>' + c.responsible + '</p>';
+
+
+
+  html += '<p><b>状态：</b>' + c.status + '</p>';
+
+
+
+
+
+
+
+  if (c.appealContent) html += '<p><b>申诉材料：</b>' + c.appealContent + '</p>';
+
+
+
+  if (c.appealResult) html += '<p><b>审核结果：</b>' + c.appealResult + '</p>';
+
+
+
+
+
+
+
+  const user = App.currentUser;
+
+
+
+
+
+
+
+  /* 待处理差评 → 店长填写责任人并生成处罚 */
+
+
+
+  if (c.status === '待处理' && user.role === '店长') {
+
+
+
+    html += '<hr style="margin:12px 0;border-color:var(--border)">';
+
+
+
+    html += '<div class="form-group"><label class="form-label">确认责任人</label><input id="detail-duty-name" class="form-input" value="' + (c.responsible || '') + '" placeholder="责任人姓名"></div>';
+
+
+
+    html += '<div class="form-group"><label class="form-label">责任人类型</label><select id="detail-duty-type" class="form-select"><option>店长</option><option>小时工</option><option>正式员工</option><option>管理者</option></select></div>';
+
+
+
+    html += '<div class="form-group"><label class="form-label">处罚等级</label><select id="detail-duty-level" class="form-select"><option>一级批评教育</option><option>二级书面警告</option><option>三级降职降薪</option><option>经济处罚</option></select></div>';
+
+
+
+    html += '<div class="form-group"><label class="form-label">经济处罚金额（元）</label><input id="detail-duty-amount" class="form-input" placeholder="如：200"></div>';
+
+
+
+    html += '<div class="form-group"><label class="form-label">调查结论</label><textarea id="detail-duty-survey" class="form-textarea" placeholder="简要描述调查结果..."></textarea></div>';
+
+
+
+    html += '<button class="btn btn-primary btn-sm" style="width:100%" onclick="Pages.resolveComplaint(\'' + id + '\')">确认责任人并生成处罚</button>';
+
+
+
+  }
+
+
+
+
+
+
+
+  /* 申诉流程 */
+
+
+
+  if (c.status === '待申诉' && (user.role === '店长' || user.role === '总部' || user.role === '客服' || user.role === '营运')) {
+
+
+
+    html += '<hr style="margin:12px 0;border-color:var(--border)">';
+
+
+
+    html += '<div class="form-group"><label class="form-label">申诉内容</label><textarea id="detail-appeal" class="form-textarea" placeholder="申诉理由和材料..."></textarea></div>';
+
+
+
+    if (user.role === '店长') {
+
+
+
+      html += '<button class="btn btn-primary btn-sm" onclick="Pages.submitAppeal(\'' + id + '\')">提交申诉</button>';
+
+
+
+    } else {
+
+
+
+      html += '<button class="btn btn-success btn-sm" style="margin-right:8px" onclick="Pages.reviewAppeal(\'' + id + '\',\'通过\')">审核通过</button>';
+
+
+
+      html += '<button class="btn btn-danger btn-sm" onclick="Pages.reviewAppeal(\'' + id + '\',\'驳回\')">驳回</button>';
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  const modal = document.getElementById('modal-overlay');
+
+
+
+  modal.querySelector('.modal-box').outerHTML = html;
+
+
+
+  modal.classList.add('show');
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 店长处理差评：填责任人并生成处罚 ---- */
+
+
+
+Pages.resolveComplaint = async function(id) {
+
+
+
+  var complaints = App.getComplaints();
+
+
+
+  var c = complaints.find(function(x) { return x.id === id; });
+
+
+
+  if (!c) return;
+
+
+
+
+
+
+
+  var dutyName = document.getElementById('detail-duty-name').value.trim();
+
+
+
+  var dutyType = document.getElementById('detail-duty-type').value;
+
+
+
+  var dutyLevel = document.getElementById('detail-duty-level').value;
+
+
+
+  var dutyAmount = document.getElementById('detail-duty-amount').value.trim();
+
+
+
+  var dutySurvey = document.getElementById('detail-duty-survey').value.trim();
+
+
+
+
+
+
+
+  if (!dutyName) { App.toast('请填写责任人'); return; }
+
+
+
+
+
+
+
+  // 更新差评状态
+
+
+
+  c.responsible = dutyName;
+
+
+
+  c.responsibleTitle = dutyType;
+
+
+
+  c.status = '已处理';
+
+
+
+  await App.saveComplaints(complaints);
+
+
+
+
+
+
+
+  // 自动生成处罚记录
+
+
+
+  var stores = App.getStores();
+
+
+
+  var store = stores.find(function(s) { return s.id === c.storeId; }) || {};
+
+
+
+  var penalties = App.getPenalties();
+
+
+
+  penalties.push({
+
+
+
+    id: 'p' + Date.now(),
+
+
+
+    storeId: c.storeId,
+
+
+
+    store: c.store,
+
+
+
+    region: store.region || '',
+
+
+
+    district: store.district || '',
+
+
+
+    manager: store.manager || '',
+
+
+
+    eventDate: c.date,
+
+
+
+    event: '差评：' + c.content.substring(0, 40),
+
+
+
+    category: dutyType,
+
+
+
+    level: dutyLevel,
+
+
+
+    source: '线上差评',
+
+
+
+    inspector: App.currentUser.name,
+
+
+
+    personName: dutyName,
+
+
+
+    personLevel: dutyLevel,
+
+
+
+    personType: dutyType,
+
+
+
+    penaltyPerson: dutyAmount,
+
+
+
+    penaltyManager: '',
+
+
+
+    survey: dutySurvey || '差评核查',
+
+
+
+    suggestion: dutyLevel + (dutyAmount ? '，经济处罚' + dutyAmount + '元' : ''),
+
+
+
+    policyRef: '差评处理流程',
+
+
+
+    dutyPerson: dutyName,
+
+
+
+    dutyManager: store.manager || '',
+
+
+
+    dutyValue: dutyAmount,
+
+
+
+    dutyCoach: '',
+
+
+
+    status: '已闭环'
+
+
+
+  });
+
+
+
+  await App.savePenalties(penalties);
+
+
+
+
+
+
+
+  App.toast('已生成处罚记录');
+
+
+
+  document.getElementById('modal-overlay').classList.remove('show');
+
+
+
+  Pages.complaint();
+
+
+
+};
+
+
+
+
+
+
+
+Pages.submitAppeal = function(id) {
+
+
+
+  const complaints = App.getComplaints();
+
+
+
+  const c = complaints.find(x => x.id === id);
+
+
+
+  if (c) {
+
+
+
+    c.status = '申诉中';
+
+
+
+    c.appealContent = document.getElementById('detail-appeal').value;
+
+
+
+    App.saveComplaints(complaints);
+
+
+
+  }
+
+
+
+  App.toast('申诉已提交');
+
+
+
+  document.getElementById('modal-overlay').classList.remove('show');
+
+
+
+  Pages.complaint();
+
+
+
+};
+
+
+
+
+
+
+
+Pages.reviewAppeal = function(id, result) {
+
+
+
+  const complaints = App.getComplaints();
+
+
+
+  const c = complaints.find(x => x.id === id);
+
+
+
+  if (c) {
+
+
+
+    c.status = result === '通过' ? '已申诉' : '已驳回';
+
+
+
+    c.appealResult = result;
+
+
+
+    if (!c.appealContent) c.appealContent = document.getElementById('detail-appeal') ? document.getElementById('detail-appeal').value : '';
+
+
+
+    App.saveComplaints(complaints);
+
+
+
+  }
+
+
+
+  App.toast('审核' + result);
+
+
+
+  document.getElementById('modal-overlay').classList.remove('show');
+
+
+
+  Pages.complaint();
+
+
+
+};
+
+
+
+
+
+
+
+/* ---- 领导看板页 ---- */
+
+
+
+Pages.dashboardMode = Pages.dashboardMode || 'mtd';
+
+
+
+
+
+
+
+Pages.dashboard = function() {
+  const el = document.getElementById('page-dashboard');
+  if (!el) return;
+  const user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'dashboard')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var complaints = App.getComplaints() || [];
+  var penalties = App.getPenalties() || [];
+  var issues = App.getIssues() || [];
+  var reports = App.getDailyReports() || [];
+  var supplyIssues = App.getSupplyIssues() || [];
+  var supplyTotal = supplyIssues.length;
+  var supplyPending = supplyIssues.filter(function(r){ return r.status === '待处理'; }).length;
+
+  var now = new Date();
+  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var monthComplaints = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
+  var monthPenalties = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
+  var pendingIssues = issues.filter(function(r){ return r.status === '待处理'; });
+  var monthReports = reports.filter(function(r){ return (r.date || '').indexOf(curMonth) === 0; });
+  var inspectors = {};
+  monthReports.forEach(function(r){ if (r.inspector) inspectors[r.inspector] = 1; });
+  var inspectorCount = Object.keys(inspectors).length;
+  var monthAmount = 0;
+  monthPenalties.forEach(function(p){ monthAmount += Pages._pAmount(p); });
+
+  var html = '';
+  html += '<div class="sub-tabbar dcb-tabbar">';
+  html += '<div class="sub-tab-item active" onclick="Pages._gotoBoardTab(\'dashboard\')">看板中心</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'inspectionWorkbench\')">稽核看板</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'complaintBoard\')">差评看板</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'daily\')">日报看板</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'penaltyBoard\')">处罚看板</div>';
+  html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'supplyChain\')">供应链看板</div>';
+  html += '</div>';
+
+  html += '<div class="dcb-wrap">';
+  html += '<div class="dcb-head"><div class="dcb-title">看板中心</div><div class="dcb-date">' + curMonth + ' · 数据实时更新</div></div>';
+  html += '<div class="dcb-grid">';
+  html += Pages._dcCard('inspectionWorkbench', '稽核待整改', pendingIssues.length, '项', '#e0342c', 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z', '待处理工单');
+  html += Pages._dcCard('complaintBoard', '差评', monthComplaints.length, '条', '#f59e0b', 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', '本月差评');
+  html += Pages._dcCard('daily', '日报', monthReports.length, '篇', '#3b82f6', 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z', inspectorCount + ' 位稽核员');
+  html += Pages._dcCard('penaltyBoard', '处罚', monthPenalties.length, '笔 · ¥' + monthAmount.toLocaleString(), '#8b5cf6', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', '本月处罚');
+  html += Pages._dcCard('supplyChain', '供应链', supplyTotal, '项', '#0ea5e9', 'M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H6a2 2 0 0 0-2 2z', supplyPending + ' 待处理');
+  html += '</div></div>';
+
+  el.innerHTML = html;
+};
+
+Pages._gotoBoardTab = function(id) {
+  if (id === 'daily') {
+    Pages._dailyMode = 'board';
+    location.hash = '#daily';
+    return;
+  }
+  if (id === 'supplyChain') {
+    Pages._supplyState.tab = 'board';
+    location.hash = '#supplyChain';
+    return;
+  }
+  location.hash = '#' + id;
+};
+
+Pages._dcCard = function(id, title, value, unit, color, iconPath, sub) {
+  return '<div class="dcb-card" onclick="Pages._gotoBoardTab(\'' + id + '\')" style="--dc:' + color + '"><div class="dcb-card-top"><div class="dcb-card-icon" style="background:' + color + '1a;color:' + color + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="dcb-card-go" style="color:' + color + '">&#8250;</div></div><div class="dcb-card-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div><div class="dcb-card-title">' + title + '</div><div class="dcb-card-sub">' + sub + '</div></div>';
+};
+
+Pages.switchDashboard = function(mode) {
+
+
+
+  Pages.dashboardMode = mode;
+
+
+
+  Pages.dashboard();
+
+
+
+};
+
+
+
+
+
+
+
+function dbKpiCard(title, value, unit, color, iconPath, onclick) {
+
+
+
+  return '<div class="db-kpi-card' + (onclick ? ' db-kpi-card-link' : '') + '"' + (onclick ? ' onclick="' + onclick + '"' : '') + '><div class="db-kpi-icon" style="background:' + color + '20;color:' + color + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="db-kpi-body"><div class="db-kpi-title">' + title + (onclick ? ' <span style="font-size:9px;opacity:0.5">›</span>' : '') + '</div><div class="db-kpi-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div></div></div>';
+
+
+
+}
+
+
+
+
+
+
+
+/* ---- 闭环追踪明细弹窗 ---- */
+
+
+
+function showClosureDetail(mode) {
+
+
+
+  var today = '2026-08-01';
+
+
+
+  var allPenalties = App.getPenalties();
+
+
+
+  var penalties = (mode === 'today') ? allPenalties.filter(function(p) { return p.eventDate === today; }) : allPenalties;
+
+
+
+  var closed = penalties.filter(function(p) { return p.status === '已闭环'; });
+
+
+
+  var overdue = penalties.filter(function(p) { return p.status === '超时'; });
+
+
+
+  var pending = penalties.filter(function(p) { return p.status === '待补填'; });
+
+
+
+
+
+
+
+  var html = '<div class="closure-overlay" onclick="this.remove()"><div class="closure-modal" onclick="event.stopPropagation()">';
+
+
+
+  html += '<div class="closure-close" onclick="this.parentElement.parentElement.remove()">&times;</div>';
+
+
+
+  html += '<div class="closure-title">闭环追踪明细</div>';
+
+
+
+
+
+
+
+  function section(color, label, items) {
+
+
+
+    var s = '<div class="closure-section"><div class="closure-section-hd" style="color:' + color + '"><span class="closure-dot" style="background:' + color + '"></span>' + label + '（' + items.length + '）</div>';
+
+
+
+    if (!items.length) { s += '<div class="closure-empty">暂无</div>'; }
+
+
+
+    else {
+
+
+
+      items.forEach(function(p) {
+
+
+
+        s += '<div class="closure-row" onclick="closeModalAndGo(\'#penalty\')"><span class="closure-store">' + p.store + '</span><span class="closure-event">' + p.event + '</span><span class="closure-date">' + (p.eventDate || '') + '</span></div>';
+
+
+
+      });
+
+
+
+    }
+
+
+
+    s += '</div>';
+
+
+
+    return s;
+
+
+
+  }
+
+
+
+
+
+
+
+  html += section('#10b981', '已闭环', closed);
+
+
+
+  html += section('#ef4444', '超时', overdue);
+
+
+
+  html += section('#f59e0b', '待补填', pending);
+
+
+
+  html += '</div></div>';
+
+
+
+
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  document.body.appendChild(div.firstElementChild);
+
+
+
+}
+
+
+
+
+
+
+
+function closeModalAndGo(hash) {
+
+
+
+  var overlay = document.querySelector('.closure-overlay');
+
+
+
+  if (overlay) overlay.remove();
+
+
+
+  location.hash = hash;
+
+
+
+}
+
+
+
+
+
+
+
+/* ==================== 通知模板 ==================== */
+
+
+
+Pages.template = function() {
+
+
+
+  var container = document.getElementById('page-template');
+
+
+
+  var templates = App.dataCache.notices || [];
+
+
+
+  var html = '<div class="template-page">';
+
+
+
+
+
+
+
+  // 头部统计
+
+
+
+  html += '<div class="stats-row">';
+
+
+
+  html += '<div class="stat-item"><span class="stat-num">' + templates.length + '</span><span class="stat-label">模板总数</span></div>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 操作栏
+
+
+
+  html += '<div class="action-bar">';
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages._templateForm()">+ 新建模板</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 模板列表
+
+
+
+  if (templates.length === 0) {
+
+
+
+    html += '<div class="empty-state">暂无通知模板，点击上方按钮创建</div>';
+
+
+
+  } else {
+
+
+
+    html += '<div class="template-list">';
+
+
+
+    templates.forEach(function(t, i) {
+
+
+
+      var typeLabel = t.type === 'penalty' ? '处罚通知' : t.type === 'inspect' ? '检查通知' : t.type === 'complaint' ? '申诉通知' : '通用通知';
+
+
+
+      var typeColor = t.type === 'penalty' ? '#ef4444' : t.type === 'inspect' ? '#3b82f6' : t.type === 'complaint' ? '#f59e0b' : '#6b7280';
+
+
+
+      html += '<div class="template-card">';
+
+
+
+      html += '<div class="template-head">';
+
+
+
+      html += '<span class="template-name">' + (t.name || '未命名') + '</span>';
+
+
+
+      html += '<span class="template-type" style="background:' + typeColor + '">' + typeLabel + '</span>';
+
+
+
+      html += '</div>';
+
+
+
+      html += '<div class="template-preview">' + (t.content || '').replace(/\{(\w+)\}/g, '<em>{$1}</em>') + '</div>';
+
+
+
+      html += '<div class="template-actions">';
+
+
+
+      html += '<button class="btn btn-sm" onclick="Pages._templateForm(' + i + ')">编辑</button>';
+
+
+
+      html += '<button class="btn btn-sm btn-danger" onclick="Pages._templateDelete(' + i + ')">删除</button>';
+
+
+
+      html += '</div>';
+
+
+
+      html += '</div>';
+
+
+
+    });
+
+
+
+    html += '</div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '</div>';
+
+
+
+  container.innerHTML = html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._templateForm = function(index) {
+
+
+
+  var templates = App.dataCache.notices || [];
+
+
+
+  var t = (index !== undefined && index >= 0) ? templates[index] : null;
+
+
+
+  var isEdit = !!t;
+
+
+
+  var title = isEdit ? '编辑模板' : '新建模板';
+
+
+
+
+
+
+
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
+
+
+
+  html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+  html += '<div class="modal-body">';
+
+
+
+
+
+
+
+  // 模板名称
+
+
+
+  html += '<div class="form-group"><label>模板名称</label>';
+
+
+
+  html += '<input type="text" id="tpl-name" class="form-input" value="' + (t ? t.name || '' : '') + '" placeholder="如：处罚通知-门店"></div>';
+
+
+
+
+
+
+
+  // 类型选择
+
+
+
+  html += '<div class="form-group"><label>适用场景</label>';
+
+
+
+  html += '<select id="tpl-type" class="form-input">';
+
+
+
+  var types = [
+
+
+
+    { v: 'penalty', l: '处罚通知' },
+
+
+
+    { v: 'inspect', l: '检查通知' },
+
+
+
+    { v: 'complaint', l: '申诉通知' },
+
+
+
+    { v: 'general', l: '通用通知' }
+
+
+
+  ];
+
+
+
+  types.forEach(function(ty) {
+
+
+
+    var sel = (t && t.type === ty.v) ? ' selected' : '';
+
+
+
+    html += '<option value="' + ty.v + '"' + sel + '>' + ty.l + '</option>';
+
+
+
+  });
+
+
+
+  html += '</select></div>';
+
+
+
+
+
+
+
+  // 模板内容
+
+
+
+  html += '<div class="form-group"><label>模板内容 <span class="hint">可用变量：{门店名称} {日期} {检查人} {扣分项} {处罚金额} {申诉内容}</span></label>';
+
+
+
+  html += '<textarea id="tpl-content" class="form-input" rows="8" placeholder="如：{门店名称} 于 {日期} 被检查发现 {扣分项}，处罚 {处罚金额} 元...">' + (t ? t.content || '' : '') + '</textarea></div>';
+
+
+
+
+
+
+
+  // 预览
+
+
+
+  html += '<div class="form-group"><label>变量说明</label>';
+
+
+
+  html += '<div class="var-hints">';
+
+
+
+  html += '<code>{门店名称}</code><code>{日期}</code><code>{检查人}</code><code>{扣分项}</code>';
+
+
+
+  html += '<code>{处罚金额}</code><code>{申诉内容}</code><code>{检查得分}</code><code>{整改期限}</code>';
+
+
+
+  html += '</div></div>';
+
+
+
+
+
+
+
+  html += '</div>';
+
+
+
+  html += '<div class="modal-footer">';
+
+
+
+  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages._templateSave(' + (isEdit ? index : -1) + ')">保存</button>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '</div></div>';
+
+
+
+
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  var overlay = div.firstElementChild;
+
+
+
+  document.body.appendChild(overlay);
+
+
+
+  overlay.offsetHeight;
+
+
+
+  overlay.classList.add('show');
+
+
+
+};
+
+
+
+
+
+
+
+Pages._templateSave = function(index) {
+
+
+
+  var name = (document.getElementById('tpl-name') || {}).value || '';
+
+
+
+  var type = (document.getElementById('tpl-type') || {}).value || 'general';
+
+
+
+  var content = (document.getElementById('tpl-content') || {}).value || '';
+
+
+
+
+
+
+
+  if (!name.trim()) return App.toast('请输入模板名称');
+
+
+
+  if (!content.trim()) return App.toast('请输入模板内容');
+
+
+
+
+
+
+
+  var templates = App.dataCache.notices || [];
+
+
+
+  var tpl = { name: name.trim(), type: type, content: content.trim() };
+
+
+
+
+
+
+
+  if (index >= 0) {
+
+
+
+    templates[index] = tpl;
+
+
+
+  } else {
+
+
+
+    templates.push(tpl);
+
+
+
+  }
+
+
+
+
+
+
+
+  App.dataCache.notices = templates;
+
+
+
+  localStorage.setItem('nanchengxiang_notices', JSON.stringify(templates));
+
+
+
+  App.toast(index >= 0 ? '模板已更新' : '模板已创建');
+
+
+
+
+
+
+
+  var overlay = document.querySelector('.modal-overlay');
+
+
+
+  if (overlay) overlay.remove();
+
+
+
+  Pages.template();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._templateDelete = function(index) {
+
+
+
+  if (!confirm('确定删除该模板？')) return;
+
+
+
+  var templates = App.dataCache.notices || [];
+
+
+
+  templates.splice(index, 1);
+
+
+
+  App.dataCache.notices = templates;
+
+
+
+  localStorage.setItem('nanchengxiang_notices', JSON.stringify(templates));
+
+
+
+  App.toast('模板已删除');
+
+
+
+  Pages.template();
+
+
+
+};
+
+
+
+
+
+
+
+/* ==================== 任务发布 ==================== */
+
+
+
+Pages.task = function() {
+  var el = document.getElementById('page-task');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'task')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var tasks = App.getTasks() || [];
+  tasks.sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); });
+
+  var html = '';
+  html += '<div class="sub-tabbar dcb-tabbar">';
+  html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? '' : ' active') + '" onclick="Pages._taskSetTab(\'list\')">任务列表</div>';
+  html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? ' active' : '') + '" onclick="Pages._taskSetTab(\'board\')">看板</div>';
+  html += '</div>';
+
+  if (Pages._taskMode === 'board') {
+    html += Pages._taskBoardHtml();
+    el.innerHTML = html;
+    return;
+  }
+  html += '<div class="task-total">共 ' + tasks.length + ' 项任务 · ' + tasks.filter(function(t){ return t.status === '进行中'; }).length + ' 项进行中</div>';
+
+  tasks.forEach(function(t) {
+    var tagCls = t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue');
+    var tagText = t.status === '进行中' ? '进行中' : t.status;
+    html += '<div class="list-item" onclick="Pages.showTaskDetail(\'' + t.id + '\')">';
+    html += '<div class="list-item-top"><span class="task-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="tag ' + tagCls + '">' + tagText + '</span></div>';
+    html += '<div class="task-sub">负责人：' + t.person + ' ｜ 截止：' + t.dueDate + (t.priority === '高' ? ' ｜ <span style="color:#e0342c">高优先级</span>' : '') + '</div>';
+    html += '</div>';
+  });
+
+  if (tasks.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无任务</div></div>';
+  }
+
+  el.innerHTML = html;
+};
+
+Pages.showTaskDetail = function(id) {
+  var tasks = App.getTasks() || [];
+  var t = tasks.find(function(x){ return x.id === id; });
+  if (!t) return;
+  var html = '<div class="modal-box">';
+  html += '<div class="modal-title">任务详情</div>';
+  html += '<p><b>任务：</b>' + t.title + '</p>';
+  if (t.store) html += '<p><b>门店：</b>' + t.store + '</p>';
+  html += '<p><b>负责人：</b>' + t.person + '</p>';
+  html += '<p><b>状态：</b><span class="tag ' + (t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue')) + '">' + t.status + '</span></p>';
+  html += '<p><b>截止日期：</b>' + t.dueDate + '</p>';
+  html += '<p><b>优先级：</b>' + t.priority + '</p>';
+  html += '<p><b>来源：</b>' + (t.source || '-') + '</p>';
+  html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
+  html += '</div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+
+
+/* ==================== 稽核员日报 ==================== */
+
+
+
+Pages._dailyMode = 'fill'; // 'fill' | 'board'
+
+
+
+
+
+
+
+Pages.daily = function() {
+
+
+
+  var el = document.getElementById('page-daily');
+
+
+
+  if (!el) return;
+
+
+
+  var user = App.currentUser;
+
+
+
+  var stores = App.getStores();
+
+
+
+  var reports = App.getDailyReports();
+
+
+
+  var mode = Pages._dailyMode;
+
+
+
+  var now = new Date();
+
+
+
+  var today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+
+
+
+
+
+
+  var html = '';
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'daily')) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    el.innerHTML = html;
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  // 模式切换
+
+
+
+  html += '<div class="daily-mode-bar">';
+
+
+
+  html += '<button class="daily-mode-btn' + (mode==='fill'?' active':'') + '" onclick="Pages._switchDaily(\'fill\')">填写日报</button>';
+
+
+
+  html += '<button class="daily-mode-btn' + (mode==='board'?' active':'') + '" onclick="Pages._switchDaily(\'board\')">日报看板</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  if (mode === 'fill') {
+
+
+
+    // ===== 填写日报 =====
+
+
+
+    html += '<div class="card">';
+
+
+
+    html += '<div class="card-title">稽核员日报</div>';
+
+
+
+
+
+
+
+    html += '<div class="daily-meta">';
+
+
+
+    html += '<span>稽核员：<b>' + user.name + '</b></span>';
+
+
+
+    html += '<span>日期：<b>' + today + '</b></span>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    html += '<div class="form-group"><label class="form-label">稽核类型</label>';
+
+
+
+    html += '<div class="daily-type-radios">';
+
+
+
+    html += '<label class="radio-label"><input type="radio" name="daily-type" value="online" checked onchange="Pages._dailyTypeChange()"> 线上稽核</label>';
+
+
+
+    html += '<label class="radio-label"><input type="radio" name="daily-type" value="offline" onchange="Pages._dailyTypeChange()"> 线下稽核</label>';
+
+
+
+    html += '</div></div>';
+
+
+
+
+
+
+
+    html += '<div id="daily-items-container">';
+
+
+
+    html += Pages._dailyRow(1);
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    html += '<button class="daily-add-btn" id="daily-add-btn" onclick="Pages._dailyAddRow()">+ 添加门店</button>';
+
+
+
+    html += '<button class="btn btn-primary" style="margin-top:12px" onclick="Pages.submitDaily()">提交日报</button>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    // 已提交列表
+
+
+
+    var userReports = reports.filter(function(r) { return r.inspector === user.name; }).reverse();
+
+
+
+    html += '<div class="card"><div class="card-title">已提交日报（' + userReports.length + '）</div>';
+
+
+
+    if (userReports.length === 0) {
+
+
+
+      html += '<div class="empty-state"><div class="empty-icon">&#128196;</div>暂无日报</div>';
+
+
+
+    } else {
+
+
+
+      userReports.forEach(function(r) {
+
+
+
+        var typeLabel = r.type === 'online' ? '线上' : '线下';
+
+
+
+        html += '<div class="list-item" onclick="Pages._toggleDailyDetail(\'' + r.id + '\')">';
+
+
+
+        html += '<div class="li-main">';
+
+
+
+        html += '<div class="li-title">' + r.date + ' | ' + typeLabel + '稽核 | ' + (r.items||[]).length + '家门店</div>';
+
+
+
+        html += '<div class="li-sub">稽核员：' + r.inspector + '</div>';
+
+
+
+        html += '</div></div>';
+
+
+
+        html += '<div id="daily-detail-' + r.id + '" class="daily-detail" style="display:none">';
+
+
+
+        (r.items||[]).forEach(function(item) {
+
+
+
+          html += '<div class="daily-detail-row"><span class="ddr-store">' + item.store + '</span><span class="ddr-score">' + item.score + '分</span><span class="ddr-findings">' + (item.findings||'无') + '</span></div>';
+
+
+
+        });
+
+
+
+        html += '</div>';
+
+
+
+      });
+
+
+
+    }
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+  } else {
+
+
+
+    // ===== 日报看板 =====
+
+
+
+    var workRecords = App.getWorkRecords();
+
+
+
+    html += Pages._renderDailyBoard(reports, stores, workRecords);
+
+
+
+  }
+
+
+
+
+
+
+
+  el.innerHTML = html;
+
+
+
+  App.initStoreSelect('daily-store-1', App.getStores());
+
+
+
+};
+
+
+
+
+
+
+
+Pages._switchDaily = function(mode) {
+
+
+
+  Pages._dailyMode = mode;
+
+
+
+  Pages.daily();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._preprocessImage = function(file) {
+  return new Promise(function(resolve, reject) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function() {
+      var maxSide = 2000;
+      var scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      var w = Math.round(img.width * scale);
+      var h = Math.round(img.height * scale);
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var imageData = ctx.getImageData(0, 0, w, h);
+      var d = imageData.data;
+      for (var i = 0; i < d.length; i += 4) {
+        var gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+        gray = (gray - 128) * 1.3 + 128;
+        if (gray < 0) gray = 0;
+        else if (gray > 255) gray = 255;
+        d[i] = gray;
+        d[i+1] = gray;
+        d[i+2] = gray;
+      }
+      ctx.putImageData(imageData, 0, 0);
+      URL.revokeObjectURL(url);
+      resolve(canvas);
+    };
+    img.onerror = function() {
+      URL.revokeObjectURL(url);
+      reject(new Error('图片读取失败'));
+    };
+    img.src = url;
+  });
+};
+
+Pages._cleanOCRText = function(text) {
+  if (!text) return '';
+  return text.split('\n').map(function(line) { return line.trim(); }).filter(function(line) { return line.length > 0; }).join('\n');
+};
+
+Pages._setDailyAIBusy = function(index, busy) {
+  var row = document.getElementById('daily-row-' + index);
+  if (!row) return;
+  var btns = row.querySelectorAll('.daily-ai-btn');
+  for (var i = 0; i < btns.length; i++) {
+    if (busy) {
+      btns[i].classList.add('daily-ai-btn-disabled');
+      btns[i].setAttribute('disabled', 'disabled');
+    } else {
+      btns[i].classList.remove('daily-ai-btn-disabled');
+      btns[i].removeAttribute('disabled');
+    }
+  }
+};
+
+Pages._dailyOCR = function(index) {
+  var input = document.getElementById('daily-findings-' + index);
+  if (!input) return;
+  var fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.capture = 'environment';
+  fileInput.style.display = 'none';
+  document.body.appendChild(fileInput);
+  fileInput.onchange = function() {
+    var file = fileInput.files[0];
+    if (!file) { fileInput.remove(); return; }
+    App.toast('识别中，请确保图片正对文字、光线充足');
+    Pages._setDailyAIBusy(index, true);
+    Pages._loadTesseract(function() {
+      if (typeof Tesseract === 'undefined') {
+        App.toast('OCR 引擎加载失败，请检查网络后重试');
+        Pages._setDailyAIBusy(index, false);
+        fileInput.remove();
+        return;
+      }
+      Pages._preprocessImage(file).then(function(canvas) {
+        return Tesseract.createWorker('chi_sim', 1, { logger: function() {} }).then(function(worker) {
+          return worker.setParameters({ tessedit_pageseg_mode: '6' }).then(function() {
+            return worker.recognize(canvas).then(function(res) {
+              return worker.terminate().then(function() {
+                return res;
+              });
+            });
+          });
+        });
+      }).then(function(res) {
+        var text = Pages._cleanOCRText(res && res.data && res.data.text || '');
+        if (text) {
+          input.value = input.value ? input.value + '\n' + text : text;
+          App.toast('已识别 ' + text.length + ' 字');
+        } else {
+          App.toast('未识别到文字，请重拍');
+        }
+        Pages._setDailyAIBusy(index, false);
+        fileInput.remove();
+      }).catch(function(err) {
+        App.toast('OCR 识别失败：' + (err && err.message ? err.message : '未知错误'));
+        Pages._setDailyAIBusy(index, false);
+        fileInput.remove();
+      });
+    });
+  };
+  fileInput.click();
+};
+
+Pages._loadTesseract = function(cb) {
+  if (typeof Tesseract !== 'undefined') { cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  s.onload = function() { cb(); };
+  s.onerror = function() { cb(); };
+  document.head.appendChild(s);
+};
+
+Pages._dailyVoice = function(index) {
+  var input = document.getElementById('daily-findings-' + index);
+  if (!input) return;
+  var ua = navigator.userAgent || '';
+  var isWeChat = /MicroMessenger/i.test(ua);
+  var isFirefox = /Firefox/i.test(ua);
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    if (isWeChat || isFirefox) {
+      App.toast('当前浏览器不支持语音输入，请点击右上角···在浏览器中打开后使用');
+    } else {
+      App.toast('当前浏览器不支持语音输入，请使用 Chrome 或 Safari 16+');
+    }
+    return;
+  }
+  var rec;
+  try {
+    rec = new SR();
+  } catch (e) {
+    App.toast('语音识别初始化失败：' + (e && e.message ? e.message : '未知错误'));
+    return;
+  }
+  rec.lang = 'zh-CN';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  Pages._setDailyAIBusy(index, true);
+  var voiceBtn = document.getElementById('daily-voice-' + index);
+  if (voiceBtn) voiceBtn.classList.add('daily-voice-active');
+  var stopped = false;
+  var timer = setTimeout(function() {
+    try { rec.stop(); } catch (e) {}
+  }, 15000);
+  function finish() {
+    if (stopped) return;
+    stopped = true;
+    clearTimeout(timer);
+    Pages._setDailyAIBusy(index, false);
+    var vb = document.getElementById('daily-voice-' + index);
+    if (vb) vb.classList.remove('daily-voice-active');
+  }
+  App.toast('请开始说话...');
+  rec.onresult = function(e) {
+    var text = '';
+    for (var i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+    text = (text || '').trim();
+    if (text) {
+      input.value = input.value ? input.value + '\n' + text : text;
+      App.toast('已输入语音内容');
+    } else {
+      App.toast('未识别到语音');
+    }
+  };
+  rec.onerror = function(e) {
+    var err = e && e.error ? e.error : '';
+    if (err === 'not-allowed' || err === 'service-not-allowed') {
+      App.toast('请开启麦克风权限后再试');
+    } else if (err === 'network') {
+      App.toast('语音服务不可达，建议使用 Chrome 或 Safari 16+ 并保持网络畅通');
+    } else {
+      App.toast('语音识别失败：' + err);
+    }
+  };
+  rec.onend = function() {
+    finish();
+    App.toast('识别结束');
+  };
+  try {
+    rec.start();
+  } catch (e) {
+    finish();
+    App.toast('语音启动失败：' + (e && e.message ? e.message : '未知错误'));
+  }
+};
+
+Pages._dailyRow = function(index) {
+
+
+
+  var stores = App.getStores();
+
+
+
+  var html = '<div class="daily-row" id="daily-row-' + index + '">';
+
+
+
+  html += App.renderStoreSelect('daily-store-' + index, stores, '', '搜索门店...');
+
+
+
+  html += '<input type="number" class="form-input daily-score" id="daily-score-' + index + '" placeholder="得分" min="0" max="100">';
+
+
+
+  html += '<input type="text" class="form-input daily-findings" id="daily-findings-' + index + '" placeholder="发现问题">';
+  html += '<div class="daily-ai-btns">';
+  html += '<button type="button" class="daily-ai-btn" id="daily-ocr-' + index + '" onclick="Pages._dailyOCR(' + index + ')">\u{1F4F7} 拍照识别</button>';
+  html += '<button type="button" class="daily-ai-btn" id="daily-voice-' + index + '" onclick="Pages._dailyVoice(' + index + ')">\u{1F3A4} 语音输入</button>';
+  html += '</div>';
+
+
+
+  if (index > 1) {
+
+
+
+    html += '<button class="daily-del-btn" onclick="Pages._dailyRemoveRow(' + index + ')">&#10005;</button>';
+
+
+
+  }
+
+
+
+  html += '</div>';
+
+
+
+  return html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._dailyTypeChange = function() {
+
+
+
+  var type = document.querySelector('input[name="daily-type"]:checked').value;
+
+
+
+  var max = type === 'online' ? 8 : 5;
+
+
+
+  var currentRows = document.querySelectorAll('.daily-row').length;
+
+
+
+  var btn = document.getElementById('daily-add-btn');
+
+
+
+  if (btn) btn.disabled = currentRows >= max;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._dailyAddRow = function() {
+
+
+
+  var type = document.querySelector('input[name="daily-type"]:checked').value;
+
+
+
+  var max = type === 'online' ? 8 : 5;
+
+
+
+  var rows = document.querySelectorAll('.daily-row');
+
+
+
+  if (rows.length >= max) return;
+
+
+
+  var nextIndex = rows.length + 1;
+
+
+
+  var html = Pages._dailyRow(nextIndex);
+
+
+
+  var container = document.getElementById('daily-items-container');
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  container.appendChild(div.firstElementChild);
+
+
+
+  App.initStoreSelect('daily-store-' + nextIndex, App.getStores());
+
+
+
+  if (rows.length + 1 >= max) {
+
+
+
+    document.getElementById('daily-add-btn').disabled = true;
+
+
+
+  }
+
+
+
+};
+
+
+
+
+
+
+
+Pages._dailyRemoveRow = function(index) {
+
+
+
+  var row = document.getElementById('daily-row-' + index);
+
+
+
+  if (row) row.remove();
+
+
+
+  var type = document.querySelector('input[name="daily-type"]:checked').value;
+
+
+
+  var max = type === 'online' ? 8 : 5;
+
+
+
+  var currentRows = document.querySelectorAll('.daily-row').length;
+
+
+
+  var btn = document.getElementById('daily-add-btn');
+
+
+
+  if (btn) btn.disabled = currentRows >= max;
+
+
+
+};
+
+
+
+
+
+
+
+Pages.submitDaily = function() {
+
+
+
+  var user = App.currentUser;
+
+
+
+  var typeEl = document.querySelector('input[name="daily-type"]:checked');
+
+
+
+  var type = typeEl ? typeEl.value : 'online';
+
+
+
+  var now = new Date();
+
+
+
+  var date = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+
+
+
+
+
+
+  var items = [];
+
+
+
+  var rows = document.querySelectorAll('.daily-row');
+
+
+
+  for (var i = 0; i < rows.length; i++) {
+
+
+
+    var idx = i + 1;
+
+
+
+    var storeId = App.getStoreSelectValue('daily-store-' + idx);
+
+
+
+    var storeData = App.getStores().find(function(s) { return s.id === storeId; });
+
+
+
+    var store = storeData ? storeData.name : '';
+
+
+
+    var scoreEl = document.getElementById('daily-score-' + idx);
+
+
+
+    var findingsEl = document.getElementById('daily-findings-' + idx);
+
+
+
+    var score = scoreEl ? parseInt(scoreEl.value) : NaN;
+
+
+
+    var findings = findingsEl ? findingsEl.value.trim() : '';
+
+
+
+    if (!store) { App.toast('第' + idx + '行请选择门店'); return; }
+
+
+
+    if (isNaN(score) || score < 0 || score > 100) { App.toast('第' + idx + '行得分需在0-100之间'); return; }
+
+
+
+    items.push({ store: store, score: score, findings: findings });
+
+
+
+  }
+
+
+
+
+
+
+
+  if (items.length === 0) { App.toast('请至少添加一条门店记录'); return; }
+
+
+
+
+
+
+
+  var reports = App.getDailyReports();
+
+
+
+  reports.push({
+
+
+
+    id: 'dr' + Date.now(),
+
+
+
+    inspector: user.name,
+
+
+
+    date: date,
+
+
+
+    type: type,
+
+
+
+    items: items
+
+
+
+  });
+
+
+
+
+
+
+
+  App.saveDailyReports(reports);
+
+
+
+  App.toast('日报已提交');
+
+
+
+  Pages.daily();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._toggleDailyDetail = function(id) {
+
+
+
+  var el = document.getElementById('daily-detail-' + id);
+
+
+
+  if (el) {
+
+
+
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+
+
+
+  }
+
+
+
+};
+
+
+
+
+
+
+
+/* ===== 日报看板渲染 ===== */
+
+
+
+Pages._dailyBoardPeriod = 'all'; // 'week' | 'month' | 'all'
+
+
+
+
+
+
+
+Pages._renderDailyBoard = function(reports, stores, workRecords) {
+
+
+
+  var html = '';
+
+
+
+  var now = new Date();
+
+
+
+
+
+
+
+  // 时间筛选
+
+
+
+  html += '<div class="db-toggle-bar">';
+
+
+
+  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='week'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'week\')">本周</button>';
+
+
+
+  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='month'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'month\')">本月</button>';
+
+
+
+  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='all'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'all\')">全部</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 按period过滤
+
+
+
+  var filtered = reports;
+
+
+
+  if (Pages._dailyBoardPeriod === 'week') {
+
+
+
+    var weekStart = new Date(now);
+
+
+
+    weekStart.setDate(now.getDate() - now.getDay());
+
+
+
+    weekStart.setHours(0,0,0,0);
+
+
+
+    filtered = reports.filter(function(r) { return new Date(r.date) >= weekStart; });
+
+
+
+  } else if (Pages._dailyBoardPeriod === 'month') {
+
+
+
+    var monthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
+
+
+
+    filtered = reports.filter(function(r) { return r.date >= monthStart; });
+
+
+
+  }
+
+
+
+
+
+
+
+  // 按稽核员分组
+
+
+
+  var groups = {};
+
+
+
+  filtered.forEach(function(r) {
+
+
+
+    if (!groups[r.inspector]) groups[r.inspector] = [];
+
+
+
+    groups[r.inspector].push(r);
+
+
+
+  });
+
+
+
+
+
+
+
+  // work_records 按人分组
+
+
+
+  var personWork = {};
+
+
+
+  (workRecords||[]).forEach(function(w) {
+
+
+
+    if (!personWork[w.user]) personWork[w.user] = [];
+
+
+
+    personWork[w.user].push(w);
+
+
+
+  });
+
+
+
+  // 确保只在 work_records 中出现的人也纳入看板
+
+
+
+  Object.keys(personWork).forEach(function(u) {
+
+
+
+    if (!groups[u]) groups[u] = [];
+
+
+
+  });
+
+
+
+
+
+
+
+  var inspectorNames = Object.keys(groups).sort();
+
+
+
+  if (inspectorNames.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128202;</div>暂无日报数据</div>';
+
+
+
+    return html;
+
+
+
+  }
+
+
+
+
+
+
+
+  inspectorNames.forEach(function(name) {
+
+
+
+    var grp = groups[name];
+
+
+
+    var totalShops = 0;
+
+
+
+    grp.forEach(function(r) { totalShops += (r.items||[]).length; });
+
+
+
+
+
+
+
+    html += '<div class="board-inspector-card" onclick="Pages._toggleBoardDetail(\'' + name.replace(/'/g, "\\\'") + '\')">';
+
+
+
+    html += '<div class="bic-header">';
+
+
+
+    html += '<div class="bic-avatar">' + (name||'?')[0] + '</div>';
+
+
+
+    html += '<div class="bic-info">';
+
+
+
+    html += '<div class="bic-name">' + name + '</div>';
+
+
+
+    var wrCount = (personWork[name]||[]).length;
+
+
+
+    var statsText = '日报 ' + grp.length + ' 份 | 累计检查 ' + totalShops + ' 家门店';
+
+
+
+    if (wrCount > 0) statsText += ' | 工作台账 ' + wrCount + ' 条';
+
+
+
+    html += '<div class="bic-stats">' + statsText + '</div>';
+
+
+
+    html += '</div><div class="bic-arrow">&#9660;</div>';
+
+
+
+    html += '</div>';
+
+
+
+
+
+
+
+    html += '<div class="board-detail-table" id="board-detail-' + name.replace(/'/g, "\\\'") + '" style="display:none">';
+
+
+
+    html += '<table class="m-table">';
+
+
+
+    html += '<thead><tr><th>日期</th><th>类型</th><th>门店</th><th>问题</th><th>操作</th></tr></thead>';
+
+
+
+    html += '<tbody>';
+
+
+
+    grp.forEach(function(r) {
+
+
+
+      var typeLabel = r.type === 'online' ? '线上' : '线下';
+
+
+
+      var rId = (r.id||'').replace(/'/g, "\\\'");
+
+
+
+      var storeCount = (r.items||[]).length;
+
+
+
+      var issuesCount = r.issuesCount || 0;
+
+
+
+      html += '<tr class="dr-row" onclick="Pages._openDailyDetail(\'' + rId + '\')">';
+
+
+
+      html += '<td>' + r.date + '</td><td>' + typeLabel + '</td><td>' + storeCount + ' 家</td><td>' + issuesCount + ' 项</td><td class="dr-view">查看明细</td>';
+
+
+
+      html += '</tr>';
+
+
+
+    });
+
+
+
+    // work_records 台账行
+
+
+
+    (personWork[name]||[]).forEach(function(w) {
+
+
+
+      var tagColor = w.type === '客诉' ? '#e74c3c' : '#8e44ad';
+
+
+
+      html += '<tr class="wr-row"><td>' + w.date + '</td><td><span class="wr-tag" style="background:' + tagColor + '">' + w.type + '</span></td><td colspan="2">' + w.summary + '</td><td class="wr-content">' + (w.detail&&w.detail.content?w.detail.content.replace(/\n/g,'<br>') : '') + '</td></tr>';
+
+
+
+    });
+
+
+
+
+
+
+
+    html += '</tbody></table></div></div>';
+
+
+
+  });
+
+
+
+
+
+
+
+  return html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._switchBoardPeriod = function(period) {
+
+
+
+  Pages._dailyBoardPeriod = period;
+
+
+
+  Pages.daily();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._toggleBoardDetail = function(name) {
+
+
+
+  var el = document.getElementById('board-detail-' + name);
+
+
+
+  if (el) {
+
+
+
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+
+
+
+  }
+
+
+
+};
+
+
+
+
+
+
+
+/* ===== 单日日报详情弹窗 ===== */
+
+
+
+Pages._openDailyDetail = function(reportId) {
+
+
+
+  var reports = App.getDailyReports() || [];
+
+
+
+  var r = null;
+
+
+
+  for (var i = 0; i < reports.length; i++) {
+
+
+
+    if (reports[i].id === reportId) { r = reports[i]; break; }
+
+
+
+  }
+
+
+
+  if (!r) {
+
+
+
+    App.toast('未找到该日报记录');
+
+
+
+    return;
+
+
+
+  }
+
+
+
+  var typeLabel = r.type === 'online' ? '线上' : '线下';
+
+
+
+  var storeCount = (r.items||[]).length;
+
+
+
+  var issuesCount = r.issuesCount || 0;
+
+
+
+
+
+
+
+  var html = '<div class="modal-box dd-modal-box">';
+
+
+
+  html += '<div class="modal-title">日报详情</div>';
+
+
+
+  html += '<div class="dd-meta">' + r.inspector + ' · ' + r.date + ' · ' + typeLabel + ' · ' + storeCount + ' 家门店 · ' + issuesCount + ' 项问题</div>';
+
+
+
+  html += '<div class="dd-modal-body">';
+
+
+
+  html += '<table class="m-table dd-modal-table">';
+
+
+
+  html += '<thead><tr><th>门店</th><th>得分</th><th>发现问题</th></tr></thead>';
+
+
+
+  html += '<tbody>';
+
+
+
+  (r.items||[]).forEach(function(item) {
+
+
+
+    var findings = (item.findings||'').replace(/\n/g,'<br>');
+
+
+
+    html += '<tr><td>' + item.store + '</td><td>' + item.score + '</td><td class="dd-findings">' + findings + '</td></tr>';
+
+
+
+  });
+
+
+
+  html += '</tbody></table>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '<button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  var modal = document.getElementById('modal-overlay');
+
+
+
+  modal.querySelector('.modal-box').outerHTML = html;
+
+
+
+  modal.classList.add('show');
+
+
+
+};
+
+
+
+
+
+
+
+/* ==================== 稽核模板管理 ==================== */
+
+
+
+Pages._tplEditMode = false;
+
+
+
+Pages._tplEditId = null;
+
+
+
+
+
+
+
+Pages.inspectionTemplates = function() {
+
+
+
+  var el = document.getElementById('page-inspectionTemplates');
+
+
+
+  if (!el) return;
+
+
+
+  var user = App.currentUser;
+
+
+
+  var templates = App.getTemplates();
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'inspection') || (App.currentUser.phone !== '13581922077' && App.currentUser.phone !== '15081280260')) {
+
+
+
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前账号无权限访问此页面</div></div>';
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+
+
+
+  html += '<div class="card"><div class="card-title">稽核模板管理</div>';
+
+
+
+
+
+
+
+  // 操作栏
+
+
+
+  html += '<div class="action-bar">';
+
+
+
+  html += '<button class="btn btn-primary btn-sm" onclick="Pages._tplShowForm()">+ 新建模板</button>';
+
+
+
+  html += '<button class="btn btn-sm" onclick="document.getElementById(\'tpl-excel-input\').click()">导入Excel</button>';
+
+
+
+  html += '<button class="btn btn-sm" onclick="Pages._tplExportExcel()">导出Excel</button>';
+
+
+
+  html += '<input type="file" id="tpl-excel-input" accept=".xlsx,.xls" style="display:none" onchange="Pages._tplImportExcel(this)">';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 模板列表
+
+
+
+  if (templates.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128196;</div><div>暂无稽核模板，点击上方按钮创建或导入</div></div>';
+
+
+
+  } else {
+
+
+
+    html += '<div class="table-container"><table><thead><tr>';
+
+
+
+    html += '<th>模板名</th><th>版本</th><th>检查项数</th><th>状态</th><th>创建时间</th><th>操作</th>';
+
+
+
+    html += '</tr></thead><tbody>';
+
+
+
+    templates.forEach(function(t) {
+
+
+
+      var statusLabel = t.isActive !== false ? '启用' : '停用';
+
+
+
+      var statusColor = t.isActive !== false ? '#10b981' : '#ef4444';
+
+
+
+      var itemCount = (t.items && Array.isArray(t.items)) ? t.items.length : 0;
+
+
+
+      html += '<tr>';
+
+
+
+      html += '<td>' + (t.name || '未命名') + '</td>';
+
+
+
+      html += '<td>v' + (t.version || 1) + '</td>';
+
+
+
+      html += '<td>' + itemCount + '</td>';
+
+
+
+      html += '<td><span style="color:' + statusColor + '">' + statusLabel + '</span></td>';
+
+
+
+      html += '<td>' + (t.createdAt || '') + '</td>';
+
+
+
+      html += '<td>';
+
+
+
+      html += '<button class="btn btn-sm" onclick="Pages._tplEdit(\'' + t.id + '\')">编辑</button>';
+
+
+
+      if (App.Permissions.canAccess(user.role, 'inspection_edit')) html += '<button class="btn btn-sm btn-primary" onclick="Pages._tplStartCheck(\'' + t.id + '\')">一键检查</button>';
+
+
+
+      html += '<button class="btn btn-sm" onclick="Pages._tplToggle(\'' + t.id + '\')">' + (t.isActive !== false ? '停用' : '启用') + '</button>';
+
+
+
+      html += '</td></tr>';
+
+
+
+    });
+
+
+
+    html += '</tbody></table></div>';
+
+
+
+  }
+
+
+
+  html += '</div>';
+
+
+
+  el.innerHTML = html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplShowForm = function() {
+
+
+
+  Pages._tplEditMode = false;
+
+
+
+  Pages._tplEditId = null;
+
+
+
+  Pages._tplRenderForm('新建稽核模板', { name: '', items: [] });
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplEdit = function(id) {
+
+
+
+  var templates = App.getTemplates();
+
+
+
+  var t = templates.find(function(x) { return x.id === id; });
+
+
+
+  if (!t) return;
+
+
+
+  Pages._tplEditMode = true;
+
+
+
+  Pages._tplEditId = id;
+
+
+
+  Pages._tplRenderForm('编辑稽核模板', t);
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplRenderForm = function(title, tpl) {
+
+
+
+  var items = tpl.items || [];
+
+
+
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" style="max-width:700px" onclick="event.stopPropagation()">';
+
+
+
+  html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+  html += '<div class="modal-body">';
+
+
+
+  html += '<div class="form-group"><label class="form-label">模板名称</label>';
+
+
+
+  html += '<input type="text" id="tpl-form-name" class="form-input" value="' + (tpl.name || '') + '" placeholder="如：门店卫生检查表"></div>';
+
+
+
+  html += '<div class="form-group"><label class="form-label">检查项目</label>';
+
+
+
+  html += '<div id="tpl-items-container">';
+
+
+
+  items.forEach(function(item, i) {
+
+
+
+    html += Pages._tplItemRow(i, item);
+
+
+
+  });
+
+
+
+  html += '</div>';
+
+
+
+  html += '<button class="btn btn-sm" style="margin-top:8px" onclick="Pages._tplAddItem()">+ 添加检查项</button>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '<div class="modal-footer">';
+
+
+
+  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages._tplSave()">保存模板</button>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '</div></div>';
+
+
+
+
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  var overlay = div.firstElementChild;
+
+
+
+  document.body.appendChild(overlay);
+
+
+
+  overlay.offsetHeight;
+
+
+
+  overlay.classList.add('show');
+
+
+
+  Pages._tplItemCount = items.length;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplItemCount = 0;
+
+
+
+
+
+
+
+Pages._tplItemRow = function(index, item) {
+
+
+
+  item = item || {};
+
+
+
+  var html = '<div class="tpl-item-row" id="tpl-item-' + index + '" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">';
+
+
+
+  html += '<input type="text" class="form-input" placeholder="类别" value="' + (item.category || '') + '" style="flex:1" data-field="category">';
+
+
+
+  html += '<input type="text" class="form-input" placeholder="检查内容" value="' + (item.content || '') + '" style="flex:2" data-field="content">';
+
+
+
+  html += '<input type="number" class="form-input" placeholder="标准分" value="' + (item.score || '') + '" style="flex:0.8" data-field="score" min="0">';
+
+
+
+  html += '<input type="text" class="form-input" placeholder="扣分标准" value="' + (item.deductRule || '') + '" style="flex:1.5" data-field="deductRule">';
+
+
+
+  html += '<button class="btn btn-sm btn-danger" onclick="Pages._tplRemoveItem(' + index + ')">&#10005;</button>';
+
+
+
+  html += '</div>';
+
+
+
+  return html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplAddItem = function() {
+
+
+
+  var idx = Pages._tplItemCount;
+
+
+
+  Pages._tplItemCount++;
+
+
+
+  var container = document.getElementById('tpl-items-container');
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = Pages._tplItemRow(idx, {});
+
+
+
+  container.appendChild(div.firstElementChild);
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplRemoveItem = function(index) {
+
+
+
+  var row = document.getElementById('tpl-item-' + index);
+
+
+
+  if (row) row.remove();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplSave = function() {
+
+
+
+  var name = (document.getElementById('tpl-form-name') || {}).value || '';
+
+
+
+  if (!name.trim()) { App.toast('请输入模板名称'); return; }
+
+
+
+
+
+
+
+  var items = [];
+
+
+
+  var rows = document.querySelectorAll('.tpl-item-row');
+
+
+
+  rows.forEach(function(row, i) {
+
+
+
+    var category = (row.querySelector('[data-field="category"]') || {}).value || '';
+
+
+
+    var content = (row.querySelector('[data-field="content"]') || {}).value || '';
+
+
+
+    var score = parseInt((row.querySelector('[data-field="score"]') || {}).value) || 0;
+
+
+
+    var deductRule = (row.querySelector('[data-field="deductRule"]') || {}).value || '';
+
+
+
+    if (content.trim()) {
+
+
+
+      items.push({ index: i, category: category, content: content, score: score, deductRule: deductRule });
+
+
+
+    }
+
+
+
+  });
+
+
+
+
+
+
+
+  if (items.length === 0) { App.toast('请至少添加一个检查项'); return; }
+
+
+
+
+
+
+
+  var templates = App.getTemplates();
+
+
+
+  var now = new Date();
+
+
+
+  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+
+
+
+
+
+
+  if (Pages._tplEditMode && Pages._tplEditId) {
+
+
+
+    var tpl = templates.find(function(x) { return x.id === Pages._tplEditId; });
+
+
+
+    if (tpl) {
+
+
+
+      tpl.name = name.trim();
+
+
+
+      tpl.items = items;
+
+
+
+      tpl.version = (tpl.version || 1) + 1;
+
+
+
+      tpl.updatedAt = dateStr;
+
+
+
+    }
+
+
+
+  } else {
+
+
+
+    templates.push({
+
+
+
+      id: 'tpl' + Date.now(),
+
+
+
+      name: name.trim(),
+
+
+
+      version: 1,
+
+
+
+      items: items,
+
+
+
+      isActive: true,
+
+
+
+      createdAt: dateStr,
+
+
+
+      updatedAt: dateStr
+
+
+
+    });
+
+
+
+  }
+
+
+
+
+
+
+
+  App.saveTemplates(templates);
+
+
+
+  App.toast('模板已保存');
+
+
+
+
+
+
+
+  var overlay = document.querySelector('.modal-overlay');
+
+
+
+  if (overlay) overlay.remove();
+
+
+
+  Pages.inspectionTemplates();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplExportExcel = function() {
+
+
+
+  var templates = App.getTemplates();
+
+
+
+  if (templates.length === 0) { App.toast('暂无模板可导出'); return; }
+
+
+
+
+
+
+
+  if (templates.length === 1) {
+
+
+
+    // 单模板直接导出
+
+
+
+    var t = templates[0];
+
+
+
+    var rows = [['类别', '检查项目', '分值', '扣分标准']];
+
+
+
+    (t.items || []).forEach(function(it) {
+
+
+
+      rows.push([it.category || '', it.content || '', it.score || 0, it.deductRule || '']);
+
+
+
+    });
+
+
+
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+
+
+
+    ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
+
+
+
+    var wb = XLSX.utils.book_new();
+
+
+
+    XLSX.utils.book_append_sheet(wb, ws, t.name || '模板');
+
+
+
+    XLSX.writeFile(wb, (t.name || '稽核模板') + '.xlsx');
+
+
+
+  } else {
+
+
+
+    // 多模板每模板一个Sheet
+
+
+
+    var wb = XLSX.utils.book_new();
+
+
+
+    templates.forEach(function(t) {
+
+
+
+      var rows = [['类别', '检查项目', '分值', '扣分标准']];
+
+
+
+      (t.items || []).forEach(function(it) {
+
+
+
+        rows.push([it.category || '', it.content || '', it.score || 0, it.deductRule || '']);
+
+
+
+      });
+
+
+
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+
+
+
+      ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
+
+
+
+      var name = (t.name || '模板').substring(0, 31);
+
+
+
+      XLSX.utils.book_append_sheet(wb, ws, name);
+
+
+
+    });
+
+
+
+    XLSX.writeFile(wb, '稽核模板导出.xlsx');
+
+
+
+  }
+
+
+
+  App.toast('导出完成');
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplStartCheck = function(tplId) {
+
+
+
+  Pages._fillTemplateId = tplId;
+
+
+
+  location.hash = '#inspectionFill';
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplToggle = function(id) {
+
+
+
+  var templates = App.getTemplates();
+
+
+
+  var t = templates.find(function(x) { return x.id === id; });
+
+
+
+  if (t) {
+
+
+
+    t.isActive = !(t.isActive !== false);
+
+
+
+    App.saveTemplates(templates);
+
+
+
+    App.toast(t.isActive !== false ? '已启用' : '已停用');
+
+
+
+    Pages.inspectionTemplates();
+
+
+
+  }
+
+
+
+};
+
+
+
+
+
+
+
+Pages._tplImportExcel = function(input) {
+
+
+
+  var file = input.files[0];
+
+
+
+  if (!file) return;
+
+
+
+  var reader = new FileReader();
+
+
+
+  reader.onload = function(e) {
+
+
+
+    var data = new Uint8Array(e.target.result);
+
+
+
+    var wb = XLSX.read(data, { type: 'array' });
+
+
+
+    var sheet = wb.Sheets[wb.SheetNames[0]];
+
+
+
+    var rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+
+
+    if (rows.length < 2) { App.toast('文件为空或缺少表头'); return; }
+
+
+
+    var headers = rows[0].map(function(h) { return String(h).trim(); });
+
+
+
+    var catIdx = -1, contIdx = -1, scoreIdx = -1, ruleIdx = -1;
+
+
+
+    headers.forEach(function(h, i) {
+
+
+
+      if (h.indexOf('类别') >= 0 || h.indexOf('分类') >= 0) catIdx = i;
+
+
+
+      if (h.indexOf('项目') >= 0 || h.indexOf('内容') >= 0 || h.indexOf('检查') >= 0) contIdx = i;
+
+
+
+      if (h.indexOf('分') >= 0 && h.indexOf('扣') < 0) scoreIdx = i;
+
+
+
+      if (h.indexOf('扣') >= 0 || h.indexOf('标准') >= 0) ruleIdx = i;
+
+
+
+    });
+
+
+
+    if (contIdx < 0) { App.toast('未识别到"检查项目"列，请检查表头'); return; }
+
+
+
+
+
+
+
+    var items = [];
+
+
+
+    for (var r = 1; r < rows.length; r++) {
+
+
+
+      var cols = rows[r];
+
+
+
+      var category = catIdx >= 0 ? String(cols[catIdx] || '').trim() : '';
+
+
+
+      var content = String(cols[contIdx] || '').trim();
+
+
+
+      if (!content) continue;
+
+
+
+      var score = scoreIdx >= 0 ? (parseInt(cols[scoreIdx]) || 0) : 0;
+
+
+
+      var deductRule = ruleIdx >= 0 ? String(cols[ruleIdx] || '').trim() : '';
+
+
+
+      items.push({ index: r - 1, category: category, content: content, score: score, deductRule: deductRule });
+
+
+
+    }
+
+
+
+
+
+
+
+    if (items.length === 0) { App.toast('未解析到有效的检查项'); return; }
+
+
+
+
+
+
+
+    var now = new Date();
+
+
+
+    var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+
+
+    var name = file.name.replace(/\.(xlsx|xls)$/i, '');
+
+
+
+    var templates = App.getTemplates();
+
+
+
+    templates.push({
+
+
+
+      id: 'tpl' + Date.now(),
+
+
+
+      name: name,
+
+
+
+      version: 1,
+
+
+
+      items: items,
+
+
+
+      isActive: true,
+
+
+
+      createdAt: dateStr,
+
+
+
+      updatedAt: dateStr
+
+
+
+    });
+
+
+
+    App.saveTemplates(templates);
+
+
+
+    App.toast('导入成功，共 ' + items.length + ' 个检查项');
+
+
+
+    Pages.inspectionTemplates();
+
+
+
+  };
+
+
+
+  reader.readAsArrayBuffer(file);
+
+
+
+  input.value = '';
+
+
+
+};
+
+
+
+
+
+
+
+/* ==================== 稽核填写 ==================== */
+
+
+
+Pages._fillTemplateId = '';
+
+
+
+Pages._fillStoreId = '';
+
+
+
+Pages._dbTplFilter = '';
+
+
+
+Pages._fillDraft = false;
+
+
+
+
+
+
+
+Pages.inspectionFill = function() {
+
+
+
+  var el = document.getElementById('page-inspectionFill');
+
+
+
+  if (!el) return;
+
+
+
+  var user = App.currentUser;
+
+
+
+  var stores = App.getStores();
+
+
+
+  var templates = App.getTemplates().filter(function(t) { return t.isActive !== false; });
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'inspection_edit')) {
+
+
+
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+
+
+
+  html += '<div class="card"><div class="card-title">稽核检查</div>';
+
+
+
+
+
+
+
+  // 选模板 + 选门店
+
+
+
+  html += '<div class="form-group"><label class="form-label">选择模板</label>';
+
+
+
+  html += '<select id="fill-template" class="form-input" onchange="Pages._fillOnTemplateChange()">';
+
+
+
+  html += '<option value="">-- 请选择 --</option>';
+
+
+
+  templates.forEach(function(t) {
+
+
+
+    var sel = Pages._fillTemplateId === t.id ? ' selected' : '';
+
+
+
+    html += '<option value="' + t.id + '"' + sel + '>' + t.name + ' (v' + (t.version||1) + ', ' + (t.items||[]).length + '项)</option>';
+
+
+
+  });
+
+
+
+  html += '</select></div>';
+
+
+
+
+
+
+
+  html += '<div class="form-group"><label class="form-label">选择门店</label>';
+
+
+
+  html += App.renderStoreSelect('fill-store', stores, Pages._fillStoreId, '搜索门店...');
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 如果已选模板，显示检查表单
+
+
+
+  if (Pages._fillTemplateId) {
+
+
+
+    var tpl = templates.find(function(t) { return t.id === Pages._fillTemplateId; });
+
+
+
+    if (tpl && tpl.items) {
+
+
+
+      html += '<div class="table-container"><table><thead><tr>';
+
+
+
+      html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th>';
+
+
+
+      html += '</tr></thead><tbody id="fill-items-body">';
+
+
+
+      tpl.items.forEach(function(item, i) {
+
+
+
+        html += '<tr class="fill-item-row" data-index="' + i + '" data-score="' + (item.score||0) + '">';
+
+
+
+        html += '<td>' + (i+1) + '</td>';
+
+
+
+        html += '<td>' + (item.category || '') + '</td>';
+
+
+
+        html += '<td>' + (item.content || '') + '</td>';
+
+
+
+        html += '<td class="fill-std-score">' + (item.score||0) + '</td>';
+
+
+
+        html += '<td><input type="number" class="form-input fill-actual" value="' + (item.score||0) + '" min="0" max="' + (item.score||0) + '" style="width:60px" onchange="Pages._fillCalcScore()"></td>';
+
+
+
+        html += '<td><input type="text" class="form-input fill-deduct-reason" placeholder="扣分原因" style="width:120px" oninput="Pages._fillOnDeductInput(this)"></td>';
+
+
+
+        html += '<td><input type="text" class="form-input fill-remark" placeholder="备注" style="width:100px"></td>';
+
+
+
+        html += '</tr>';
+
+
+
+      });
+
+
+
+      html += '</tbody></table></div>';
+
+
+
+
+
+
+
+      var totalScore = tpl.items.reduce(function(s, item) { return s + (item.score||0); }, 0);
+
+
+
+      html += '<div style="margin-top:8px;font-weight:bold">总分：<span id="fill-total-score" style="color:#c41a1a">' + totalScore + '</span> / ' + totalScore + '</div>';
+
+
+
+
+
+
+
+      html += '<div style="margin-top:12px;display:flex;gap:8px">';
+
+
+
+      html += '<button class="btn btn-primary" onclick="Pages._fillSubmit(false)">提交检查</button>';
+
+
+
+      html += '<button class="btn" onclick="Pages._fillSubmit(true)">保存草稿</button>';
+
+
+
+      html += '</div>';
+
+
+
+    }
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '</div>';
+
+
+
+  el.innerHTML = html;
+
+
+
+
+
+
+
+  if (Pages._fillTemplateId) {
+
+
+
+    App.initStoreSelect('fill-store', stores, function(sid) { Pages._fillStoreId = sid; });
+
+
+
+  }
+
+
+
+};
+
+
+
+
+
+
+
+Pages._fillOnTemplateChange = function() {
+
+
+
+  Pages._fillTemplateId = document.getElementById('fill-template').value;
+
+
+
+  Pages.inspectionFill();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._fillCalcScore = function() {
+
+
+
+  var rows = document.querySelectorAll('.fill-item-row');
+
+
+
+  var total = 0, maxTotal = 0;
+
+
+
+  rows.forEach(function(row) {
+
+
+
+    var stdScore = parseInt(row.dataset.score) || 0;
+
+
+
+    var actual = parseInt((row.querySelector('.fill-actual')||{}).value);
+
+
+
+    maxTotal += stdScore;
+
+
+
+    if (!isNaN(actual)) total += actual; else total += stdScore;
+
+
+
+  });
+
+
+
+  var el = document.getElementById('fill-total-score');
+
+
+
+  if (el) el.textContent = total;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._fillOnDeductInput = function(input) {
+
+
+
+  var row = input.closest('.fill-item-row');
+
+
+
+  if (!row) return;
+
+
+
+  var stdScore = parseInt(row.dataset.score) || 0;
+
+
+
+  var reason = input.value.trim();
+
+
+
+  var actualEl = row.querySelector('.fill-actual');
+
+
+
+  if (reason && actualEl) {
+
+
+
+    // 用户输入扣分原因时自动将实际得分设为标准分-1，用户可继续调整
+
+
+
+    if (parseInt(actualEl.value) >= stdScore) {
+
+
+
+      actualEl.value = Math.max(0, stdScore - 1);
+
+
+
+    }
+
+
+
+  }
+
+
+
+  Pages._fillCalcScore();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._fillSubmit = async function(isDraft) {
+
+
+
+  var tplId = Pages._fillTemplateId || document.getElementById('fill-template').value;
+
+
+
+  var storeId = Pages._fillStoreId || App.getStoreSelectValue('fill-store');
+
+
+
+  if (!tplId) { App.toast('请选择模板'); return; }
+
+
+
+  if (!storeId) { App.toast('请选择门店'); return; }
+
+
+
+
+
+
+
+  var templates = App.getTemplates();
+
+
+
+  var tpl = templates.find(function(t) { return t.id === tplId; });
+
+
+
+  if (!tpl) { App.toast('模板不存在'); return; }
+
+
+
+
+
+
+
+  var stores = App.getStores();
+
+
+
+  var store = stores.find(function(s) { return s.id === storeId; });
+
+
+
+  var storeName = store ? store.name : storeId;
+
+
+
+
+
+
+
+  var rows = document.querySelectorAll('.fill-item-row');
+
+
+
+  var details = [];
+
+
+
+  var totalScore = 0, maxScore = 0;
+
+
+
+
+
+
+
+  rows.forEach(function(row, i) {
+
+
+
+    var item = tpl.items[i] || {};
+
+
+
+    var stdScore = item.score || 0;
+
+
+
+    var actualEl = row.querySelector('.fill-actual');
+
+
+
+    var actual = actualEl ? parseInt(actualEl.value) : stdScore;
+
+
+
+    if (isNaN(actual)) actual = stdScore;
+
+
+
+    var deductReason = (row.querySelector('.fill-deduct-reason')||{}).value || '';
+
+
+
+    var remark = (row.querySelector('.fill-remark')||{}).value || '';
+
+
+
+
+
+
+
+    maxScore += stdScore;
+
+
+
+    totalScore += actual;
+
+
+
+
+
+
+
+    details.push({
+
+
+
+      index: i,
+
+
+
+      category: item.category || '',
+
+
+
+      content: item.content || '',
+
+
+
+      stdScore: stdScore,
+
+
+
+      actualScore: actual,
+
+
+
+      deductReason: deductReason,
+
+
+
+      remark: remark
+
+
+
+    });
+
+
+
+  });
+
+
+
+
+
+
+
+  var now = new Date();
+
+
+
+  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+
+
+  var user = App.currentUser;
+
+
+
+
+
+
+
+  var resultId = 'ir' + Date.now();
+
+
+
+  var result = {
+
+
+
+    id: resultId,
+
+
+
+    storeId: storeId,
+
+
+
+    store: storeName,
+
+
+
+    templateId: tplId,
+
+
+
+    templateName: tpl.name,
+
+
+
+    date: dateStr,
+
+
+
+    inspector: user.name,
+
+
+
+    totalScore: totalScore,
+
+
+
+    maxScore: maxScore,
+
+
+
+    details: details,
+
+
+
+    status: isDraft ? '草稿' : '已完成',
+
+    locked: !isDraft
+
+
+
+  };
+
+
+
+
+
+
+
+  var results = App.getResults();
+
+
+
+  results.push(result);
+
+
+
+  await App.saveResults(results);
+
+
+
+
+
+
+
+  // 非草稿：扣分项生成 issues
+
+
+
+  if (!isDraft) {
+
+
+
+    var issues = App.getIssues();
+
+
+
+    details.forEach(function(d) {
+
+
+
+      if (d.actualScore < d.stdScore) {
+
+
+
+        issues.push({
+
+
+
+          id: 'is' + Date.now() + '_' + d.index,
+
+
+
+          resultId: resultId,
+
+
+
+          storeId: storeId,
+
+
+
+          store: storeName,
+
+
+
+          templateId: tplId,
+
+
+
+          templateName: tpl.name,
+
+
+
+          date: dateStr,
+
+
+
+          inspector: user.name,
+
+
+
+          category: d.category,
+
+
+
+          content: d.content,
+
+
+
+          stdScore: d.stdScore,
+
+
+
+          actualScore: d.actualScore,
+
+
+
+          deductReason: d.deductReason,
+
+
+
+          status: '待处理',
+
+
+
+          fixAction: '',
+
+
+
+          appealContent: '',
+
+
+
+          appealResult: ''
+
+
+
+        });
+
+
+
+      }
+
+
+
+    });
+
+
+
+    await App.saveIssues(issues);
+
+
+
+  }
+
+
+
+
+
+
+
+  App.toast(isDraft ? '草稿已保存' : '检查已提交');
+
+
+
+  Pages._fillTemplateId = '';
+
+
+
+  Pages._fillStoreId = '';
+
+
+
+  Pages.inspectionFill();
+
+
+
+};
+
+
+
+
+
+
+
+/* ==================== 检查结果列表 ==================== */
+
+
+
+Pages.inspectionResults = function() {
+
+
+
+  var el = document.getElementById('page-inspectionResults');
+
+
+
+  if (!el) return;
+
+
+
+  var user = App.currentUser;
+
+
+
+  var results = App.getResults();
+
+
+
+  var stores = App.getStores();
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'inspection_results')) {
+
+
+
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  // 店长只看自己门店
+
+
+
+  if (user.role === '店长' && user.storeId) {
+
+
+
+    results = results.filter(function(r) { return r.storeId === user.storeId; });
+
+
+
+  }
+
+
+
+
+
+
+
+  var html = '';
+
+  var subHash = location.hash.replace('#', '');
+
+  var subTabs = Pages._inspectionSubTabs(user);
+
+  html += '<div class="sub-tabbar">';
+
+  subTabs.forEach(function(t) {
+
+    if (!t.show) return;
+
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+
+  });
+
+  html += '</div>';
+
+  html += '<div class="card"><div class="card-title">检查结果</div>';
+
+
+
+
+
+
+
+  // 筛选栏
+
+
+
+  html += '<div class="form-group" style="display:flex;gap:8px;flex-wrap:wrap">';
+
+
+
+  html += '<select id="res-filter-store" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()"><option value="">全部门店</option>';
+
+
+
+  var storeSet = {};
+
+
+
+  results.forEach(function(r) { storeSet[r.storeId] = r.store; });
+
+
+
+  Object.keys(storeSet).forEach(function(sid) {
+
+
+
+    html += '<option value="' + sid + '">' + storeSet[sid] + '</option>';
+
+
+
+  });
+
+
+
+  html += '</select>';
+
+
+
+  html += '<input type="date" id="res-filter-date" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()">';
+
+
+
+  html += '<select id="res-filter-tpl" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()"><option value="">全部模板</option>';
+
+
+
+  var tplSet = {};
+
+
+
+  results.forEach(function(r) { tplSet[r.templateId] = r.templateName; });
+
+
+
+  Object.keys(tplSet).forEach(function(tid) {
+
+
+
+    html += '<option value="' + tid + '">' + tplSet[tid] + '</option>';
+
+
+
+  });
+
+
+
+  html += '</select>';
+
+
+
+  html += '<button class="btn btn-sm" onclick="Pages._exportResults()">导出Excel</button>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  if (results.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128202;</div><div>暂无检查结果</div></div>';
+
+
+
+  } else {
+
+
+
+    html += '<div class="table-container"><table><thead><tr>';
+
+
+
+    html += '<th>门店</th><th>模板</th><th>日期</th><th>稽核员</th><th>总分</th><th>状态</th><th>操作</th>';
+
+
+
+    html += '</tr></thead><tbody id="res-tbody">';
+
+
+
+    results.reverse().forEach(function(r) {
+
+
+
+      html += '<tr class="res-row" data-store="' + (r.storeId||'') + '" data-date="' + (r.date||'') + '" data-tpl="' + (r.templateId||'') + '">';
+
+
+
+      html += '<td>' + (r.store || '') + '</td>';
+
+
+
+      html += '<td>' + (r.templateName || '') + '</td>';
+
+
+
+      html += '<td>' + (r.date || '') + '</td>';
+
+
+
+      html += '<td>' + (r.inspector || '') + '</td>';
+
+
+
+      html += '<td><b>' + (r.totalScore || 0) + '</b> / ' + (r.maxScore || 0) + '</td>';
+
+
+
+      var statusColor = r.status === '已完成' ? '#10b981' : '#f59e0b';
+
+
+
+      html += '<td><span style="color:' + statusColor + '">' + (r.status || '') + '</span></td>';
+
+
+
+      html += '<td>';
+      html += '<button class="btn btn-sm" onclick="Pages._showResultDetail(\'' + r.id + '\')">详情</button>';
+      var isHQ = App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260';
+      var canEdit = App.Permissions.canAccess(user.role, 'inspection_edit');
+      var sameDay = r.locked !== false && r.date === Pages._todayStr();
+      if (canEdit && (isHQ || sameDay)) {
+        html += ' <button class="btn btn-sm btn-outline" onclick="Pages._withdrawResult(\'' + r.id + '\')">撤回</button>';
+      }
+      html += '</td>';
+
+
+
+      html += '</tr>';
+
+
+
+    });
+
+
+
+    html += '</tbody></table></div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '</div>';
+
+
+
+  el.innerHTML = html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._filterResults = function() {
+
+
+
+  var storeFilter = (document.getElementById('res-filter-store')||{}).value || '';
+
+
+
+  var dateFilter = (document.getElementById('res-filter-date')||{}).value || '';
+
+
+
+  var tplFilter = (document.getElementById('res-filter-tpl')||{}).value || '';
+
+
+
+
+
+
+
+  document.querySelectorAll('.res-row').forEach(function(row) {
+
+
+
+    var show = true;
+
+
+
+    if (storeFilter && row.dataset.store !== storeFilter) show = false;
+
+
+
+    if (dateFilter && row.dataset.date !== dateFilter) show = false;
+
+
+
+    if (tplFilter && row.dataset.tpl !== tplFilter) show = false;
+
+
+
+    row.style.display = show ? '' : 'none';
+
+
+
+  });
+
+
+
+};
+
+
+
+
+
+
+
+Pages._todayStr = function() {
+  var n = new Date();
+  return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
+};
+
+Pages._withdrawResult = function(id) {
+  var results = App.getResults();
+  var r = results.find(function(x) { return x.id === id; });
+  if (!r) return;
+  var isHQ = App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260';
+  var canWithdraw = App.Permissions.canAccess(App.currentUser.role, 'inspection_edit') && (isHQ || (r.locked !== false && r.date === Pages._todayStr()));
+  if (!canWithdraw) { App.toast('该记录已过当天，不可撤回'); return; }
+  var overlay = document.getElementById('modal-overlay');
+  if (!overlay) return;
+  overlay.querySelector('.modal-box').outerHTML = '<div class="modal-box" style="max-width:480px" onclick="event.stopPropagation()">' +
+    '<div class="modal-header"><h3>撤回检查记录</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>' +
+    '<div class="modal-body"><p>确定撤回该条检查记录吗？</p><p style="color:#666;font-size:13px">门店：' + (r.store||'') + ' ｜ 日期：' + (r.date||'') + ' ｜ 稽核员：' + (r.inspector||'') + '</p><p style="color:#f59e0b;font-size:13px">撤回将删除此条记录及关联问题工单，且不可恢复。</p></div>' +
+    '<div class="modal-footer"><button class="btn" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">取消</button> ' +
+    '<button class="btn btn-danger" onclick="Pages._doWithdraw(\'' + id + '\')">确认撤回</button></div></div>';
+  overlay.classList.add('show');
+};
+
+Pages._doWithdraw = function(id) {
+  var results = App.getResults();
+  var idx = results.findIndex(function(x) { return x.id === id; });
+  if (idx < 0) { App.toast('记录不存在'); return; }
+  var r = results[idx];
+  results.splice(idx, 1);
+  App.saveResults(results);
+  if (App.getIssues && App.saveIssues) {
+    var issues = App.getIssues().filter(function(iss) { return iss.resultId !== id; });
+    App.saveIssues(issues);
+  }
+  var overlay = document.getElementById('modal-overlay');
+  if (overlay) overlay.classList.remove('show');
+  App.toast('已撤回该条检查记录');
+  if (location.hash.replace('#','') === 'inspectionResults') {
+    Pages.inspectionResults();
+  } else {
+    location.hash = '#inspectionResults';
+  }
+};
+
+Pages._showResultDetail = function(id) {
+
+
+
+  var results = App.getResults();
+
+
+
+  var r = results.find(function(x) { return x.id === id; });
+
+
+
+  if (!r) return;
+
+
+
+
+
+
+
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" style="max-width:700px" onclick="event.stopPropagation()">';
+
+
+
+  html += '<div class="modal-header"><h3>检查详情</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+  html += '<div class="modal-body">';
+
+
+
+  html += '<p><b>门店：</b>' + (r.store||'') + ' &nbsp; <b>模板：</b>' + (r.templateName||'') + '</p>';
+
+
+
+  html += '<p><b>日期：</b>' + (r.date||'') + ' &nbsp; <b>稽核员：</b>' + (r.inspector||'') + '</p>';
+
+
+
+  html += '<p><b>总分：</b>' + (r.totalScore||0) + ' / ' + (r.maxScore||0) + '</p>';
+
+
+
+
+
+
+
+  html += '<div class="table-container"><table><thead><tr>';
+
+
+
+  html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th>';
+
+
+
+  html += '</tr></thead><tbody>';
+
+
+
+  (r.details||[]).forEach(function(d, i) {
+
+
+
+    var isDeduct = d.actualScore < d.stdScore;
+
+
+
+    html += '<tr' + (isDeduct ? ' style="background:#fef2f2"' : '') + '>';
+
+
+
+    html += '<td>' + (i+1) + '</td>';
+
+
+
+    html += '<td>' + (d.category||'') + '</td>';
+
+
+
+    html += '<td>' + (d.content||'') + '</td>';
+
+
+
+    html += '<td>' + (d.stdScore||0) + '</td>';
+
+
+
+    html += '<td style="color:' + (isDeduct ? '#ef4444' : '#10b981') + '">' + (d.actualScore||0) + '</td>';
+
+
+
+    html += '<td>' + (d.deductReason||'') + '</td>';
+
+
+
+    html += '<td>' + (d.remark||'') + '</td>';
+
+
+
+    html += '</tr>';
+
+
+
+  });
+
+
+
+  html += '</tbody></table></div>';
+
+
+
+  html += '</div></div></div>';
+
+
+
+
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  var overlay = div.firstElementChild;
+
+
+
+  document.body.appendChild(overlay);
+
+
+
+  overlay.offsetHeight;
+
+
+
+  overlay.classList.add('show');
+
+
+
+};
+
+
+
+
+
+
+
+Pages._exportResults = function() {
+
+
+
+  var results = App.getResults();
+
+
+
+  if (results.length === 0) { App.toast('无数据可导出'); return; }
+
+
+
+
+
+
+
+  var rows = [['门店', '模板', '日期', '稽核员', '总分', '满分', '状态', '序号', '类别', '检查内容', '标准分', '实际得分', '扣分原因', '备注']];
+
+
+
+  results.forEach(function(r) {
+
+
+
+    (r.details||[]).forEach(function(d, i) {
+
+
+
+      rows.push([r.store||'', r.templateName||'', r.date||'', r.inspector||'',
+
+
+
+        r.totalScore||0, r.maxScore||0, r.status||'',
+
+
+
+        i+1, d.category||'', d.content||'', d.stdScore||0, d.actualScore||0, d.deductReason||'', d.remark||'']);
+
+
+
+    });
+
+
+
+  });
+
+
+
+
+
+
+
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+
+
+
+  var wb = XLSX.utils.book_new();
+
+
+
+  XLSX.utils.book_append_sheet(wb, ws, '检查结果');
+
+
+
+  var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+
+
+  var blob = new Blob([wbout], { type: 'application/vnd.ms-excel' });
+
+
+
+  var a = document.createElement('a');
+
+
+
+  a.href = URL.createObjectURL(blob);
+
+
+
+  var now = new Date();
+
+
+
+  a.download = 'inspection_results_' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '.xlsx';
+
+
+
+  a.click();
+
+
+
+  App.toast('导出成功');
+
+
+
+};
+
+
+
+
+
+
+
+/* ==================== 问题工单 ==================== */
+
+
+
+Pages._issueFilter = 'all';
+
+
+
+
+
+
+
+Pages.inspectionIssues = function() {
+
+
+
+  var el = document.getElementById('page-inspectionIssues');
+
+
+
+  if (!el) return;
+
+
+
+  var user = App.currentUser;
+
+
+
+  var issues = App.getIssues();
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'inspection')) {
+
+
+
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  // 店长只看自己门店
+
+
+
+  if (user.role === '店长' && user.storeId) {
+
+
+
+    issues = issues.filter(function(is) { return is.storeId === user.storeId; });
+
+
+
+  }
+
+
+
+
+
+
+
+  var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+
+
+
+  html += '<div class="card"><div class="card-title">问题工单</div>';
+
+
+
+
+
+
+
+  // 筛选
+
+
+
+  html += '<div class="db-toggle-bar">';
+
+
+
+  var statuses = [
+
+
+
+    { v: 'all', l: '全部' },
+
+
+
+    { v: '待处理', l: '待处理' },
+
+
+
+    { v: '已整改', l: '已整改' },
+
+
+
+    { v: '已闭环', l: '已闭环' },
+
+
+
+    { v: '申诉中', l: '申诉中' }
+
+
+
+  ];
+
+
+
+  statuses.forEach(function(s) {
+
+
+
+    html += '<button class="db-toggle-btn' + (Pages._issueFilter === s.v ? ' active' : '') + '" onclick="Pages._setIssueFilter(\'' + s.v + '\')">' + s.l + '</button>';
+
+
+
+  });
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 统计
+
+
+
+  var pending = issues.filter(function(is) { return is.status === '待处理'; }).length;
+
+
+
+  var fixed = issues.filter(function(is) { return is.status === '已整改'; }).length;
+
+
+
+  var closed = issues.filter(function(is) { return is.status === '已闭环'; }).length;
+
+
+
+  var appealing = issues.filter(function(is) { return is.status === '申诉中'; }).length;
+
+
+
+  var total = issues.length;
+
+
+
+  var fixRate = total > 0 ? Math.round((fixed + closed) / total * 100) : 0;
+
+
+
+
+
+
+
+  html += '<div class="stats-row">';
+
+
+
+  html += '<div class="stat-item"><span class="stat-num" style="color:#ef4444">' + pending + '</span><span class="stat-label">待处理</span></div>';
+
+
+
+  html += '<div class="stat-item"><span class="stat-num" style="color:#f59e0b">' + fixed + '</span><span class="stat-label">已整改</span></div>';
+
+
+
+  html += '<div class="stat-item"><span class="stat-num" style="color:#10b981">' + closed + '</span><span class="stat-label">已闭环</span></div>';
+
+
+
+  html += '<div class="stat-item"><span class="stat-num" style="color:#6366f1">' + appealing + '</span><span class="stat-label">申诉中</span></div>';
+
+
+
+  html += '<div class="stat-item"><span class="stat-num">' + fixRate + '%</span><span class="stat-label">整改率</span></div>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 批量操作栏（管理角色 + 已整改筛选时显示）
+
+
+
+  var isManager = (user.role === '总部' || user.role === '稽核' || user.role === '稽核员' || user.role === '线上稽核' || user.role === '线下稽核');
+
+
+
+  if (isManager && Pages._issueFilter === '已整改') {
+
+
+
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+
+
+
+    html += '<label style="cursor:pointer;font-size:12px;user-select:none"><input type="checkbox" id="issue-select-all" onchange="Pages._issueSelectAll()"> 全选</label>';
+
+
+
+    html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueBatchClose()">批量关闭所选</button>';
+
+
+
+    html += '</div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  var filtered = issues;
+
+
+
+  if (Pages._issueFilter !== 'all') {
+
+
+
+    filtered = issues.filter(function(is) { return is.status === Pages._issueFilter; });
+
+
+
+  }
+
+
+
+
+
+
+
+  if (filtered.length === 0) {
+
+
+
+    html += '<div class="empty-state"><div class="empty-icon">&#128221;</div><div>暂无问题工单</div></div>';
+
+
+
+  } else {
+
+
+
+    filtered.reverse().forEach(function(is) {
+
+
+
+      var statusColor = is.status === '待处理' ? '#ef4444' : is.status === '已整改' ? '#f59e0b' : is.status === '已闭环' ? '#10b981' : '#6366f1';
+
+
+
+      html += '<div class="list-item" style="border-left:3px solid ' + statusColor + '">';
+
+
+
+      if (isManager && is.status === '已整改') {
+
+
+
+        html += '<input type="checkbox" class="issue-checkbox" data-id="' + is.id + '" style="margin-right:8px;flex-shrink:0">';
+
+
+
+      }
+
+
+
+      html += '<div class="li-main">';
+
+
+
+      html += '<div class="li-title">[' + (is.store||'') + '] ' + (is.content||'') + '</div>';
+
+
+
+      html += '<div class="li-sub">' + (is.date||'') + ' | ' + (is.category||'') + ' | 扣' + ((is.stdScore||0) - (is.actualScore||0)) + '分 | ' + (is.deductReason||'') + '</div>';
+
+
+
+      html += '<div class="li-sub">稽核员：' + (is.inspector||'') + ' | 状态：<span style="color:' + statusColor + '">' + (is.status||'') + '</span></div>';
+
+
+
+      if (is.fixAction) html += '<div class="li-sub">整改措施：' + is.fixAction + '</div>';
+
+
+
+      html += '</div>';
+
+
+
+
+
+
+
+      // 操作按钮
+
+
+
+      html += '<div class="li-actions" style="margin-top:6px">';
+
+
+
+      if (user.role === '店长' && is.status === '待处理') {
+
+
+
+        html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueFix(\'' + is.id + '\')">填写整改</button>';
+
+
+
+        html += '<button class="btn btn-sm" onclick="Pages._issueAppeal(\'' + is.id + '\')">申诉</button>';
+
+
+
+      }
+
+
+
+      if (user.role === '店长' && is.status === '已闭环') {
+
+
+
+        html += '<button class="btn btn-sm" onclick="Pages._issueAppeal(\'' + is.id + '\')">申诉</button>';
+
+
+
+      }
+
+
+
+      if ((user.role === '总部' || user.role === '稽核' || user.role === '稽核员' || user.role === '线上稽核' || user.role === '线下稽核')) {
+
+
+
+        if (is.status === '已整改') {
+
+
+
+          html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueVerify(\'' + is.id + '\', \'closed\')">审核通过</button>';
+
+
+
+          html += '<button class="btn btn-sm btn-danger" onclick="Pages._issueVerify(\'' + is.id + '\', \'reject\')">驳回</button>';
+
+
+
+        }
+
+
+
+        if (is.status === '申诉中') {
+
+
+
+          html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueReviewAppeal(\'' + is.id + '\', \'通过\')">申诉通过</button>';
+
+
+
+          html += '<button class="btn btn-sm btn-danger" onclick="Pages._issueReviewAppeal(\'' + is.id + '\', \'驳回\')">申诉驳回</button>';
+
+
+
+        }
+
+
+
+      }
+
+
+
+      html += '</div>';
+
+
+
+      html += '</div>';
+
+
+
+    });
+
+
+
+  }
+
+
+
+
+
+
+
+  html += '</div>';
+
+
+
+  el.innerHTML = html;
+
+
+
+};
+
+
+
+
+
+
+
+Pages._setIssueFilter = function(filter) {
+
+
+
+  Pages._issueFilter = filter;
+
+
+
+  Pages.inspectionIssues();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueSelectAll = function() {
+
+
+
+  var checked = document.getElementById('issue-select-all').checked;
+
+
+
+  document.querySelectorAll('.issue-checkbox').forEach(function(cb) { cb.checked = checked; });
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueBatchClose = function() {
+
+
+
+  var checked = document.querySelectorAll('.issue-checkbox:checked');
+
+
+
+  if (checked.length === 0) { App.toast('请先勾选要关闭的工单'); return; }
+
+
+
+  if (!confirm('确定要批量关闭 ' + checked.length + ' 个工单吗？')) return;
+
+
+
+  var ids = [];
+
+
+
+  checked.forEach(function(cb) { ids.push(cb.dataset.id); });
+
+
+
+  var issues = App.getIssues();
+
+
+
+  issues.forEach(function(is) {
+
+
+
+    if (ids.indexOf(is.id) >= 0 && is.status === '已整改') {
+
+
+
+      is.status = '已闭环';
+
+
+
+      is.closedAt = new Date().toISOString().slice(0,10);
+
+
+
+    }
+
+
+
+  });
+
+
+
+  App.saveIssues();
+
+
+
+  Pages.inspectionIssues();
+
+
+
+  App.toast('已批量关闭 ' + ids.length + ' 个工单');
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueFix = function(id) {
+
+
+
+  var issues = App.getIssues();
+
+
+
+  var is = issues.find(function(x) { return x.id === id; });
+
+
+
+  if (!is) return;
+
+
+
+
+
+
+
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
+
+
+
+  html += '<div class="modal-header"><h3>填写整改措施</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+  html += '<div class="modal-body">';
+
+
+
+  html += '<p><b>问题：</b>' + (is.content||'') + '（' + (is.store||'') + '）</p>';
+
+
+
+  html += '<div class="form-group"><label class="form-label">整改措施</label>';
+
+
+
+  html += '<textarea id="issue-fix-action" class="form-input" rows="4" placeholder="请描述整改措施..."></textarea></div>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '<div class="modal-footer">';
+
+
+
+  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages._issueFixSubmit(\'' + id + '\')">提交整改</button>';
+
+
+
+  html += '</div></div></div>';
+
+
+
+
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  document.body.appendChild(div.firstElementChild).classList.add('show');
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueFixSubmit = async function(id) {
+
+
+
+  var action = (document.getElementById('issue-fix-action')||{}).value || '';
+
+
+
+  if (!action.trim()) { App.toast('请填写整改措施'); return; }
+
+
+
+  var issues = App.getIssues();
+
+
+
+  var is = issues.find(function(x) { return x.id === id; });
+
+
+
+  if (is) {
+
+
+
+    is.fixAction = action.trim();
+
+
+
+    is.status = '已整改';
+
+
+
+    await App.saveIssues(issues);
+
+
+
+    App.toast('整改已提交');
+
+
+
+  }
+
+
+
+  document.querySelector('.modal-overlay').remove();
+
+
+
+  Pages.inspectionIssues();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueVerify = async function(id, action) {
+
+
+
+  var issues = App.getIssues();
+
+
+
+  var is = issues.find(function(x) { return x.id === id; });
+
+
+
+  if (!is) return;
+
+
+
+
+
+
+
+  if (action === 'closed') {
+
+
+
+    is.status = '已闭环';
+
+
+
+    App.toast('已审核通过');
+
+
+
+  } else {
+
+
+
+    is.status = '待处理';
+
+
+
+    is.fixAction = '';
+
+
+
+    App.toast('已驳回，退回待处理');
+
+
+
+  }
+
+
+
+  await App.saveIssues(issues);
+
+
+
+  Pages.inspectionIssues();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueAppeal = function(id) {
+
+
+
+  var issues = App.getIssues();
+
+
+
+  var is = issues.find(function(x) { return x.id === id; });
+
+
+
+  if (!is) return;
+
+
+
+
+
+
+
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
+
+
+
+  html += '<div class="modal-header"><h3>提交申诉</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+  html += '<div class="modal-body">';
+
+
+
+  html += '<p><b>问题：</b>' + (is.content||'') + '（' + (is.store||'') + '）</p>';
+
+
+
+  html += '<div class="form-group"><label class="form-label">申诉内容</label>';
+
+
+
+  html += '<textarea id="issue-appeal-content" class="form-input" rows="4" placeholder="请描述申诉理由..."></textarea></div>';
+
+
+
+  html += '</div>';
+
+
+
+  html += '<div class="modal-footer">';
+
+
+
+  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+  html += '<button class="btn btn-primary" onclick="Pages._issueAppealSubmit(\'' + id + '\')">提交申诉</button>';
+
+
+
+  html += '</div></div></div>';
+
+
+
+
+
+
+
+  var div = document.createElement('div');
+
+
+
+  div.innerHTML = html;
+
+
+
+  document.body.appendChild(div.firstElementChild).classList.add('show');
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueAppealSubmit = async function(id) {
+
+
+
+  var content = (document.getElementById('issue-appeal-content')||{}).value || '';
+
+
+
+  if (!content.trim()) { App.toast('请填写申诉内容'); return; }
+
+
+
+  var issues = App.getIssues();
+
+
+
+  var is = issues.find(function(x) { return x.id === id; });
+
+
+
+  if (is) {
+
+
+
+    is.status = '申诉中';
+
+
+
+    is.appealContent = content.trim();
+
+
+
+    await App.saveIssues(issues);
+
+
+
+    App.toast('申诉已提交');
+
+
+
+  }
+
+
+
+  document.querySelector('.modal-overlay').remove();
+
+
+
+  Pages.inspectionIssues();
+
+
+
+};
+
+
+
+
+
+
+
+Pages._issueReviewAppeal = async function(id, result) {
+
+
+
+  var issues = App.getIssues();
+
+
+
+  var is = issues.find(function(x) { return x.id === id; });
+
+
+
+  if (is) {
+
+
+
+    is.status = result === '通过' ? '已闭环' : '待处理';
+
+
+
+    is.appealResult = result;
+
+
+
+    await App.saveIssues(issues);
+
+
+
+    App.toast('申诉审核' + result);
+
+
+
+  }
+
+
+
+  Pages.inspectionIssues();
+
+
+
+};
+
+
+
+
+
+
+
+/* ==================== 稽核看板 ==================== */
+
+
+
+Pages.inspectionDashboard = function() {
+
+
+
+  var el = document.getElementById('page-inspectionDashboard');
+
+
+
+  if (!el) return;
+
+
+
+  var user = App.currentUser;
+
+
+
+
+
+
+
+  if (!App.Permissions.canAccess(user.role, 'inspection')) {
+
+
+
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+    return;
+
+
+
+  }
+
+
+
+
+
+
+
+  var results = App.getResults();
+
+
+
+  var issues = App.getIssues();
+
+
+
+  var stores = App.getStores();
+
+
+
+
+
+
+
+  var now = new Date();
+
+
+
+  var monthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
+
+
+
+
+
+
+
+  var monthResults = results.filter(function(r) { return r.date >= monthStart; });
+
+
+
+  var monthIssues = issues.filter(function(is) { return is.date >= monthStart; });
+
+
+
+
+
+
+
+  var checkCount = monthResults.length;
+
+
+
+  var avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
+
+
+
+  var issueCount = monthIssues.length;
+
+
+
+  var fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
+
+
+
+  var fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
+
+
+
+
+
+
+
+  // 门店筛选（持久化到 Pages 上，切换后重绘；店长强制锁定本人门店）
+
+
+
+  var storeFilter = (user.role === '店长' && user.storeId) ? user.storeId : (Pages._dbStoreFilter || '');
+
+
+
+  if (storeFilter) {
+
+
+
+    results = results.filter(function(r) { return r.storeId === storeFilter; });
+
+
+
+    issues = issues.filter(function(is) { return is.storeId === storeFilter; });
+
+
+
+    monthResults = monthResults.filter(function(r) { return r.storeId === storeFilter; });
+
+
+
+    monthIssues = monthIssues.filter(function(is) { return is.storeId === storeFilter; });
+
+
+
+    checkCount = monthResults.length;
+
+
+
+    avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
+
+
+
+    issueCount = monthIssues.length;
+
+
+
+    fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
+
+
+
+    fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
+
+
+
+  }
+
+
+
+
+
+
+
+  // 模板筛选（与门店筛选叠加）
+
+
+
+  var tplFilter = Pages._dbTplFilter || '';
+
+
+
+  if (tplFilter) {
+
+
+
+    results = results.filter(function(r) { return r.templateId === tplFilter; });
+
+
+
+    issues = issues.filter(function(is) { return is.templateId === tplFilter; });
+
+
+
+    monthResults = monthResults.filter(function(r) { return r.templateId === tplFilter; });
+
+
+
+    monthIssues = monthIssues.filter(function(is) { return is.templateId === tplFilter; });
+
+
+
+    checkCount = monthResults.length;
+
+
+
+    avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
+
+
+
+    issueCount = monthIssues.length;
+
+
+
+    fixedCount = monthIssues.filter(function(is) { return is.status === '已闭环' || is.status === '已整改'; }).length;
+
+
+
+    fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
+
+
+
+  }
+
+
+
+
+
+
+
+  var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+
+
+
+
+
+
+
+  // 门店筛选下拉（店长不显示，自动锁定；其他角色使用全量门店列表）
+
+
+
+  if (user.role !== '店长') {
+
+
+
+    var storeEntries = (App.getStores() || []).sort(function(a,b) { return (a.name||'').localeCompare(b.name||'', 'zh'); });
+
+
+
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+
+
+
+    html += '<label style="font-size:13px;white-space:nowrap">门店筛选：</label>';
+
+
+
+    html += '<select id="db-store-filter" class="form-input" style="max-width:200px" onchange="Pages._dbStoreFilter=this.value;Pages.inspectionDashboard()">';
+
+
+
+    html += '<option value="">全部门店</option>';
+
+
+
+    storeEntries.forEach(function(s) {
+
+
+
+      html += '<option value="' + (s.id||s.storeId) + '"' + (storeFilter === (s.id||s.storeId) ? ' selected' : '') + '>' + (s.name||s.store) + '</option>';
+
+
+
+    });
+
+
+
+    html += '</select>';
+
+
+
+    html += '</div>';
+
+
+
+    // 模板筛选
+
+
+
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+
+
+
+    html += '<label style="font-size:13px;white-space:nowrap">模板筛选：</label>';
+
+
+
+    html += '<select id="db-tpl-filter" class="form-input" style="max-width:200px" onchange="Pages._dbTplFilter=this.value;Pages.inspectionDashboard()">';
+
+
+
+    html += '<option value="">全部模板</option>';
+
+
+
+    (App.getTemplates() || []).forEach(function(t) {
+
+
+
+      html += '<option value="' + t.id + '"' + (tplFilter === t.id ? ' selected' : '') + '>' + (t.name||t.id) + '</option>';
+
+
+
+    });
+
+
+
+    html += '</select>';
+
+
+
+    html += '</div>';
+
+
+
+  } else {
+
+
+
+    var myStore = (App.getStores() || []).find(function(s) { return (s.id||s.storeId) === (user.storeId||''); });
+
+
+
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:#6b7280">';
+
+
+
+    html += '当前门店：<b style="color:#111">' + ((myStore && (myStore.name||myStore.store)) || user.store || user.storeId || '') + '</b>';
+
+
+
+    html += '</div>';
+
+
+
+    // 模板筛选
+
+
+
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+
+
+
+    html += '<label style="font-size:13px;white-space:nowrap">模板筛选：</label>';
+
+
+
+    html += '<select id="db-tpl-filter" class="form-input" style="max-width:200px" onchange="Pages._dbTplFilter=this.value;Pages.inspectionDashboard()">';
+
+
+
+    html += '<option value="">全部模板</option>';
+
+
+
+    (App.getTemplates() || []).forEach(function(t) {
+
+
+
+      html += '<option value="' + t.id + '"' + (tplFilter === t.id ? ' selected' : '') + '>' + (t.name||t.id) + '</option>';
+
+
+
+    });
+
+
+
+    html += '</select>';
+
+
+
+    html += '</div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  // KPI 卡片
+
+
+
+  html += '<div class="db-kpi-grid">';
+
+
+
+  html += dbKpiCard('本月检查', checkCount, '次', '#6366f1', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5v2h6V5');
+
+
+
+  html += dbKpiCard('平均分', avgScore, '分', '#10b981', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z');
+
+
+
+  html += dbKpiCard('问题数', issueCount, '项', '#ef4444', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z');
+
+
+
+  html += dbKpiCard('整改率', fixRate, '%', '#f59e0b', 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15');
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 门店得分柱状图
+
+
+
+  html += '<div class="db-card-3d"><div class="db-card-title">近期门店得分对比</div>';
+
+
+
+  html += '<canvas id="insp-bar-chart" width="600" height="200" style="width:100%;max-width:600px;height:200px"></canvas>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 问题分类饼图
+
+
+
+  html += '<div class="db-card-3d" style="display:inline-block;width:48%;vertical-align:top"><div class="db-card-title">问题分类分布</div>';
+
+
+
+  html += '<canvas id="insp-pie-chart" width="250" height="250" style="width:100%;max-width:250px;height:250px"></canvas>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 月度趋势折线图
+
+
+
+  html += '<div class="db-card-3d" style="display:inline-block;width:48%;vertical-align:top"><div class="db-card-title">月度趋势</div>';
+
+
+
+  html += '<canvas id="insp-line-chart" width="250" height="250" style="width:100%;max-width:250px;height:250px"></canvas>';
+
+
+
+  html += '</div>';
+
+
+
+
+
+
+
+  // 机会点：本月 Top 扣分项
+
+
+
+  var topDeducts = monthIssues.map(function(is) {
+
+
+
+    return { content: is.content, category: is.category, deduct: (is.stdScore||0) - (is.actualScore||0), reason: is.deductReason };
+
+
+
+  }).sort(function(a,b) { return b.deduct - a.deduct; }).slice(0, 5);
+
+
+
+  if (topDeducts.length > 0) {
+
+
+
+    html += '<div class="db-card-3d" style="margin-top:16px"><div class="db-card-title">本月机会点（Top 扣分项）</div>';
+
+
+
+    html += '<div class="table-container" style="margin-top:8px"><table><thead><tr>';
+
+
+
+    html += '<th style="width:55%">检查项目</th><th style="width:15%">类别</th><th style="width:10%">扣分</th><th style="width:20%">扣分原因</th>';
+
+
+
+    html += '</tr></thead><tbody>';
+
+
+
+    topDeducts.forEach(function(d, i) {
+
+
+
+      var barW = Math.round((d.deduct / topDeducts[0].deduct) * 80);
+
+
+
+      html += '<tr>';
+
+
+
+      html += '<td><div style="position:relative">';
+
+
+
+      html += '<div style="position:absolute;left:0;top:0;bottom:0;background:#fecaca;border-radius:2px;width:' + barW + '%"></div>';
+
+
+
+      html += '<span style="position:relative">' + (d.content||'') + '</span></div></td>';
+
+
+
+      html += '<td>' + (d.category||'') + '</td>';
+
+
+
+      html += '<td style="color:#ef4444;font-weight:600">-' + d.deduct + '分</td>';
+
+
+
+      html += '<td style="font-size:11px;color:#6b7280">' + (d.reason||'') + '</td>';
+
+
+
+      html += '</tr>';
+
+
+
+    });
+
+
+
+    html += '</tbody></table></div></div>';
+
+
+
+  }
+
+
+
+
+
+
+
+  el.innerHTML = html;
+
+
+
+
+
+
+
+  // 延迟绘制图表
+
+
+
+  setTimeout(function() {
+
+
+
+    Pages._drawInspBarChart(results, stores);
+
+
+
+    Pages._drawInspPieChart(issues);
+
+
+
+    Pages._drawInspLineChart(results);
+
+
+
+  }, 100);
+
+
+
+};
+
+
+
+
+
+
+
+Pages._drawInspBarChart = function(results, stores) {
+
+
+
+  var canvas = document.getElementById('insp-bar-chart');
+
+
+
+  if (!canvas) return;
+
+
+
+  var ctx = canvas.getContext('2d');
+
+
+
+  var W = canvas.width, H = canvas.height;
+
+
+
+  ctx.clearRect(0, 0, W, H);
+
+
+
+
+
+
+
+  // 按门店聚合
+
+
+
+  var storeScores = {};
+
+
+
+  results.forEach(function(r) {
+
+
+
+    if (!storeScores[r.storeId]) storeScores[r.storeId] = { name: r.store, scores: [] };
+
+
+
+    storeScores[r.storeId].scores.push(r.totalScore||0);
+
+
+
+  });
+
+
+
+
+
+
+
+  var entries = Object.values(storeScores).map(function(s) {
+
+
+
+    return { name: s.name, avg: Math.round(s.scores.reduce(function(a,b){return a+b;},0) / s.scores.length) };
+
+
+
+  }).sort(function(a,b) { return b.avg - a.avg; }).slice(0, 8);
+
+
+
+
+
+
+
+  if (entries.length === 0) return;
+
+
+
+
+
+
+
+  var pad = { top: 20, bottom: 40, left: 40, right: 10 };
+
+
+
+  var chartW = W - pad.left - pad.right;
+
+
+
+  var chartH = H - pad.top - pad.bottom;
+
+
+
+  var barW = chartW / entries.length * 0.6;
+
+
+
+  var gap = chartW / entries.length * 0.4;
+
+
+
+  var maxVal = Math.max.apply(null, entries.map(function(e) { return e.avg; })) || 100;
+
+
+
+
+
+
+
+  // 坐标轴
+
+
+
+  ctx.strokeStyle = '#ddd';
+
+
+
+  ctx.lineWidth = 1;
+
+
+
+  ctx.beginPath();
+
+
+
+  ctx.moveTo(pad.left, pad.top);
+
+
+
+  ctx.lineTo(pad.left, pad.top + chartH);
+
+
+
+  ctx.lineTo(pad.left + chartW, pad.top + chartH);
+
+
+
+  ctx.stroke();
+
+
+
+
+
+
+
+  // 柱状图
+
+
+
+  var colors = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ec4899','#3b82f6','#ef4444','#14b8a6'];
+
+
+
+  entries.forEach(function(e, i) {
+
+
+
+    var barH = (e.avg / maxVal) * chartH;
+
+
+
+    var x = pad.left + i * (barW + gap) + gap / 2;
+
+
+
+    var y = pad.top + chartH - barH;
+
+
+
+    ctx.fillStyle = colors[i % colors.length];
+
+
+
+    ctx.fillRect(x, y, barW, barH);
+
+
+
+    // 分值
+
+
+
+    ctx.fillStyle = '#333';
+
+
+
+    ctx.font = '10px sans-serif';
+
+
+
+    ctx.textAlign = 'center';
+
+
+
+    ctx.fillText(e.avg, x + barW/2, y - 4);
+
+
+
+    // 标签
+
+
+
+    ctx.fillText((e.name||'').length > 4 ? (e.name||'').substring(0,4) : (e.name||''), x + barW/2, pad.top + chartH + 16);
+
+
+
+  });
+
+
+
+};
+
+
+
+
+
+
+
+Pages._drawInspPieChart = function(issues) {
+
+
+
+  var canvas = document.getElementById('insp-pie-chart');
+
+
+
+  if (!canvas) return;
+
+
+
+  var ctx = canvas.getContext('2d');
+
+
+
+  var W = canvas.width, H = canvas.height;
+
+
+
+  ctx.clearRect(0, 0, W, H);
+
+
+
+
+
+
+
+  // 按分类聚合
+
+
+
+  var cats = {};
+
+
+
+  issues.forEach(function(is) {
+
+
+
+    var cat = is.category || '其他';
+
+
+
+    cats[cat] = (cats[cat] || 0) + 1;
+
+
+
+  });
+
+
+
+
+
+
+
+  var entries = Object.keys(cats).map(function(k) { return { name: k, count: cats[k] }; });
+
+
+
+  if (entries.length === 0) return;
+
+
+
+
+
+
+
+  var total = entries.reduce(function(s,e) { return s + e.count; }, 0);
+
+
+
+  var colors = ['#6366f1','#ef4444','#f59e0b','#10b981','#ec4899','#8b5cf6','#14b8a6','#3b82f6'];
+
+
+
+  var cx = W/2, cy = H/2, r = Math.min(cx, cy) - 10;
+
+
+
+  var startAngle = -Math.PI / 2;
+
+
+
+
+
+
+
+  entries.forEach(function(e, i) {
+
+
+
+    var sliceAngle = (e.count / total) * 2 * Math.PI;
+
+
+
+    ctx.beginPath();
+
+
+
+    ctx.moveTo(cx, cy);
+
+
+
+    ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+
+
+
+    ctx.closePath();
+
+
+
+    ctx.fillStyle = colors[i % colors.length];
+
+
+
+    ctx.fill();
+
+
+
+    ctx.strokeStyle = '#fff';
+
+
+
+    ctx.lineWidth = 2;
+
+
+
+    ctx.stroke();
+
+
+
+
+
+
+
+    // 标签
+
+
+
+    var midAngle = startAngle + sliceAngle / 2;
+
+
+
+    var lx = cx + Math.cos(midAngle) * (r * 0.7);
+
+
+
+    var ly = cy + Math.sin(midAngle) * (r * 0.7);
+
+
+
+    ctx.fillStyle = '#fff';
+
+
+
+    ctx.font = '10px sans-serif';
+
+
+
+    ctx.textAlign = 'center';
+
+
+
+    ctx.fillText(e.count, lx, ly - 5);
+
+
+
+    ctx.fillText(e.name.length > 4 ? e.name.substring(0,4) : e.name, lx, ly + 10);
+
+
+
+
+
+
+
+    startAngle += sliceAngle;
+
+
+
+  });
+
+
+
+};
+
+
+
+
+
+
+
+Pages._drawInspLineChart = function(results) {
+
+
+
+  var canvas = document.getElementById('insp-line-chart');
+
+
+
+  if (!canvas) return;
+
+
+
+  var ctx = canvas.getContext('2d');
+
+
+
+  var W = canvas.width, H = canvas.height;
+
+
+
+  ctx.clearRect(0, 0, W, H);
+
+
+
+
+
+
+
+  // 按月份聚合
+
+
+
+  var months = {};
+
+
+
+  results.forEach(function(r) {
+
+
+
+    var m = (r.date||'').substring(0, 7);
+
+
+
+    if (!months[m]) months[m] = { total: 0, count: 0 };
+
+
+
+    months[m].total += (r.totalScore||0);
+
+
+
+    months[m].count += 1;
+
+
+
+  });
+
+
+
+
+
+
+
+  var entries = Object.keys(months).sort().slice(-6).map(function(k) {
+
+
+
+    return { month: k, avg: Math.round(months[k].total / months[k].count) };
+
+
+
+  });
+
+
+
+
+
+
+
+  if (entries.length < 2) return;
+
+
+
+
+
+
+
+  var pad = { top: 20, bottom: 35, left: 35, right: 10 };
+
+
+
+  var chartW = W - pad.left - pad.right;
+
+
+
+  var chartH = H - pad.top - pad.bottom;
+
+
+
+  var minVal = Math.min.apply(null, entries.map(function(e) { return e.avg; })) - 5;
+
+
+
+  var maxVal = Math.max.apply(null, entries.map(function(e) { return e.avg; })) + 5;
+
+
+
+  if (maxVal <= minVal) maxVal = minVal + 10;
+
+
+
+
+
+
+
+  // 坐标轴
+
+
+
+  ctx.strokeStyle = '#ddd';
+
+
+
+  ctx.beginPath();
+
+
+
+  ctx.moveTo(pad.left, pad.top);
+
+
+
+  ctx.lineTo(pad.left, pad.top + chartH);
+
+
+
+  ctx.lineTo(pad.left + chartW, pad.top + chartH);
+
+
+
+  ctx.stroke();
+
+
+
+
+
+
+
+  // 折线
+
+
+
+  ctx.strokeStyle = '#6366f1';
+
+
+
+  ctx.lineWidth = 2;
+
+
+
+  ctx.beginPath();
+
+
+
+  entries.forEach(function(e, i) {
+
+
+
+    var x = pad.left + (i / (entries.length - 1)) * chartW;
+
+
+
+    var y = pad.top + chartH - ((e.avg - minVal) / (maxVal - minVal)) * chartH;
+
+
+
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+
+
+
+  });
+
+
+
+  ctx.stroke();
+
+
+
+
+
+
+
+  // 数据点
+
+
+
+  ctx.fillStyle = '#6366f1';
+
+
+
+  entries.forEach(function(e, i) {
+
+
+
+    var x = pad.left + (i / (entries.length - 1)) * chartW;
+
+
+
+    var y = pad.top + chartH - ((e.avg - minVal) / (maxVal - minVal)) * chartH;
+
+
+
+    ctx.beginPath();
+
+
+
+    ctx.arc(x, y, 3, 0, 2*Math.PI);
+
+
+
+    ctx.fill();
+
+
+
+    ctx.fillStyle = '#333';
+
+
+
+    ctx.font = '10px sans-serif';
+
+
+
+    ctx.textAlign = 'center';
+
+
+
+    ctx.fillText(e.avg, x, y - 8);
+
+
+
+    ctx.fillText((e.month||'').substring(5), x, pad.top + chartH + 14);
+
+
+
+    ctx.fillStyle = '#6366f1';
+
+
+
+  });
+
+
+
+};
+
+/* ==================== 供应链问题模块 ==================== */
+Pages._supplyTabs = [
+  { id: 'production', label: '生产', category: '生产' },
+  { id: 'purchase', label: '采购', category: '采购' },
+  { id: 'logistics', label: '物流', category: '物流' },
+  { id: 'vegetable', label: '净菜', category: '净菜' },
+  { id: 'board', label: '看板', category: '' }
+];
+
+Pages._supplyState = { tab: 'production', status: '全部', type: '全部' };
+
+Pages._supplyStatusClass = function(s) {
+  if (s === '已闭环') return 'sc-status-done';
+  if (s === '处理中') return 'sc-status-doing';
+  return 'sc-status-wait';
+};
+
+Pages._supplyEsc = function(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+};
+
+Pages.supplyChain = function() {
+  var el = document.getElementById('page-supplyChain');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'supply_chain')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var subHash = Pages._supplyState.tab;
+  var html = '';
+  html += '<div class="sub-tabbar sc-tabbar">';
+  Pages._supplyTabs.forEach(function(t) {
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" onclick="Pages._supplySetTab(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+  if (subHash === 'board') {
+    html += Pages._supplyRenderBoard(user);
+  } else {
+    html += Pages._supplyRenderCategory(user, subHash);
+  }
+
+  html += '<div class="sc-report-entry" onclick="Pages._supplyOpenReport(\'' + subHash + '\')"><span class="sc-report-plus">＋</span>上报问题</div>';
+
+  el.innerHTML = html;
+};
+
+Pages._supplySetTab = function(id) {
+  Pages._supplyState.tab = id;
+  Pages._supplyState.status = '全部';
+  Pages._supplyState.type = '全部';
+  Pages.supplyChain();
+};
+
+Pages._supplySetFilter = function(key, val) {
+  Pages._supplyState[key] = val;
+  Pages.supplyChain();
+};
+
+Pages._supplyRenderCategory = function(user, tabId) {
+  var cat = '';
+  Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
+  var all = App.getSupplyIssues() || [];
+  var list = all.filter(function(r) { return r.category === cat; });
+
+  var status = Pages._supplyState.status;
+  var type = Pages._supplyState.type;
+  if (status && status !== '全部') list = list.filter(function(r) { return r.status === status; });
+  if (type && type !== '全部') list = list.filter(function(r) { return r.type === type; });
+
+  var typeSet = {};
+  all.forEach(function(r) { if (r.category === cat && r.type) typeSet[r.type] = 1; });
+  var typeArr = Object.keys(typeSet).sort();
+
+  var today = new Date();
+  var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+  var html = '';
+  html += '<div class="sc-head"><div class="sc-title">' + cat + '问题</div><div class="sc-date">' + dateStr + '</div></div>';
+
+  html += '<div class="sc-filter">';
+  html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'status\', this.value)">';
+  ['全部','待处理','处理中','已闭环'].forEach(function(s) {
+    html += '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
+  });
+  html += '</select>';
+  html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'type\', this.value)">';
+  html += '<option value="全部">全部类型</option>';
+  typeArr.forEach(function(t) {
+    html += '<option value="' + Pages._supplyEsc(t) + '"' + (type === t ? ' selected' : '') + '>' + Pages._supplyEsc(t) + '</option>';
+  });
+  html += '</select>';
+  html += '</div>';
+
+  var waitN = list.filter(function(r){ return r.status === '待处理'; }).length;
+  var doingN = list.filter(function(r){ return r.status === '处理中'; }).length;
+  var doneN = list.filter(function(r){ return r.status === '已闭环'; }).length;
+  html += '<div class="sc-mini-stats">';
+  html += '<div class="sc-mini"><span class="sc-mini-num">' + list.length + '</span><span class="sc-mini-label">共' + cat + '条</span></div>';
+  html += '<div class="sc-mini sc-mini-wait"><span class="sc-mini-num">' + waitN + '</span><span class="sc-mini-label">待处理</span></div>';
+  html += '<div class="sc-mini sc-mini-doing"><span class="sc-mini-num">' + doingN + '</span><span class="sc-mini-label">处理中</span></div>';
+  html += '<div class="sc-mini sc-mini-done"><span class="sc-mini-num">' + doneN + '</span><span class="sc-mini-label">已闭环</span></div>';
+  html += '</div>';
+
+  list.sort(function(a, b) { return (b.date || '') < (a.date || '') ? -1 : 1; });
+  if (list.length === 0) {
+    html += '<div class="card sc-card"><div class="sc-empty">暂无符合条件的问题</div></div>';
+  } else {
+    html += '<div class="sc-list">';
+    list.forEach(function(r) {
+      html += '<div class="card sc-card" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
+      html += '<div class="sc-card-top"><span class="sc-source">' + Pages._supplyEsc(r.source) + '</span>';
+      html += '<span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
+      if (r.product) html += '<div class="sc-product">' + Pages._supplyEsc(r.product) + '</div>';
+      html += '<div class="sc-issue">' + Pages._supplyEsc(r.issue) + '</div>';
+      html += '<div class="sc-card-bottom"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span><span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  return html;
+};
+
+Pages._supplyRenderBoard = function(user) {
+  var all = App.getSupplyIssues() || [];
+  var total = all.length;
+  var waitN = all.filter(function(r){ return r.status === '待处理'; }).length;
+  var doingN = all.filter(function(r){ return r.status === '处理中'; }).length;
+  var doneN = all.filter(function(r){ return r.status === '已闭环'; }).length;
+
+  var cats = ['生产','采购','物流','净菜'];
+  var catCount = {};
+  cats.forEach(function(c){ catCount[c] = all.filter(function(r){ return r.category === c; }).length; });
+
+  var typeCount = {};
+  all.forEach(function(r) { if (r.type) typeCount[r.type] = (typeCount[r.type] || 0) + 1; });
+  var typeArr = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
+
+  var srcCount = {};
+  all.forEach(function(r) { if (r.source) srcCount[r.source] = (srcCount[r.source] || 0) + 1; });
+  var srcArr = Object.keys(srcCount).map(function(k){ return { name: k, count: srcCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
+
+  var days = [];
+  var today = new Date();
+  for (var i = 13; i >= 0; i--) {
+    var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    days.push({ key: key, count: 0 });
+  }
+  all.forEach(function(r) {
+    if (!r.date) return;
+    for (var j = 0; j < days.length; j++) {
+      if (days[j].key === r.date) { days[j].count++; break; }
+    }
+  });
+  var maxDay = 1;
+  days.forEach(function(d){ if (d.count > maxDay) maxDay = d.count; });
+
+  var html = '';
+  html += '<div class="sc-head"><div class="sc-title">供应链问题看板</div></div>';
+
+  html += '<div class="sc-board-nums">';
+  html += '<div class="sc-num-card sc-num-total"><span class="sc-num-big">' + total + '</span><span class="sc-num-label">问题总数</span></div>';
+  html += '<div class="sc-num-card sc-num-wait"><span class="sc-num-big">' + waitN + '</span><span class="sc-num-label">待处理</span></div>';
+  html += '<div class="sc-num-card sc-num-doing"><span class="sc-num-big">' + doingN + '</span><span class="sc-num-label">处理中</span></div>';
+  html += '<div class="sc-num-card sc-num-done"><span class="sc-num-big">' + doneN + '</span><span class="sc-num-label">已闭环</span></div>';
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">各环节问题占比</div>';
+  cats.forEach(function(c) {
+    var n = catCount[c] || 0;
+    var pct = total > 0 ? Math.round(n / total * 100) : 0;
+    html += '<div class="sc-cat-row"><div class="sc-cat-line"><span class="sc-cat-name">' + c + '</span><span class="sc-cat-num">' + n + ' (' + pct + '%)</span></div>';
+    html += '<div class="sc-bar"><div class="sc-bar-inner" style="width:' + pct + '%"></div></div></div>';
+  });
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">高频问题类型 TOP5</div>';
+  if (typeArr.length === 0) {
+    html += '<div class="sc-empty">暂无数据</div>';
+  } else {
+    typeArr.forEach(function(t, idx) {
+      var pct = total > 0 ? Math.round(t.count / total * 100) : 0;
+      html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(t.name) + '</span><div class="sc-bar sc-bar-flex"><div class="sc-bar-inner sc-bar-type" style="width:' + pct + '%"></div></div><span class="sc-rank-num">' + t.count + '</span></div>';
+    });
+  }
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">反馈来源 TOP5</div>';
+  if (srcArr.length === 0) {
+    html += '<div class="sc-empty">暂无数据</div>';
+  } else {
+    srcArr.forEach(function(s, idx) {
+      html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(s.name) + '</span><span class="sc-rank-num">' + s.count + ' 条</span></div>';
+    });
+  }
+  html += '</div>';
+
+  html += '<div class="card sc-card"><div class="sc-card-title">每日趋势（近14天）</div>';
+  html += '<div class="sc-trend">';
+  days.forEach(function(d) {
+    var h = d.count > 0 ? Math.max(4, Math.round(d.count / maxDay * 60)) : 2;
+    html += '<div class="sc-trend-col"><div class="sc-trend-bar" style="height:' + h + 'px" title="' + d.key + ' ' + d.count + '条">' + (d.count > 0 ? d.count : '') + '</div><div class="sc-trend-day">' + d.key.slice(8) + '</div></div>';
+  });
+  html += '</div>';
+  html += '</div>';
+
+  var pending = all.filter(function(r){ return r.status === '待处理'; }).sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; }).slice(0, 5);
+  html += '<div class="card sc-card"><div class="sc-card-title">最新待处理</div>';
+  if (pending.length === 0) {
+    html += '<div class="sc-empty">暂无待处理问题</div>';
+  } else {
+    pending.forEach(function(r) {
+      html += '<div class="sc-pending-row" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
+      html += '<span class="sc-pending-cat">' + r.category + '</span>';
+      html += '<span class="sc-pending-txt">' + Pages._supplyEsc(r.issue) + '</span>';
+      html += '<span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  return html;
+};
+
+Pages._supplyOpenDetail = function(id) {
+  var all = App.getSupplyIssues() || [];
+  var r = null;
+  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+  if (!r) return;
+  var html = '';
+  html += '<div class="modal-header"><h3>问题详情</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
+  html += '<div class="sc-detail">';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">环节</span><span class="sc-detail-val">' + r.category + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">反馈来源</span><span class="sc-detail-val">' + Pages._supplyEsc(r.source) + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">产品</span><span class="sc-detail-val">' + Pages._supplyEsc(r.product || '-') + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">日期</span><span class="sc-detail-val">' + Pages._supplyEsc(r.date || '-') + '</span></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">类型</span><span class="sc-detail-val"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span></span></div>';
+  html += '<div class="sc-detail-block"><span class="sc-detail-label">问题描述</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.issue) + '</div></div>';
+  if (r.remark) html += '<div class="sc-detail-block"><span class="sc-detail-label">备注</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.remark) + '</div></div>';
+  html += '<div class="sc-detail-row"><span class="sc-detail-label">状态</span><span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
+  if (r.handler) html += '<div class="sc-detail-row"><span class="sc-detail-label">处理人</span><span class="sc-detail-val">' + Pages._supplyEsc(r.handler) + '</span></div>';
+  if (r.result) html += '<div class="sc-detail-block"><span class="sc-detail-label">处理结果</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.result) + '</div></div>';
+
+  html += '<div class="sc-flow">';
+  if (r.status === '待处理') {
+    html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(App.currentUser ? (App.currentUser.name || '') : '') + '"></div>';
+    html += '<button class="btn sc-btn-main" onclick="Pages._supplyStart(\'' + id + '\')">开始处理</button>';
+  } else if (r.status === '处理中') {
+    html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(r.handler || '') + '"></div>';
+    html += '<div class="sc-flow-form"><textarea class="form-input sc-input sc-textarea" id="sc-result-' + id + '" placeholder="填写处理结果">' + Pages._supplyEsc(r.result || '') + '</textarea></div>';
+    html += '<button class="btn sc-btn-done" onclick="Pages._supplyFinish(\'' + id + '\')">完成闭环</button>';
+  } else {
+    html += '<div class="sc-closed-tip">该问题已闭环，如需重新处理请上报新问题</div>';
+  }
+  html += '</div>';
+
+  html += '<div style="margin-top:14px"><button class="btn btn-outline btn-sm" style="width:100%" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  html += '</div>';
+
+  document.querySelector('#modal-overlay .modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+};
+
+Pages._supplyStart = function(id) {
+  var all = App.getSupplyIssues() || [];
+  var r = null;
+  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+  if (!r) return;
+  var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
+  r.status = '处理中';
+  r.handler = handler || (App.currentUser ? (App.currentUser.name || '') : '');
+  App.saveSupplyIssues(all);
+  Pages._toast('已开始处理');
+  Pages._supplyOpenDetail(id);
+};
+
+Pages._supplyFinish = function(id) {
+  var all = App.getSupplyIssues() || [];
+  var r = null;
+  for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+  if (!r) return;
+  var result = document.getElementById('sc-result-' + id) ? document.getElementById('sc-result-' + id).value.trim() : '';
+  var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
+  if (!result) {
+    Pages._toast('请填写处理结果');
+    return;
+  }
+  r.status = '已闭环';
+  r.result = result;
+  r.handler = handler || r.handler || (App.currentUser ? (App.currentUser.name || '') : '');
+  r.closeDate = new Date().toISOString().slice(0, 10);
+  App.saveSupplyIssues(all);
+  Pages._toast('已闭环');
+  Pages._supplyOpenDetail(id);
+};
+
+Pages._supplyOpenReport = function(tabId) {
+  var cat = '';
+  Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
+  var html = '';
+  html += '<div class="modal-header"><h3>上报问题</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
+  html += '<div class="sc-report-form">';
+  html += '<div class="sc-form-row"><label class="sc-form-label">环节</label><span class="sc-form-static">' + cat + '</span></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">反馈来源</label><input class="form-input sc-input" id="sc-r-source" placeholder="如：黄寺大街店 / 生产反馈"></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">产品</label><input class="form-input sc-input" id="sc-r-product" placeholder="如：小炒肉汁"></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">检查机会点</label><textarea class="form-input sc-input sc-textarea" id="sc-r-issue" placeholder="问题描述"></textarea></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">类型</label><input class="form-input sc-input" id="sc-r-type" placeholder="如：异物、少货、品质不佳"></div>';
+  html += '<div class="sc-form-row"><label class="sc-form-label">备注</label><textarea class="form-input sc-input sc-textarea" id="sc-r-remark" placeholder="选填"></textarea></div>';
+  html += '<button class="btn sc-btn-main" style="width:100%;margin-top:6px" onclick="Pages._supplyDoReport(\'' + cat + '\')">提交上报</button>';
+  html += '</div>';
+  document.querySelector('#modal-overlay .modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+};
+
+Pages._supplyDoReport = function(cat) {
+  var source = document.getElementById('sc-r-source') ? document.getElementById('sc-r-source').value.trim() : '';
+  var product = document.getElementById('sc-r-product') ? document.getElementById('sc-r-product').value.trim() : '';
+  var issue = document.getElementById('sc-r-issue') ? document.getElementById('sc-r-issue').value.trim() : '';
+  var type = document.getElementById('sc-r-type') ? document.getElementById('sc-r-type').value.trim() : '';
+  var remark = document.getElementById('sc-r-remark') ? document.getElementById('sc-r-remark').value.trim() : '';
+  if (!source || !issue) {
+    Pages._toast('请填写反馈来源和问题描述');
+    return;
+  }
+  var all = App.getSupplyIssues() || [];
+  var maxId = 0;
+  all.forEach(function(r) {
+    var n = parseInt(String(r.id).replace(/\D/g, ''), 10);
+    if (!isNaN(n) && n > maxId) maxId = n;
+  });
+  var now = new Date();
+  var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  var item = {
+    id: 'sp' + String(maxId + 1).padStart(4, '0'),
+    category: cat,
+    date: dateStr,
+    source: source,
+    product: product,
+    issue: issue,
+    type: type,
+    remark: remark,
+    status: '待处理',
+    result: '',
+    handler: ''
+  };
+  all.unshift(item);
+  App.saveSupplyIssues(all);
+  Pages._toast('上报成功');
+  document.getElementById('modal-overlay').classList.remove('show');
+  Pages.supplyChain();
+};
+
+Pages._toast = function(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
+};
+
+
+/* ==================== 看板中心 · 差评看板 ==================== */
+Pages._cType = function(c) {
+  var t = (c.opportunity || '') + ' ' + (c.content || '');
+  var rules = [
+    ['服务态度', ['服务','态度','店员','员工','不理','冷漠','回应','语气']],
+    ['出品/口味', ['咸','淡','味道','口味','好吃','难吃','菜','饭','汤','食材','变质','异味','口感','量少','不熟']],
+    ['环境/卫生', ['卫生','干净','脏','油渍','餐具','桌面','地面','苍蝇','虫','头发']],
+    ['出餐/配送', ['等','慢','上菜','外卖','漏送','打包','配送','迟到']]
+  ];
+  for (var i = 0; i < rules.length; i++) {
+    for (var j = 0; j < rules[i][1].length; j++) {
+      if (t.indexOf(rules[i][1][j]) >= 0) return rules[i][0];
+    }
+  }
+  return '其他';
+};
+
+Pages._bdTabs = function(activeId) {
+  var tabs = [
+    { id: 'dashboard', label: '看板中心' },
+    { id: 'inspectionWorkbench', label: '稽核看板' },
+    { id: 'complaintBoard', label: '差评看板' },
+    { id: 'daily', label: '日报看板' },
+    { id: 'penaltyBoard', label: '处罚看板' },
+    { id: 'supplyChain', label: '供应链看板' }
+  ];
+  var html = '<div class="sub-tabbar bd-tabbar">';
+  tabs.forEach(function(t) {
+    html += '<div class="sub-tab-item' + (t.id === activeId ? ' active' : '') + '" onclick="Pages._gotoBoardTab(\\\'' + t.id + '\\\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._bdDays = function(records, dateKeyFn) {
+  // 最近 10 天（含今日）
+  var days = [];
+  var now = new Date();
+  for (var i = 9; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    days.push({ label: String(d.getDate()), key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), count: 0, amount: 0 });
+  }
+  var map = {};
+  days.forEach(function(dd){ map[dd.key] = dd; });
+  records.forEach(function(r) {
+    var k = dateKeyFn(r);
+    if (map[k]) { map[k].count++; map[k].amount += Pages._pAmount(r); }
+  });
+  return days;
+};
+
+Pages._bdTrendHtml = function(days, color, valFn, valSuffix) {
+  var max = 1;
+  days.forEach(function(d){ var v = valFn(d); if (v > max) max = v; });
+  var html = '<div class="bd-trend">';
+  days.forEach(function(d) {
+    var v = valFn(d);
+    var h = Math.max(8, Math.round(v / max * 100));
+    html += '<div class="bd-trend-col"><div class="bd-trend-bar-wrap"><div class="bd-trend-bar" style="height:' + h + '%;background:' + color + '"></div></div><div class="bd-trend-val">' + v + (valSuffix || '') + '</div><div class="bd-trend-label">' + d.label + '</div></div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._bdRankHtml = function(rows, color) {
+  var medals = ['&#129351;', '&#129352;', '&#129353;'];
+  var html = '<div class="bd-rank">';
+  rows.forEach(function(r, i) {
+    html += '<div class="bd-rank-row"><span class="bd-rank-idx" style="background:' + (i < 3 ? color + '1a' : '#f1f5f9') + ';color:' + (i < 3 ? color : '#94a3b8') + '">' + (i < 3 ? medals[i] : (i + 1)) + '</span><span class="bd-rank-name">' + r.name + '</span><span class="bd-rank-val" style="color:' + color + '">' + r.val + '</span></div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._bdTypeHtml = function(rows, color, valKey) {
+  var total = 0;
+  rows.forEach(function(r){ total += r.count; });
+  if (total === 0) total = 1;
+  var html = '<div class="bd-type">';
+  rows.forEach(function(r) {
+    var w = Math.max(6, Math.round(r.count / total * 100));
+    html += '<div class="bd-type-row"><div class="bd-type-name">' + r.name + '</div><div class="bd-type-track"><div class="bd-type-fill" style="width:' + w + '%;background:' + color + '"></div></div><div class="bd-type-val">' + (valKey === 'amount' ? r.count + '笔 · ¥' + r.amount.toLocaleString() : r.count + '条') + '</div></div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._pAmount = function(p) {
+  if (!p) return 0;
+  var num = function(v) {
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string') {
+      var n = parseFloat(v.replace(/[^\d.]/g, ''));
+      return isNaN(n) ? 0 : n;
+    }
+    return 0;
+  };
+  if (p.dutyValue !== '' && p.dutyValue !== undefined && p.dutyValue !== null) {
+    var dv = num(p.dutyValue);
+    if (dv > 0) return dv;
+  }
+  return num(p.penaltyPerson) + num(p.penaltyManager);
+};
+
 Pages.complaintBoard = function() {
   var el = document.getElementById('page-complaintBoard');
   if (!el) return;
@@ -12498,49 +12542,52 @@ Pages.complaintBoard = function() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
     return;
   }
-
-  var complaints = App.getComplaints() || [];
-  var now = new Date();
-  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  var month = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
-  var pending = month.filter(function(c){ return c.status === '待处理'; });
-  var handled = month.filter(function(c){ return c.status !== '待处理'; });
-  var rate = month.length ? Math.round(handled.length / month.length * 100) : 0;
-
-  var days = Pages._bdDays(month, function(c){ return c.date || ''; });
-  var storeCount = {};
-  month.forEach(function(c){ storeCount[c.store] = (storeCount[c.store] || 0) + 1; });
-  var storeRank = Object.keys(storeCount).map(function(k){ return { name: k, val: storeCount[k] + '条' }; }).sort(function(a, b){ return b.val.localeCompare(a.val) || b.val.length - a.val.length; }).slice(0, 5);
-  var typeCount = {};
-  month.forEach(function(c){ var t = Pages._cType(c); typeCount[t] = (typeCount[t] || 0) + 1; });
-  var typeRows = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a, b){ return b.count - a.count; });
-  var latest = month.filter(function(c){ return c.status === '待处理'; }).sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); }).slice(0, 5);
-
-  var html = '';
-  html += Pages._bdTabs('complaintBoard');
-  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#e0342c,#f87171)">';
-  html += '<div class="bd-head-left"><div class="bd-title">差评看板</div><div class="bd-date">' + curMonth + '</div></div>';
-  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
-  html += '<div class="bd-stats">';
-  html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月差评</div></div>';
-  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pending.length + '</div><div class="bd-stat-label">待审核</div></div>';
-  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">处理率</div></div>';
-  html += '</div>';
-  html += '<div class="bd-card"><div class="bd-card-title">每日差评趋势</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
-  html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#complaint\\\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
-  html += '<div class="bd-card"><div class="bd-card-title">差评类型分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeRows, '#e0342c', 'count') + '</div></div>';
-  html += '<div class="bd-card"><div class="bd-card-title">最新待审核差评</div><div class="bd-list">';
-  if (latest.length === 0) {
-    html += '<div class="bd-empty">本月暂无待审核差评</div>';
-  }
-  latest.forEach(function(c) {
-    html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\\\'' + c.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
-  });
-  html += '</div></div></div>';
-
-  el.innerHTML = html;
+  el.innerHTML = Pages._bdTabs('complaintBoard') + Pages._complaintBoardHtml();
 };
 
+Pages._complaintBoardHtml = function() {
+var complaints = App.getComplaints() || [];
+  var now = new Date();
+  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var month = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
+  var pending = month.filter(function(c){ return c.status === '待处理'; });
+  var handled = month.filter(function(c){ return c.status !== '待处理'; });
+  var rate = month.length ? Math.round(handled.length / month.length * 100) : 0;
+
+  var days = Pages._bdDays(month, function(c){ return c.date || ''; });
+  var storeCount = {};
+  month.forEach(function(c){ storeCount[c.store] = (storeCount[c.store] || 0) + 1; });
+  var storeRank = Object.keys(storeCount).map(function(k){ return { name: k, val: storeCount[k] + '条' }; }).sort(function(a, b){ return b.val.localeCompare(a.val) || b.val.length - a.val.length; }).slice(0, 5);
+  var typeCount = {};
+  month.forEach(function(c){ var t = Pages._cType(c); typeCount[t] = (typeCount[t] || 0) + 1; });
+  var typeRows = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a, b){ return b.count - a.count; });
+  var latest = month.filter(function(c){ return c.status === '待处理'; }).sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); }).slice(0, 5);
+
+  var html = '';
+  html += Pages._bdTabs('complaintBoard');
+  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#e0342c,#f87171)">';
+  html += '<div class="bd-head-left"><div class="bd-title">差评看板</div><div class="bd-date">' + curMonth + '</div></div>';
+  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
+  html += '<div class="bd-stats">';
+  html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月差评</div></div>';
+  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pending.length + '</div><div class="bd-stat-label">待审核</div></div>';
+  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">处理率</div></div>';
+  html += '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">每日差评趋势</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#complaint\\\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">差评类型分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeRows, '#e0342c', 'count') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">最新待审核差评</div><div class="bd-list">';
+  if (latest.length === 0) {
+    html += '<div class="bd-empty">本月暂无待审核差评</div>';
+  }
+  latest.forEach(function(c) {
+    html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\\\'' + c.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
+  });
+  html += '</div></div></div>';
+
+  return html;
+};
+
 Pages.penaltyBoard = function() {
   var el = document.getElementById('page-penaltyBoard');
   if (!el) return;
@@ -12550,60 +12597,63 @@ Pages.penaltyBoard = function() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
     return;
   }
-
-  var penalties = App.getPenalties() || [];
-  var now = new Date();
-  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  var month = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
-  var totalAmount = 0;
-  month.forEach(function(p){ totalAmount += Pages._pAmount(p); });
-  var pendingFill = month.filter(function(p){ return p.status === '待补填'; });
-
-  var days = Pages._bdDays(month, function(p){ return p.eventDate || ''; });
-  var typeRows = {};
-  month.forEach(function(p) {
-    var k = p.category || '其他';
-    if (!typeRows[k]) typeRows[k] = { count: 0, amount: 0 };
-    typeRows[k].count++;
-    typeRows[k].amount += Pages._pAmount(p);
-  });
-  var typeList = Object.keys(typeRows).map(function(k){ return { name: k, count: typeRows[k].count, amount: typeRows[k].amount }; }).sort(function(a, b){ return b.count - a.count; });
-  var storeRows = {};
-  month.forEach(function(p) {
-    var k = p.store || '未知门店';
-    if (!storeRows[k]) storeRows[k] = { count: 0, amount: 0 };
-    storeRows[k].count++;
-    storeRows[k].amount += Pages._pAmount(p);
-  });
-  var storeRank = Object.keys(storeRows).map(function(k){ return { name: k, val: storeRows[k].count + '笔 · ¥' + storeRows[k].amount.toLocaleString() }; }).sort(function(a, b){ return b.val.length - a.val.length || b.val.localeCompare(a.val); }).slice(0, 5);
-  var latest = month.sort(function(a, b){ return (b.eventDate || '').localeCompare(a.eventDate || ''); }).slice(0, 5);
-
-  var html = '';
-  html += Pages._bdTabs('penaltyBoard');
-  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">';
-  html += '<div class="bd-head-left"><div class="bd-title">处罚看板</div><div class="bd-date">' + curMonth + '</div></div>';
-  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
-  html += '<div class="bd-stats">';
-  html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月处罚</div></div>';
-  html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">处罚金额</div></div>';
-  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pendingFill.length + '</div><div class="bd-stat-label">待补填</div></div>';
-  html += '</div>';
-  html += '<div class="bd-card"><div class="bd-card-title">处罚类型分布（含金额）</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeList, '#7c3aed', 'amount') + '</div></div>';
-  html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#penalty\\\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
-  html += '<div class="bd-card"><div class="bd-card-title">每日处罚金额趋势</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
-  html += '<div class="bd-card"><div class="bd-card-title">最新处罚记录</div><div class="bd-list">';
-  if (latest.length === 0) {
-    html += '<div class="bd-empty">本月暂无处罚记录</div>';
-  }
-  latest.forEach(function(p) {
-    var cls = p.status === '已闭环' ? 'bd-tag-green' : (p.status === '超时' ? 'bd-tag-red' : 'bd-tag-amber');
-    html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\\\'' + p.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
-  });
-  html += '</div></div></div>';
-
-  el.innerHTML = html;
+  el.innerHTML = Pages._bdTabs('penaltyBoard') + Pages._penaltyBoardHtml();
 };
 
+Pages._penaltyBoardHtml = function() {
+var penalties = App.getPenalties() || [];
+  var now = new Date();
+  var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var month = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
+  var totalAmount = 0;
+  month.forEach(function(p){ totalAmount += Pages._pAmount(p); });
+  var pendingFill = month.filter(function(p){ return p.status === '待补填'; });
+
+  var days = Pages._bdDays(month, function(p){ return p.eventDate || ''; });
+  var typeRows = {};
+  month.forEach(function(p) {
+    var k = p.category || '其他';
+    if (!typeRows[k]) typeRows[k] = { count: 0, amount: 0 };
+    typeRows[k].count++;
+    typeRows[k].amount += Pages._pAmount(p);
+  });
+  var typeList = Object.keys(typeRows).map(function(k){ return { name: k, count: typeRows[k].count, amount: typeRows[k].amount }; }).sort(function(a, b){ return b.count - a.count; });
+  var storeRows = {};
+  month.forEach(function(p) {
+    var k = p.store || '未知门店';
+    if (!storeRows[k]) storeRows[k] = { count: 0, amount: 0 };
+    storeRows[k].count++;
+    storeRows[k].amount += Pages._pAmount(p);
+  });
+  var storeRank = Object.keys(storeRows).map(function(k){ return { name: k, val: storeRows[k].count + '笔 · ¥' + storeRows[k].amount.toLocaleString() }; }).sort(function(a, b){ return b.val.length - a.val.length || b.val.localeCompare(a.val); }).slice(0, 5);
+  var latest = month.sort(function(a, b){ return (b.eventDate || '').localeCompare(a.eventDate || ''); }).slice(0, 5);
+
+  var html = '';
+  html += Pages._bdTabs('penaltyBoard');
+  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">';
+  html += '<div class="bd-head-left"><div class="bd-title">处罚看板</div><div class="bd-date">' + curMonth + '</div></div>';
+  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
+  html += '<div class="bd-stats">';
+  html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月处罚</div></div>';
+  html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">处罚金额</div></div>';
+  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pendingFill.length + '</div><div class="bd-stat-label">待补填</div></div>';
+  html += '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">处罚类型分布（含金额）</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeList, '#7c3aed', 'amount') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#penalty\\\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">每日处罚金额趋势</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">最新处罚记录</div><div class="bd-list">';
+  if (latest.length === 0) {
+    html += '<div class="bd-empty">本月暂无处罚记录</div>';
+  }
+  latest.forEach(function(p) {
+    var cls = p.status === '已闭环' ? 'bd-tag-green' : (p.status === '超时' ? 'bd-tag-red' : 'bd-tag-amber');
+    html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\\\'' + p.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
+  });
+  html += '</div></div></div>';
+
+  return html;
+};
+
 Pages.taskBoard = function() {
   var el = document.getElementById('page-taskBoard');
   if (!el) return;
@@ -12613,51 +12663,54 @@ Pages.taskBoard = function() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
     return;
   }
-
-  var tasks = App.getTasks() || [];
-  var done = tasks.filter(function(t){ return t.status === '已完成'; });
-  var doing = tasks.filter(function(t){ return t.status === '进行中'; });
-  var todo = tasks.filter(function(t){ return t.status === '待办'; });
-  var rate = tasks.length ? Math.round(done.length / tasks.length * 100) : 0;
-
-  var statusRows = [
-    { name: '已完成', count: done.length },
-    { name: '进行中', count: doing.length },
-    { name: '待办', count: todo.length }
-  ];
-  var personRows = {};
-  tasks.forEach(function(t) {
-    var k = t.person || '未分配';
-    if (!personRows[k]) personRows[k] = { count: 0, done: 0 };
-    personRows[k].count++;
-    if (t.status === '已完成') personRows[k].done++;
-  });
-  var personRank = Object.keys(personRows).map(function(k){ return { name: k, val: personRows[k].done + '/' + personRows[k].count + ' 完成' }; }).sort(function(a, b){ return b.val.localeCompare(a.val); }).slice(0, 5);
-
-  var today = new Date();
-  var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-  var upcoming = tasks.filter(function(t){ return t.status !== '已完成' && (t.dueDate || '') >= todayStr; }).sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); }).slice(0, 5);
-
-  var html = '';
-  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#059669,#34d399)">';
-  html += '<div class="bd-head-left"><div class="bd-title">任务看板</div><div class="bd-date">' + todayStr + '</div></div>';
-  html += '<button class="bd-back" onclick="location.hash=\\\'#task\\\'">任务列表</button></div>';
-  html += '<div class="bd-stats">';
-  html += '<div class="bd-stat" style="--bd:#059669"><div class="bd-stat-num">' + tasks.length + '</div><div class="bd-stat-label">任务总数</div></div>';
-  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + doing.length + '</div><div class="bd-stat-label">进行中</div></div>';
-  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">完成率</div></div>';
-  html += '</div>';
-  html += '<div class="bd-card"><div class="bd-card-title">任务状态分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(statusRows, '#059669', 'count') + '</div></div>';
-  html += '<div class="bd-card"><div class="bd-card-title">各人任务量排行</div><div style="padding:12px 16px">' + Pages._bdRankHtml(personRank, '#059669') + '</div></div>';
-  html += '<div class="bd-card"><div class="bd-card-title">即将到期任务</div><div class="bd-list">';
-  if (upcoming.length === 0) {
-    html += '<div class="bd-empty">暂无即将到期任务</div>';
-  }
-  upcoming.forEach(function(t) {
-    html += '<div class="bd-item" onclick="Pages.showTaskDetail(\\\'' + t.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="bd-tag bd-tag-amber">' + t.status + '</span></div><div class="bd-item-sub">' + t.person + ' · 截止 ' + t.dueDate + (t.priority === '高' ? ' · <span style="color:#e0342c">高优先级</span>' : '') + '</div></div>';
-  });
-  html += '</div></div></div>';
-
-  el.innerHTML = html;
+  el.innerHTML = Pages._taskBoardHtml();
 };
 
+Pages._taskBoardHtml = function() {
+var tasks = App.getTasks() || [];
+  var done = tasks.filter(function(t){ return t.status === '已完成'; });
+  var doing = tasks.filter(function(t){ return t.status === '进行中'; });
+  var todo = tasks.filter(function(t){ return t.status === '待办'; });
+  var rate = tasks.length ? Math.round(done.length / tasks.length * 100) : 0;
+
+  var statusRows = [
+    { name: '已完成', count: done.length },
+    { name: '进行中', count: doing.length },
+    { name: '待办', count: todo.length }
+  ];
+  var personRows = {};
+  tasks.forEach(function(t) {
+    var k = t.person || '未分配';
+    if (!personRows[k]) personRows[k] = { count: 0, done: 0 };
+    personRows[k].count++;
+    if (t.status === '已完成') personRows[k].done++;
+  });
+  var personRank = Object.keys(personRows).map(function(k){ return { name: k, val: personRows[k].done + '/' + personRows[k].count + ' 完成' }; }).sort(function(a, b){ return b.val.localeCompare(a.val); }).slice(0, 5);
+
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  var upcoming = tasks.filter(function(t){ return t.status !== '已完成' && (t.dueDate || '') >= todayStr; }).sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); }).slice(0, 5);
+
+  var html = '';
+  html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#059669,#34d399)">';
+  html += '<div class="bd-head-left"><div class="bd-title">任务看板</div><div class="bd-date">' + todayStr + '</div></div>';
+  html += '<button class="bd-back" onclick="location.hash=\\\'#task\\\'">任务列表</button></div>';
+  html += '<div class="bd-stats">';
+  html += '<div class="bd-stat" style="--bd:#059669"><div class="bd-stat-num">' + tasks.length + '</div><div class="bd-stat-label">任务总数</div></div>';
+  html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + doing.length + '</div><div class="bd-stat-label">进行中</div></div>';
+  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">完成率</div></div>';
+  html += '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">任务状态分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(statusRows, '#059669', 'count') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">各人任务量排行</div><div style="padding:12px 16px">' + Pages._bdRankHtml(personRank, '#059669') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">即将到期任务</div><div class="bd-list">';
+  if (upcoming.length === 0) {
+    html += '<div class="bd-empty">暂无即将到期任务</div>';
+  }
+  upcoming.forEach(function(t) {
+    html += '<div class="bd-item" onclick="Pages.showTaskDetail(\\\'' + t.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="bd-tag bd-tag-amber">' + t.status + '</span></div><div class="bd-item-sub">' + t.person + ' · 截止 ' + t.dueDate + (t.priority === '高' ? ' · <span style="color:#e0342c">高优先级</span>' : '') + '</div></div>';
+  });
+  html += '</div></div></div>';
+
+  return html;
+};
+
