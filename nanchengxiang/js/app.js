@@ -146,6 +146,22 @@ const App = {
 
 
 
+    _cacheTTL: {},       // 表级内存缓存：table -> { ts, data }（TTL 30s）
+
+
+
+
+
+
+
+    _cacheInFlight: {},  // 表级并发去重：table -> Promise
+
+
+
+
+
+
+
   dataReady: false,    // 缓存是否就绪
 
 
@@ -3576,7 +3592,7 @@ const App = {
 
 
 
-          var { count } = await this.supabase.from(table).select('*', { count: 'exact', head: true });
+          try {
 
 
 
@@ -3584,7 +3600,7 @@ const App = {
 
 
 
-          if (count === 0) {
+            var { count } = await this.supabase.from(table).select('*', { count: 'exact', head: true });
 
 
 
@@ -3592,7 +3608,7 @@ const App = {
 
 
 
-            // 写入 Supabase 时转 snake_case
+            if (count === 0) {
 
 
 
@@ -3600,7 +3616,39 @@ const App = {
 
 
 
-            await this.supabase.from(table).insert(this._snakeList(this.seedData[table]));
+              // 写入 Supabase 时转 snake_case；表结构不匹配（如缺列）时跳过该表，不影响其他表初始化
+
+
+
+
+
+
+
+              await this.supabase.from(table).insert(this._snakeList(this.seedData[table]));
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+          } catch (e2) {
+
+
+
+
+
+
+
+            console.warn('[Supabase] 跳过表 ' + table + ' 的种子初始化（' + (e2.message || e2) + '）');
 
 
 
@@ -3768,7 +3816,7 @@ const App = {
 
 
 
-      localStorage.setItem('nanchengxiang_online_records', JSON.stringify(this.seedData.online_records));
+      localStorage.setItem('nanchengxiang_online_records', JSON.stringify(this.seedData.onlineRecords || []));
 
 
 
@@ -3776,7 +3824,7 @@ const App = {
 
 
 
-      localStorage.setItem('nanchengxiang_offline_records', JSON.stringify(this.seedData.offline_records));
+      localStorage.setItem('nanchengxiang_offline_records', JSON.stringify(this.seedData.offlineRecords || []));
 
 
 
@@ -4022,7 +4070,7 @@ const App = {
 
 
 
-      tasks.push(this._loadTable(this.tables[t]));
+      tasks.push(this._loadTableCached(this.tables[t], false));
 
 
 
@@ -4318,6 +4366,486 @@ const App = {
 
 
 
+    /* 页面切换时刷新缓存（获取最新数据，按页面所需表 + TTL 去重） */
+
+
+
+
+
+
+
+  _pageTablesFor(hash) {
+
+
+
+
+
+
+
+    var map = {
+
+
+
+
+
+
+
+      'home': ['stores', 'users', 'daily_reports', 'work_records', 'tasks', 'supply_issues'],
+
+
+
+
+
+
+
+      'inspection': ['inspection_templates', 'inspection_results', 'inspection_issues', 'online_records', 'offline_records', 'stores', 'daily_reports', 'supply_issues'],
+
+
+
+
+
+
+
+      'inspectionTemplates': ['inspection_templates'],
+
+
+
+
+
+
+
+      'inspectionFill': ['inspection_templates', 'inspection_results', 'inspection_issues'],
+
+
+
+
+
+
+
+      'inspectionResults': ['inspection_results', 'inspection_templates'],
+
+
+
+
+
+
+
+      'inspectionIssues': ['inspection_issues', 'inspection_templates'],
+
+
+
+
+
+
+
+      'inspectionDashboard': ['inspection_results', 'inspection_issues', 'stores', 'daily_reports'],
+
+
+
+
+
+
+
+      'inspectionWorkbench': ['inspection_results', 'inspection_issues', 'stores', 'daily_reports', 'supply_issues'],
+
+
+
+
+
+
+
+      'penalty': ['penalties', 'stores'],
+
+
+
+
+
+
+
+      'complaint': ['complaints', 'stores'],
+
+
+
+
+
+
+
+      'dashboard': ['stores', 'penalties', 'complaints', 'tasks', 'supply_issues', 'work_records', 'daily_reports', 'inspection_results', 'inspection_issues'],
+
+
+
+
+
+
+
+      'complaintBoard': ['complaints', 'stores'],
+
+
+
+
+
+
+
+      'penaltyBoard': ['penalties', 'stores'],
+
+
+
+
+
+
+
+      'taskBoard': ['tasks', 'stores'],
+
+
+
+
+
+
+
+      'template': ['inspection_templates'],
+
+
+
+
+
+
+
+      'daily': ['daily_reports', 'stores', 'users', 'online_records', 'offline_records'],
+
+
+
+
+
+
+
+      'task': ['tasks', 'stores'],
+
+
+
+
+
+
+
+      'supply': ['supply_issues', 'stores'],
+
+
+
+
+
+
+
+      'supplyChain': ['supply_issues', 'stores'],
+
+
+
+
+
+
+
+      'setting': ['stores', 'users'],
+
+
+
+
+
+
+
+      'login': []
+
+
+
+
+
+
+
+    };
+
+
+
+
+
+
+
+    return map[hash] || this.tables;
+
+
+
+
+
+
+
+  },
+
+
+
+
+
+
+
+  /* 带内存缓存(TTL 30s)与并发去重的表加载 */
+
+
+
+
+
+
+
+  async _loadTableCached(table, forceRefresh) {
+
+
+
+
+
+
+
+    var now = Date.now();
+
+
+
+
+
+
+
+    var cached = this._cacheTTL[table];
+
+
+
+
+
+
+
+    if (!forceRefresh && cached && (now - cached.ts < 30000)) {
+
+
+
+
+
+
+
+      this.dataCache[table] = cached.data;
+
+
+
+
+
+
+
+      return cached.data;
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+    // 并发去重：同一表同时只发一个请求，避免快速切换页面时的重复请求
+
+
+
+
+
+
+
+    if (this._cacheInFlight[table]) {
+
+
+
+
+
+
+
+      var inflight = await this._cacheInFlight[table];
+
+
+
+
+
+
+
+      this.dataCache[table] = inflight;
+
+
+
+
+
+
+
+      return inflight;
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+    var self = this;
+
+
+
+
+
+
+
+    var p = (async function() {
+
+
+
+
+
+
+
+      await self._loadTable(table);
+
+
+
+
+
+
+
+      var d = self.dataCache[table] || [];
+
+
+
+
+
+
+
+      self._cacheTTL[table] = { ts: Date.now(), data: d };
+
+
+
+
+
+
+
+      return d;
+
+
+
+
+
+
+
+    })();
+
+
+
+
+
+
+
+    this._cacheInFlight[table] = p;
+
+
+
+
+
+
+
+    try {
+
+
+
+
+
+
+
+      return await p;
+
+
+
+
+
+
+
+    } finally {
+
+
+
+
+
+
+
+      delete this._cacheInFlight[table];
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+  },
+
+
+
+
+
+
+
+  /* 写入后同步更新内存缓存，避免 30s 内读脏数据 */
+
+
+
+
+
+
+
+  _touchCache(table, data) {
+
+
+
+
+
+
+
+    this.dataCache[table] = data;
+
+
+
+
+
+
+
+    if (this._cacheTTL) this._cacheTTL[table] = { ts: Date.now(), data };
+
+
+
+
+
+
+
+  },
+
+
+
+
+
+
+
   /* 页面切换时刷新缓存（获取最新数据） */
 
 
@@ -4326,7 +4854,7 @@ const App = {
 
 
 
-  async refreshData() {
+  async refreshData(hash) {
 
 
 
@@ -4350,7 +4878,47 @@ const App = {
 
 
 
-        await this.loadAll();
+        var tables = this._pageTablesFor(hash);
+
+
+
+
+
+
+
+        var tasks = [];
+
+
+
+
+
+
+
+        for (var t = 0; t < tables.length; t++) {
+
+
+
+
+
+
+
+          tasks.push(this._loadTableCached(tables[t], false));
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        await Promise.all(tasks);
 
 
 
@@ -4501,7 +5069,7 @@ const App = {
   getSupplyIssues()   { var d = this.dataCache.supply_issues || []; if (this.seedData.supply_issues && this.seedData.supply_issues.length > 0) { var ids={}; d.forEach(function(r){ids[r.id]=true}); this.seedData.supply_issues.forEach(function(r){if(!ids[r.id])d.push(r)}); } return d; },
 
   async saveSupplyIssues(data) {
-    this.dataCache.supply_issues = data;
+    this._touchCache('supply_issues', data);
     localStorage.setItem('nanchengxiang_supply_issues', JSON.stringify(data));
     if (this.supabase) {
       try {
@@ -4535,7 +5103,7 @@ const App = {
 
 
 
-    this.dataCache.daily_reports = data;
+    this._touchCache('daily_reports', data);
 
 
 
@@ -4607,7 +5175,7 @@ const App = {
 
 
 
-    this.dataCache.inspection_templates = data;
+    this._touchCache('inspection_templates', data);
 
 
 
@@ -4671,7 +5239,7 @@ const App = {
 
 
 
-    this.dataCache.inspection_results = data;
+    this._touchCache('inspection_results', data);
 
 
 
@@ -4735,7 +5303,7 @@ const App = {
 
 
 
-    this.dataCache.inspection_issues = data;
+    this._touchCache('inspection_issues', data);
 
 
 
@@ -4807,7 +5375,7 @@ const App = {
 
 
 
-    this.dataCache.penalties = data;
+    this._touchCache('penalties', data);
 
 
 
@@ -4871,7 +5439,7 @@ const App = {
 
 
 
-    this.dataCache.complaints = data;
+    this._touchCache('complaints', data);
 
 
 
@@ -4935,7 +5503,7 @@ const App = {
 
 
 
-    this.dataCache.online_records = data;
+    this._touchCache('online_records', data);
 
 
 
@@ -4999,7 +5567,7 @@ const App = {
 
 
 
-    this.dataCache.offline_records = data;
+    this._touchCache('offline_records', data);
 
 
 
@@ -5063,7 +5631,7 @@ const App = {
 
 
 
-    this.dataCache.users = data;
+    this._touchCache('users', data);
 
 
 
@@ -5367,7 +5935,7 @@ const App = {
 
 
 
-    this.dataCache.stores = data;
+    this._touchCache('stores', data);
 
 
 
@@ -5567,7 +6135,7 @@ const App = {
 
 
 
-      await this.refreshData();
+      await this.refreshData(hash);
 
 
 
