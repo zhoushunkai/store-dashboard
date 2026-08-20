@@ -4390,7 +4390,7 @@ const App = {
 
 
 
-      'home': ['stores', 'users', 'daily_reports', 'work_records', 'tasks', 'supply_issues'],
+      'home': ['stores', 'users', 'daily_reports', 'work_records', 'supply_issues'],
 
 
 
@@ -4470,7 +4470,7 @@ const App = {
 
 
 
-      'dashboard': ['stores', 'penalties', 'complaints', 'tasks', 'supply_issues', 'work_records', 'daily_reports', 'inspection_results', 'inspection_issues'],
+      'dashboard': ['stores', 'penalties', 'complaints', 'supply_issues', 'work_records', 'daily_reports', 'inspection_results', 'inspection_issues'],
 
 
 
@@ -4494,7 +4494,7 @@ const App = {
 
 
 
-      'taskBoard': ['tasks', 'stores'],
+      'taskBoard': ['stores'],
 
 
 
@@ -4518,7 +4518,7 @@ const App = {
 
 
 
-      'task': ['tasks', 'stores'],
+      'task': ['stores'],
 
 
 
