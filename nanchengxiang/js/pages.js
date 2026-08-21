@@ -25111,7 +25111,7 @@ Pages._bdTabs = function(activeId) {
 
   tabs.forEach(function(t) {
 
-    html += '<div class="sub-tab-item' + (t.id === activeId ? ' active' : '') + '" onclick="Pages._gotoBoardTab(\\\'' + t.id + '\\\')">' + t.label + '</div>';
+    html += '<div class="sub-tab-item' + (t.id === activeId ? ' active' : '') + '" onclick="Pages._gotoBoardTab(\'' + t.id + '\')">' + t.label + '</div>';
 
   });
 
@@ -25318,7 +25318,7 @@ var complaints = App.getComplaints() || [];
 
   html += '<div class="bd-head-left"><div class="bd-title">差评看板</div><div class="bd-date">' + curMonth + '</div></div>';
 
-  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
+  html += '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div>';
 
   html += '<div class="bd-stats">';
 
@@ -25332,7 +25332,7 @@ var complaints = App.getComplaints() || [];
 
   html += '<div class="bd-card"><div class="bd-card-title">每日差评趋势</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
 
-  html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#complaint\\\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#complaint\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
 
   html += '<div class="bd-card"><div class="bd-card-title">差评类型分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeRows, '#e0342c', 'count') + '</div></div>';
 
@@ -25346,7 +25346,7 @@ var complaints = App.getComplaints() || [];
 
   latest.forEach(function(c) {
 
-    html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\\\'' + c.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
+    html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
 
   });
 
@@ -25435,7 +25435,7 @@ var penalties = App.getPenalties() || [];
 
   html += '<div class="bd-head-left"><div class="bd-title">处罚看板</div><div class="bd-date">' + curMonth + '</div></div>';
 
-  html += '<button class="bd-back" onclick="location.hash=\\\'#dashboard\\\'">看板中心</button></div>';
+  html += '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div>';
 
   html += '<div class="bd-stats">';
 
@@ -25449,7 +25449,7 @@ var penalties = App.getPenalties() || [];
 
   html += '<div class="bd-card"><div class="bd-card-title">处罚类型分布（含金额）</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeList, '#7c3aed', 'amount') + '</div></div>';
 
-  html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\\\'#penalty\\\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#penalty\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
 
   html += '<div class="bd-card"><div class="bd-card-title">每日处罚金额趋势</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
 
@@ -25465,7 +25465,7 @@ var penalties = App.getPenalties() || [];
 
     var cls = p.status === '已闭环' ? 'bd-tag-green' : (p.status === '超时' ? 'bd-tag-red' : 'bd-tag-amber');
 
-    html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\\\'' + p.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
+    html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\'' + p.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
 
   });
 
@@ -25546,7 +25546,7 @@ var tasks = App.getTasks() || [];
 
   html += '<div class="bd-head-left"><div class="bd-title">任务看板</div><div class="bd-date">' + todayStr + '</div></div>';
 
-  html += '<button class="bd-back" onclick="location.hash=\\\'#task\\\'">任务列表</button></div>';
+  html += '<button class="bd-back" onclick="location.hash=\'#task\'">任务列表</button></div>';
 
   html += '<div class="bd-stats">';
 
@@ -25572,7 +25572,7 @@ var tasks = App.getTasks() || [];
 
   upcoming.forEach(function(t) {
 
-    html += '<div class="bd-item" onclick="Pages.showTaskDetail(\\\'' + t.id + '\\\')"><div class="bd-item-top"><span class="bd-item-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="bd-tag bd-tag-amber">' + t.status + '</span></div><div class="bd-item-sub">' + t.person + ' · 截止 ' + t.dueDate + (t.priority === '高' ? ' · <span style="color:#e0342c">高优先级</span>' : '') + '</div></div>';
+    html += '<div class="bd-item" onclick="Pages.showTaskDetail(\'' + t.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="bd-tag bd-tag-amber">' + t.status + '</span></div><div class="bd-item-sub">' + t.person + ' · 截止 ' + t.dueDate + (t.priority === '高' ? ' · <span style="color:#e0342c">高优先级</span>' : '') + '</div></div>';
 
   });
 
