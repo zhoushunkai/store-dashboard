@@ -3176,3 +3176,7 @@ body {
   .list-item .li-title { margin-bottom: 0; font-size: 14px; }
   .list-item .li-sub { font-size: 13px; }
 }
+
+/* Phase3 门店整改 */
+.corr-item { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid #eef1f6; }
+.corr-item:last-child { border-bottom:none; }

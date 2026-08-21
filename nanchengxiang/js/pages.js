@@ -2737,6 +2737,11 @@ Pages.home = function() {
     html += '<div class="quick-entry" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>检查结果</div>';
 
 
+    if (App.canSubmitCorrection(user)) {
+      html += '<div class="quick-entry" onclick="location.hash=\'#correction\'"><span class="qe-icon">\u{1F527}</span>本店整改</div>';
+    }
+
+
 
 
 
@@ -6576,7 +6581,12 @@ Pages._inspectionSubTabs = function(user) {
 
 
 
-  ];
+  
+
+    { id: 'correction', label: '本店整改', show: (user.role === '店长' || user.role === '总部' || user.role === 'admin' || user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员') },
+
+    { id: 'permissionConfig', label: '权限配置', show: (user.role === '总部' || user.role === 'admin') },
+];
 
 
 
@@ -6586,6 +6596,419 @@ Pages._inspectionSubTabs = function(user) {
 
 
 
+
+
+
+/* ==================== Phase3 门店整改（店长提交 + 审核闭环） ==================== */
+Pages._corrPhotos = [];
+Pages._corrUploading = false;
+Pages._corrCurrentKey = null;
+
+Pages._corrStatusText = function(s) {
+  if (s === 'approved') return '已通过';
+  if (s === 'rejected') return '已驳回';
+  return '待审核';
+};
+
+/* 扣分判断：issue 是否有扣分 */
+Pages._issueDeducted = function(it) {
+  if (it.actualScore != null && it.stdScore != null) return it.actualScore < it.stdScore;
+  if (it.score != null && it.maxScore != null) return it.score < it.maxScore;
+  return false;
+};
+
+/* 构建扣分项列表：[{key, kind, id, resultId, storeId, store, date, inspector, finding, score, maxScore}] */
+Pages._corrDeductions = function() {
+  var issues = App.getIssues() || [];
+  var results = App.getResults() || [];
+  var list = [];
+  var issueResultIds = {};
+  issues.forEach(function(it) {
+    if (!Pages._issueDeducted(it)) return;
+    issueResultIds[it.resultId] = true;
+    list.push({
+      key: 'issue:' + it.id, kind: 'issue', id: it.id, resultId: it.resultId || '',
+      storeId: it.storeId || '', store: it.store || '',
+      date: it.date || '', inspector: it.inspector || '',
+      finding: it.description || it.content || '', category: it.category || '',
+      score: (it.actualScore != null ? it.actualScore : it.score), maxScore: (it.stdScore != null ? it.stdScore : it.maxScore)
+    });
+  });
+  results.forEach(function(r) {
+    var hasDed = (r.score != null && r.maxScore != null && r.score < r.maxScore) ||
+                 (r.totalScore != null && r.maxScore != null && r.totalScore < r.maxScore);
+    if (!hasDed) return;
+    if (issueResultIds[r.id]) return; // 已有明细 issue，避免重复
+    list.push({
+      key: 'result:' + r.id, kind: 'result', id: r.id, resultId: r.id,
+      storeId: r.storeId || '', store: r.store || '',
+      date: r.date || '', inspector: r.inspector || '',
+      finding: '整单扣分（' + (r.templateName || '') + '）', category: '',
+      score: (r.score != null ? r.score : r.totalScore), maxScore: r.maxScore
+    });
+  });
+  return list;
+};
+
+/* 某扣分项的整改记录（取最新一条） */
+Pages._corrRecordFor = function(key) {
+  var corrs = App.getCorrections() || [];
+  var match = corrs.filter(function(c) {
+    return (c.issueId === key) || (key.indexOf('issue:') === 0 && c.issueId === key.slice(6)) ||
+           (key.indexOf('result:') === 0 && c.issueId === key);
+  });
+  if (!match.length) return null;
+  match.sort(function(a, b) { return (a.id || '').localeCompare(b.id || ''); });
+  return match[match.length - 1];
+};
+
+Pages.correction = function() {
+  var el = document.getElementById('page-correction');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  var canSubmit = App.canSubmitCorrection(user);
+  var canReview = App.canReviewCorrection(user);
+  if (!canSubmit && !canReview) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无整改权限</div></div>';
+    return;
+  }
+
+  var deductions = Pages._corrDeductions();
+  var corrs = App.getCorrections() || [];
+
+  // 提交角色只看自己门店
+  var myStoreId = user.storeId || '';
+  if (canSubmit && !canReview && myStoreId) {
+    deductions = deductions.filter(function(d) { return d.storeId === myStoreId; });
+    corrs = corrs.filter(function(c) { return c.storeId === myStoreId; });
+  }
+  // 有审核权且无提交权（稽核员/总部）看全部；店长兼审核时（默认不兼）按门店
+  if (canSubmit && canReview && myStoreId) {
+    corrs = corrs.filter(function(c) { return c.storeId === myStoreId; });
+  }
+
+  var pending = deductions.filter(function(d) { return !Pages._corrRecordFor(d.key); });
+  var submitted = corrs.slice().sort(function(a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
+
+  var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="stats-row">';
+  html += '<div class="stat-card"><div class="stat-num">' + pending.length + '</div><div class="stat-label">待整改</div></div>';
+  var stPending = submitted.filter(function(c) { return c.status === 'pending_review'; }).length;
+  var stApproved = submitted.filter(function(c) { return c.status === 'approved'; }).length;
+  var stRejected = submitted.filter(function(c) { return c.status === 'rejected'; }).length;
+  html += '<div class="stat-card"><div class="stat-num" style="color:#f59e0b">' + stPending + '</div><div class="stat-label">待审核</div></div>';
+  html += '<div class="stat-card"><div class="stat-num" style="color:#10b981">' + stApproved + '</div><div class="stat-label">已通过</div></div>';
+  html += '<div class="stat-card"><div class="stat-num" style="color:#ef4444">' + stRejected + '</div><div class="stat-label">已驳回</div></div>';
+  html += '</div>';
+
+  // 待整改区
+  html += '<div class="card"><div class="card-title">待整改扣分项</div>';
+  if (!pending.length) {
+    html += '<div class="empty-state"><div class="empty-icon">&#9989;</div><div>暂无待整改项</div></div>';
+  } else {
+    pending.forEach(function(d) {
+      html += '<div class="corr-item">';
+      html += '<div style="flex:1">';
+      html += '<div style="font-weight:600">' + Pages._storeName(d.storeId, d.store) + (d.category ? ' · ' + d.category : '') + '</div>';
+      html += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + (d.date || '') + ' · 稽核员 ' + (d.inspector || '-') + '</div>';
+      html += '<div style="font-size:13px;margin-top:4px">' + (d.finding || '扣分项') + '</div>';
+      html += '<div style="font-size:12px;color:#ef4444;margin-top:2px">扣分 ' + (d.score != null ? d.score : '?') + ' / ' + (d.maxScore != null ? d.maxScore : '?') + '</div>';
+      html += '</div>';
+      if (canSubmit) {
+        html += '<div style="margin-left:8px"><button class="btn btn-sm btn-primary" onclick="Pages._openCorrectionModal(\'' + d.key + '\')">整改</button></div>';
+      }
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 已提交区
+  html += '<div class="card"><div class="card-title">整改记录</div>';
+  if (!submitted.length) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无整改记录</div></div>';
+  } else {
+    submitted.forEach(function(c) {
+      var stCls = c.status === 'approved' ? '#10b981' : (c.status === 'rejected' ? '#ef4444' : '#f59e0b');
+      html += '<div class="corr-item" style="align-items:flex-start">';
+      html += '<div style="flex:1">';
+      html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+      html += '<span style="font-weight:600">' + Pages._storeName(c.storeId, '') + '</span>';
+      html += '<span style="font-size:11px;padding:1px 8px;border-radius:10px;color:#fff;background:' + stCls + '">' + Pages._corrStatusText(c.status) + '</span>';
+      if (c.issueId && c.issueId.indexOf('result:') === 0) html += '<span style="font-size:11px;color:var(--text-secondary)">整单扣分</span>';
+      html += '</div>';
+      html += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + (c.createdAt || '') + ' · 提交人 ' + (c.inspector || '-') + '</div>';
+      html += '<div style="font-size:13px;margin-top:4px;background:#f6f8fb;padding:6px 8px;border-radius:6px">' + (c.correctionText || '') + '</div>';
+      if (c.correctionImages && c.correctionImages.length) {
+        html += '<div style="margin-top:6px">';
+        c.correctionImages.forEach(function(u) {
+          html += '<img src="' + u + '" style="width:52px;height:52px;object-fit:cover;border-radius:6px;margin:2px;border:1px solid #dbe3ee" onclick="Pages._showPhoto(\'' + u + '\')">';
+        });
+        html += '</div>';
+      }
+      if (c.status !== 'pending_review' && (c.reviewReason || c.reviewer)) {
+        html += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">审核意见：' + (c.reviewReason || '无') + '（' + (c.reviewer || '-') + '）</div>';
+      }
+      html += '</div>';
+      if (canReview && c.status === 'pending_review') {
+        html += '<div style="margin-left:8px;display:flex;flex-direction:column;gap:4px">';
+        html += '<button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="Pages._reviewCorrection(\'' + c.id + '\',\'approved\')">通过</button>';
+        html += '<button class="btn btn-sm btn-outline" onclick="Pages._reviewCorrection(\'' + c.id + '\',\'rejected\')">驳回</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
+  el.innerHTML = html;
+};
+
+/* 打开整改弹窗 */
+Pages._openCorrectionModal = function(key) {
+  var deductions = Pages._corrDeductions();
+  var d = deductions.find(function(x) { return x.key === key; });
+  if (!d) return;
+  if (Pages._corrRecordFor(key)) { App.toast('该扣分项已提交整改'); return; }
+  Pages._corrCurrentKey = key;
+  Pages._corrPhotos = [];
+
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
+  html += '<div class="modal-header"><h3>提交整改</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+  html += '<div class="modal-body">';
+  html += '<p style="font-size:13px"><b>' + Pages._storeName(d.storeId, d.store) + '</b>（' + (d.date || '') + ' · ' + (d.inspector || '-') + '）</p>';
+  html += '<p style="font-size:13px;background:#f6f8fb;padding:8px;border-radius:6px">' + (d.finding || '扣分项') + '　<span style="color:#ef4444">扣分 ' + (d.score != null ? d.score : '?') + ' / ' + (d.maxScore != null ? d.maxScore : '?') + '</span></p>';
+  html += '<div class="form-group"><label class="form-label">整改说明<span style="color:#ef4444">*</span></label>';
+  html += '<textarea id="corr-text" class="form-input" rows="4" placeholder="请填写整改说明..."></textarea></div>';
+  html += '<div class="form-group"><label class="form-label">整改图片</label>';
+  html += '<div style="display:flex;gap:8px;margin-bottom:6px">';
+  html += '<button type="button" class="btn btn-sm" onclick="Pages._pickCorrectionImages(\'gallery\')">选图</button>';
+  html += '<button type="button" class="btn btn-sm" onclick="Pages._pickCorrectionImages(\'camera\')">拍照</button>';
+  html += '</div><input type="file" accept="image/*" multiple style="display:none" id="corr-img-input">';
+  html += '<div class="fill-thumbs" id="corr-thumbs"></div></div>';
+  html += '</div>';
+  html += '<div class="modal-footer">';
+  html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+  html += '<button class="btn btn-primary" onclick="Pages._submitCorrection()">提交整改</button>';
+  html += '</div></div></div>';
+
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  document.body.appendChild(div.firstElementChild).classList.add('show');
+};
+
+Pages._pickCorrectionImages = function(mode) {
+  var input = document.getElementById('corr-img-input');
+  if (!input) return;
+  input.value = '';
+  if (mode === 'camera') { input.setAttribute('capture', 'environment'); }
+  else { input.removeAttribute('capture'); }
+  input.onchange = async function() {
+    var files = input.files || [];
+    if (!files.length) return;
+    for (var k = 0; k < files.length; k++) {
+      try {
+        var dataUrl = await Pages._compressImage(files[k]);
+        Pages._corrPhotos.push({ dataUrl: dataUrl, status: 'pending', url: '' });
+      } catch (err) {
+        console.error('[corr] 图片处理失败', err);
+        App.toast('图片处理失败，请重试');
+      }
+    }
+    input.value = '';
+    Pages._renderCorrectionThumbs();
+  };
+  input.click();
+};
+
+Pages._renderCorrectionThumbs = function() {
+  var box = document.getElementById('corr-thumbs');
+  if (!box) return;
+  var html = '';
+  Pages._corrPhotos.forEach(function(p, idx) {
+    html += '<div style="position:relative;display:inline-block;margin:3px;vertical-align:top">';
+    html += '<img src="' + p.dataUrl + '" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid #dbe3ee;display:block">';
+    html += '<span style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;line-height:16px;text-align:center;background:#ef4444;color:#fff;border-radius:50%;font-size:10px;cursor:pointer" onclick="Pages._corrPhotos.splice(' + idx + ',1);Pages._renderCorrectionThumbs()">&times;</span>';
+    html += '</div>';
+  });
+  box.innerHTML = html;
+};
+
+Pages._showPhoto = function(url) {
+  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()" style="background:transparent;box-shadow:none;padding:0">';
+  html += '<img src="' + url + '" style="width:100%;border-radius:10px">';
+  html += '</div></div>';
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  document.body.appendChild(div.firstElementChild).classList.add('show');
+};
+
+/* 提交整改 */
+Pages._submitCorrection = async function() {
+  var text = (document.getElementById('corr-text') || {}).value || '';
+  if (!text.trim()) { App.toast('请填写整改说明'); return; }
+  if (Pages._corrUploading) { App.toast('图片上传中，请稍候'); return; }
+  Pages._corrUploading = true;
+
+  var user = App.currentUser;
+  var deductions = Pages._corrDeductions();
+  var d = deductions.find(function(x) { return x.key === Pages._corrCurrentKey; });
+  if (!d) { App.toast('扣分项不存在'); Pages._corrUploading = false; return; }
+
+  var images = [];
+  for (var k = 0; k < Pages._corrPhotos.length; k++) {
+    var ph = Pages._corrPhotos[k];
+    try {
+      var name = 'cr' + Date.now() + '_' + k;
+      var url = await Pages._uploadFillPhoto(ph.dataUrl, d.storeId, d.date || 'nodate', name);
+      images.push(url);
+      ph.status = 'uploaded';
+    } catch (err) {
+      console.error('[corr] 图片上传失败', err);
+      App.toast('图片上传失败：' + (err.message || '网络错误'));
+      Pages._corrUploading = false;
+      return;
+    }
+  }
+
+  var corrs = App.getCorrections() || [];
+  var now = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  var nowStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  corrs.push({
+    id: App.nextCorrectionId(),
+    issueId: d.key,
+    storeId: d.storeId,
+    inspector: user.name,
+    originalScore: d.score,
+    originalFinding: d.finding,
+    correctionText: text.trim(),
+    correctionImages: images,
+    status: 'pending_review',
+    reviewer: '',
+    reviewReason: '',
+    createdAt: nowStr,
+    updatedAt: nowStr
+  });
+  await App.saveCorrections(corrs);
+  Pages._corrUploading = false;
+  document.querySelector('.modal-overlay').remove();
+  App.toast('整改已提交，等待审核');
+  Pages.correction();
+};
+
+/* 审核整改 */
+Pages._reviewCorrection = async function(id, status) {
+  var corrs = App.getCorrections() || [];
+  var c = corrs.find(function(x) { return x.id === id; });
+  if (!c) return;
+  if (status === 'rejected') {
+    var reason = window.prompt('请输入驳回原因：');
+    if (reason === null) return;
+    c.reviewReason = reason.trim();
+  } else {
+    c.reviewReason = '';
+  }
+  var user = App.currentUser;
+  c.status = status;
+  c.reviewer = user ? user.name : '';
+  var now = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  c.updatedAt = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  await App.saveCorrections(corrs);
+  App.toast(status === 'approved' ? '已审核通过' : '已驳回');
+  Pages.correction();
+};
+
+/* ==================== Phase3 权限配置页（仅总部/admin） ==================== */
+Pages.permissionConfig = function() {
+  var el = document.getElementById('page-permissionConfig');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (user.role !== '总部' && user.role !== 'admin') {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+
+  var cfg = App._correctionConfig();
+  var stores = App.getStores() || [];
+  var roleList = ['店长', '线上稽核', '线下稽核', '稽核员', '区域教练', '营运', '总部'];
+
+  var html = '';
+  var subHash = location.hash.replace('#', '');
+  var subTabs = Pages._inspectionSubTabs(user);
+  html += '<div class="sub-tabbar">';
+  subTabs.forEach(function(t) {
+    if (!t.show) return;
+    html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="card"><div class="card-title">整改权限配置</div>';
+  html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">配置保存到 permission_configs，前端读取生效，无需改代码。</div>';
+
+  html += '<div class="form-group"><label class="form-label">允许提交整改的角色</label>';
+  roleList.forEach(function(r) {
+    html += '<label style="display:inline-flex;align-items:center;margin:4px 12px 4px 0"><input type="checkbox" name="corr-submit-role" value="' + r + '"' + (cfg.submitRoles.indexOf(r) >= 0 ? ' checked' : '') + ' style="margin-right:4px">' + r + '</label>';
+  });
+  html += '</div>';
+
+  html += '<div class="form-group"><label class="form-label">允许审核整改的角色</label>';
+  roleList.forEach(function(r) {
+    html += '<label style="display:inline-flex;align-items:center;margin:4px 12px 4px 0"><input type="checkbox" name="corr-review-role" value="' + r + '"' + (cfg.reviewRoles.indexOf(r) >= 0 ? ' checked' : '') + ' style="margin-right:4px">' + r + '</label>';
+  });
+  html += '</div>';
+
+  var scope = cfg.storeScope || { mode: 'all', stores: [] };
+  html += '<div class="form-group"><label class="form-label">门店范围</label>';
+  html += '<label style="display:inline-flex;align-items:center;margin:4px 12px 4px 0"><input type="radio" name="corr-scope-mode" value="all"' + (scope.mode === 'all' ? ' checked' : '') + ' style="margin-right:4px">全部门店</label>';
+  html += '<label style="display:inline-flex;align-items:center;margin:4px 0"><input type="radio" name="corr-scope-mode" value="selected"' + (scope.mode === 'selected' ? ' checked' : '') + ' style="margin-right:4px">指定门店</label>';
+  html += '<div id="corr-scope-stores" style="margin-top:6px">';
+  stores.forEach(function(s) {
+    var sid = s.storeId || s.id;
+    if (!sid) return;
+    html += '<label style="display:inline-flex;align-items:center;margin:4px 10px 4px 0"><input type="checkbox" name="corr-scope-store" value="' + sid + '"' + ((scope.stores || []).indexOf(sid) >= 0 ? ' checked' : '') + ' style="margin-right:4px">' + (s.storeName || s.name || sid) + '</label>';
+  });
+  html += '</div></div>';
+
+  html += '<div style="margin-top:12px"><button class="btn btn-primary" onclick="Pages._savePermissionConfig()">保存配置</button></div>';
+  html += '</div>';
+
+  el.innerHTML = html;
+};
+
+Pages._savePermissionConfig = async function() {
+  var submit = [], review = [], stores = [];
+  document.querySelectorAll('input[name="corr-submit-role"]:checked').forEach(function(c) { submit.push(c.value); });
+  document.querySelectorAll('input[name="corr-review-role"]:checked').forEach(function(c) { review.push(c.value); });
+  var modeEl = document.querySelector('input[name="corr-scope-mode"]:checked');
+  var mode = modeEl ? modeEl.value : 'all';
+  if (mode === 'selected') {
+    document.querySelectorAll('input[name="corr-scope-store"]:checked').forEach(function(c) { stores.push(c.value); });
+    if (!stores.length) { App.toast('请选择指定门店'); return; }
+  }
+  var now = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  var nowStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  var cfgs = [
+    { id: 'pc0001', configKey: 'correction_submit_roles', configValue: submit, updatedAt: nowStr },
+    { id: 'pc0002', configKey: 'correction_review_roles', configValue: review, updatedAt: nowStr },
+    { id: 'pc0003', configKey: 'correction_store_scope', configValue: { mode: mode, stores: stores }, updatedAt: nowStr }
+  ];
+  await App.savePermissionConfigs(cfgs);
+  App.toast('权限配置已保存');
+  Pages.permissionConfig();
+};
 
 
 Pages._gotoSub = function(id) {
@@ -37788,6 +38211,14 @@ Pages.inspectionResults = function() {
       html += '<button class="btn btn-sm" onclick="Pages._showResultDetail(\'' + r.id + '\')">详情</button>';
 
 
+      var _hasDed = (r.score != null && r.maxScore != null && r.score < r.maxScore) || (r.totalScore != null && r.maxScore != null && r.totalScore < r.maxScore);
+      if (App.canSubmitCorrection(user) && _hasDed) {
+        html += ' <button class="btn btn-sm btn-primary" onclick="location.hash=\'#correction\'">整改</button>';
+      } else if (App.canReviewCorrection(user)) {
+        html += ' <button class="btn btn-sm btn-outline" onclick="location.hash=\'#correction\'">整改审核</button>';
+      }
+
+
 
       var isHQ = App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260';
 
@@ -39623,7 +40054,7 @@ Pages._storeName = function(storeId, storeName) {
 
 
 
-    if (st[i] && st[i].id === storeId) return st[i].name || storeId || '';
+    if (st[i] && (st[i].id === storeId || st[i].storeId === storeId)) return st[i].name || st[i].storeName || storeId || '';
 
 
 

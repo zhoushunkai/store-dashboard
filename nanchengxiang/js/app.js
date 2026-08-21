@@ -3001,7 +3001,7 @@ const App = {
 
 
 
-  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues', 'work_records', 'supply_issues'],
+  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues', 'work_records', 'supply_issues', 'correction_reviews', 'permission_configs'],
 
 
 
@@ -4440,6 +4440,8 @@ const App = {
 
 
       'inspectionWorkbench': ['inspection_results', 'inspection_issues', 'stores', 'daily_reports', 'supply_issues'],
+      'correction': ['correction_reviews', 'permission_configs', 'inspection_results', 'inspection_issues', 'stores'],
+      'permissionConfig': ['permission_configs', 'stores'],
 
 
 
@@ -5360,6 +5362,96 @@ const App = {
 
 
 
+  /* ---- Phase3 门店整改（correction_reviews / permission_configs） ---- */
+  getCorrections() { return this.dataCache.correction_reviews || []; },
+  getPermissionConfigs() { return this.dataCache.permission_configs || []; },
+
+  _cloudCorrections(list) {
+    return (list || []).map(function(r) {
+      return {
+        id: r.id || '', issue_id: r.issueId || r.issue_id || '', store_id: r.storeId || r.store_id || '',
+        inspector: r.inspector || '',
+        original_score: (r.originalScore != null) ? r.originalScore : null,
+        original_finding: r.originalFinding || r.original_finding || '',
+        correction_text: r.correctionText || r.correction_text || '',
+        correction_images: (r.correctionImages && r.correctionImages.length) ? JSON.stringify(r.correctionImages) : null,
+        status: r.status || 'pending_review',
+        reviewer: r.reviewer || '', review_reason: r.reviewReason || r.review_reason || '',
+        created_at: r.createdAt || r.created_at || '', updated_at: r.updatedAt || r.updated_at || ''
+      };
+    });
+  },
+
+  _cloudPermissionConfigs(list) {
+    return (list || []).map(function(r) {
+      return {
+        id: r.id || '', config_key: r.configKey || r.config_key || '',
+        config_value: (r.configValue != null) ? JSON.stringify(r.configValue) : null,
+        updated_at: r.updatedAt || r.updated_at || ''
+      };
+    });
+  },
+
+  async saveCorrections(data) {
+    this._touchCache('correction_reviews', data || []);
+    localStorage.setItem('nanchengxiang_correction_reviews', JSON.stringify(data || []));
+    if (this.supabase) {
+      await this.supabase.from('correction_reviews').delete().neq('id', '__none__');
+      if (data && data.length > 0) await this.supabase.from('correction_reviews').insert(this._cloudCorrections(data));
+    }
+  },
+
+  async savePermissionConfigs(data) {
+    this._touchCache('permission_configs', data || []);
+    localStorage.setItem('nanchengxiang_permission_configs', JSON.stringify(data || []));
+    if (this.supabase) {
+      await this.supabase.from('permission_configs').delete().neq('id', '__none__');
+      if (data && data.length > 0) await this.supabase.from('permission_configs').insert(this._cloudPermissionConfigs(data));
+    }
+  },
+
+  /* 解析权限配置：{ submitRoles:[], reviewRoles:[], storeScope:{mode:'all',stores:[]} } */
+  _correctionConfig() {
+    var cfgs = this.getPermissionConfigs() || [];
+    var out = { submitRoles: ['店长'], reviewRoles: ['线上稽核', '线下稽核'], storeScope: { mode: 'all', stores: [] } };
+    cfgs.forEach(function(c) {
+      var v = c.configValue;
+      if (c.configKey === 'correction_submit_roles') out.submitRoles = Array.isArray(v) ? v : [];
+      else if (c.configKey === 'correction_review_roles') out.reviewRoles = Array.isArray(v) ? v : [];
+      else if (c.configKey === 'correction_store_scope') { if (v && typeof v === 'object') out.storeScope = v; }
+    });
+    return out;
+  },
+
+  /* 当前用户是否可提交整改（角色 + 门店范围） */
+  canSubmitCorrection(user) {
+    if (!user) return false;
+    var cfg = this._correctionConfig();
+    if (cfg.submitRoles.indexOf(user.role) < 0) return false;
+    var scope = cfg.storeScope || { mode: 'all', stores: [] };
+    if (scope.mode === 'all') return true;
+    return (scope.stores || []).indexOf(user.storeId) >= 0;
+  },
+
+  /* 当前用户是否可审核整改（审核角色或总部/admin 兜底） */
+  canReviewCorrection(user) {
+    if (!user) return false;
+    if (user.role === '总部' || user.role === 'admin') return true;
+    var cfg = this._correctionConfig();
+    return cfg.reviewRoles.indexOf(user.role) >= 0;
+  },
+
+  /* 生成下一条整改记录 id：cr0001 递增 */
+  nextCorrectionId() {
+    var list = this.getCorrections() || [];
+    var max = 0;
+    list.forEach(function(c) {
+      var m = /^cr(\d+)$/.exec(c.id || '');
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return 'cr' + String(max + 1).padStart(4, '0');
+  },
+
   async savePenalties(data) {
 
 
@@ -6240,7 +6332,7 @@ const App = {
 
 
 
-    var inspectionSubPages = ['inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard', 'inspectionWorkbench'];
+    var inspectionSubPages = ['inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues', 'inspectionDashboard', 'inspectionWorkbench', 'correction', 'permissionConfig'];
 
     var dashboardSubPages = ['dashboard', 'complaintBoard', 'penaltyBoard', 'taskBoard'];
 
@@ -6505,7 +6597,8 @@ const App = {
 
 
 
-      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台', supplyChain: '供应链问题', complaintBoard: '差评看板', penaltyBoard: '处罚看板', taskBoard: '任务看板'
+      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台', supplyChain: '供应链问题', complaintBoard: '差评看板', penaltyBoard: '处罚看板', taskBoard: '任务看板',
+      correction: '本店整改', permissionConfig: '权限配置'
 
 
 
