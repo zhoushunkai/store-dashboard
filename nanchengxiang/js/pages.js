@@ -6843,15 +6843,6 @@ Pages._renderCorrectionThumbs = function() {
   box.innerHTML = html;
 };
 
-Pages._showPhoto = function(url) {
-  var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()" style="background:transparent;box-shadow:none;padding:0">';
-  html += '<img src="' + url + '" style="width:100%;border-radius:10px">';
-  html += '</div></div>';
-  var div = document.createElement('div');
-  div.innerHTML = html;
-  document.body.appendChild(div.firstElementChild).classList.add('show');
-};
-
 /* 提交整改 */
 Pages._submitCorrection = async function() {
   var text = (document.getElementById('corr-text') || {}).value || '';
