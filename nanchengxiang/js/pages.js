@@ -6,6 +6,14 @@
 
 
 
+
+
+
+
+
+
+
+
    pages.js — 所有页面渲染函数
 
 
@@ -14,7 +22,31 @@
 
 
 
+
+
+
+
+
+
+
+
    ============================================ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -46,7 +78,31 @@ const Pages = {};
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ---- 登录页 ---- */
+
+
+
+
+
+
+
+
 
 
 
@@ -62,7 +118,23 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   const el = document.getElementById('page-login');
+
+
+
+
+
+
+
+
 
 
 
@@ -86,7 +158,31 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   let html = '<div class="login-page">';
+
+
+
+
+
+
+
+
 
 
 
@@ -102,7 +198,23 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="login-title">南城香协作终端</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -126,7 +238,31 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 手机号登录表单
+
+
+
+
+
+
+
+
 
 
 
@@ -142,7 +278,23 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="card-title">手机号登录</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -158,7 +310,23 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<span class="phone-prefix">+86</span>';
+
+
+
+
+
+
+
+
 
 
 
@@ -174,7 +342,23 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -190,7 +374,31 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -214,7 +422,23 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="skip-btn" onclick="App.quickLogin(); location.hash=\'#home\';">跳过登录，直接预览首页</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -230,6 +454,14 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
   el.innerHTML = html;
 
 
@@ -238,7 +470,31 @@ Pages.login = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -270,7 +526,31 @@ Pages._phoneLoginNumber = '';
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.onPhoneInput = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -286,7 +566,23 @@ Pages.onPhoneInput = function() {
 
 
 
+
+
+
+
+
+
+
+
   var btn = document.getElementById('sms-btn');
+
+
+
+
+
+
+
+
 
 
 
@@ -302,7 +598,23 @@ Pages.onPhoneInput = function() {
 
 
 
+
+
+
+
+
+
+
+
   // 回车直接登录
+
+
+
+
+
+
+
+
 
 
 
@@ -318,7 +630,23 @@ Pages.onPhoneInput = function() {
 
 
 
+
+
+
+
+
+
+
+
     document.getElementById('phone-input').onkeydown = function(e) {
+
+
+
+
+
+
+
+
 
 
 
@@ -334,7 +662,23 @@ Pages.onPhoneInput = function() {
 
 
 
+
+
+
+
+
+
+
+
     };
+
+
+
+
+
+
+
+
 
 
 
@@ -350,7 +694,31 @@ Pages.onPhoneInput = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -374,7 +742,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
   var phone = document.getElementById('phone-input').value.replace(/\D/g,'');
+
+
+
+
+
+
+
+
 
 
 
@@ -390,7 +774,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
   Pages._phoneLoginNumber = phone;
+
+
+
+
+
+
+
+
 
 
 
@@ -414,7 +814,31 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 数据尚未从云端同步完成时，等待后重试
+
+
+
+
+
+
+
+
 
 
 
@@ -430,7 +854,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
     var btn = document.getElementById('sms-btn');
+
+
+
+
+
+
+
+
 
 
 
@@ -446,7 +886,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
     var retry = 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -462,7 +918,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
     var timer = setInterval(function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -478,7 +950,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
       if (App.dataReady || retry > 40) {
+
+
+
+
+
+
+
+
 
 
 
@@ -494,7 +982,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
         if (btn) { btn.disabled = false; btn.textContent = '登录'; }
+
+
+
+
+
+
+
+
 
 
 
@@ -510,7 +1014,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
           self._doPhoneLoginCore(phone);
+
+
+
+
+
+
+
+
 
 
 
@@ -526,7 +1046,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
           App.toast('数据同步超时，请刷新页面重试');
+
+
+
+
+
+
+
+
 
 
 
@@ -542,7 +1078,23 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -558,6 +1110,14 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
 
 
@@ -566,7 +1126,31 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -590,7 +1174,31 @@ Pages.doPhoneLogin = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -614,7 +1222,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
   var users = App.getUsers();
+
+
+
+
+
+
+
+
 
 
 
@@ -630,7 +1254,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
   for (var i = 0; i < users.length; i++) {
+
+
+
+
+
+
+
+
 
 
 
@@ -646,7 +1286,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
       user = users[i];
+
+
+
+
+
+
+
+
 
 
 
@@ -662,6 +1318,14 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
     }
 
 
@@ -670,7 +1334,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -686,7 +1366,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
     var seedUsers = App.seedData && App.seedData.users ? App.seedData.users : [];
+
+
+
+
+
+
+
+
 
 
 
@@ -702,7 +1398,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
       if (seedUsers[j].phone === phone) {
+
+
+
+
+
+
+
+
 
 
 
@@ -718,7 +1430,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
         break;
+
+
+
+
+
+
+
+
 
 
 
@@ -734,7 +1462,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -750,7 +1494,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
       App.toast('该手机号未注册，请联系管理员');
+
+
+
+
+
+
+
+
 
 
 
@@ -766,6 +1526,14 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
     }
 
 
@@ -774,7 +1542,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -790,7 +1574,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
     App.toast('登录成功');
+
+
+
+
+
+
+
+
 
 
 
@@ -806,7 +1606,23 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -830,7 +1646,31 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ---- 首页 ---- */
+
+
+
+
+
+
+
+
 
 
 
@@ -846,7 +1686,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   const el = document.getElementById('page-home');
+
+
+
+
+
+
+
+
 
 
 
@@ -862,7 +1718,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   const user = App.currentUser;
+
+
+
+
+
+
+
+
 
 
 
@@ -878,7 +1750,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   const penalties = App.getPenalties();
+
+
+
+
+
+
+
+
 
 
 
@@ -894,6 +1782,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   const onlineRecords = App.getOnlineRecords();
 
 
@@ -902,7 +1798,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   const offlineRecords = App.getOfflineRecords();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -934,7 +1854,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /* 用户个人信息卡片 */
+
+
+
+
+
+
+
+
 
 
 
@@ -950,7 +1894,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   var roleBadgeColors = App.Permissions.roleBadgeColors;
+
+
+
+
+
+
+
+
 
 
 
@@ -966,7 +1926,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="user-avatar" style="background:' + (roleBadgeColors[user.role] || '#888') + '">' + (user.name || '?')[0] + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -982,7 +1958,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="user-name">' + (user.name || '未登录') + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -998,7 +1990,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (user.store) {
+
+
+
+
+
+
+
+
 
 
 
@@ -1014,7 +2022,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   } else if (user.area) {
+
+
+
+
+
+
+
+
 
 
 
@@ -1030,6 +2054,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
 
 
@@ -1038,7 +2070,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1054,7 +2102,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1078,7 +2150,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     // 店长看自己门店
+
+
+
+
+
+
+
+
 
 
 
@@ -1094,7 +2182,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     const storePenalties = penalties.filter(p => p.storeId === user.storeId);
+
+
+
+
+
+
+
+
 
 
 
@@ -1110,7 +2214,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     const pendingPenalty = storePenalties.filter(p => p.status === '待补填').length;
+
+
+
+
+
+
+
+
 
 
 
@@ -1134,6 +2254,22 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 找门店得分（从线下稽核记录）
 
 
@@ -1142,7 +2278,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     const storeOffline = offlineRecords.filter(r => r.storeId === user.storeId);
+
+
+
+
+
+
+
+
 
 
 
@@ -1166,7 +2318,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="card">';
+
+
+
+
+
+
+
+
 
 
 
@@ -1182,7 +2358,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     const cls = latestScore >= 85 ? 'high' : (latestScore >= 70 ? 'mid' : 'low');
+
+
+
+
+
+
+
+
 
 
 
@@ -1198,6 +2390,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div style="text-align:center;color:var(--text-secondary);font-size:12px;">最新稽核得分</div>';
 
 
@@ -1206,7 +2406,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1230,7 +2454,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="stat-card" onclick="location.hash=\'#penalty\'">';
+
+
+
+
+
+
+
+
 
 
 
@@ -1246,7 +2486,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="stat-label">待处理处罚</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1262,7 +2518,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="stat-num" style="color:' + (pendingComplaint > 0 ? 'var(--status-pending)' : 'var(--primary)') + '">' + pendingComplaint + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1278,7 +2550,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1302,7 +2598,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (pendingComplaint > 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -1318,7 +2630,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<span class="alert-icon">\u{1F514}</span>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1334,7 +2662,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1358,7 +2702,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="quick-entries">';
+
+
+
+
+
+
+
+
 
 
 
@@ -1374,7 +2742,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1390,6 +2774,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
 
 
@@ -1398,7 +2790,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1422,7 +2838,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     const todayRecords = user.role === '线上稽核'
+
+
+
+
+
+
+
+
 
 
 
@@ -1438,7 +2870,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
       : offlineRecords.filter(r => r.inspector === user.name);
+
+
+
+
+
+
+
+
 
 
 
@@ -1462,7 +2910,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="card">';
+
+
+
+
+
+
+
+
 
 
 
@@ -1478,7 +2950,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="stats-row">';
+
+
+
+
+
+
+
+
 
 
 
@@ -1494,7 +2982,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="stat-card"><div class="stat-num">' + stores.length + '</div><div class="stat-label">管辖门店</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1518,7 +3022,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="quick-entries">';
+
+
+
+
+
+
+
+
 
 
 
@@ -1534,7 +3062,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4DD}</span>线上检查录入</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1550,7 +3094,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="quick-entry" onclick="location.hash=\'#offline-inspect\'"><span class="qe-icon">\u{1F50D}</span>线下检查录入</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1566,7 +3126,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1582,6 +3158,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
 
 
@@ -1590,7 +3174,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1614,7 +3222,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     const totalPenalties = penalties.length;
+
+
+
+
+
+
+
+
 
 
 
@@ -1630,7 +3254,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     const totalComplaints = complaints.length;
+
+
+
+
+
+
+
+
 
 
 
@@ -1654,7 +3294,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="stats-row">';
+
+
+
+
+
+
+
+
 
 
 
@@ -1670,6 +3334,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="stat-card"><div class="stat-num">' + totalPenalties + '</div><div class="stat-label">处罚总数</div></div>';
 
 
@@ -1678,7 +3350,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1702,7 +3398,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="stat-card"><div class="stat-num">' + donePenalties + '</div><div class="stat-label">已闭环处罚</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1718,7 +3430,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1742,7 +3478,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="card-title">闭环率</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1758,7 +3510,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div style="font-size:22px;font-weight:700;color:var(--primary)">' + closeRate + '%</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1774,7 +3542,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1798,7 +3590,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>领导看板</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1814,7 +3622,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评审核</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1830,6 +3654,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4CB}</span>检查记录</div>';
 
 
@@ -1838,7 +3670,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -1854,7 +3702,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="quick-entry" onclick="location.hash=\'#admin\'"><span class="qe-icon">\u{2699}</span>数据管理</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1870,6 +3734,14 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
 
 
@@ -1878,7 +3750,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1902,7 +3798,31 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1926,7 +3846,23 @@ Pages.home = function() {
 
 
 
+
+
+
+
+
+
+
+
 Pages.admin = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -1942,7 +3878,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (user.role !== '总部' && user.role !== 'admin' && user.role !== '客服') {
+
+
+
+
+
+
+
+
 
 
 
@@ -1958,7 +3910,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>仅总部管理员可访问此页面</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -1974,7 +3942,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2006,7 +3998,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /* ===== 人员管理 ===== */
+
+
+
+
+
+
+
+
 
 
 
@@ -2022,7 +4038,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="section-title">&#128101; 人员管理（' + users.length + '人）</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2038,6 +4070,14 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary" onclick="Pages._userForm()">+ 新增人员</button>';
 
 
@@ -2046,7 +4086,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2070,7 +4134,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="empty-state">暂无人员数据</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2086,7 +4166,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="user-list">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2102,7 +4198,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
     users.forEach(function(u) {
+
+
+
+
+
+
+
+
 
 
 
@@ -2118,7 +4230,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="user-info">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2134,7 +4262,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="user-meta">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2150,7 +4294,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
       if (u.store) html += '<span class="user-store">' + u.store + '</span>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2166,6 +4326,14 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<span class="user-phone">' + (u.phone || '') + '</span>';
 
 
@@ -2174,7 +4342,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2190,7 +4374,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<button class="btn btn-xs" onclick="Pages._userForm(\'' + u.id + '\')">编辑</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2206,7 +4406,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2222,7 +4438,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2246,7 +4478,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /* ===== 数据导入 ===== */
+
+
+
+
+
+
+
+
 
 
 
@@ -2270,7 +4526,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="card">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2286,7 +4566,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="card-desc">XLS 格式：id, 姓名, 角色(总部/线上稽核/线下稽核/区域教练/店长), 区域/区, 门店ID, 门店名, 手机号</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2302,7 +4598,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<input type="file" accept=".xls,.xlsx" onchange="App.importXLS(this, \'users\')" style="display:none" id="file-users">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2318,7 +4630,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2342,7 +4678,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="card-title">导入门店</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2358,7 +4710,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div style="margin:8px 0"><button class="btn btn-xs btn-outline" onclick="App.downloadTemplate(\'stores\')">下载门店模板</button></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2374,6 +4742,14 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary" style="width:100%" onclick="document.getElementById(\'file-stores\').click()">选择门店 XLS 并导入</button>';
 
 
@@ -2382,7 +4758,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2406,6 +4806,14 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="section-title" style="margin-top:20px">&#128228; 数据导出</div>';
 
 
@@ -2422,7 +4830,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="card">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2438,7 +4870,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'users\')">下载人员 XLS</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2462,7 +4910,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="card">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2478,7 +4950,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'penalties\')">下载处罚 XLS</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2502,7 +4990,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="card">';
+
+
+
+
+
+
+
+
 
 
 
@@ -2518,6 +5030,14 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-outline" style="width:100%" onclick="App.exportXLS(\'complaints\')">下载差评 XLS</button>';
 
 
@@ -2526,7 +5046,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2550,7 +5094,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="card-title">导出看板汇总</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2566,7 +5126,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2590,7 +5174,31 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2614,7 +5222,23 @@ Pages.admin = function() {
 
 
 
+
+
+
+
+
+
+
+
 Pages._userForm = function(id) {
+
+
+
+
+
+
+
+
 
 
 
@@ -2630,6 +5254,14 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var u = id ? users.find(function(x) { return x.id === id; }) : null;
 
 
@@ -2638,7 +5270,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var isEdit = !!u;
+
+
+
+
+
+
+
+
 
 
 
@@ -2662,6 +5310,22 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
 
 
@@ -2670,7 +5334,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2694,7 +5374,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label>姓名</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2718,7 +5422,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label>角色</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2734,7 +5462,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   ['总部', '线上稽核', '线下稽核', '区域教练', '店长', '客服', '营运'].forEach(function(r) {
+
+
+
+
+
+
+
+
 
 
 
@@ -2750,6 +5494,14 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<option value="' + r + '"' + sel + '>' + r + '</option>';
 
 
@@ -2758,7 +5510,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -2782,7 +5550,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label>手机号</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2806,7 +5598,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label>所属区域</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2830,7 +5646,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label>绑定门店</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2854,7 +5694,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2870,7 +5734,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2886,7 +5766,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -2910,7 +5806,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var div = document.createElement('div');
+
+
+
+
+
+
+
+
 
 
 
@@ -2926,7 +5846,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var overlay = div.firstElementChild;
+
+
+
+
+
+
+
+
 
 
 
@@ -2942,7 +5878,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   overlay.offsetHeight;
+
+
+
+
+
+
+
+
 
 
 
@@ -2958,7 +5910,23 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   App.initStoreSelect('uf-storeId', App.getStores());
+
+
+
+
+
+
+
+
 
 
 
@@ -2982,7 +5950,31 @@ Pages._userForm = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages._userSave = async function(id) {
+
+
+
+
+
+
+
+
 
 
 
@@ -2998,7 +5990,23 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var role = (document.getElementById('uf-role') || {}).value || '店长';
+
+
+
+
+
+
+
+
 
 
 
@@ -3014,6 +6022,14 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var area = (document.getElementById('uf-area') || {}).value || '';
 
 
@@ -3022,7 +6038,31 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var storeId = App.getStoreSelectValue('uf-storeId');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3054,7 +6094,31 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var storeName = '';
+
+
+
+
+
+
+
+
 
 
 
@@ -3070,7 +6134,23 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     var stores = App.getStores();
+
+
+
+
+
+
+
+
 
 
 
@@ -3086,6 +6166,14 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     if (s) storeName = s.name;
 
 
@@ -3094,7 +6182,31 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3126,7 +6238,31 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var overlay = document.querySelector('.modal-overlay');
+
+
+
+
+
+
+
+
 
 
 
@@ -3150,7 +6286,31 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (id) {
+
+
+
+
+
+
+
+
 
 
 
@@ -3166,7 +6326,23 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -3182,7 +6358,23 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -3198,7 +6390,31 @@ Pages._userSave = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3222,7 +6438,23 @@ Pages._userDelete = async function(id, name) {
 
 
 
+
+
+
+
+
+
+
+
   if (!confirm('确定删除「' + name + '」？此操作不可恢复。')) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -3238,6 +6470,14 @@ Pages._userDelete = async function(id, name) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.admin();
 
 
@@ -3246,7 +6486,31 @@ Pages._userDelete = async function(id, name) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3270,434 +6534,873 @@ Pages._userDelete = async function(id, name) {
 
 
 
+
+
+
+
+
+
+
+
 Pages._inspectionSubTabs = function(user) {
+
+
 
   return [
 
+
+
     { id: 'inspection', label: '检查记录', show: App.Permissions.canAccess(user.role, 'inspection') },
+
+
 
     { id: 'inspectionTemplates', label: '稽核模板', show: App.Permissions.canAccess(user.role, 'inspection') && (App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260') },
 
+
+
     { id: 'inspectionFill', label: '稽核检查', show: App.Permissions.canAccess(user.role, 'inspection_edit') },
+
+
 
     { id: 'inspectionResults', label: '检查结果', show: App.Permissions.canAccess(user.role, 'inspection_results') },
 
+
+
     { id: 'inspectionIssues', label: '问题工单', show: App.Permissions.canAccess(user.role, 'inspection') },
+
+
 
     { id: 'inspectionWorkbench', label: '工作台', show: App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results') },
 
 
+
+
+
   ];
 
+
+
 };
+
+
+
+
 
 
 
 Pages._gotoSub = function(id) {
 
+
+
   if (id === 'inspection') {
+
+
 
     window.__inspectionExplicit = true;
 
+
+
   }
+
+
 
   location.hash = '#' + id;
 
+
+
 };
+
+
+
+
 
 
 
 /* ==================== 稽核工作台（B方向·问题驱动） ==================== */
 
+
+
 Pages._wbFilter = { storeId: '', region: '', days: 0 };
+
+
+
+
 
 
 
 Pages._wbCategoryKeywords = [
 
+
+
   ['清洁/卫生', ['污渍','油渍','油垢','污垢','残渣','毛发','毛絮','垃圾','水垢','积水','灰尘','烟头','纸屑','清洁不到位','未清理','未清洁','未及时清洁','不干净','脏污','水印','水渍','蜘蛛网','苍蝇','蚊虫','飞虫','积灰','胶渍','胶痕','虫害','粘虫','卫生较差','残渍','异味','油污','除垢']],
+
+
 
   ['储存/封口/加盖', ['封口','加盖','储存','保鲜盒','交叉污染','先进先出','混放','开封','封存','离地','落地','上冻','堆放','集中存放','存放','生熟']],
 
+
+
   ['仪表/着装/佩戴', ['仪容仪表','工服','工牌','纽扣','耳钉','首饰','项链','手链','口罩','帽子','着装','佩戴','戴手套','摘帽','摘口罩','嚼东西']],
+
+
 
   ['产品品质/断档', ['断档','出品','破损','冻伤','黄叶','黑叶','烂叶','发黄','汤汁','开叉','软榻','过少','规格','克数','参数','断供','断货','估清','缺货','不合格','品相','破皮','重量超标','漏签','蒸菜','午餐','晚餐','早餐']],
 
+
+
   ['设备/设施', ['设备','滤芯','净水','吊灯','空调','广告机','豆浆机','灭蝇灯','消毒柜','冰箱','制冰机','封膜机','洗碗机','饮水机','餐盘柜','排烟','开水器','风扇','照明','灯','虫']],
+
+
 
   ['操作规范/工器具', ['翻动','未处理','搅拌','抖动','溜边','锅圈','打散','浇油','焯水','煎制','热料包','下米','下绿豆','下配料','放油','接触','掉落','落入','入水','未用新碗','分装','称量','器具','工器具','专用','标准','超时','未达标','打烊','报损','过早','关火','消毒','预热','翻面','抓','夹子','锅','用手']],
 
+
+
   ['值班/制度/台账', ['手机','离岗','台账','SOP','抽查','晨检','知识','岗位标准','值班','顶岗','纪律','记录缺失','制度','不在岗','报修','更换','记录不完善']],
 
+
+
   ['服务/话术', ['话术','迎宾','托盘','腰包','餐具','收餐','回餐','服务']]
+
+
 
 ];
 
 
 
+
+
+
+
 Pages._wbClassify = function(text) {
+
+
 
   if (!text) return '其他';
 
+
+
   for (var ci = 0; ci < Pages._wbCategoryKeywords.length; ci++) {
+
+
 
     var cat = Pages._wbCategoryKeywords[ci];
 
+
+
     for (var ki = 0; ki < cat[1].length; ki++) {
+
+
 
       if (text.indexOf(cat[1][ki]) >= 0) return cat[0];
 
+
+
     }
+
+
 
   }
 
+
+
   return '其他';
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbStoreName = function(sid) {
 
+
+
   var stores = App.getStores() || [];
+
+
 
   for (var i = 0; i < stores.length; i++) {
 
+
+
     if (stores[i].id === sid) return stores[i].name || sid;
+
+
 
   }
 
+
+
   return sid;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbIssuesText = function(iss) {
 
+
+
   return iss.content || iss.description || '';
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbIssuesItems = function(iss) {
 
+
+
   if (iss.description) {
+
+
 
     if (!/^\d+\./m.test(iss.description)) return [];
 
+
+
     var items = iss.description.match(/[①②③④⑤⑥⑦⑧⑨⑩][^①-⑩]*/g) || [];
+
+
 
     var out = [];
 
+
+
     for (var i = 0; i < items.length; i++) {
+
+
 
       var it = items[i].trim();
 
+
+
       if (it) out.push(it);
+
+
 
     }
 
+
+
     return out;
+
+
 
   }
 
+
+
   return (iss.content || '').trim() ? [iss.content.trim()] : [];
+
+
 
 };
 
 
 
+
+
+
+
 Pages.inspectionWorkbench = function() {
+
+
 
   const el = document.getElementById('page-inspectionWorkbench');
 
+
+
   if (!el) return;
 
+
+
   const user = App.currentUser;
+
+
 
   if (!user) return;
 
 
 
+
+
+
+
   var canView = App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results');
+
+
 
   var isStoreOwner = (user.role === '店长' && user.storeId);
 
+
+
   if (!canView && !isStoreOwner) {
+
+
 
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
 
+
+
     return;
 
+
+
   }
+
+
+
+
 
 
 
   var results = App.getResults() || [];
 
+
+
   var issues = App.getIssues() || [];
+
+
 
   var stores = App.getStores() || [];
 
 
 
+
+
+
+
   // 店长仅本店
+
+
 
   if (isStoreOwner) {
 
+
+
     results = results.filter(function(r){ return r.storeId === user.storeId; });
+
+
 
     issues = issues.filter(function(r){ return r.storeId === user.storeId; });
 
+
+
   }
+
+
+
+
 
 
 
   // 筛选
 
+
+
   var f = Pages._wbFilter;
+
+
 
   if (f.region) {
 
+
+
     var regionStoreIds = {};
+
+
 
     stores.forEach(function(s){ if (s.region === f.region || s.adminArea === f.region || s.bizArea === f.region) regionStoreIds[s.id] = 1; });
 
+
+
     results = results.filter(function(r){ return regionStoreIds[r.storeId]; });
+
+
 
     issues = issues.filter(function(r){ return regionStoreIds[r.storeId]; });
 
+
+
   }
+
+
 
   if (f.storeId) {
 
+
+
     results = results.filter(function(r){ return r.storeId === f.storeId; });
+
+
 
     issues = issues.filter(function(r){ return r.storeId === f.storeId; });
 
+
+
   }
+
+
 
   if (f.days > 0) {
 
+
+
     var cutoff = new Date();
+
+
 
     cutoff.setDate(cutoff.getDate() - f.days);
 
+
+
     var cutoffStr = cutoff.toISOString().slice(0, 10);
+
+
 
     results = results.filter(function(r){ return (r.date || '') >= cutoffStr; });
 
+
+
     issues = issues.filter(function(r){ return (r.date || '') >= cutoffStr; });
 
+
+
   }
+
+
+
+
 
 
 
   // 门店映射
 
+
+
   var storeMap = {};
+
+
 
   stores.forEach(function(s){ storeMap[s.id] = s; });
 
 
 
+
+
+
+
   // 1. 待整改事项
+
+
 
   var pending = issues.filter(function(r){ return r.status === '待处理'; });
 
+
+
   // 记录时间倒序：优先有 date 的（desc 型），content 型无 date 排后
+
+
 
   pending.sort(function(a, b) {
 
+
+
     var da = a.date || '0000-00-00';
+
+
 
     var db = b.date || '0000-00-00';
 
+
+
     if (da !== db) return da < db ? 1 : -1;
+
+
 
     return 0;
 
+
+
   });
 
+
+
   var pendingTotal = pending.length;
+
+
 
   var pendingTop3 = pending.slice(0, 3);
 
 
 
+
+
+
+
   // 2. 最近检查得分最低 TOP5（每店最近一次，剔除0分）
+
+
 
   var storeLatest = {};
 
+
+
   results.forEach(function(r) {
+
+
 
     var sid = r.storeId;
 
+
+
     var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+
+
 
     if (!score || score <= 0) return;
 
+
+
     var prev = storeLatest[sid];
+
+
 
     if (!prev || (r.date || '') > (prev.date || '')) {
 
+
+
       storeLatest[sid] = { storeId: sid, score: score, date: r.date || '', resultId: r.id };
+
+
 
     }
 
+
+
   });
+
+
 
   var top5 = Object.keys(storeLatest).map(function(sid){ return storeLatest[sid]; });
 
+
+
   top5.sort(function(a, b) {
+
+
 
     if (a.score !== b.score) return a.score - b.score;
 
+
+
     return a.storeId < b.storeId ? -1 : 1;
 
+
+
   });
+
+
 
   top5 = top5.slice(0, 5);
 
 
 
+
+
+
+
   // 3. 高频问题 TOP5（关键词归类）
+
+
 
   var catCount = {};
 
+
+
   var catTotal = 0;
+
+
 
   issues.forEach(function(r) {
 
+
+
     Pages._wbIssuesItems(r).forEach(function(t) {
+
+
 
       catTotal++;
 
+
+
       var c = Pages._wbClassify(t);
+
+
 
       catCount[c] = (catCount[c] || 0) + 1;
 
+
+
     });
+
+
 
   });
 
+
+
   var catArr = Object.keys(catCount).map(function(c){ return { name: c, count: catCount[c] }; });
+
+
 
   catArr.sort(function(a, b) { return b.count - a.count || (a.name < b.name ? -1 : 1); });
 
+
+
   catArr = catArr.slice(0, 5);
+
+
 
   var issueTotal = catTotal || 1;
 
 
 
+
+
+
+
   // 4. 待处理问题门店 TOP5
+
+
 
   var storePending = {};
 
+
+
   pending.forEach(function(r) {
+
+
 
     storePending[r.storeId] = (storePending[r.storeId] || 0) + 1;
 
+
+
   });
+
+
 
   var spArr = Object.keys(storePending).map(function(sid){ return { storeId: sid, count: storePending[sid] }; });
 
+
+
   spArr.sort(function(a, b) { return b.count - a.count || (a.storeId < b.storeId ? -1 : 1); });
+
+
 
   spArr = spArr.slice(0, 5);
 
 
 
+
+
+
+
   // 5. 稽核员动态（按 inspector 聚合全部 results）
+
+
 
   var inspMap = {};
 
+
+
   results.forEach(function(r) {
+
+
 
     var name = r.inspector || '未署名';
 
+
+
     if (!inspMap[name]) inspMap[name] = { name: name, count: 0, sum: 0, valid: 0 };
+
+
 
     inspMap[name].count++;
 
+
+
     var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+
+
 
     if (score > 0) { inspMap[name].sum += score; inspMap[name].valid++; }
 
+
+
   });
+
+
 
   var inspArr = Object.keys(inspMap).map(function(n){ return inspMap[n]; });
 
+
+
   inspArr.sort(function(a, b) { return b.count - a.count; });
+
+
 
   inspArr = inspArr.slice(0, 5);
 
 
 
+
+
+
+
   // 筛选下拉选项
+
+
 
   var storeOptions = '<option value="">全部门店</option>';
 
+
+
   stores.slice().sort(function(a, b){ return (a.name || '') < (b.name || '') ? -1 : 1; }).forEach(function(s) {
+
+
 
     storeOptions += '<option value="' + s.id + '"' + (f.storeId === s.id ? ' selected' : '') + '>' + s.name + '</option>';
 
+
+
   });
+
+
 
   var regionSet = {};
 
+
+
   stores.forEach(function(s) {
+
+
 
     var r = s.region || s.adminArea || s.bizArea || '';
 
+
+
     if (r) regionSet[r] = 1;
 
+
+
   });
+
+
 
   var regionOptions = '<option value="">全部区域</option>';
 
+
+
   Object.keys(regionSet).sort().forEach(function(r) {
+
+
 
     regionOptions += '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>';
 
+
+
   });
+
+
 
   var daysOptions = '<option value="0">全部时间</option>';
 
+
+
   [[7,'近7天'],[30,'近30天'],[90,'近90天']].forEach(function(o) {
+
+
 
     daysOptions += '<option value="' + o[0] + '"' + (f.days === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
 
+
+
   });
+
+
+
+
 
 
 
   var today = new Date();
 
+
+
   var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+
+
+
 
 
 
   var html = '';
 
+
+
   html += Pages._bdTabs('inspectionWorkbench');
+
+
 
   html += '<div class="sub-tabbar">';
 
+
+
   var subHash = location.hash.replace('#', '');
+
+
 
   Pages._inspectionSubTabs(user).forEach(function(t) {
 
+
+
     if (!t.show) return;
+
+
 
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
 
+
+
   });
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
@@ -3705,455 +7408,915 @@ Pages.inspectionWorkbench = function() {
 
 
 
+
+
+
+
   // 筛选栏
+
+
 
   html += '<div class="wb-filter">';
 
+
+
   html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'storeId\', this.value)">' + storeOptions + '</select>';
+
+
 
   html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'region\', this.value)">' + regionOptions + '</select>';
 
+
+
   html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'days\', this.value)">' + daysOptions + '</select>';
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   // 待整改事项
 
+
+
   html += '<div class="card wb-card wb-pending-card">';
+
+
 
   html += '<div class="wb-card-head"><span class="wb-card-title">待整改事项</span><span class="wb-badge-red" onclick="Pages._wbOpenPendingAll()">查看全部</span></div>';
 
+
+
   html += '<div class="wb-pending-num">' + pendingTotal + '<span class="wb-pending-unit">项待处理</span></div>';
+
+
 
   if (pendingTop3.length === 0) {
 
+
+
     html += '<div class="wb-pending-empty">暂无待处理问题</div>';
+
+
 
   } else {
 
+
+
     pendingTop3.forEach(function(p) {
+
+
 
       var txt = Pages._wbIssuesText(p);
 
+
+
       html += '<div class="wb-pending-item" onclick="Pages._wbOpenStoreIssues(\'' + p.storeId + '\')">';
+
+
 
       html += '<span class="wb-pending-store">' + Pages._wbStoreName(p.storeId) + '</span>';
 
+
+
       html += '<span class="wb-pending-txt">' + txt + '</span>';
+
+
 
       html += '</div>';
 
+
+
     });
+
+
 
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   // 最近检查得分最低 TOP5
 
+
+
   html += '<div class="card wb-card">';
+
+
 
   html += '<div class="wb-card-head"><span class="wb-card-title">最近检查得分最低 TOP5</span></div>';
 
+
+
   if (top5.length === 0) {
+
+
 
     html += '<div class="wb-empty">暂无有效检查得分记录</div>';
 
+
+
   } else {
+
+
 
     html += '<table class="m-table wb-table"><thead><tr><th>#</th><th>门店</th><th>得分</th><th>日期</th></tr></thead><tbody>';
 
+
+
     top5.forEach(function(t, idx) {
+
+
 
       html += '<tr onclick="Pages._wbOpenStoreDetail(\'' + t.storeId + '\')">';
 
+
+
       html += '<td>' + (idx+1) + '</td><td>' + Pages._wbStoreName(t.storeId) + '</td>';
+
+
 
       html += '<td class="' + (t.score < 80 ? 'wb-score-low' : '') + '">' + t.score + '</td><td>' + t.date + '</td></tr>';
 
+
+
     });
+
+
 
     html += '</tbody></table>';
 
+
+
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   // 高频问题 TOP5
 
+
+
   html += '<div class="card wb-card">';
+
+
 
   html += '<div class="wb-card-head"><span class="wb-card-title">高频问题 TOP5</span></div>';
 
+
+
   if (catArr.length === 0) {
+
+
 
     html += '<div class="wb-empty">暂无问题数据</div>';
 
+
+
   } else {
+
+
 
     catArr.forEach(function(c) {
 
+
+
       var pct = Math.round(c.count / issueTotal * 100);
+
+
 
       html += '<div class="wb-cat-row" onclick="Pages._wbOpenCategory(\'' + c.name + '\')">';
 
+
+
       html += '<div class="wb-cat-line"><span class="wb-cat-name">' + c.name + '</span><span class="wb-cat-num">' + c.count + ' (' + pct + '%)</span></div>';
+
+
 
       html += '<div class="wb-bar"><div class="wb-bar-inner" style="width:' + Math.min(100, pct) + '%"></div></div>';
 
+
+
       html += '</div>';
+
+
 
     });
 
+
+
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   // 待处理问题门店 TOP5
 
+
+
   html += '<div class="card wb-card">';
+
+
 
   html += '<div class="wb-card-head"><span class="wb-card-title">待处理问题门店 TOP5</span></div>';
 
+
+
   if (spArr.length === 0) {
+
+
 
     html += '<div class="wb-empty">暂无待处理问题</div>';
 
+
+
   } else {
+
+
 
     spArr.forEach(function(s) {
 
+
+
       html += '<div class="wb-sp-row" onclick="Pages._wbOpenStoreIssues(\'' + s.storeId + '\')">';
+
+
 
       html += '<span class="wb-sp-name">' + Pages._wbStoreName(s.storeId) + '</span>';
 
+
+
       html += '<span class="wb-sp-count' + (s.count >= 5 ? ' wb-sp-hot' : '') + '">' + s.count + ' 条</span>';
+
+
 
       html += '</div>';
 
+
+
     });
+
+
 
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   // 稽核员动态
 
+
+
   html += '<div class="card wb-card">';
+
+
 
   html += '<div class="wb-card-head"><span class="wb-card-title">稽核员动态</span></div>';
 
+
+
   if (inspArr.length === 0) {
+
+
 
     html += '<div class="wb-empty">暂无提交记录</div>';
 
+
+
   } else {
+
+
 
     html += '<div class="wb-insp-list">';
 
+
+
     inspArr.forEach(function(i) {
+
+
 
       var avg = i.valid > 0 ? (i.sum / i.valid) : 0;
 
+
+
       var ok = i.valid > 0 && avg >= 90;
+
+
 
       html += '<div class="wb-insp-row" onclick="Pages._wbOpenInspector(\'' + i.name.replace(/'/g, "\\'") + '\')">';
 
+
+
       html += '<span class="wb-insp-avatar">' + i.name.charAt(0) + '</span>';
+
+
 
       html += '<span class="wb-insp-info"><span class="wb-insp-name">' + i.name + '</span><span class="wb-insp-sub">提交 ' + i.count + ' 次 · 均分 ' + avg.toFixed(1) + '</span></span>';
 
+
+
       html += '<span class="wb-insp-badge' + (ok ? ' wb-ok' : '') + '">' + (ok ? '达标' : '—') + '</span>';
+
+
 
       html += '</div>';
 
+
+
     });
+
+
 
     html += '</div>';
 
+
+
   }
+
+
 
   html += '</div>';
 
 
 
+
+
+
+
   // 底部注释
+
+
 
   html += '<div class="wb-footnote">数据口径：得分=门店最近一次现场检查得分（百分制，剔除0分）；待处理=status 为「待处理」；高频问题按描述关键词互斥归类。</div>';
 
 
 
+
+
+
+
   el.innerHTML = html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbSetFilter = function(key, val) {
 
+
+
   Pages._wbFilter[key] = key === 'days' ? parseInt(val || '0', 10) : val;
+
+
 
   Pages.inspectionWorkbench();
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbOpenPendingAll = function() {
 
+
+
   var issues = App.getIssues() || [];
+
+
 
   var pending = issues.filter(function(r){ return r.status === '待处理'; });
 
+
+
   pending.sort(function(a, b) {
+
+
 
     var da = a.date || '0000-00-00';
 
+
+
     var db = b.date || '0000-00-00';
+
+
 
     if (da !== db) return da < db ? 1 : -1;
 
+
+
     return 0;
+
+
 
   });
 
+
+
   var html = '<div class="modal-box dd-modal-box"><div class="modal-title">待整改事项（' + pending.length + '）</div><div class="dd-modal-body">';
+
+
 
   if (pending.length === 0) {
 
+
+
     html += '<div class="wb-empty">暂无待处理问题</div>';
+
+
 
   } else {
 
+
+
     html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th><th>状态</th></tr></thead><tbody>';
+
+
 
     pending.forEach(function(p) {
 
+
+
       html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '待处理') + '</td></tr>';
+
+
 
     });
 
+
+
     html += '</tbody></table>';
+
+
 
   }
 
+
+
   html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+
+
 
   var modal = document.getElementById('modal-overlay');
 
+
+
   modal.querySelector('.modal-box').outerHTML = html;
+
+
 
   modal.classList.add('show');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbOpenStoreIssues = function(storeId) {
 
+
+
   var issues = App.getIssues() || [];
+
+
 
   var list = issues.filter(function(r){ return r.storeId === storeId; });
 
+
+
   var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
+
+
 
   if (list.length === 0) {
 
+
+
     html += '<div class="wb-empty">暂无问题记录</div>';
+
+
 
   } else {
 
+
+
     html += '<table class="m-table dd-modal-table"><thead><tr><th>问题</th><th>状态</th></tr></thead><tbody>';
+
+
 
     list.forEach(function(p) {
 
+
+
       html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td><td>' + (p.status || '—') + '</td></tr>';
+
+
 
     });
 
+
+
     html += '</tbody></table>';
+
+
 
   }
 
+
+
   html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+
+
 
   var modal = document.getElementById('modal-overlay');
 
+
+
   modal.querySelector('.modal-box').outerHTML = html;
+
+
 
   modal.classList.add('show');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbOpenStoreDetail = function(storeId) {
 
+
+
   var results = App.getResults() || [];
+
+
 
   var issues = App.getIssues() || [];
 
+
+
   var list = results.filter(function(r){ return r.storeId === storeId; });
+
+
 
   list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
 
+
+
   var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — 检查历史</div><div class="dd-modal-body">';
+
+
 
   if (list.length === 0) {
 
+
+
     html += '<div class="wb-empty">暂无检查记录</div>';
+
+
 
   } else {
 
+
+
     html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>得分</th><th>稽核员</th></tr></thead><tbody>';
+
+
 
     list.forEach(function(r) {
 
+
+
       var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
+
+
 
       html += '<tr><td>' + r.date + '</td><td>' + score + '</td><td>' + (r.inspector || '—') + '</td></tr>';
 
+
+
     });
+
+
 
     html += '</tbody></table>';
 
+
+
     var storeIssues = issues.filter(function(r){ return r.storeId === storeId; });
+
+
 
     if (storeIssues.length > 0) {
 
+
+
       html += '<div class="dd-meta" style="margin-top:10px">问题明细（' + storeIssues.length + '）</div><table class="m-table dd-modal-table"><tbody>';
+
+
 
       storeIssues.forEach(function(p) {
 
+
+
         html += '<tr><td class="dd-findings">' + Pages._wbIssuesText(p) + '</td></tr>';
+
+
 
       });
 
+
+
       html += '</tbody></table>';
+
+
 
     }
 
+
+
   }
+
+
 
   html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
 
+
+
   var modal = document.getElementById('modal-overlay');
+
+
 
   modal.querySelector('.modal-box').outerHTML = html;
 
+
+
   modal.classList.add('show');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbOpenCategory = function(cat) {
 
+
+
   var issues = App.getIssues() || [];
+
+
 
   var list = [];
 
+
+
   issues.forEach(function(r) {
+
+
 
     Pages._wbIssuesItems(r).forEach(function(t) {
 
+
+
       if (Pages._wbClassify(t) === cat) {
+
+
 
         list.push({ storeId: r.storeId, text: t });
 
+
+
       }
 
+
+
     });
+
+
 
   });
 
+
+
   var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + cat + ' — 问题明细（' + list.length + '）</div><div class="dd-modal-body">';
+
+
 
   if (list.length === 0) {
 
+
+
     html += '<div class="wb-empty">暂无问题记录</div>';
+
+
 
   } else {
 
+
+
     html += '<table class="m-table dd-modal-table"><thead><tr><th>门店</th><th>问题</th></tr></thead><tbody>';
+
+
 
     list.forEach(function(p) {
 
+
+
       html += '<tr><td>' + Pages._wbStoreName(p.storeId) + '</td><td class="dd-findings">' + p.text + '</td></tr>';
+
+
 
     });
 
+
+
     html += '</tbody></table>';
+
+
 
   }
 
+
+
   html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+
+
 
   var modal = document.getElementById('modal-overlay');
 
+
+
   modal.querySelector('.modal-box').outerHTML = html;
+
+
 
   modal.classList.add('show');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._wbOpenInspector = function(name) {
 
+
+
   var results = App.getResults() || [];
+
+
 
   var list = results.filter(function(r){ return (r.inspector || '未署名') === name; });
 
+
+
   list.sort(function(a, b){ return (a.date || '') < (b.date || '') ? 1 : -1; });
+
+
 
   var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + name + ' — 提交记录（' + list.length + '）</div><div class="dd-modal-body">';
 
+
+
   if (list.length === 0) {
+
+
 
     html += '<div class="wb-empty">暂无提交记录</div>';
 
+
+
   } else {
+
+
 
     html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>门店</th><th>得分</th></tr></thead><tbody>';
 
+
+
     list.forEach(function(r) {
+
+
 
       var score = (typeof r.score === 'number') ? r.score : (typeof r.totalScore === 'number' ? r.totalScore : 0);
 
+
+
       html += '<tr><td>' + r.date + '</td><td>' + Pages._wbStoreName(r.storeId) + '</td><td>' + score + '</td></tr>';
+
+
 
     });
 
+
+
     html += '</tbody></table>';
+
+
 
   }
 
+
+
   html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+
+
 
   var modal = document.getElementById('modal-overlay');
 
+
+
   modal.querySelector('.modal-box').outerHTML = html;
+
+
 
   modal.classList.add('show');
 
+
+
 };
+
+
+
+
+
+
 
 
 
 
 
 Pages.inspection = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -4169,7 +8332,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -4185,6 +8364,14 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   const stores = App.getStores();
 
 
@@ -4193,7 +8380,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   const records = App.getOnlineRecords();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4225,7 +8436,27 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'inspection')) {
+
+
+
+
 
 
 
@@ -4233,7 +8464,15 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
       location.hash = '#inspectionResults';
+
+
+
+
 
 
 
@@ -4241,11 +8480,27 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
     html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4261,6 +8516,14 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
 
 
@@ -4269,7 +8532,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4293,7 +8580,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   var subHash = location.hash.replace('#', '');
+
+
+
+
+
+
+
+
 
 
 
@@ -4309,7 +8612,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
     location.hash = '#inspectionTemplates';
+
+
+
+
+
+
+
+
 
 
 
@@ -4325,7 +8644,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -4341,7 +8676,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="sub-tabbar">';
+
+
+
+
+
+
+
+
 
 
 
@@ -4357,7 +8708,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (!t.show) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -4373,6 +8740,14 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
 
 
@@ -4381,7 +8756,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4405,7 +8804,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="card"><div class="card-title">\u{1F4F7} 优化部稽核记录</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4429,7 +8852,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<select id="online-project" class="form-select">';
+
+
+
+
+
+
+
+
 
 
 
@@ -4445,6 +8884,14 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<option value="' + t + '">' + t + '</option>';
 
 
@@ -4453,7 +8900,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -4477,7 +8940,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 拍照OCR区域
+
+
+
+
+
+
+
+
 
 
 
@@ -4493,7 +8980,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="ocr-area">';
+
+
+
+
+
+
+
+
 
 
 
@@ -4509,7 +9012,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-outline" onclick="document.getElementById(\'ocr-camera\').click()">\u{1F4F8} 拍照识别</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4525,6 +9044,14 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div id="ocr-status" class="ocr-status hidden"></div>';
 
 
@@ -4533,7 +9060,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4557,7 +9100,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">反馈相关部门动作</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4581,7 +9148,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">相关部门反馈</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4605,6 +9196,22 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary" onclick="Pages.submitOnline()">提交</button>';
 
 
@@ -4613,7 +9220,31 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4637,7 +9268,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="card"><div class="card-title">\u{1F4CB} 已提交记录</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4653,7 +9300,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (userRecords.length === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -4669,7 +9332,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -4685,7 +9364,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="list-item">';
+
+
+
+
+
+
+
+
 
 
 
@@ -4701,7 +9396,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-title">' + r.projectType + ' — ' + (r.store || '') + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4717,6 +9428,14 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
 
 
@@ -4725,7 +9444,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4741,7 +9476,23 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -4765,7 +9516,27 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   el.innerHTML = html;
+
+
+
+
 
 
 
@@ -4773,7 +9544,19 @@ Pages.inspection = function() {
 
 
 
+
+
+
+
 };// 照片捕获回调
+
+
+
+
+
+
+
+
 
 
 
@@ -4789,7 +9572,23 @@ Pages.onPhotoCapture = function(event) {
 
 
 
+
+
+
+
+
+
+
+
   const file = event.target.files[0];
+
+
+
+
+
+
+
+
 
 
 
@@ -4813,7 +9612,31 @@ Pages.onPhotoCapture = function(event) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 显示预览
+
+
+
+
+
+
+
+
 
 
 
@@ -4829,7 +9652,23 @@ Pages.onPhotoCapture = function(event) {
 
 
 
+
+
+
+
+
+
+
+
   reader.onload = function(e) {
+
+
+
+
+
+
+
+
 
 
 
@@ -4845,7 +9684,23 @@ Pages.onPhotoCapture = function(event) {
 
 
 
+
+
+
+
+
+
+
+
     preview.innerHTML = '<img src="' + e.target.result + '" class="ocr-img"><button class="btn btn-primary ocr-detect-btn" onclick="Pages.doOCR(\'' + e.target.result + '\')">\u{1F50D} 开始识别文字</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4861,7 +9716,23 @@ Pages.onPhotoCapture = function(event) {
 
 
 
+
+
+
+
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -4877,7 +9748,31 @@ Pages.onPhotoCapture = function(event) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4901,7 +9796,23 @@ Pages.onPhotoCapture = function(event) {
 
 
 
+
+
+
+
+
+
+
+
 Pages.doOCR = function(dataUrl) {
+
+
+
+
+
+
+
+
 
 
 
@@ -4917,7 +9828,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
   status.innerHTML = '<span class="ocr-loading">\u23F3 正在识别文字...</span>';
+
+
+
+
+
+
+
+
 
 
 
@@ -4941,7 +9868,31 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   Tesseract.recognize(dataUrl, 'chi_sim+eng', {
+
+
+
+
+
+
+
+
 
 
 
@@ -4957,7 +9908,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
       if (m.status === 'recognizing text') {
+
+
+
+
+
+
+
+
 
 
 
@@ -4973,7 +9940,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -4989,7 +9972,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
   }).then(function(result) {
+
+
+
+
+
+
+
+
 
 
 
@@ -5005,7 +10004,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
     document.getElementById('online-record').value = text;
+
+
+
+
+
+
+
+
 
 
 
@@ -5021,7 +10036,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
     App.toast('识别完成');
+
+
+
+
+
+
+
+
 
 
 
@@ -5037,7 +10068,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
     status.innerHTML = '<span class="ocr-fail">\u274C 识别失败，请手动输入</span>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5053,7 +10100,23 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -5077,7 +10140,31 @@ Pages.doOCR = function(dataUrl) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.submitOnline = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -5093,7 +10180,23 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const project = document.getElementById('online-project').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -5109,6 +10212,14 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const feedbackDept = document.getElementById('online-feedback-dept').value.trim();
 
 
@@ -5117,7 +10228,31 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const deptFeedback = document.getElementById('online-dept-feedback').value.trim();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5149,7 +10284,31 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const records = App.getOnlineRecords();
+
+
+
+
+
+
+
+
 
 
 
@@ -5165,6 +10324,14 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const dateStr = now.getFullYear() + '-' +
 
 
@@ -5173,7 +10340,23 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
     String(now.getMonth() + 1).padStart(2, '0') + '-' +
+
+
+
+
+
+
+
+
 
 
 
@@ -5197,7 +10380,31 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   records.push({
+
+
+
+
+
+
+
+
 
 
 
@@ -5213,7 +10420,23 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
     inspector: user.name,
+
+
+
+
+
+
+
+
 
 
 
@@ -5229,7 +10452,23 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
     store: user.store || '',
+
+
+
+
+
+
+
+
 
 
 
@@ -5245,7 +10484,23 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
     record: record,
+
+
+
+
+
+
+
+
 
 
 
@@ -5261,6 +10516,14 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
     deptFeedback: deptFeedback,
 
 
@@ -5269,7 +10532,23 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
     date: dateStr
+
+
+
+
+
+
+
+
 
 
 
@@ -5293,7 +10572,31 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   App.saveOnlineRecords(records);
+
+
+
+
+
+
+
+
 
 
 
@@ -5309,7 +10612,23 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
   Pages.inspection();
+
+
+
+
+
+
+
+
 
 
 
@@ -5333,7 +10652,31 @@ Pages.submitOnline = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ---- 线下门店检查页 ---- */
+
+
+
+
+
+
+
+
 
 
 
@@ -5349,7 +10692,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
   const el = document.getElementById('page-offline-inspect');
+
+
+
+
+
+
+
+
 
 
 
@@ -5365,7 +10724,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
   const stores = App.getStores();
+
+
+
+
+
+
+
+
 
 
 
@@ -5381,7 +10756,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
   const user = App.currentUser;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5413,7 +10812,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">门店</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5437,7 +10860,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">检查日期</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5461,7 +10908,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">得分</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5485,7 +10956,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">扣分项</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5509,7 +11004,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">照片（模拟）</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5533,7 +11052,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">备注</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5557,6 +11100,22 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary" onclick="Pages.submitOffline()">提交检查</button>';
 
 
@@ -5565,7 +11124,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5589,7 +11172,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="card"><div class="card-title">提交记录</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5605,7 +11204,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="empty-state"><div class="empty-icon">\u{1F4C4}</div>暂无记录</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5621,7 +11236,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
     records.slice().reverse().forEach(r => {
+
+
+
+
+
+
+
+
 
 
 
@@ -5637,7 +11268,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-main">';
+
+
+
+
+
+
+
+
 
 
 
@@ -5653,7 +11300,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-sub">' + r.date + ' | 稽核员: ' + r.inspector + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -5669,6 +11332,14 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
 
 
@@ -5677,7 +11348,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -5701,6 +11388,22 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   el.innerHTML = html;
 
 
@@ -5709,7 +11412,23 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.initStoreSelect('offline-store', App.getStores());
+
+
+
+
+
+
+
+
 
 
 
@@ -5733,7 +11452,31 @@ Pages['offline-inspect'] = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.submitOffline = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -5749,7 +11492,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const storeId = App.getStoreSelectValue('offline-store');
+
+
+
+
+
+
+
+
 
 
 
@@ -5765,7 +11524,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const date = document.getElementById('offline-date').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -5781,7 +11556,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const deductions = document.getElementById('offline-deductions').value.trim();
+
+
+
+
+
+
+
+
 
 
 
@@ -5797,7 +11588,31 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
   const note = document.getElementById('offline-note').value.trim();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5829,7 +11644,31 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const records = App.getOfflineRecords();
+
+
+
+
+
+
+
+
 
 
 
@@ -5845,7 +11684,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
     id: 'of' + Date.now(),
+
+
+
+
+
+
+
+
 
 
 
@@ -5861,7 +11716,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
     storeId: storeId,
+
+
+
+
+
+
+
+
 
 
 
@@ -5877,7 +11748,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
     date: date,
+
+
+
+
+
+
+
+
 
 
 
@@ -5893,7 +11780,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
     deductions: deductions,
+
+
+
+
+
+
+
+
 
 
 
@@ -5909,6 +11812,14 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
     note: note
 
 
@@ -5917,7 +11828,31 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5941,7 +11876,23 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('提交成功');
+
+
+
+
+
+
+
+
 
 
 
@@ -5957,7 +11908,31 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5981,21 +11956,51 @@ Pages.submitOffline = function() {
 
 
 
+
+
+
+
+
+
+
+
 Pages._penaltyMode = Pages._penaltyMode || 'list';
+
+
+
+
 
 
 
 Pages._penaltySetTab = function(mode) {
 
+
+
   Pages._penaltyMode = mode;
 
+
+
   Pages.penalty();
+
+
 
 };
 
 
 
+
+
+
+
 Pages.penalty = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -6011,7 +12016,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -6027,6 +12048,14 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   const stores = App.getStores();
 
 
@@ -6035,7 +12064,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   const penalties = App.getPenalties();
+
+
+
+
+
+
+
+
 
 
 
@@ -6059,7 +12104,39 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   let html = '';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6083,7 +12160,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6099,6 +12192,14 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
 
 
@@ -6107,7 +12208,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6125,25 +12250,49 @@ Pages.penalty = function() {
 
   // 模块内子页签：处罚登记 / 看板
 
+
+
   html += '<div class="sub-tabbar dcb-tabbar">';
+
+
 
   html += '<div class="sub-tab-item' + (Pages._penaltyMode === 'board' ? '' : ' active') + '" onclick="Pages._penaltySetTab(\'list\')">处罚登记</div>';
 
+
+
   html += '<div class="sub-tab-item' + (Pages._penaltyMode === 'board' ? ' active' : '') + '" onclick="Pages._penaltySetTab(\'board\')">看板</div>';
+
+
 
   html += '</div>';
 
 
 
+
+
+
+
   if (Pages._penaltyMode === 'board') {
+
+
 
     html += Pages._penaltyBoardHtml();
 
+
+
     el.innerHTML = html;
+
+
 
     return;
 
+
+
   }
+
+
+
+
 
 
 
@@ -6155,7 +12304,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     // 完整表单 — 22个字段
+
+
+
+
+
+
+
+
 
 
 
@@ -6179,7 +12344,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">区域</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6195,7 +12384,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<option value="">请选择</option>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6211,7 +12416,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</select></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6235,7 +12464,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += App.renderStoreSelect('pen-store', stores, '', '输入门店名称搜索...');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6259,7 +12512,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<input id="pen-manager" class="form-input" placeholder="自动填充"></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6283,7 +12560,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<input id="pen-event-date" type="date" class="form-input"></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6307,7 +12608,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<textarea id="pen-event" class="form-textarea" placeholder="事件描述..."></textarea></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6331,7 +12656,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<textarea id="pen-survey" class="form-textarea" placeholder="调查结论..."></textarea></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6355,7 +12704,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<input id="pen-suggestion" class="form-input" placeholder="处罚建议"></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6379,7 +12752,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<input id="pen-inspector" class="form-input" value="' + user.name + '"></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6403,7 +12800,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<input id="pen-policy" class="form-input" placeholder="如：新奖惩制度第X条"></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6427,7 +12848,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<input id="pen-person-name" class="form-input"></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6451,7 +12896,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<select id="pen-level" class="form-select">';
+
+
+
+
+
+
+
+
 
 
 
@@ -6467,7 +12928,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<option value="' + l + '">' + l + '</option>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6483,7 +12960,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</select></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6507,7 +13008,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<select id="pen-type" class="form-select">';
+
+
+
+
+
+
+
+
 
 
 
@@ -6523,6 +13040,14 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<option value="' + t + '">' + t + '</option>';
 
 
@@ -6531,7 +13056,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -6555,7 +13096,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">经济处罚-当事人</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6579,7 +13144,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">经济处罚-店长</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6603,7 +13192,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">来源</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6627,7 +13240,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<button class="btn btn-primary" onclick="Pages.submitPenalty()">提交处罚记录</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6643,7 +13280,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6667,7 +13328,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   let listPenalties = penalties;
+
+
+
+
+
+
+
+
 
 
 
@@ -6683,7 +13360,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     listPenalties = penalties.filter(p => p.storeId === user.storeId);
+
+
+
+
+
+
+
+
 
 
 
@@ -6699,7 +13392,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     listPenalties = penalties.filter(p => {
+
+
+
+
+
+
+
+
 
 
 
@@ -6715,7 +13424,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
       return s && s.region === user.area;
+
+
+
+
+
+
+
+
 
 
 
@@ -6731,7 +13456,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6755,7 +13504,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (listPenalties.length === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -6771,7 +13536,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -6787,7 +13568,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
       let tagClass = 'tag-pending';
+
+
+
+
+
+
+
+
 
 
 
@@ -6803,7 +13600,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
       else if (p.status === '超时') tagClass = 'tag-overdue';
+
+
+
+
+
+
+
+
 
 
 
@@ -6819,7 +13632,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-main">';
+
+
+
+
+
+
+
+
 
 
 
@@ -6835,7 +13664,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-sub">' + p.eventDate + ' | <span class="tag ' + tagClass + '">' + p.status + '</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -6851,7 +13696,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -6867,7 +13728,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6891,7 +13776,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.initStoreSelect('pen-store', stores, function(sid) {
+
+
+
+
+
+
+
+
 
 
 
@@ -6907,7 +13808,23 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     document.getElementById('pen-manager').value = s ? (s.managerTitle ? s.managerTitle + s.manager : s.manager) : '';
+
+
+
+
+
+
+
+
 
 
 
@@ -6923,7 +13840,31 @@ Pages.penalty = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6947,7 +13888,23 @@ Pages.penaltyRegionChange = function() {
 
 
 
+
+
+
+
+
+
+
+
   const region = document.getElementById('pen-region').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -6963,7 +13920,23 @@ Pages.penaltyRegionChange = function() {
 
 
 
+
+
+
+
+
+
+
+
   const filtered = region ? allStores.filter(s => s.district === region) : allStores;
+
+
+
+
+
+
+
+
 
 
 
@@ -6979,7 +13952,23 @@ Pages.penaltyRegionChange = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.initStoreSelect('pen-store', filtered, function(sid) {
+
+
+
+
+
+
+
+
 
 
 
@@ -6995,7 +13984,23 @@ Pages.penaltyRegionChange = function() {
 
 
 
+
+
+
+
+
+
+
+
     document.getElementById('pen-manager').value = s ? (s.managerTitle ? s.managerTitle + s.manager : s.manager) : '';
+
+
+
+
+
+
+
+
 
 
 
@@ -7011,7 +14016,31 @@ Pages.penaltyRegionChange = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7035,6 +14064,14 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   const storeId = App.getStoreSelectValue('pen-store');
 
 
@@ -7043,7 +14080,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   const storeData = App.getStores().find(s => s.id === storeId);
+
+
+
+
+
+
+
+
 
 
 
@@ -7067,7 +14120,31 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const penalties = App.getPenalties();
+
+
+
+
+
+
+
+
 
 
 
@@ -7083,7 +14160,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     id: 'p' + Date.now(),
+
+
+
+
+
+
+
+
 
 
 
@@ -7099,7 +14192,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     store: storeName,
+
+
+
+
+
+
+
+
 
 
 
@@ -7115,7 +14224,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     district: storeData ? storeData.district : '',
+
+
+
+
+
+
+
+
 
 
 
@@ -7131,7 +14256,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     eventDate: document.getElementById('pen-event-date').value,
+
+
+
+
+
+
+
+
 
 
 
@@ -7147,7 +14288,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     category: document.getElementById('pen-type').value,
+
+
+
+
+
+
+
+
 
 
 
@@ -7163,7 +14320,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     source: document.getElementById('pen-source').value.trim(),
+
+
+
+
+
+
+
+
 
 
 
@@ -7179,7 +14352,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     personName: document.getElementById('pen-person-name').value.trim(),
+
+
+
+
+
+
+
+
 
 
 
@@ -7195,7 +14384,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     personType: document.getElementById('pen-type').value,
+
+
+
+
+
+
+
+
 
 
 
@@ -7211,7 +14416,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     penaltyManager: document.getElementById('pen-eco-manager').value.trim(),
+
+
+
+
+
+
+
+
 
 
 
@@ -7227,7 +14448,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     suggestion: document.getElementById('pen-suggestion').value.trim(),
+
+
+
+
+
+
+
+
 
 
 
@@ -7243,6 +14480,14 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     dutyPerson: '', dutyManager: '', dutyValue: '', dutyCoach: '',
 
 
@@ -7251,7 +14496,23 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
     status: '待补填'
+
+
+
+
+
+
+
+
 
 
 
@@ -7275,7 +14536,31 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   App.savePenalties(penalties);
+
+
+
+
+
+
+
+
 
 
 
@@ -7291,6 +14576,14 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
   Pages.penalty();
 
 
@@ -7299,7 +14592,31 @@ Pages.submitPenalty = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7323,6 +14640,14 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   const penalties = App.getPenalties();
 
 
@@ -7331,7 +14656,23 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   const p = penalties.find(x => x.id === id);
+
+
+
+
+
+
+
+
 
 
 
@@ -7355,7 +14696,31 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   let html = '<div class="modal-box">';
+
+
+
+
+
+
+
+
 
 
 
@@ -7371,7 +14736,23 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>门店：</b>' + p.store + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7387,7 +14768,23 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>事件：</b>' + p.event + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7403,7 +14800,23 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>类型：</b>' + p.category + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7419,7 +14832,23 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (p.survey) html += '<p><b>调查结果：</b>' + p.survey + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7443,7 +14872,31 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (p.status === '待补填') {
+
+
+
+
+
+
+
+
 
 
 
@@ -7459,7 +14912,23 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">责任人</label><input id="detail-duty-person" class="form-input" value="' + (p.dutyPerson || '') + '"></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7475,6 +14944,14 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<button class="btn btn-success btn-sm" style="margin-right:8px" onclick="Pages.closePenalty(\'' + id + '\')">标记已闭环</button>';
 
 
@@ -7483,7 +14960,31 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7507,7 +15008,31 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7531,7 +15056,23 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   modal.querySelector('.modal-box').outerHTML = html;
+
+
+
+
+
+
+
+
 
 
 
@@ -7547,7 +15088,31 @@ Pages.showPenaltyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7571,7 +15136,23 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   const penalties = App.getPenalties();
+
+
+
+
+
+
+
+
 
 
 
@@ -7587,7 +15168,23 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (p) {
+
+
+
+
+
+
+
+
 
 
 
@@ -7603,7 +15200,23 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     p.dutyPerson = document.getElementById('detail-duty-person').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -7619,7 +15232,23 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     App.savePenalties(penalties);
+
+
+
+
+
+
+
+
 
 
 
@@ -7635,7 +15264,23 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('已标记为闭环');
+
+
+
+
+
+
+
+
 
 
 
@@ -7651,6 +15296,14 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.penalty();
 
 
@@ -7659,7 +15312,31 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7683,21 +15360,51 @@ Pages.closePenalty = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 Pages._complaintMode = Pages._complaintMode || 'list';
+
+
+
+
 
 
 
 Pages._complaintSetTab = function(mode) {
 
+
+
   Pages._complaintMode = mode;
 
+
+
   Pages.complaint();
+
+
 
 };
 
 
 
+
+
+
+
 Pages.complaint = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -7713,7 +15420,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -7729,6 +15452,14 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   const stores = App.getStores();
 
 
@@ -7737,7 +15468,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   const complaints = App.getComplaints();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7769,7 +15524,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'complaint')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -7785,7 +15564,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     el.innerHTML = html;
+
+
+
+
+
+
+
+
 
 
 
@@ -7801,7 +15596,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7819,29 +15638,61 @@ Pages.complaint = function() {
 
   // 模块内子页签：差评列表 / 看板
 
+
+
   html += '<div class="sub-tabbar dcb-tabbar">';
+
+
 
   html += '<div class="sub-tab-item' + (Pages._complaintMode === 'board' ? '' : ' active') + '" onclick="Pages._complaintSetTab(\'list\')">差评列表</div>';
 
+
+
   html += '<div class="sub-tab-item' + (Pages._complaintMode === 'board' ? ' active' : '') + '" onclick="Pages._complaintSetTab(\'board\')">看板</div>';
+
+
 
   html += '</div>';
 
 
 
+
+
+
+
   if (Pages._complaintMode === 'board') {
+
+
 
     html += Pages._complaintBoardHtml();
 
+
+
     el.innerHTML = html;
 
+
+
     return;
+
+
 
   }
 
 
 
+
+
+
+
   // 表单（从看板跳转时不显示）
+
+
+
+
+
+
+
+
 
 
 
@@ -7857,7 +15708,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   // 表单
+
+
+
+
+
+
+
+
 
 
 
@@ -7881,7 +15748,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">门店</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7905,7 +15796,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">日期</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7929,7 +15844,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">餐段</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -7945,6 +15884,14 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   ['早餐', '午餐', '晚餐', '未知'].forEach(m => { html += '<option>' + m + '</option>'; });
 
 
@@ -7953,7 +15900,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</select></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7977,7 +15948,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<textarea id="comp-content" class="form-textarea" placeholder="门店调查结果摘要..."></textarea></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8001,7 +15996,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<input id="comp-opportunity" class="form-input" placeholder="如：口味标准化/服务培训"></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8025,6 +16044,14 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<select id="comp-platform" class="form-select">';
 
 
@@ -8033,7 +16060,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   ['点评', '公众号'].forEach(p => { html += '<option>' + p + '</option>'; });
+
+
+
+
+
+
+
+
 
 
 
@@ -8057,7 +16100,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">责任人</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8081,7 +16148,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary" onclick="Pages.submitComplaint()">提交</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8105,7 +16196,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -8121,7 +16236,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -8137,7 +16268,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   let listComplaints = complaints;
+
+
+
+
+
+
+
+
 
 
 
@@ -8153,7 +16300,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     listComplaints = complaints.filter(c => c.storeId === user.storeId);
+
+
+
+
+
+
+
+
 
 
 
@@ -8169,6 +16332,14 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     listComplaints = complaints.filter(c => stores.filter(s => s.region === user.area).some(s => s.id === c.storeId));
 
 
@@ -8177,7 +16348,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8201,7 +16396,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (listComplaints.length === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -8217,7 +16428,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -8233,7 +16460,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
       let tagClass = 'tag-pending';
+
+
+
+
+
+
+
+
 
 
 
@@ -8249,6 +16492,14 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
       else if (c.status === '已处理') tagClass = 'tag-done';
 
 
@@ -8257,7 +16508,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
       else if (c.status === '已申诉' && c.appealResult === '通过') tagClass = 'tag-done';
+
+
+
+
+
+
+
+
 
 
 
@@ -8281,7 +16548,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       html += '<div class="list-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')">';
+
+
+
+
+
+
+
+
 
 
 
@@ -8297,7 +16588,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-title">' + c.store + ' | ' + c.content.substring(0, 30) + '...</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8313,7 +16620,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8329,7 +16652,23 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -8353,7 +16692,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   el.innerHTML = html;
+
+
+
+
+
+
+
+
 
 
 
@@ -8369,7 +16732,31 @@ Pages.complaint = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8393,7 +16780,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   const storeId = App.getStoreSelectValue('comp-store');
+
+
+
+
+
+
+
+
 
 
 
@@ -8409,7 +16812,31 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   const complaints = App.getComplaints();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8433,7 +16860,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     id: 'c' + Date.now(),
+
+
+
+
+
+
+
+
 
 
 
@@ -8449,7 +16892,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     store: store ? store.name : '',
+
+
+
+
+
+
+
+
 
 
 
@@ -8465,7 +16924,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     meal: document.getElementById('comp-meal').value,
+
+
+
+
+
+
+
+
 
 
 
@@ -8481,7 +16956,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     opportunity: document.getElementById('comp-opportunity').value.trim(),
+
+
+
+
+
+
+
+
 
 
 
@@ -8497,7 +16988,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     responsible: document.getElementById('comp-responsible').value.trim(),
+
+
+
+
+
+
+
+
 
 
 
@@ -8513,7 +17020,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     dutyManager: store ? store.manager : '',
+
+
+
+
+
+
+
+
 
 
 
@@ -8529,6 +17052,14 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     appealContent: '',
 
 
@@ -8537,7 +17068,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
     appealResult: ''
+
+
+
+
+
+
+
+
 
 
 
@@ -8561,7 +17108,31 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   App.saveComplaints(complaints);
+
+
+
+
+
+
+
+
 
 
 
@@ -8577,7 +17148,23 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
   Pages.complaint();
+
+
+
+
+
+
+
+
 
 
 
@@ -8601,7 +17188,31 @@ Pages.submitComplaint = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.showComplaintDetail = function(id) {
+
+
+
+
+
+
+
+
 
 
 
@@ -8617,7 +17228,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   const c = complaints.find(x => x.id === id);
+
+
+
+
+
+
+
+
 
 
 
@@ -8641,7 +17268,31 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   let html = '<div class="modal-box">';
+
+
+
+
+
+
+
+
 
 
 
@@ -8657,7 +17308,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>门店：</b>' + c.store + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8673,7 +17340,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>平台：</b>' + c.platform + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8689,6 +17372,14 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>机会点：</b>' + c.opportunity + '</p>';
 
 
@@ -8697,7 +17388,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>责任人：</b>' + c.responsible + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8721,6 +17428,22 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (c.appealContent) html += '<p><b>申诉材料：</b>' + c.appealContent + '</p>';
 
 
@@ -8729,7 +17452,31 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (c.appealResult) html += '<p><b>审核结果：</b>' + c.appealResult + '</p>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8761,7 +17508,31 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   /* 待处理差评 → 店长填写责任人并生成处罚 */
+
+
+
+
+
+
+
+
 
 
 
@@ -8777,7 +17548,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<hr style="margin:12px 0;border-color:var(--border)">';
+
+
+
+
+
+
+
+
 
 
 
@@ -8793,7 +17580,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">责任人类型</label><select id="detail-duty-type" class="form-select"><option>店长</option><option>小时工</option><option>正式员工</option><option>管理者</option></select></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8809,7 +17612,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">经济处罚金额（元）</label><input id="detail-duty-amount" class="form-input" placeholder="如：200"></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8825,6 +17644,14 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<button class="btn btn-primary btn-sm" style="width:100%" onclick="Pages.resolveComplaint(\'' + id + '\')">确认责任人并生成处罚</button>';
 
 
@@ -8833,7 +17660,31 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8857,7 +17708,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (c.status === '待申诉' && (user.role === '店长' || user.role === '总部' || user.role === '客服' || user.role === '营运')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -8873,7 +17740,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="form-group"><label class="form-label">申诉内容</label><textarea id="detail-appeal" class="form-textarea" placeholder="申诉理由和材料..."></textarea></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8889,7 +17772,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
       html += '<button class="btn btn-primary btn-sm" onclick="Pages.submitAppeal(\'' + id + '\')">提交申诉</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8905,7 +17804,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
       html += '<button class="btn btn-success btn-sm" style="margin-right:8px" onclick="Pages.reviewAppeal(\'' + id + '\',\'通过\')">审核通过</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8921,7 +17836,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -8945,7 +17876,31 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -8969,7 +17924,31 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const modal = document.getElementById('modal-overlay');
+
+
+
+
+
+
+
+
 
 
 
@@ -8985,7 +17964,23 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   modal.classList.add('show');
+
+
+
+
+
+
+
+
 
 
 
@@ -9009,7 +18004,31 @@ Pages.showComplaintDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ---- 店长处理差评：填责任人并生成处罚 ---- */
+
+
+
+
+
+
+
+
 
 
 
@@ -9025,6 +18044,14 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var complaints = App.getComplaints();
 
 
@@ -9033,7 +18060,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var c = complaints.find(function(x) { return x.id === id; });
+
+
+
+
+
+
+
+
 
 
 
@@ -9057,7 +18100,31 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var dutyName = document.getElementById('detail-duty-name').value.trim();
+
+
+
+
+
+
+
+
 
 
 
@@ -9073,7 +18140,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var dutyLevel = document.getElementById('detail-duty-level').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -9089,7 +18172,31 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var dutySurvey = document.getElementById('detail-duty-survey').value.trim();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9121,7 +18228,31 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 更新差评状态
+
+
+
+
+
+
+
+
 
 
 
@@ -9137,6 +18268,14 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   c.responsibleTitle = dutyType;
 
 
@@ -9145,7 +18284,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   c.status = '已处理';
+
+
+
+
+
+
+
+
 
 
 
@@ -9169,7 +18324,31 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 自动生成处罚记录
+
+
+
+
+
+
+
+
 
 
 
@@ -9185,7 +18364,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var store = stores.find(function(s) { return s.id === c.storeId; }) || {};
+
+
+
+
+
+
+
+
 
 
 
@@ -9201,7 +18396,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   penalties.push({
+
+
+
+
+
+
+
+
 
 
 
@@ -9217,7 +18428,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     storeId: c.storeId,
+
+
+
+
+
+
+
+
 
 
 
@@ -9233,7 +18460,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     region: store.region || '',
+
+
+
+
+
+
+
+
 
 
 
@@ -9249,7 +18492,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     manager: store.manager || '',
+
+
+
+
+
+
+
+
 
 
 
@@ -9265,7 +18524,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     event: '差评：' + c.content.substring(0, 40),
+
+
+
+
+
+
+
+
 
 
 
@@ -9281,7 +18556,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     level: dutyLevel,
+
+
+
+
+
+
+
+
 
 
 
@@ -9297,7 +18588,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     inspector: App.currentUser.name,
+
+
+
+
+
+
+
+
 
 
 
@@ -9313,7 +18620,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     personLevel: dutyLevel,
+
+
+
+
+
+
+
+
 
 
 
@@ -9329,7 +18652,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     penaltyPerson: dutyAmount,
+
+
+
+
+
+
+
+
 
 
 
@@ -9345,7 +18684,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     survey: dutySurvey || '差评核查',
+
+
+
+
+
+
+
+
 
 
 
@@ -9361,7 +18716,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     policyRef: '差评处理流程',
+
+
+
+
+
+
+
+
 
 
 
@@ -9377,7 +18748,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     dutyManager: store.manager || '',
+
+
+
+
+
+
+
+
 
 
 
@@ -9393,7 +18780,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     dutyCoach: '',
+
+
+
+
+
+
+
+
 
 
 
@@ -9409,7 +18812,23 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -9433,7 +18852,31 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   App.toast('已生成处罚记录');
+
+
+
+
+
+
+
+
 
 
 
@@ -9449,6 +18892,14 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.complaint();
 
 
@@ -9457,7 +18908,31 @@ Pages.resolveComplaint = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9481,7 +18956,23 @@ Pages.submitAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   const complaints = App.getComplaints();
+
+
+
+
+
+
+
+
 
 
 
@@ -9497,7 +18988,23 @@ Pages.submitAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (c) {
+
+
+
+
+
+
+
+
 
 
 
@@ -9513,7 +19020,23 @@ Pages.submitAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     c.appealContent = document.getElementById('detail-appeal').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -9529,7 +19052,23 @@ Pages.submitAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -9545,7 +19084,23 @@ Pages.submitAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   document.getElementById('modal-overlay').classList.remove('show');
+
+
+
+
+
+
+
+
 
 
 
@@ -9561,7 +19116,31 @@ Pages.submitAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9585,7 +19164,23 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
   const complaints = App.getComplaints();
+
+
+
+
+
+
+
+
 
 
 
@@ -9601,7 +19196,23 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
   if (c) {
+
+
+
+
+
+
+
+
 
 
 
@@ -9617,7 +19228,23 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
     c.appealResult = result;
+
+
+
+
+
+
+
+
 
 
 
@@ -9633,7 +19260,23 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
     App.saveComplaints(complaints);
+
+
+
+
+
+
+
+
 
 
 
@@ -9649,7 +19292,23 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('审核' + result);
+
+
+
+
+
+
+
+
 
 
 
@@ -9665,6 +19324,14 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.complaint();
 
 
@@ -9673,7 +19340,31 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9697,7 +19388,31 @@ Pages.reviewAppeal = function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
 Pages.dashboardMode = Pages.dashboardMode || 'mtd';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9715,147 +19430,297 @@ Pages.dashboardMode = Pages.dashboardMode || 'mtd';
 
 Pages.dashboard = function() {
 
+
+
   const el = document.getElementById('page-dashboard');
+
+
 
   if (!el) return;
 
+
+
   const user = App.currentUser;
+
+
 
   if (!user) return;
 
+
+
   if (!App.Permissions.canAccess(user.role, 'dashboard')) {
+
+
 
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
 
+
+
     return;
 
+
+
   }
+
+
+
+
 
 
 
   var complaints = App.getComplaints() || [];
 
+
+
   var penalties = App.getPenalties() || [];
+
+
 
   var issues = App.getIssues() || [];
 
+
+
   var reports = App.getDailyReports() || [];
+
+
 
   var supplyIssues = App.getSupplyIssues() || [];
 
+
+
   var supplyTotal = supplyIssues.length;
+
+
 
   var supplyPending = supplyIssues.filter(function(r){ return r.status === '待处理'; }).length;
 
 
 
+
+
+
+
   var now = new Date();
+
+
 
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
+
+
   var monthComplaints = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
+
+
 
   var monthPenalties = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
 
+
+
   var pendingIssues = issues.filter(function(r){ return r.status === '待处理'; });
+
+
 
   var monthReports = reports.filter(function(r){ return (r.date || '').indexOf(curMonth) === 0; });
 
+
+
   var inspectors = {};
+
+
 
   monthReports.forEach(function(r){ if (r.inspector) inspectors[r.inspector] = 1; });
 
+
+
   var inspectorCount = Object.keys(inspectors).length;
 
+
+
   var monthAmount = 0;
+
+
 
   monthPenalties.forEach(function(p){ monthAmount += Pages._pAmount(p); });
 
 
 
+
+
+
+
   var html = '';
+
+
 
   html += '<div class="sub-tabbar dcb-tabbar">';
 
+
+
   html += '<div class="sub-tab-item active" onclick="Pages._gotoBoardTab(\'dashboard\')">看板中心</div>';
+
+
 
   html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'inspectionWorkbench\')">稽核看板</div>';
 
+
+
   html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'complaintBoard\')">差评看板</div>';
+
+
 
   html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'daily\')">日报看板</div>';
 
+
+
   html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'penaltyBoard\')">处罚看板</div>';
 
+
+
   html += '<div class="sub-tab-item" onclick="Pages._gotoBoardTab(\'supplyChain\')">供应链看板</div>';
+
+
 
   html += '</div>';
 
 
 
+
+
+
+
   html += '<div class="dcb-wrap">';
+
+
 
   html += '<div class="dcb-head"><div class="dcb-title">看板中心</div><div class="dcb-date">' + curMonth + ' · 数据实时更新</div></div>';
 
+
+
   html += '<div class="dcb-grid">';
+
+
 
   html += Pages._dcCard('inspectionWorkbench', '稽核待整改', pendingIssues.length, '项', '#e0342c', 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z', '待处理工单');
 
+
+
   html += Pages._dcCard('complaintBoard', '差评', monthComplaints.length, '条', '#f59e0b', 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', '本月差评');
+
+
 
   html += Pages._dcCard('daily', '日报', monthReports.length, '篇', '#3b82f6', 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z', inspectorCount + ' 位稽核员');
 
+
+
   html += Pages._dcCard('penaltyBoard', '处罚', monthPenalties.length, '笔 · ¥' + monthAmount.toLocaleString(), '#8b5cf6', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', '本月处罚');
 
+
+
   html += Pages._dcCard('supplyChain', '供应链', supplyTotal, '项', '#0ea5e9', 'M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H6a2 2 0 0 0-2 2z', supplyPending + ' 待处理');
+
+
 
   html += '</div></div>';
 
 
 
+
+
+
+
   el.innerHTML = html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._gotoBoardTab = function(id) {
 
+
+
   if (id === 'daily') {
+
+
 
     Pages._dailyMode = 'board';
 
+
+
     location.hash = '#daily';
+
+
 
     return;
 
+
+
   }
+
+
 
   if (id === 'supplyChain') {
 
+
+
     Pages._supplyState.tab = 'board';
+
+
 
     location.hash = '#supplyChain';
 
+
+
     return;
+
+
 
   }
 
+
+
   location.hash = '#' + id;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._dcCard = function(id, title, value, unit, color, iconPath, sub) {
 
+
+
   return '<div class="dcb-card" onclick="Pages._gotoBoardTab(\'' + id + '\')" style="--dc:' + color + '"><div class="dcb-card-top"><div class="dcb-card-icon" style="background:' + color + '1a;color:' + color + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="dcb-card-go" style="color:' + color + '">&#8250;</div></div><div class="dcb-card-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div><div class="dcb-card-title">' + title + '</div><div class="dcb-card-sub">' + sub + '</div></div>';
+
+
 
 };
 
 
 
+
+
+
+
 Pages.switchDashboard = function(mode) {
+
+
+
+
+
+
+
+
 
 
 
@@ -9871,6 +19736,14 @@ Pages.switchDashboard = function(mode) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.dashboard();
 
 
@@ -9879,7 +19752,31 @@ Pages.switchDashboard = function(mode) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9903,6 +19800,14 @@ function dbKpiCard(title, value, unit, color, iconPath, onclick) {
 
 
 
+
+
+
+
+
+
+
+
   return '<div class="db-kpi-card' + (onclick ? ' db-kpi-card-link' : '') + '"' + (onclick ? ' onclick="' + onclick + '"' : '') + '><div class="db-kpi-icon" style="background:' + color + '20;color:' + color + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="db-kpi-body"><div class="db-kpi-title">' + title + (onclick ? ' <span style="font-size:9px;opacity:0.5">›</span>' : '') + '</div><div class="db-kpi-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div></div></div>';
 
 
@@ -9911,7 +19816,31 @@ function dbKpiCard(title, value, unit, color, iconPath, onclick) {
 
 
 
+
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9935,7 +19864,23 @@ function dbKpiCard(title, value, unit, color, iconPath, onclick) {
 
 
 
+
+
+
+
+
+
+
+
 function showClosureDetail(mode) {
+
+
+
+
+
+
+
+
 
 
 
@@ -9951,7 +19896,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   var allPenalties = App.getPenalties();
+
+
+
+
+
+
+
+
 
 
 
@@ -9967,6 +19928,14 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   var closed = penalties.filter(function(p) { return p.status === '已闭环'; });
 
 
@@ -9975,7 +19944,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   var overdue = penalties.filter(function(p) { return p.status === '超时'; });
+
+
+
+
+
+
+
+
 
 
 
@@ -9999,6 +19984,22 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '<div class="closure-overlay" onclick="this.remove()"><div class="closure-modal" onclick="event.stopPropagation()">';
 
 
@@ -10007,7 +20008,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="closure-close" onclick="this.parentElement.parentElement.remove()">&times;</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10031,7 +20048,31 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   function section(color, label, items) {
+
+
+
+
+
+
+
+
 
 
 
@@ -10047,7 +20088,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
     if (!items.length) { s += '<div class="closure-empty">暂无</div>'; }
+
+
+
+
+
+
+
+
 
 
 
@@ -10063,7 +20120,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
       items.forEach(function(p) {
+
+
+
+
+
+
+
+
 
 
 
@@ -10079,7 +20152,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
       });
+
+
+
+
+
+
+
+
 
 
 
@@ -10095,7 +20184,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
     s += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10111,7 +20216,31 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10135,6 +20264,14 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   html += section('#ef4444', '超时', overdue);
 
 
@@ -10143,7 +20280,23 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   html += section('#f59e0b', '待补填', pending);
+
+
+
+
+
+
+
+
 
 
 
@@ -10167,7 +20320,31 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var div = document.createElement('div');
+
+
+
+
+
+
+
+
 
 
 
@@ -10183,6 +20360,14 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
   document.body.appendChild(div.firstElementChild);
 
 
@@ -10191,7 +20376,31 @@ function showClosureDetail(mode) {
 
 
 
+
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10215,7 +20424,23 @@ function closeModalAndGo(hash) {
 
 
 
+
+
+
+
+
+
+
+
   var overlay = document.querySelector('.closure-overlay');
+
+
+
+
+
+
+
+
 
 
 
@@ -10231,7 +20456,23 @@ function closeModalAndGo(hash) {
 
 
 
+
+
+
+
+
+
+
+
   location.hash = hash;
+
+
+
+
+
+
+
+
 
 
 
@@ -10255,7 +20496,31 @@ function closeModalAndGo(hash) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ==================== 通知模板 ==================== */
+
+
+
+
+
+
+
+
 
 
 
@@ -10271,6 +20536,14 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   var container = document.getElementById('page-template');
 
 
@@ -10279,7 +20552,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   var templates = App.dataCache.notices || [];
+
+
+
+
+
+
+
+
 
 
 
@@ -10303,7 +20592,31 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 头部统计
+
+
+
+
+
+
+
+
 
 
 
@@ -10319,6 +20632,14 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="stat-item"><span class="stat-num">' + templates.length + '</span><span class="stat-label">模板总数</span></div>';
 
 
@@ -10327,7 +20648,31 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10351,7 +20696,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="action-bar">';
+
+
+
+
+
+
+
+
 
 
 
@@ -10367,7 +20728,31 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10391,7 +20776,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (templates.length === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -10407,7 +20808,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -10423,7 +20840,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
     templates.forEach(function(t, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -10439,7 +20872,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       var typeColor = t.type === 'penalty' ? '#ef4444' : t.type === 'inspect' ? '#3b82f6' : t.type === 'complaint' ? '#f59e0b' : '#6b7280';
+
+
+
+
+
+
+
+
 
 
 
@@ -10455,7 +20904,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="template-head">';
+
+
+
+
+
+
+
+
 
 
 
@@ -10471,6 +20936,14 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<span class="template-type" style="background:' + typeColor + '">' + typeLabel + '</span>';
 
 
@@ -10479,7 +20952,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10495,7 +20984,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="template-actions">';
+
+
+
+
+
+
+
+
 
 
 
@@ -10511,6 +21016,14 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<button class="btn btn-sm btn-danger" onclick="Pages._templateDelete(' + i + ')">删除</button>';
 
 
@@ -10519,6 +21032,14 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
 
 
@@ -10527,7 +21048,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10543,7 +21080,23 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10567,7 +21120,31 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10583,7 +21160,31 @@ Pages.template = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10607,7 +21208,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var templates = App.dataCache.notices || [];
+
+
+
+
+
+
+
+
 
 
 
@@ -10623,7 +21240,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var isEdit = !!t;
+
+
+
+
+
+
+
+
 
 
 
@@ -10647,6 +21280,22 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
 
 
@@ -10655,7 +21304,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10679,6 +21344,22 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 模板名称
 
 
@@ -10687,7 +21368,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label>模板名称</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10711,7 +21408,31 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 类型选择
+
+
+
+
+
+
+
+
 
 
 
@@ -10727,7 +21448,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<select id="tpl-type" class="form-input">';
+
+
+
+
+
+
+
+
 
 
 
@@ -10743,7 +21480,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
     { v: 'penalty', l: '处罚通知' },
+
+
+
+
+
+
+
+
 
 
 
@@ -10759,7 +21512,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
     { v: 'complaint', l: '申诉通知' },
+
+
+
+
+
+
+
+
 
 
 
@@ -10775,7 +21544,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   ];
+
+
+
+
+
+
+
+
 
 
 
@@ -10791,7 +21576,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
     var sel = (t && t.type === ty.v) ? ' selected' : '';
+
+
+
+
+
+
+
+
 
 
 
@@ -10807,7 +21608,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -10831,6 +21648,22 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 模板内容
 
 
@@ -10839,7 +21672,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label>模板内容 <span class="hint">可用变量：{门店名称} {日期} {检查人} {扣分项} {处罚金额} {申诉内容}</span></label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10863,7 +21712,31 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 预览
+
+
+
+
+
+
+
+
 
 
 
@@ -10879,7 +21752,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="var-hints">';
+
+
+
+
+
+
+
+
 
 
 
@@ -10895,7 +21784,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<code>{处罚金额}</code><code>{申诉内容}</code><code>{检查得分}</code><code>{整改期限}</code>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10919,7 +21824,31 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10935,7 +21864,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -10951,6 +21896,14 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
 
 
@@ -10959,7 +21912,31 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div></div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10983,7 +21960,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   div.innerHTML = html;
+
+
+
+
+
+
+
+
 
 
 
@@ -10999,7 +21992,23 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   document.body.appendChild(overlay);
+
+
+
+
+
+
+
+
 
 
 
@@ -11015,6 +22024,14 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   overlay.classList.add('show');
 
 
@@ -11023,7 +22040,31 @@ Pages._templateForm = function(index) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11047,6 +22088,14 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var name = (document.getElementById('tpl-name') || {}).value || '';
 
 
@@ -11055,7 +22104,23 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var type = (document.getElementById('tpl-type') || {}).value || 'general';
+
+
+
+
+
+
+
+
 
 
 
@@ -11079,7 +22144,31 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!name.trim()) return App.toast('请输入模板名称');
+
+
+
+
+
+
+
+
 
 
 
@@ -11103,7 +22192,31 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var templates = App.dataCache.notices || [];
+
+
+
+
+
+
+
+
 
 
 
@@ -11127,7 +22240,31 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (index >= 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -11143,6 +22280,14 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   } else {
 
 
@@ -11151,7 +22296,23 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
     templates.push(tpl);
+
+
+
+
+
+
+
+
 
 
 
@@ -11175,6 +22336,22 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   App.dataCache.notices = templates;
 
 
@@ -11183,7 +22360,23 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   localStorage.setItem('nanchengxiang_notices', JSON.stringify(templates));
+
+
+
+
+
+
+
+
 
 
 
@@ -11207,7 +22400,31 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var overlay = document.querySelector('.modal-overlay');
+
+
+
+
+
+
+
+
 
 
 
@@ -11223,6 +22440,14 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.template();
 
 
@@ -11231,7 +22456,31 @@ Pages._templateSave = function(index) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11255,7 +22504,23 @@ Pages._templateDelete = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   if (!confirm('确定删除该模板？')) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -11271,7 +22536,23 @@ Pages._templateDelete = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   templates.splice(index, 1);
+
+
+
+
+
+
+
+
 
 
 
@@ -11287,7 +22568,23 @@ Pages._templateDelete = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   localStorage.setItem('nanchengxiang_notices', JSON.stringify(templates));
+
+
+
+
+
+
+
+
 
 
 
@@ -11303,6 +22600,14 @@ Pages._templateDelete = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.template();
 
 
@@ -11311,7 +22616,31 @@ Pages._templateDelete = function(index) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11335,147 +22664,303 @@ Pages._templateDelete = function(index) {
 
 
 
+
+
+
+
+
+
+
+
 Pages._taskMode = Pages._taskMode || 'list';
+
+
+
+
 
 
 
 Pages._taskSetTab = function(mode) {
 
+
+
   Pages._taskMode = mode;
+
+
 
   Pages.task();
 
+
+
 };
+
+
+
+
 
 
 
 Pages.task = function() {
 
+
+
   var el = document.getElementById('page-task');
+
+
 
   if (!el) return;
 
+
+
   var user = App.currentUser;
+
+
 
   if (!user) return;
 
+
+
   if (!App.Permissions.canAccess(user.role, 'task')) {
+
+
 
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
 
+
+
     return;
+
+
 
   }
 
 
 
+
+
+
+
   var tasks = App.getTasks() || [];
+
+
 
   tasks.sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); });
 
 
 
+
+
+
+
   var html = '';
+
+
 
   html += '<div class="sub-tabbar dcb-tabbar">';
 
+
+
   html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? '' : ' active') + '" onclick="Pages._taskSetTab(\'list\')">任务列表</div>';
+
+
 
   html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? ' active' : '') + '" onclick="Pages._taskSetTab(\'board\')">看板</div>';
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   if (Pages._taskMode === 'board') {
 
+
+
     html += Pages._taskBoardHtml();
+
+
 
     el.innerHTML = html;
 
+
+
     return;
 
+
+
   }
+
+
 
   html += '<div class="task-total">共 ' + tasks.length + ' 项任务 · ' + tasks.filter(function(t){ return t.status === '进行中'; }).length + ' 项进行中</div>';
 
 
 
+
+
+
+
   tasks.forEach(function(t) {
+
+
 
     var tagCls = t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue');
 
+
+
     var tagText = t.status === '进行中' ? '进行中' : t.status;
+
+
 
     html += '<div class="list-item" onclick="Pages.showTaskDetail(\'' + t.id + '\')">';
 
+
+
     html += '<div class="list-item-top"><span class="task-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="tag ' + tagCls + '">' + tagText + '</span></div>';
+
+
 
     html += '<div class="task-sub">负责人：' + t.person + ' ｜ 截止：' + t.dueDate + (t.priority === '高' ? ' ｜ <span style="color:#e0342c">高优先级</span>' : '') + '</div>';
 
+
+
     html += '</div>';
+
+
 
   });
 
 
 
+
+
+
+
   if (tasks.length === 0) {
 
+
+
     html += '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无任务</div></div>';
+
+
 
   }
 
 
 
+
+
+
+
   el.innerHTML = html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages.showTaskDetail = function(id) {
 
+
+
   var tasks = App.getTasks() || [];
+
+
 
   var t = tasks.find(function(x){ return x.id === id; });
 
+
+
   if (!t) return;
+
+
 
   var html = '<div class="modal-box">';
 
+
+
   html += '<div class="modal-title">任务详情</div>';
+
+
 
   html += '<p><b>任务：</b>' + t.title + '</p>';
 
+
+
   if (t.store) html += '<p><b>门店：</b>' + t.store + '</p>';
+
+
 
   html += '<p><b>负责人：</b>' + t.person + '</p>';
 
+
+
   html += '<p><b>状态：</b><span class="tag ' + (t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue')) + '">' + t.status + '</span></p>';
+
+
 
   html += '<p><b>截止日期：</b>' + t.dueDate + '</p>';
 
+
+
   html += '<p><b>优先级：</b>' + t.priority + '</p>';
+
+
 
   html += '<p><b>来源：</b>' + (t.source || '-') + '</p>';
 
+
+
   html += '<button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button>';
+
+
 
   html += '</div>';
 
+
+
   var modal = document.getElementById('modal-overlay');
+
+
 
   modal.querySelector('.modal-box').outerHTML = html;
 
+
+
   modal.classList.add('show');
 
+
+
 };
+
+
+
+
+
+
 
 
 
 
 
 /* ==================== 稽核员日报 ==================== */
+
+
+
+
+
+
+
+
 
 
 
@@ -11499,7 +22984,31 @@ Pages._dailyMode = 'fill'; // 'fill' | 'board'
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.daily = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -11515,7 +23024,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -11531,7 +23056,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   var stores = App.getStores();
+
+
+
+
+
+
+
+
 
 
 
@@ -11547,7 +23088,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   var mode = Pages._dailyMode;
+
+
+
+
+
+
+
+
 
 
 
@@ -11563,7 +23120,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   var today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11595,7 +23176,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'daily')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -11611,7 +23216,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     el.innerHTML = html;
+
+
+
+
+
+
+
+
 
 
 
@@ -11627,7 +23248,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -11651,7 +23288,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 模式切换
+
+
+
+
+
+
+
+
 
 
 
@@ -11667,7 +23328,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="daily-mode-btn' + (mode==='fill'?' active':'') + '" onclick="Pages._switchDaily(\'fill\')">填写日报</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -11683,7 +23360,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11707,6 +23408,14 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     // ===== 填写日报 =====
 
 
@@ -11715,7 +23424,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="card">';
+
+
+
+
+
+
+
+
 
 
 
@@ -11739,7 +23464,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="daily-meta">';
+
+
+
+
+
+
+
+
 
 
 
@@ -11755,6 +23504,14 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<span>日期：<b>' + today + '</b></span>';
 
 
@@ -11763,7 +23520,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11787,7 +23568,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="daily-type-radios">';
+
+
+
+
+
+
+
+
 
 
 
@@ -11803,7 +23600,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<label class="radio-label"><input type="radio" name="daily-type" value="offline" onchange="Pages._dailyTypeChange()"> 线下稽核</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -11827,7 +23640,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div id="daily-items-container">';
+
+
+
+
+
+
+
+
 
 
 
@@ -11843,7 +23680,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11867,6 +23728,14 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<button class="btn btn-primary" style="margin-top:12px" onclick="Pages.submitDaily()">提交日报</button>';
 
 
@@ -11875,7 +23744,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -11899,7 +23792,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     var userReports = reports.filter(function(r) { return r.inspector === user.name; }).reverse();
+
+
+
+
+
+
+
+
 
 
 
@@ -11915,7 +23824,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (userReports.length === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -11931,7 +23856,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -11947,7 +23888,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
         var typeLabel = r.type === 'online' ? '线上' : '线下';
+
+
+
+
+
+
+
+
 
 
 
@@ -11963,7 +23920,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<div class="li-main">';
+
+
+
+
+
+
+
+
 
 
 
@@ -11979,7 +23952,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<div class="li-sub">稽核员：' + r.inspector + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -11995,7 +23984,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<div id="daily-detail-' + r.id + '" class="daily-detail" style="display:none">';
+
+
+
+
+
+
+
+
 
 
 
@@ -12011,7 +24016,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
           html += '<div class="daily-detail-row"><span class="ddr-store">' + item.store + '</span><span class="ddr-score">' + item.score + '分</span><span class="ddr-findings">' + (item.findings||'无') + '</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -12027,7 +24048,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -12043,7 +24080,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -12067,7 +24120,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -12083,7 +24160,23 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
     var workRecords = App.getWorkRecords();
+
+
+
+
+
+
+
+
 
 
 
@@ -12099,7 +24192,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -12123,6 +24240,14 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.initStoreSelect('daily-store-1', App.getStores());
 
 
@@ -12131,7 +24256,31 @@ Pages.daily = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -12155,7 +24304,23 @@ Pages._switchDaily = function(mode) {
 
 
 
+
+
+
+
+
+
+
+
   Pages._dailyMode = mode;
+
+
+
+
+
+
+
+
 
 
 
@@ -12171,7 +24336,31 @@ Pages._switchDaily = function(mode) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -12189,387 +24378,777 @@ Pages._switchDaily = function(mode) {
 
 Pages._preprocessImage = function(file) {
 
+
+
   return new Promise(function(resolve, reject) {
+
+
 
     var url = URL.createObjectURL(file);
 
+
+
     var img = new Image();
+
+
 
     img.onload = function() {
 
+
+
       var maxSide = 2000;
+
+
 
       var scale = Math.min(1, maxSide / Math.max(img.width, img.height));
 
+
+
       var w = Math.round(img.width * scale);
+
+
 
       var h = Math.round(img.height * scale);
 
+
+
       var canvas = document.createElement('canvas');
+
+
 
       canvas.width = w;
 
+
+
       canvas.height = h;
+
+
 
       var ctx = canvas.getContext('2d');
 
+
+
       ctx.drawImage(img, 0, 0, w, h);
+
+
 
       var imageData = ctx.getImageData(0, 0, w, h);
 
+
+
       var d = imageData.data;
+
+
 
       for (var i = 0; i < d.length; i += 4) {
 
+
+
         var gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+
+
 
         gray = (gray - 128) * 1.3 + 128;
 
+
+
         if (gray < 0) gray = 0;
+
+
 
         else if (gray > 255) gray = 255;
 
+
+
         d[i] = gray;
+
+
 
         d[i+1] = gray;
 
+
+
         d[i+2] = gray;
+
+
 
       }
 
+
+
       ctx.putImageData(imageData, 0, 0);
 
+
+
       URL.revokeObjectURL(url);
+
+
 
       resolve(canvas);
 
+
+
     };
+
+
 
     img.onerror = function() {
 
+
+
       URL.revokeObjectURL(url);
+
+
 
       reject(new Error('图片读取失败'));
 
+
+
     };
+
+
 
     img.src = url;
 
+
+
   });
 
+
+
 };
+
+
+
+
 
 
 
 Pages._cleanOCRText = function(text) {
 
+
+
   if (!text) return '';
+
+
 
   return text.split('\n').map(function(line) { return line.trim(); }).filter(function(line) { return line.length > 0; }).join('\n');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._setDailyAIBusy = function(index, busy) {
 
+
+
   var row = document.getElementById('daily-row-' + index);
+
+
 
   if (!row) return;
 
+
+
   var btns = row.querySelectorAll('.daily-ai-btn');
+
+
 
   for (var i = 0; i < btns.length; i++) {
 
+
+
     if (busy) {
+
+
 
       btns[i].classList.add('daily-ai-btn-disabled');
 
+
+
       btns[i].setAttribute('disabled', 'disabled');
+
+
 
     } else {
 
+
+
       btns[i].classList.remove('daily-ai-btn-disabled');
+
+
 
       btns[i].removeAttribute('disabled');
 
+
+
     }
+
+
 
   }
 
+
+
 };
+
+
+
+
 
 
 
 Pages._dailyOCR = function(index) {
 
+
+
   var input = document.getElementById('daily-findings-' + index);
+
+
 
   if (!input) return;
 
+
+
   var fileInput = document.createElement('input');
+
+
 
   fileInput.type = 'file';
 
+
+
   fileInput.accept = 'image/*';
+
+
 
   fileInput.capture = 'environment';
 
+
+
   fileInput.style.display = 'none';
+
+
 
   document.body.appendChild(fileInput);
 
+
+
   fileInput.onchange = function() {
+
+
 
     var file = fileInput.files[0];
 
+
+
     if (!file) { fileInput.remove(); return; }
+
+
 
     App.toast('识别中，请确保图片正对文字、光线充足');
 
+
+
     Pages._setDailyAIBusy(index, true);
+
+
 
     Pages._loadTesseract(function() {
 
+
+
       if (typeof Tesseract === 'undefined') {
+
+
 
         App.toast('OCR 引擎加载失败，请检查网络后重试');
 
+
+
         Pages._setDailyAIBusy(index, false);
 
+
+
         fileInput.remove();
+
+
 
         return;
 
+
+
       }
+
+
 
       Pages._preprocessImage(file).then(function(canvas) {
 
+
+
         return Tesseract.createWorker('chi_sim', 1, { logger: function() {} }).then(function(worker) {
+
+
 
           return worker.setParameters({ tessedit_pageseg_mode: '6' }).then(function() {
 
+
+
             return worker.recognize(canvas).then(function(res) {
+
+
 
               return worker.terminate().then(function() {
 
+
+
                 return res;
+
+
 
               });
 
+
+
             });
+
+
 
           });
 
+
+
         });
+
+
 
       }).then(function(res) {
 
+
+
         var text = Pages._cleanOCRText(res && res.data && res.data.text || '');
+
+
 
         if (text) {
 
+
+
           input.value = input.value ? input.value + '\n' + text : text;
+
+
 
           App.toast('已识别 ' + text.length + ' 字');
 
+
+
         } else {
+
+
 
           App.toast('未识别到文字，请重拍');
 
+
+
         }
+
+
 
         Pages._setDailyAIBusy(index, false);
 
+
+
         fileInput.remove();
+
+
 
       }).catch(function(err) {
 
+
+
         App.toast('OCR 识别失败：' + (err && err.message ? err.message : '未知错误'));
+
+
 
         Pages._setDailyAIBusy(index, false);
 
+
+
         fileInput.remove();
+
+
 
       });
 
+
+
     });
+
+
 
   };
 
+
+
   fileInput.click();
 
+
+
 };
+
+
+
+
 
 
 
 Pages._loadTesseract = function(cb) {
 
+
+
   if (typeof Tesseract !== 'undefined') { cb(); return; }
+
+
 
   var s = document.createElement('script');
 
+
+
   s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+
+
 
   s.onload = function() { cb(); };
 
+
+
   s.onerror = function() { cb(); };
+
+
 
   document.head.appendChild(s);
 
+
+
 };
+
+
+
+
 
 
 
 Pages._dailyVoice = function(index) {
 
+
+
   var input = document.getElementById('daily-findings-' + index);
+
+
 
   if (!input) return;
 
+
+
   var ua = navigator.userAgent || '';
+
+
 
   var isWeChat = /MicroMessenger/i.test(ua);
 
+
+
   var isFirefox = /Firefox/i.test(ua);
+
+
 
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+
+
   if (!SR) {
+
+
 
     if (isWeChat || isFirefox) {
 
+
+
       App.toast('当前浏览器不支持语音输入，请点击右上角···在浏览器中打开后使用');
 
+
+
     } else {
+
+
 
       App.toast('当前浏览器不支持语音输入，请使用 Chrome 或 Safari 16+');
 
+
+
     }
+
+
 
     return;
 
+
+
   }
+
+
 
   var rec;
 
+
+
   try {
+
+
 
     rec = new SR();
 
+
+
   } catch (e) {
+
+
 
     App.toast('语音识别初始化失败：' + (e && e.message ? e.message : '未知错误'));
 
+
+
     return;
 
+
+
   }
+
+
 
   rec.lang = 'zh-CN';
 
+
+
   rec.interimResults = false;
+
+
 
   rec.maxAlternatives = 1;
 
+
+
   Pages._setDailyAIBusy(index, true);
+
+
 
   var voiceBtn = document.getElementById('daily-voice-' + index);
 
+
+
   if (voiceBtn) voiceBtn.classList.add('daily-voice-active');
+
+
 
   var stopped = false;
 
+
+
   var timer = setTimeout(function() {
+
+
 
     try { rec.stop(); } catch (e) {}
 
+
+
   }, 15000);
+
+
 
   function finish() {
 
+
+
     if (stopped) return;
+
+
 
     stopped = true;
 
+
+
     clearTimeout(timer);
+
+
 
     Pages._setDailyAIBusy(index, false);
 
+
+
     var vb = document.getElementById('daily-voice-' + index);
+
+
 
     if (vb) vb.classList.remove('daily-voice-active');
 
+
+
   }
+
+
 
   App.toast('请开始说话...');
 
+
+
   rec.onresult = function(e) {
+
+
 
     var text = '';
 
+
+
     for (var i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+
+
 
     text = (text || '').trim();
 
+
+
     if (text) {
+
+
 
       input.value = input.value ? input.value + '\n' + text : text;
 
+
+
       App.toast('已输入语音内容');
 
+
+
     } else {
+
+
 
       App.toast('未识别到语音');
 
+
+
     }
 
+
+
   };
+
+
 
   rec.onerror = function(e) {
 
+
+
     var err = e && e.error ? e.error : '';
+
+
 
     if (err === 'not-allowed' || err === 'service-not-allowed') {
 
+
+
       App.toast('请开启麦克风权限后再试');
+
+
 
     } else if (err === 'network') {
 
+
+
       App.toast('语音服务不可达，建议使用 Chrome 或 Safari 16+ 并保持网络畅通');
+
+
 
     } else {
 
+
+
       App.toast('语音识别失败：' + err);
+
+
 
     }
 
+
+
   };
+
+
 
   rec.onend = function() {
 
+
+
     finish();
+
+
 
     App.toast('识别结束');
 
+
+
   };
+
+
 
   try {
 
+
+
     rec.start();
+
+
 
   } catch (e) {
 
+
+
     finish();
+
+
 
     App.toast('语音启动失败：' + (e && e.message ? e.message : '未知错误'));
 
+
+
   }
+
+
 
 };
 
 
 
+
+
+
+
 Pages._dailyRow = function(index) {
+
+
+
+
+
+
+
+
 
 
 
@@ -12585,7 +25164,23 @@ Pages._dailyRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var html = '<div class="daily-row" id="daily-row-' + index + '">';
+
+
+
+
+
+
+
+
 
 
 
@@ -12601,7 +25196,23 @@ Pages._dailyRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<input type="number" class="form-input daily-score" id="daily-score-' + index + '" placeholder="得分" min="0" max="100">';
+
+
+
+
+
+
+
+
 
 
 
@@ -12611,13 +25222,29 @@ Pages._dailyRow = function(index) {
 
   html += '<input type="text" class="form-input daily-findings" id="daily-findings-' + index + '" placeholder="发现问题">';
 
+
+
   html += '<div class="daily-ai-btns">';
+
+
 
   html += '<button type="button" class="daily-ai-btn" id="daily-ocr-' + index + '" onclick="Pages._dailyOCR(' + index + ')">\u{1F4F7} 拍照识别</button>';
 
+
+
   html += '<button type="button" class="daily-ai-btn" id="daily-voice-' + index + '" onclick="Pages._dailyVoice(' + index + ')">\u{1F3A4} 语音输入</button>';
 
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -12633,7 +25260,23 @@ Pages._dailyRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<button class="daily-del-btn" onclick="Pages._dailyRemoveRow(' + index + ')">&#10005;</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -12649,7 +25292,23 @@ Pages._dailyRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -12665,7 +25324,31 @@ Pages._dailyRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -12689,7 +25372,23 @@ Pages._dailyTypeChange = function() {
 
 
 
+
+
+
+
+
+
+
+
   var type = document.querySelector('input[name="daily-type"]:checked').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -12705,7 +25404,23 @@ Pages._dailyTypeChange = function() {
 
 
 
+
+
+
+
+
+
+
+
   var currentRows = document.querySelectorAll('.daily-row').length;
+
+
+
+
+
+
+
+
 
 
 
@@ -12721,6 +25436,14 @@ Pages._dailyTypeChange = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (btn) btn.disabled = currentRows >= max;
 
 
@@ -12729,7 +25452,31 @@ Pages._dailyTypeChange = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -12753,7 +25500,23 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
   var type = document.querySelector('input[name="daily-type"]:checked').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -12769,7 +25532,23 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
   var rows = document.querySelectorAll('.daily-row');
+
+
+
+
+
+
+
+
 
 
 
@@ -12785,7 +25564,23 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
   var nextIndex = rows.length + 1;
+
+
+
+
+
+
+
+
 
 
 
@@ -12801,7 +25596,23 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
   var container = document.getElementById('daily-items-container');
+
+
+
+
+
+
+
+
 
 
 
@@ -12817,7 +25628,23 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
   div.innerHTML = html;
+
+
+
+
+
+
+
+
 
 
 
@@ -12833,7 +25660,23 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.initStoreSelect('daily-store-' + nextIndex, App.getStores());
+
+
+
+
+
+
+
+
 
 
 
@@ -12849,7 +25692,23 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
     document.getElementById('daily-add-btn').disabled = true;
+
+
+
+
+
+
+
+
 
 
 
@@ -12865,7 +25724,31 @@ Pages._dailyAddRow = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -12889,7 +25772,23 @@ Pages._dailyRemoveRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var row = document.getElementById('daily-row-' + index);
+
+
+
+
+
+
+
+
 
 
 
@@ -12905,7 +25804,23 @@ Pages._dailyRemoveRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var type = document.querySelector('input[name="daily-type"]:checked').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -12921,7 +25836,23 @@ Pages._dailyRemoveRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var currentRows = document.querySelectorAll('.daily-row').length;
+
+
+
+
+
+
+
+
 
 
 
@@ -12937,7 +25868,23 @@ Pages._dailyRemoveRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   if (btn) btn.disabled = currentRows >= max;
+
+
+
+
+
+
+
+
 
 
 
@@ -12961,7 +25908,31 @@ Pages._dailyRemoveRow = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.submitDaily = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -12977,7 +25948,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
   var typeEl = document.querySelector('input[name="daily-type"]:checked');
+
+
+
+
+
+
+
+
 
 
 
@@ -12993,7 +25980,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
   var now = new Date();
+
+
+
+
+
+
+
+
 
 
 
@@ -13017,7 +26020,31 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var items = [];
+
+
+
+
+
+
+
+
 
 
 
@@ -13033,7 +26060,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
   for (var i = 0; i < rows.length; i++) {
+
+
+
+
+
+
+
+
 
 
 
@@ -13049,7 +26092,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     var storeId = App.getStoreSelectValue('daily-store-' + idx);
+
+
+
+
+
+
+
+
 
 
 
@@ -13065,7 +26124,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     var store = storeData ? storeData.name : '';
+
+
+
+
+
+
+
+
 
 
 
@@ -13081,7 +26156,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     var findingsEl = document.getElementById('daily-findings-' + idx);
+
+
+
+
+
+
+
+
 
 
 
@@ -13097,7 +26188,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     var findings = findingsEl ? findingsEl.value.trim() : '';
+
+
+
+
+
+
+
+
 
 
 
@@ -13113,7 +26220,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (isNaN(score) || score < 0 || score > 100) { App.toast('第' + idx + '行得分需在0-100之间'); return; }
+
+
+
+
+
+
+
+
 
 
 
@@ -13129,7 +26252,31 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13161,7 +26308,31 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var reports = App.getDailyReports();
+
+
+
+
+
+
+
+
 
 
 
@@ -13177,7 +26348,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     id: 'dr' + Date.now(),
+
+
+
+
+
+
+
+
 
 
 
@@ -13193,7 +26380,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     date: date,
+
+
+
+
+
+
+
+
 
 
 
@@ -13209,6 +26412,14 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
     items: items
 
 
@@ -13217,7 +26428,31 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13241,7 +26476,23 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('日报已提交');
+
+
+
+
+
+
+
+
 
 
 
@@ -13257,7 +26508,31 @@ Pages.submitDaily = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13281,7 +26556,23 @@ Pages._toggleDailyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var el = document.getElementById('daily-detail-' + id);
+
+
+
+
+
+
+
+
 
 
 
@@ -13297,7 +26588,23 @@ Pages._toggleDailyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
+
+
+
+
+
+
+
+
 
 
 
@@ -13313,7 +26620,31 @@ Pages._toggleDailyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13337,7 +26668,31 @@ Pages._toggleDailyDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 Pages._dailyBoardPeriod = 'all'; // 'week' | 'month' | 'all'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13361,7 +26716,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   var html = '';
+
+
+
+
+
+
+
+
 
 
 
@@ -13385,7 +26756,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 时间筛选
+
+
+
+
+
+
+
+
 
 
 
@@ -13401,7 +26796,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='week'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'week\')">本周</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -13417,6 +26828,14 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='all'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'all\')">全部</button>';
 
 
@@ -13425,7 +26844,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13449,7 +26892,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   var filtered = reports;
+
+
+
+
+
+
+
+
 
 
 
@@ -13465,7 +26924,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     var weekStart = new Date(now);
+
+
+
+
+
+
+
+
 
 
 
@@ -13481,7 +26956,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     weekStart.setHours(0,0,0,0);
+
+
+
+
+
+
+
+
 
 
 
@@ -13497,7 +26988,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   } else if (Pages._dailyBoardPeriod === 'month') {
+
+
+
+
+
+
+
+
 
 
 
@@ -13513,6 +27020,14 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     filtered = reports.filter(function(r) { return r.date >= monthStart; });
 
 
@@ -13521,7 +27036,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13545,7 +27084,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   var groups = {};
+
+
+
+
+
+
+
+
 
 
 
@@ -13561,7 +27116,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     if (!groups[r.inspector]) groups[r.inspector] = [];
+
+
+
+
+
+
+
+
 
 
 
@@ -13577,7 +27148,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13601,7 +27196,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   var personWork = {};
+
+
+
+
+
+
+
+
 
 
 
@@ -13617,7 +27228,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     if (!personWork[w.user]) personWork[w.user] = [];
+
+
+
+
+
+
+
+
 
 
 
@@ -13633,7 +27260,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -13649,7 +27292,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   Object.keys(personWork).forEach(function(u) {
+
+
+
+
+
+
+
+
 
 
 
@@ -13665,7 +27324,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13689,7 +27372,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   if (inspectorNames.length === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -13705,6 +27404,14 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     return html;
 
 
@@ -13713,7 +27420,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -13737,6 +27468,14 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     var grp = groups[name];
 
 
@@ -13745,7 +27484,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     var totalShops = 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -13769,7 +27524,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="board-inspector-card" onclick="Pages._toggleBoardDetail(\'' + name.replace(/'/g, "\\\'") + '\')">';
+
+
+
+
+
+
+
+
 
 
 
@@ -13785,7 +27564,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="bic-avatar">' + (name||'?')[0] + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -13801,7 +27596,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="bic-name">' + name + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -13817,7 +27628,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     var statsText = '日报 ' + grp.length + ' 份 | 累计检查 ' + totalShops + ' 家门店';
+
+
+
+
+
+
+
+
 
 
 
@@ -13833,6 +27660,14 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="bic-stats">' + statsText + '</div>';
 
 
@@ -13841,7 +27676,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div><div class="bic-arrow">&#9660;</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -13865,7 +27716,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     html += '<div class="board-detail-table" id="board-detail-' + name.replace(/'/g, "\\\'") + '" style="display:none">';
+
+
+
+
+
+
+
+
 
 
 
@@ -13881,7 +27756,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<thead><tr><th>日期</th><th>类型</th><th>门店</th><th>问题</th><th>操作</th></tr></thead>';
+
+
+
+
+
+
+
+
 
 
 
@@ -13897,7 +27788,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     grp.forEach(function(r) {
+
+
+
+
+
+
+
+
 
 
 
@@ -13913,7 +27820,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
       var rId = (r.id||'').replace(/'/g, "\\\'");
+
+
+
+
+
+
+
+
 
 
 
@@ -13929,7 +27852,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
       var issuesCount = r.issuesCount || 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -13945,7 +27884,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td>' + r.date + '</td><td>' + typeLabel + '</td><td>' + storeCount + ' 家</td><td>' + issuesCount + ' 项</td><td class="dr-view">查看明细</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -13961,7 +27916,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -13977,7 +27948,23 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     (personWork[name]||[]).forEach(function(w) {
+
+
+
+
+
+
+
+
 
 
 
@@ -13993,6 +27980,14 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
       html += '<tr class="wr-row"><td>' + w.date + '</td><td><span class="wr-tag" style="background:' + tagColor + '">' + w.type + '</span></td><td colspan="2">' + w.summary + '</td><td class="wr-content">' + (w.detail&&w.detail.content?w.detail.content.replace(/\n/g,'<br>') : '') + '</td></tr>';
 
 
@@ -14001,7 +27996,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14025,7 +28044,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14049,7 +28092,31 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14073,7 +28140,23 @@ Pages._switchBoardPeriod = function(period) {
 
 
 
+
+
+
+
+
+
+
+
   Pages._dailyBoardPeriod = period;
+
+
+
+
+
+
+
+
 
 
 
@@ -14089,7 +28172,31 @@ Pages._switchBoardPeriod = function(period) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14113,7 +28220,23 @@ Pages._toggleBoardDetail = function(name) {
 
 
 
+
+
+
+
+
+
+
+
   var el = document.getElementById('board-detail-' + name);
+
+
+
+
+
+
+
+
 
 
 
@@ -14129,7 +28252,23 @@ Pages._toggleBoardDetail = function(name) {
 
 
 
+
+
+
+
+
+
+
+
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
+
+
+
+
+
+
+
+
 
 
 
@@ -14145,7 +28284,31 @@ Pages._toggleBoardDetail = function(name) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14169,7 +28332,23 @@ Pages._toggleBoardDetail = function(name) {
 
 
 
+
+
+
+
+
+
+
+
 Pages._openDailyDetail = function(reportId) {
+
+
+
+
+
+
+
+
 
 
 
@@ -14185,7 +28364,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   var r = null;
+
+
+
+
+
+
+
+
 
 
 
@@ -14201,6 +28396,14 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
     if (reports[i].id === reportId) { r = reports[i]; break; }
 
 
@@ -14209,7 +28412,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -14225,7 +28444,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
     App.toast('未找到该日报记录');
+
+
+
+
+
+
+
+
 
 
 
@@ -14241,7 +28476,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -14257,7 +28508,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   var storeCount = (r.items||[]).length;
+
+
+
+
+
+
+
+
 
 
 
@@ -14281,7 +28548,31 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '<div class="modal-box dd-modal-box">';
+
+
+
+
+
+
+
+
 
 
 
@@ -14297,7 +28588,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="dd-meta">' + r.inspector + ' · ' + r.date + ' · ' + typeLabel + ' · ' + storeCount + ' 家门店 · ' + issuesCount + ' 项问题</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14313,7 +28620,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<table class="m-table dd-modal-table">';
+
+
+
+
+
+
+
+
 
 
 
@@ -14329,7 +28652,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<tbody>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14345,7 +28684,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
     var findings = (item.findings||'').replace(/\n/g,'<br>');
+
+
+
+
+
+
+
+
 
 
 
@@ -14361,7 +28716,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -14377,7 +28748,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14393,7 +28780,31 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14417,6 +28828,14 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   modal.querySelector('.modal-box').outerHTML = html;
 
 
@@ -14425,7 +28844,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
   modal.classList.add('show');
+
+
+
+
+
+
+
+
 
 
 
@@ -14449,6 +28884,22 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ==================== 稽核模板管理 ==================== */
 
 
@@ -14457,7 +28908,23 @@ Pages._openDailyDetail = function(reportId) {
 
 
 
+
+
+
+
+
+
+
+
 Pages._tplEditMode = false;
+
+
+
+
+
+
+
+
 
 
 
@@ -14481,7 +28948,31 @@ Pages._tplEditId = null;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.inspectionTemplates = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -14497,6 +28988,14 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
 
 
@@ -14505,7 +29004,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   var user = App.currentUser;
+
+
+
+
+
+
+
+
 
 
 
@@ -14529,7 +29044,31 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'inspection') || (App.currentUser.phone !== '13581922077' && App.currentUser.phone !== '15081280260')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -14545,7 +29084,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
+
+
+
+
+
+
+
+
 
 
 
@@ -14569,23 +29124,65 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '';
+
+
 
   var subHash = location.hash.replace('#', '');
 
+
+
   var subTabs = Pages._inspectionSubTabs(user);
+
+
 
   html += '<div class="sub-tabbar">';
 
+
+
   subTabs.forEach(function(t) {
+
+
 
     if (!t.show) return;
 
+
+
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14611,7 +29208,31 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 操作栏
+
+
+
+
+
+
+
+
 
 
 
@@ -14627,7 +29248,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary btn-sm" onclick="Pages._tplShowForm()">+ 新建模板</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14643,7 +29280,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-sm" onclick="Pages._tplExportExcel()">导出Excel</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14659,7 +29312,31 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14683,7 +29360,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (templates.length === 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -14699,7 +29392,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -14715,7 +29424,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<th>模板名</th><th>版本</th><th>检查项数</th><th>状态</th><th>创建时间</th><th>操作</th>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14731,7 +29456,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
     templates.forEach(function(t) {
+
+
+
+
+
+
+
+
 
 
 
@@ -14747,7 +29488,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
       var statusColor = t.isActive !== false ? '#10b981' : '#ef4444';
+
+
+
+
+
+
+
+
 
 
 
@@ -14763,7 +29520,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<tr>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14779,7 +29552,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td>v' + (t.version || 1) + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14795,7 +29584,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td><span style="color:' + statusColor + '">' + statusLabel + '</span></td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14811,7 +29616,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14827,7 +29648,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
       if (App.Permissions.canAccess(user.role, 'inspection_edit')) html += '<button class="btn btn-sm btn-primary" onclick="Pages._tplStartCheck(\'' + t.id + '\')">一键检查</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14843,7 +29680,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</td></tr>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14859,7 +29712,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</tbody></table></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14875,7 +29744,23 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -14891,7 +29776,31 @@ Pages.inspectionTemplates = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14915,7 +29824,23 @@ Pages._tplShowForm = function() {
 
 
 
+
+
+
+
+
+
+
+
   Pages._tplEditMode = false;
+
+
+
+
+
+
+
+
 
 
 
@@ -14931,6 +29856,14 @@ Pages._tplShowForm = function() {
 
 
 
+
+
+
+
+
+
+
+
   Pages._tplRenderForm('新建稽核模板', { name: '', items: [] });
 
 
@@ -14939,7 +29872,31 @@ Pages._tplShowForm = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -14963,7 +29920,23 @@ Pages._tplEdit = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var templates = App.getTemplates();
+
+
+
+
+
+
+
+
 
 
 
@@ -14979,7 +29952,23 @@ Pages._tplEdit = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (!t) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -14995,7 +29984,23 @@ Pages._tplEdit = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   Pages._tplEditId = id;
+
+
+
+
+
+
+
+
 
 
 
@@ -15011,7 +30016,31 @@ Pages._tplEdit = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15035,7 +30064,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   var items = tpl.items || [];
+
+
+
+
+
+
+
+
 
 
 
@@ -15051,7 +30096,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="modal-header"><h3>' + title + '</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15067,7 +30128,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">模板名称</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15083,7 +30160,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">检查项目</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15099,7 +30192,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   items.forEach(function(item, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -15115,6 +30224,14 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   });
 
 
@@ -15123,7 +30240,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15139,6 +30272,14 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
 
 
@@ -15147,7 +30288,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15163,7 +30320,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15179,7 +30352,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15203,7 +30392,31 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var div = document.createElement('div');
+
+
+
+
+
+
+
+
 
 
 
@@ -15219,7 +30432,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   var overlay = div.firstElementChild;
+
+
+
+
+
+
+
+
 
 
 
@@ -15235,7 +30464,23 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   overlay.offsetHeight;
+
+
+
+
+
+
+
+
 
 
 
@@ -15251,6 +30496,14 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
   Pages._tplItemCount = items.length;
 
 
@@ -15259,7 +30512,31 @@ Pages._tplRenderForm = function(title, tpl) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15291,7 +30568,31 @@ Pages._tplItemCount = 0;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages._tplItemRow = function(index, item) {
+
+
+
+
+
+
+
+
 
 
 
@@ -15307,7 +30608,23 @@ Pages._tplItemRow = function(index, item) {
 
 
 
+
+
+
+
+
+
+
+
   var html = '<div class="tpl-item-row" id="tpl-item-' + index + '" style="display:flex;gap:6px;margin-bottom:6px;align-items:center">';
+
+
+
+
+
+
+
+
 
 
 
@@ -15323,7 +30640,23 @@ Pages._tplItemRow = function(index, item) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<input type="text" class="form-input" placeholder="检查内容" value="' + (item.content || '') + '" style="flex:2" data-field="content">';
+
+
+
+
+
+
+
+
 
 
 
@@ -15339,7 +30672,23 @@ Pages._tplItemRow = function(index, item) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<input type="text" class="form-input" placeholder="扣分标准" value="' + (item.deductRule || '') + '" style="flex:1.5" data-field="deductRule">';
+
+
+
+
+
+
+
+
 
 
 
@@ -15355,7 +30704,23 @@ Pages._tplItemRow = function(index, item) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -15371,7 +30736,31 @@ Pages._tplItemRow = function(index, item) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15395,7 +30784,23 @@ Pages._tplAddItem = function() {
 
 
 
+
+
+
+
+
+
+
+
   var idx = Pages._tplItemCount;
+
+
+
+
+
+
+
+
 
 
 
@@ -15411,7 +30816,23 @@ Pages._tplAddItem = function() {
 
 
 
+
+
+
+
+
+
+
+
   var container = document.getElementById('tpl-items-container');
+
+
+
+
+
+
+
+
 
 
 
@@ -15427,7 +30848,23 @@ Pages._tplAddItem = function() {
 
 
 
+
+
+
+
+
+
+
+
   div.innerHTML = Pages._tplItemRow(idx, {});
+
+
+
+
+
+
+
+
 
 
 
@@ -15443,7 +30880,31 @@ Pages._tplAddItem = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15467,6 +30928,14 @@ Pages._tplRemoveItem = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   var row = document.getElementById('tpl-item-' + index);
 
 
@@ -15475,7 +30944,23 @@ Pages._tplRemoveItem = function(index) {
 
 
 
+
+
+
+
+
+
+
+
   if (row) row.remove();
+
+
+
+
+
+
+
+
 
 
 
@@ -15499,6 +30984,22 @@ Pages._tplRemoveItem = function(index) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages._tplSave = function() {
 
 
@@ -15507,7 +31008,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   var name = (document.getElementById('tpl-form-name') || {}).value || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -15531,7 +31048,31 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var items = [];
+
+
+
+
+
+
+
+
 
 
 
@@ -15547,7 +31088,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   rows.forEach(function(row, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -15563,7 +31120,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
     var content = (row.querySelector('[data-field="content"]') || {}).value || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -15579,7 +31152,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
     var deductRule = (row.querySelector('[data-field="deductRule"]') || {}).value || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -15595,7 +31184,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
       items.push({ index: i, category: category, content: content, score: score, deductRule: deductRule });
+
+
+
+
+
+
+
+
 
 
 
@@ -15611,7 +31216,31 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15643,6 +31272,22 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var templates = App.getTemplates();
 
 
@@ -15651,7 +31296,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   var now = new Date();
+
+
+
+
+
+
+
+
 
 
 
@@ -15675,7 +31336,31 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (Pages._tplEditMode && Pages._tplEditId) {
+
+
+
+
+
+
+
+
 
 
 
@@ -15691,7 +31376,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (tpl) {
+
+
+
+
+
+
+
+
 
 
 
@@ -15707,7 +31408,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
       tpl.items = items;
+
+
+
+
+
+
+
+
 
 
 
@@ -15723,7 +31440,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
       tpl.updatedAt = dateStr;
+
+
+
+
+
+
+
+
 
 
 
@@ -15739,7 +31472,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -15755,7 +31504,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
       id: 'tpl' + Date.now(),
+
+
+
+
+
+
+
+
 
 
 
@@ -15771,7 +31536,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
       version: 1,
+
+
+
+
+
+
+
+
 
 
 
@@ -15787,7 +31568,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
       isActive: true,
+
+
+
+
+
+
+
+
 
 
 
@@ -15803,7 +31600,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
       updatedAt: dateStr
+
+
+
+
+
+
+
+
 
 
 
@@ -15819,7 +31632,31 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15843,7 +31680,31 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('模板已保存');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15867,7 +31728,23 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (overlay) overlay.remove();
+
+
+
+
+
+
+
+
 
 
 
@@ -15883,7 +31760,31 @@ Pages._tplSave = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15907,7 +31808,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
   var templates = App.getTemplates();
+
+
+
+
+
+
+
+
 
 
 
@@ -15931,7 +31848,31 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (templates.length === 1) {
+
+
+
+
+
+
+
+
 
 
 
@@ -15947,7 +31888,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     var t = templates[0];
+
+
+
+
+
+
+
+
 
 
 
@@ -15963,7 +31920,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     (t.items || []).forEach(function(it) {
+
+
+
+
+
+
+
+
 
 
 
@@ -15979,7 +31952,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -15995,6 +31984,14 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
 
 
@@ -16003,7 +32000,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     var wb = XLSX.utils.book_new();
+
+
+
+
+
+
+
+
 
 
 
@@ -16019,7 +32032,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     XLSX.writeFile(wb, (t.name || '稽核模板') + '.xlsx');
+
+
+
+
+
+
+
+
 
 
 
@@ -16035,7 +32064,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     // 多模板每模板一个Sheet
+
+
+
+
+
+
+
+
 
 
 
@@ -16051,7 +32096,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     templates.forEach(function(t) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16067,7 +32128,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
       (t.items || []).forEach(function(it) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16083,7 +32160,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
       });
+
+
+
+
+
+
+
+
 
 
 
@@ -16099,7 +32192,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
       ws['!cols'] = [{wch:12},{wch:40},{wch:8},{wch:30}];
+
+
+
+
+
+
+
+
 
 
 
@@ -16115,7 +32224,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
       XLSX.utils.book_append_sheet(wb, ws, name);
+
+
+
+
+
+
+
+
 
 
 
@@ -16131,7 +32256,23 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
     XLSX.writeFile(wb, '稽核模板导出.xlsx');
+
+
+
+
+
+
+
+
 
 
 
@@ -16147,6 +32288,14 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('导出完成');
 
 
@@ -16155,7 +32304,31 @@ Pages._tplExportExcel = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -16179,7 +32352,23 @@ Pages._tplStartCheck = function(tplId) {
 
 
 
+
+
+
+
+
+
+
+
   Pages._fillTemplateId = tplId;
+
+
+
+
+
+
+
+
 
 
 
@@ -16195,7 +32384,31 @@ Pages._tplStartCheck = function(tplId) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -16219,7 +32432,23 @@ Pages._tplToggle = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var templates = App.getTemplates();
+
+
+
+
+
+
+
+
 
 
 
@@ -16235,7 +32464,23 @@ Pages._tplToggle = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (t) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16251,7 +32496,23 @@ Pages._tplToggle = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     App.saveTemplates(templates);
+
+
+
+
+
+
+
+
 
 
 
@@ -16267,6 +32528,14 @@ Pages._tplToggle = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     Pages.inspectionTemplates();
 
 
@@ -16275,7 +32544,23 @@ Pages._tplToggle = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -16299,7 +32584,31 @@ Pages._tplToggle = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages._tplImportExcel = function(input) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16315,7 +32624,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   if (!file) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -16331,7 +32656,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   reader.onload = function(e) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16347,7 +32688,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     var wb = XLSX.read(data, { type: 'array' });
+
+
+
+
+
+
+
+
 
 
 
@@ -16363,7 +32720,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     var rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+
+
+
+
+
+
+
 
 
 
@@ -16379,7 +32752,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     var headers = rows[0].map(function(h) { return String(h).trim(); });
+
+
+
+
+
+
+
+
 
 
 
@@ -16395,7 +32784,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     headers.forEach(function(h, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16411,7 +32816,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       if (h.indexOf('项目') >= 0 || h.indexOf('内容') >= 0 || h.indexOf('检查') >= 0) contIdx = i;
+
+
+
+
+
+
+
+
 
 
 
@@ -16427,6 +32848,14 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       if (h.indexOf('扣') >= 0 || h.indexOf('标准') >= 0) ruleIdx = i;
 
 
@@ -16435,7 +32864,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -16459,7 +32904,31 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     var items = [];
+
+
+
+
+
+
+
+
 
 
 
@@ -16475,7 +32944,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       var cols = rows[r];
+
+
+
+
+
+
+
+
 
 
 
@@ -16491,7 +32976,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       var content = String(cols[contIdx] || '').trim();
+
+
+
+
+
+
+
+
 
 
 
@@ -16507,7 +33008,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       var score = scoreIdx >= 0 ? (parseInt(cols[scoreIdx]) || 0) : 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -16523,6 +33040,14 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       items.push({ index: r - 1, category: category, content: content, score: score, deductRule: deductRule });
 
 
@@ -16531,7 +33056,31 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -16563,7 +33112,31 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     var now = new Date();
+
+
+
+
+
+
+
+
 
 
 
@@ -16579,7 +33152,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     var name = file.name.replace(/\.(xlsx|xls)$/i, '');
+
+
+
+
+
+
+
+
 
 
 
@@ -16595,7 +33184,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     templates.push({
+
+
+
+
+
+
+
+
 
 
 
@@ -16611,7 +33216,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       name: name,
+
+
+
+
+
+
+
+
 
 
 
@@ -16627,7 +33248,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       items: items,
+
+
+
+
+
+
+
+
 
 
 
@@ -16643,7 +33280,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       createdAt: dateStr,
+
+
+
+
+
+
+
+
 
 
 
@@ -16659,7 +33312,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -16675,7 +33344,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     App.toast('导入成功，共 ' + items.length + ' 个检查项');
+
+
+
+
+
+
+
+
 
 
 
@@ -16691,7 +33376,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -16707,7 +33408,23 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   input.value = '';
+
+
+
+
+
+
+
+
 
 
 
@@ -16731,7 +33448,31 @@ Pages._tplImportExcel = function(input) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ==================== 稽核填写 ==================== */
+
+
+
+
+
+
+
+
 
 
 
@@ -16747,6 +33488,14 @@ Pages._fillTemplateId = '';
 
 
 
+
+
+
+
+
+
+
+
 Pages._fillStoreId = '';
 
 
@@ -16755,7 +33504,23 @@ Pages._fillStoreId = '';
 
 
 
+
+
+
+
+
+
+
+
 Pages._dbTplFilter = '';
+
+
+
+
+
+
+
+
 
 
 
@@ -16779,7 +33544,31 @@ Pages._fillDraft = false;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.inspectionFill = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -16795,7 +33584,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -16811,7 +33616,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   var stores = App.getStores();
+
+
+
+
+
+
+
+
 
 
 
@@ -16835,7 +33656,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'inspection_edit')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16851,7 +33696,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
+
+
+
+
+
+
+
+
 
 
 
@@ -16875,23 +33736,65 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '';
+
+
 
   var subHash = location.hash.replace('#', '');
 
+
+
   var subTabs = Pages._inspectionSubTabs(user);
+
+
 
   html += '<div class="sub-tabbar">';
 
+
+
   subTabs.forEach(function(t) {
+
+
 
     if (!t.show) return;
 
+
+
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -16917,7 +33820,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 选模板 + 选门店
+
+
+
+
+
+
+
+
 
 
 
@@ -16933,7 +33860,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<select id="fill-template" class="form-input" onchange="Pages._fillOnTemplateChange()">';
+
+
+
+
+
+
+
+
 
 
 
@@ -16949,7 +33892,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   templates.forEach(function(t) {
+
+
+
+
+
+
+
+
 
 
 
@@ -16965,6 +33924,14 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<option value="' + t.id + '"' + sel + '>' + t.name + ' (v' + (t.version||1) + ', ' + (t.items||[]).length + '项)</option>';
 
 
@@ -16973,7 +33940,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -16997,7 +33980,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">选择门店</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -17013,7 +34020,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -17037,7 +34068,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (Pages._fillTemplateId) {
+
+
+
+
+
+
+
+
 
 
 
@@ -17053,7 +34100,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (tpl && tpl.items) {
+
+
+
+
+
+
+
+
 
 
 
@@ -17069,7 +34132,23 @@ Pages.inspectionFill = function() {
 
 
 
-      html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th>';
+
+
+
+
+
+
+
+
+      html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th><th>现场图片</th>';
+
+
+
+
+
+
+
+
 
 
 
@@ -17085,7 +34164,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
       tpl.items.forEach(function(item, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -17101,7 +34196,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<td>' + (i+1) + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -17117,7 +34228,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<td>' + (item.content || '') + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -17133,7 +34260,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<td><input type="number" class="form-input fill-actual" value="' + (item.score||0) + '" min="0" max="' + (item.score||0) + '" style="width:60px" onchange="Pages._fillCalcScore()"></td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -17149,7 +34292,25 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<td><input type="text" class="form-input fill-remark" placeholder="备注" style="width:100px"></td>';
+
+        html += '<td style="min-width:170px"><button type="button" class="btn btn-sm" onclick="Pages._fillPickImages(' + i + ', \'gallery\')">图片</button> <button type="button" class="btn btn-sm" onclick="Pages._fillPickImages(' + i + ', \'camera\')">拍照</button><input type="file" accept="image/*" multiple style="display:none" id="fill-img-input-' + i + '"><div class="fill-thumbs" id="fill-thumbs-' + i + '"></div></td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -17165,7 +34326,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
       });
+
+
+
+
+
+
+
+
 
 
 
@@ -17189,7 +34366,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       var totalScore = tpl.items.reduce(function(s, item) { return s + (item.score||0); }, 0);
+
+
+
+
+
+
+
+
 
 
 
@@ -17213,7 +34414,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       html += '<div style="margin-top:12px;display:flex;gap:8px">';
+
+
+
+
+
+
+
+
 
 
 
@@ -17229,7 +34454,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<button class="btn" onclick="Pages._fillSubmit(true)">保存草稿</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -17245,7 +34486,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -17269,6 +34526,22 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '</div>';
 
 
@@ -17277,7 +34550,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
   el.innerHTML = html;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -17301,7 +34598,23 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
     App.initStoreSelect('fill-store', stores, function(sid) { Pages._fillStoreId = sid; });
+
+
+
+
+
+
+
+
 
 
 
@@ -17317,7 +34630,31 @@ Pages.inspectionFill = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -17341,7 +34678,23 @@ Pages._fillOnTemplateChange = function() {
 
 
 
+
+
+
+
+
+
+
+
   Pages._fillTemplateId = document.getElementById('fill-template').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -17357,7 +34710,31 @@ Pages._fillOnTemplateChange = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -17381,7 +34758,23 @@ Pages._fillCalcScore = function() {
 
 
 
+
+
+
+
+
+
+
+
   var rows = document.querySelectorAll('.fill-item-row');
+
+
+
+
+
+
+
+
 
 
 
@@ -17397,7 +34790,23 @@ Pages._fillCalcScore = function() {
 
 
 
+
+
+
+
+
+
+
+
   rows.forEach(function(row) {
+
+
+
+
+
+
+
+
 
 
 
@@ -17413,7 +34822,23 @@ Pages._fillCalcScore = function() {
 
 
 
+
+
+
+
+
+
+
+
     var actual = parseInt((row.querySelector('.fill-actual')||{}).value);
+
+
+
+
+
+
+
+
 
 
 
@@ -17429,7 +34854,23 @@ Pages._fillCalcScore = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (!isNaN(actual)) total += actual; else total += stdScore;
+
+
+
+
+
+
+
+
 
 
 
@@ -17445,7 +34886,23 @@ Pages._fillCalcScore = function() {
 
 
 
+
+
+
+
+
+
+
+
   var el = document.getElementById('fill-total-score');
+
+
+
+
+
+
+
+
 
 
 
@@ -17461,7 +34918,31 @@ Pages._fillCalcScore = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -17485,7 +34966,23 @@ Pages._fillOnDeductInput = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   var row = input.closest('.fill-item-row');
+
+
+
+
+
+
+
+
 
 
 
@@ -17501,7 +34998,23 @@ Pages._fillOnDeductInput = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   var stdScore = parseInt(row.dataset.score) || 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -17517,7 +35030,23 @@ Pages._fillOnDeductInput = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   var actualEl = row.querySelector('.fill-actual');
+
+
+
+
+
+
+
+
 
 
 
@@ -17533,7 +35062,23 @@ Pages._fillOnDeductInput = function(input) {
 
 
 
+
+
+
+
+
+
+
+
     // 用户输入扣分原因时自动将实际得分设为标准分-1，用户可继续调整
+
+
+
+
+
+
+
+
 
 
 
@@ -17549,7 +35094,23 @@ Pages._fillOnDeductInput = function(input) {
 
 
 
+
+
+
+
+
+
+
+
       actualEl.value = Math.max(0, stdScore - 1);
+
+
+
+
+
+
+
+
 
 
 
@@ -17565,7 +35126,23 @@ Pages._fillOnDeductInput = function(input) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -17581,7 +35158,31 @@ Pages._fillOnDeductInput = function(input) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -17605,7 +35206,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   var tplId = Pages._fillTemplateId || document.getElementById('fill-template').value;
+
+
+
+
+
+
+
+
 
 
 
@@ -17621,7 +35238,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   if (!tplId) { App.toast('请选择模板'); return; }
+
+
+
+
+
+
+
+
 
 
 
@@ -17645,6 +35278,22 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var templates = App.getTemplates();
 
 
@@ -17653,7 +35302,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   var tpl = templates.find(function(t) { return t.id === tplId; });
+
+
+
+
+
+
+
+
 
 
 
@@ -17677,6 +35342,22 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var stores = App.getStores();
 
 
@@ -17685,7 +35366,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   var store = stores.find(function(s) { return s.id === storeId; });
+
+
+
+
+
+
+
+
 
 
 
@@ -17709,6 +35406,22 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var rows = document.querySelectorAll('.fill-item-row');
 
 
@@ -17717,7 +35430,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   var details = [];
+
+
+
+
+
+
+
+
 
 
 
@@ -17741,7 +35470,31 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   rows.forEach(function(row, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -17757,7 +35510,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     var stdScore = item.score || 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -17773,7 +35542,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     var actual = actualEl ? parseInt(actualEl.value) : stdScore;
+
+
+
+
+
+
+
+
 
 
 
@@ -17789,7 +35574,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     var deductReason = (row.querySelector('.fill-deduct-reason')||{}).value || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -17813,7 +35614,31 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     maxScore += stdScore;
+
+
+
+
+
+
+
+
 
 
 
@@ -17837,7 +35662,32 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     details.push({
+      photos: (Pages._fillPhotos[i] || []).filter(function(x){ return x.status === 'uploaded' && x.url; }).map(function(x){ return x.url; }),
+
+
+
+
+
+
+
+
 
 
 
@@ -17853,7 +35703,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
       category: item.category || '',
+
+
+
+
+
+
+
+
 
 
 
@@ -17869,7 +35735,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
       stdScore: stdScore,
+
+
+
+
+
+
+
+
 
 
 
@@ -17885,7 +35767,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
       deductReason: deductReason,
+
+
+
+
+
+
+
+
 
 
 
@@ -17901,7 +35799,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -17925,7 +35839,31 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var now = new Date();
+
+
+
+
+
+
+
+
 
 
 
@@ -17941,7 +35879,31 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   var user = App.currentUser;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -17965,7 +35927,25 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+  var allPhotos = [];
+  details.forEach(function(d) { if (d.photos) allPhotos = allPhotos.concat(d.photos); });
   var result = {
+    photos: allPhotos,
+
+
+
+
+
+
+
 
 
 
@@ -17981,7 +35961,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     storeId: storeId,
+
+
+
+
+
+
+
+
 
 
 
@@ -17997,7 +35993,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     templateId: tplId,
+
+
+
+
+
+
+
+
 
 
 
@@ -18013,7 +36025,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     date: dateStr,
+
+
+
+
+
+
+
+
 
 
 
@@ -18029,7 +36057,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     totalScore: totalScore,
+
+
+
+
+
+
+
+
 
 
 
@@ -18045,7 +36089,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     details: details,
+
+
+
+
+
+
+
+
 
 
 
@@ -18057,7 +36117,19 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
     locked: !isDraft
+
+
+
+
+
+
+
+
 
 
 
@@ -18081,6 +36153,52 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // 上传所有待上传图片（含失败重试标记），上传成功写入 details[i].photos
+  var uploadFailed = false;
+  for (var ui = 0; ui < rows.length; ui++) {
+    var arr = Pages._fillPhotos[ui] || [];
+    for (var uj = 0; uj < arr.length; uj++) {
+      var ph = arr[uj];
+      if (ph.status === 'uploaded' && ph.url) continue;
+      try {
+        var photoName = resultId + '_' + ui + '_' + uj + '_' + Date.now();
+        var pubUrl = await Pages._uploadFillPhoto(ph.dataUrl, storeId, dateStr, photoName);
+        ph.status = 'uploaded';
+        ph.url = pubUrl;
+        if (details[ui]) {
+          if (!details[ui].photos) details[ui].photos = [];
+          if (details[ui].photos.indexOf(pubUrl) === -1) details[ui].photos.push(pubUrl);
+        }
+      } catch (err) {
+        console.error('[photo] 上传失败', err);
+        ph.status = 'failed';
+        uploadFailed = true;
+      }
+    }
+    Pages._renderFillThumbs(ui);
+  }
+
+  // 上传完成后重新汇总 result.photos（含本次新上传 URL）
+  var allPhotos = [];
+  details.forEach(function(d) { if (d.photos) allPhotos = allPhotos.concat(d.photos); });
+  result.photos = allPhotos;
+
   var results = App.getResults();
 
 
@@ -18089,7 +36207,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   results.push(result);
+
+
+
+
+
+
+
+
 
 
 
@@ -18113,7 +36247,31 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 非草稿：扣分项生成 issues
+
+
+
+
+
+
+
+
 
 
 
@@ -18129,7 +36287,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     var issues = App.getIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -18145,7 +36319,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
       if (d.actualScore < d.stdScore) {
+
+
+
+
+
+
+
+
 
 
 
@@ -18161,7 +36351,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           id: 'is' + Date.now() + '_' + d.index,
+
+
+
+
+
+
+
+
 
 
 
@@ -18177,7 +36383,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           storeId: storeId,
+
+
+
+
+
+
+
+
 
 
 
@@ -18193,7 +36415,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           templateId: tplId,
+
+
+
+
+
+
+
+
 
 
 
@@ -18209,7 +36447,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           date: dateStr,
+
+
+
+
+
+
+
+
 
 
 
@@ -18225,7 +36479,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           category: d.category,
+
+
+
+
+
+
+
+
 
 
 
@@ -18241,7 +36511,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           stdScore: d.stdScore,
+
+
+
+
+
+
+
+
 
 
 
@@ -18257,7 +36543,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           deductReason: d.deductReason,
+
+
+
+
+
+
+
+
 
 
 
@@ -18273,7 +36575,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           fixAction: '',
+
+
+
+
+
+
+
+
 
 
 
@@ -18289,7 +36607,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
           appealResult: ''
+
+
+
+
+
+
+
+
 
 
 
@@ -18305,7 +36639,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -18321,7 +36671,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
     await App.saveIssues(issues);
+
+
+
+
+
+
+
+
 
 
 
@@ -18345,7 +36711,35 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
-  App.toast(isDraft ? '草稿已保存' : '检查已提交');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  if (uploadFailed) {
+    App.toast((isDraft ? '草稿已保存' : '检查已提交') + '，但部分图片上传失败，已标记可重试');
+  } else {
+    App.toast(isDraft ? '草稿已保存' : '检查已提交');
+  }
+
+
+
+
+
+
+
+
 
 
 
@@ -18361,7 +36755,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
   Pages._fillStoreId = '';
+
+
+
+
+
+
+
+
 
 
 
@@ -18377,7 +36787,31 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -18401,7 +36835,23 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
+
+
+
+
+
+
+
+
 Pages.inspectionResults = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -18417,7 +36867,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -18433,7 +36899,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   var results = App.getResults();
+
+
+
+
+
+
+
+
 
 
 
@@ -18457,7 +36939,31 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'inspection_results')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -18473,6 +36979,14 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
 
 
@@ -18481,7 +36995,31 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -18505,6 +37043,14 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (user.role === '店长' && user.storeId) {
 
 
@@ -18513,7 +37059,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     results = results.filter(function(r) { return r.storeId === user.storeId; });
+
+
+
+
+
+
+
+
 
 
 
@@ -18537,7 +37099,27 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '';
+
+
+
+
 
 
 
@@ -18545,7 +37127,15 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
   var subTabs = Pages._inspectionSubTabs(user);
+
+
+
+
 
 
 
@@ -18553,7 +37143,15 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
   subTabs.forEach(function(t) {
+
+
+
+
 
 
 
@@ -18561,7 +37159,15 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+
+
+
+
 
 
 
@@ -18569,11 +37175,35 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
   html += '</div>';
 
 
 
+
+
+
+
   html += '<div class="card"><div class="card-title">检查结果</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -18597,7 +37227,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="form-group" style="display:flex;gap:8px;flex-wrap:wrap">';
+
+
+
+
+
+
+
+
 
 
 
@@ -18613,7 +37259,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   var storeSet = {};
+
+
+
+
+
+
+
+
 
 
 
@@ -18629,7 +37291,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   Object.keys(storeSet).forEach(function(sid) {
+
+
+
+
+
+
+
+
 
 
 
@@ -18645,6 +37323,14 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
 
 
@@ -18653,7 +37339,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</select>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18669,7 +37371,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<select id="res-filter-tpl" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()"><option value="">全部模板</option>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18685,7 +37403,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   results.forEach(function(r) { tplSet[r.templateId] = r.templateName; });
+
+
+
+
+
+
+
+
 
 
 
@@ -18701,7 +37435,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<option value="' + tid + '">' + tplSet[tid] + '</option>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18717,7 +37467,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</select>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18733,7 +37499,31 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -18757,7 +37547,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="empty-state"><div class="empty-icon">&#128202;</div><div>暂无检查结果</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18773,6 +37579,14 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="table-container"><table><thead><tr>';
 
 
@@ -18781,7 +37595,23 @@ Pages.inspectionResults = function() {
 
 
 
-    html += '<th>门店</th><th>模板</th><th>日期</th><th>稽核员</th><th>总分</th><th>状态</th><th>操作</th>';
+
+
+
+
+
+
+
+
+    html += '<th>门店</th><th>模板</th><th>日期</th><th>稽核员</th><th>总分</th><th>状态</th><th>现场图片</th><th>操作</th>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18797,7 +37627,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     results.reverse().forEach(function(r) {
+
+
+
+
+
+
+
+
 
 
 
@@ -18813,7 +37659,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td>' + Pages._storeName(r.storeId, r.store) + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18829,7 +37691,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td>' + (r.date || '') + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18845,7 +37723,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td><b>' + (r.totalScore || 0) + '</b> / ' + (r.maxScore || 0) + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18861,7 +37755,25 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td><span style="color:' + statusColor + '">' + (r.status || '') + '</span></td>';
+
+      html += '<td>' + Pages._detailPhotosHtml(r.photos, r) + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18871,21 +37783,45 @@ Pages.inspectionResults = function() {
 
       html += '<td>';
 
+
+
       html += '<button class="btn btn-sm" onclick="Pages._showResultDetail(\'' + r.id + '\')">详情</button>';
+
+
 
       var isHQ = App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260';
 
+
+
       var canEdit = App.Permissions.canAccess(user.role, 'inspection_edit');
+
+
 
       var sameDay = r.locked !== false && r.date === Pages._todayStr();
 
+
+
       if (canEdit && (isHQ || sameDay)) {
+
+
 
         html += ' <button class="btn btn-sm btn-outline" onclick="Pages._withdrawResult(\'' + r.id + '\')">撤回</button>';
 
+
+
       }
 
+
+
       html += '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -18901,7 +37837,23 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -18917,7 +37869,31 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -18941,6 +37917,14 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   el.innerHTML = html;
 
 
@@ -18949,7 +37933,31 @@ Pages.inspectionResults = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -18973,6 +37981,14 @@ Pages._filterResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   var storeFilter = (document.getElementById('res-filter-store')||{}).value || '';
 
 
@@ -18981,7 +37997,23 @@ Pages._filterResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   var dateFilter = (document.getElementById('res-filter-date')||{}).value || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -19005,7 +38037,31 @@ Pages._filterResults = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   document.querySelectorAll('.res-row').forEach(function(row) {
+
+
+
+
+
+
+
+
 
 
 
@@ -19021,7 +38077,23 @@ Pages._filterResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (storeFilter && row.dataset.store !== storeFilter) show = false;
+
+
+
+
+
+
+
+
 
 
 
@@ -19037,7 +38109,23 @@ Pages._filterResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     if (tplFilter && row.dataset.tpl !== tplFilter) show = false;
+
+
+
+
+
+
+
+
 
 
 
@@ -19053,6 +38141,14 @@ Pages._filterResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   });
 
 
@@ -19061,7 +38157,31 @@ Pages._filterResults = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19079,89 +38199,321 @@ Pages._filterResults = function() {
 
 Pages._todayStr = function() {
 
+
+
   var n = new Date();
+
+
 
   return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._withdrawResult = function(id) {
 
+
+
   var results = App.getResults();
+
+
 
   var r = results.find(function(x) { return x.id === id; });
 
+
+
   if (!r) return;
+
+
 
   var isHQ = App.currentUser.phone === '13581922077' || App.currentUser.phone === '15081280260';
 
+
+
   var canWithdraw = App.Permissions.canAccess(App.currentUser.role, 'inspection_edit') && (isHQ || (r.locked !== false && r.date === Pages._todayStr()));
+
+
 
   if (!canWithdraw) { App.toast('该记录已过当天，不可撤回'); return; }
 
+
+
   var overlay = document.getElementById('modal-overlay');
+
+
 
   if (!overlay) return;
 
+
+
   overlay.querySelector('.modal-box').outerHTML = '<div class="modal-box" style="max-width:480px" onclick="event.stopPropagation()">' +
+
+
 
     '<div class="modal-header"><h3>撤回检查记录</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>' +
 
+
+
     '<div class="modal-body"><p>确定撤回该条检查记录吗？</p><p style="color:#666;font-size:13px">门店：' + (r.store||'') + ' ｜ 日期：' + (r.date||'') + ' ｜ 稽核员：' + (r.inspector||'') + '</p><p style="color:#f59e0b;font-size:13px">撤回将删除此条记录及关联问题工单，且不可恢复。</p></div>' +
+
+
 
     '<div class="modal-footer"><button class="btn" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">取消</button> ' +
 
+
+
     '<button class="btn btn-danger" onclick="Pages._doWithdraw(\'' + id + '\')">确认撤回</button></div></div>';
+
+
 
   overlay.classList.add('show');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._doWithdraw = function(id) {
 
+
+
   var results = App.getResults();
+
+
 
   var idx = results.findIndex(function(x) { return x.id === id; });
 
+
+
   if (idx < 0) { App.toast('记录不存在'); return; }
+
+
 
   var r = results[idx];
 
+
+
   results.splice(idx, 1);
+
+
 
   App.saveResults(results);
 
+
+
   if (App.getIssues && App.saveIssues) {
+
+
 
     var issues = App.getIssues().filter(function(iss) { return iss.resultId !== id; });
 
+
+
     App.saveIssues(issues);
 
+
+
   }
+
+
 
   var overlay = document.getElementById('modal-overlay');
 
+
+
   if (overlay) overlay.classList.remove('show');
+
+
 
   App.toast('已撤回该条检查记录');
 
+
+
   if (location.hash.replace('#','') === 'inspectionResults') {
+
+
 
     Pages.inspectionResults();
 
+
+
   } else {
+
+
 
     location.hash = '#inspectionResults';
 
+
+
   }
+
+
 
 };
 
 
+
+
+
+
+
+
+/* ==================== 现场图片（拍照/相册上传） ==================== */
+
+/* 已选图片暂存：{ 行号: [ {dataUrl, status:'pending'|'uploaded'|'failed', url} ] } */
+Pages._fillPhotos = {};
+
+Pages._compressImage = function(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onerror = function() { reject(new Error('读取文件失败')); };
+    reader.onload = function(e) {
+      var img = new Image();
+      img.onerror = function() { reject(new Error('图片解析失败')); };
+      img.onload = function() {
+        var MAX = 1200;
+        var scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var quality = 0.7;
+        var out = canvas.toDataURL('image/jpeg', quality);
+        // 压缩至单张 <= 200KB
+        var MAXLEN = 200 * 1024 * 1.34; // base64 长度与字节近似换算
+        var guard = 0;
+        while (out.length > MAXLEN && quality > 0.25 && guard < 6) {
+          quality -= 0.1;
+          out = canvas.toDataURL('image/jpeg', quality);
+          guard++;
+        }
+        resolve(out);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+Pages._dataUrlToBlob = function(dataUrl) {
+  var parts = dataUrl.split(',');
+  var mime = (parts[0].match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+  var bin = atob(parts[1]);
+  var u8 = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return new Blob([u8], { type: mime });
+};
+
+Pages._uploadFillPhoto = async function(dataUrl, storeId, date, name) {
+  var supabase = App.supabase;
+  if (!supabase) throw new Error('云端未连接');
+  var blob = Pages._dataUrlToBlob(dataUrl);
+  var path = (storeId || 'unknown') + '/' + (date || 'nodate') + '/' + name + '.jpg';
+  var { error } = await supabase.storage.from('inspection-photos').upload(path, blob, {
+    contentType: 'image/jpeg', upsert: true
+  });
+  if (error) throw error;
+  var { data } = supabase.storage.from('inspection-photos').getPublicUrl(path);
+  return data.publicUrl;
+};
+
+Pages._fillPickImages = function(i, mode) {
+  var input = document.getElementById('fill-img-input-' + i);
+  if (!input) return;
+  input.value = '';
+  if (mode === 'camera') { input.setAttribute('capture', 'environment'); }
+  else { input.removeAttribute('capture'); }
+  input.onchange = function() { Pages._fillOnImagesPicked(input, i); };
+  input.click();
+};
+
+Pages._fillOnImagesPicked = async function(input, i) {
+  var files = input.files || [];
+  if (!files.length) return;
+  if (!Pages._fillPhotos[i]) Pages._fillPhotos[i] = [];
+  for (var k = 0; k < files.length; k++) {
+    try {
+      var dataUrl = await Pages._compressImage(files[k]);
+      Pages._fillPhotos[i].push({ dataUrl: dataUrl, status: 'pending', url: '' });
+    } catch (err) {
+      console.error('[photo] 压缩失败', err);
+      App.toast('图片处理失败，请重试');
+    }
+  }
+  input.value = '';
+  Pages._renderFillThumbs(i);
+};
+
+Pages._renderFillThumbs = function(i) {
+  var box = document.getElementById('fill-thumbs-' + i);
+  if (!box) return;
+  var arr = Pages._fillPhotos[i] || [];
+  var html = '';
+  arr.forEach(function(p, idx) {
+    html += '<div class="fill-thumb" style="position:relative;display:inline-block;margin:3px;vertical-align:top">';
+    html += '<img src="' + p.dataUrl + '" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid #dbe3ee;display:block">';
+    if (p.status === 'failed') {
+      html += '<span style="position:absolute;bottom:2px;left:2px;background:#f59e0b;color:#fff;font-size:9px;padding:0 4px;border-radius:8px;cursor:pointer" onclick="Pages._fillRetryImage(' + i + ',' + idx + ')">重试</span>';
+    }
+    html += '<span style="position:absolute;top:-7px;right:-7px;background:#ef4444;color:#fff;border-radius:50%;width:16px;height:16px;line-height:15px;text-align:center;font-size:11px;cursor:pointer;border:1px solid #fff" onclick="Pages._fillRemoveImage(' + i + ',' + idx + ')">&times;</span>';
+    html += '</div>';
+  });
+  box.innerHTML = html;
+};
+
+Pages._fillRemoveImage = function(i, idx) {
+  if (!Pages._fillPhotos[i]) return;
+  Pages._fillPhotos[i].splice(idx, 1);
+  Pages._renderFillThumbs(i);
+};
+
+Pages._fillRetryImage = function(i, idx) {
+  var arr = Pages._fillPhotos[i];
+  if (!arr || !arr[idx]) return;
+  arr[idx].status = 'pending';
+  arr[idx].url = '';
+  Pages._renderFillThumbs(i);
+  App.toast('已标记重试，提交时自动重新上传');
+};
+
+/* 详情/列表缩略图 + 轻量 lightbox */
+Pages._detailPhotosHtml = function(photos) {
+  if (!photos) return '<span style="color:#c3cbd8">-</span>';
+  if (typeof photos === 'string') { try { photos = JSON.parse(photos); } catch (e) { photos = [photos]; } }
+  if (!Array.isArray(photos) || !photos.length) return '<span style="color:#c3cbd8">-</span>';
+  var html = '';
+  photos.forEach(function(u) {
+    if (!u) return;
+    var safe = String(u).replace(/'/g, '%27');
+    html += '<img src="' + u + '" style="width:52px;height:52px;object-fit:cover;border-radius:6px;border:1px solid #dbe3ee;cursor:pointer;margin:1px" onclick="Pages._showPhoto(\'' + safe + '\')">';
+  });
+  return html;
+};
+
+Pages._showPhoto = function(src) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:16px';
+  ov.onclick = function() { ov.remove(); };
+  var img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'max-width:92vw;max-height:92vh;border-radius:8px;object-fit:contain';
+  ov.appendChild(img);
+  document.body.appendChild(ov);
+};
 
 Pages._showResultDetail = function(id) {
 
@@ -19171,7 +38523,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var results = App.getResults();
+
+
+
+
+
+
+
+
 
 
 
@@ -19187,7 +38555,31 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (!r) return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19211,7 +38603,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="modal-header"><h3>检查详情</h3><span class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19227,7 +38635,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>门店：</b>' + Pages._storeName(r.storeId, r.store) + ' &nbsp; <b>模板：</b>' + (r.templateName||'') + '</p>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19243,7 +38667,33 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<p><b>总分：</b>' + (r.totalScore||0) + ' / ' + (r.maxScore||0) + '</p>';
+
+  html += '<p><b>现场图片：</b>' + Pages._detailPhotosHtml(r.photos, r) + '</p>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19267,7 +38717,23 @@ Pages._showResultDetail = function(id) {
 
 
 
-  html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th>';
+
+
+
+
+
+
+
+
+  html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th><th>现场图片</th>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19283,7 +38749,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   (r.details||[]).forEach(function(d, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -19299,7 +38781,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<tr' + (isDeduct ? ' style="background:#fef2f2"' : '') + '>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19315,7 +38813,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<td>' + (d.category||'') + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19331,7 +38845,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<td>' + (d.stdScore||0) + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19347,6 +38877,14 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<td>' + (d.deductReason||'') + '</td>';
 
 
@@ -19355,7 +38893,25 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
     html += '<td>' + (d.remark||'') + '</td>';
+
+    html += '<td>' + Pages._detailPhotosHtml(d.photos, d) + '</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19371,6 +38927,14 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   });
 
 
@@ -19379,7 +38943,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</tbody></table></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -19403,7 +38983,31 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var div = document.createElement('div');
+
+
+
+
+
+
+
+
 
 
 
@@ -19419,7 +39023,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var overlay = div.firstElementChild;
+
+
+
+
+
+
+
+
 
 
 
@@ -19435,7 +39055,23 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   overlay.offsetHeight;
+
+
+
+
+
+
+
+
 
 
 
@@ -19451,7 +39087,31 @@ Pages._showResultDetail = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19475,7 +39135,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   var results = App.getResults();
+
+
+
+
+
+
+
+
 
 
 
@@ -19499,7 +39175,31 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var rows = [['门店', '模板', '日期', '稽核员', '总分', '满分', '状态', '序号', '类别', '检查内容', '标准分', '实际得分', '扣分原因', '备注']];
+
+
+
+
+
+
+
+
 
 
 
@@ -19515,7 +39215,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     (r.details||[]).forEach(function(d, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -19531,7 +39247,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
         r.totalScore||0, r.maxScore||0, r.status||'',
+
+
+
+
+
+
+
+
 
 
 
@@ -19547,7 +39279,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -19571,7 +39319,31 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var ws = XLSX.utils.aoa_to_sheet(rows);
+
+
+
+
+
+
+
+
 
 
 
@@ -19587,7 +39359,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   XLSX.utils.book_append_sheet(wb, ws, '检查结果');
+
+
+
+
+
+
+
+
 
 
 
@@ -19603,7 +39391,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   var blob = new Blob([wbout], { type: 'application/vnd.ms-excel' });
+
+
+
+
+
+
+
+
 
 
 
@@ -19619,7 +39423,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   a.href = URL.createObjectURL(blob);
+
+
+
+
+
+
+
+
 
 
 
@@ -19635,7 +39455,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   a.download = 'inspection_results_' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '.xlsx';
+
+
+
+
+
+
+
+
 
 
 
@@ -19651,6 +39487,14 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('导出成功');
 
 
@@ -19659,7 +39503,31 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19683,7 +39551,23 @@ Pages._exportResults = function() {
 
 
 
+
+
+
+
+
+
+
+
 Pages._storeName = function(storeId, storeName) {
+
+
+
+
+
+
+
+
 
 
 
@@ -19699,7 +39583,23 @@ Pages._storeName = function(storeId, storeName) {
 
 
 
+
+
+
+
+
+
+
+
   var st = App.getStores() || [];
+
+
+
+
+
+
+
+
 
 
 
@@ -19715,7 +39615,23 @@ Pages._storeName = function(storeId, storeName) {
 
 
 
+
+
+
+
+
+
+
+
     if (st[i] && st[i].id === storeId) return st[i].name || storeId || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -19731,6 +39647,14 @@ Pages._storeName = function(storeId, storeName) {
 
 
 
+
+
+
+
+
+
+
+
   return storeId || '';
 
 
@@ -19739,7 +39663,30 @@ Pages._storeName = function(storeId, storeName) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19762,7 +39709,23 @@ Pages._issueStatus = function(is) {
 
 
 
+
+
+
+
+
+
+
+
   if (!is) return '待处理';
+
+
+
+
+
+
+
+
 
 
 
@@ -19778,7 +39741,23 @@ Pages._issueStatus = function(is) {
 
 
 
+
+
+
+
+
+
+
+
   if (is.closedAt) return '已闭环';
+
+
+
+
+
+
+
+
 
 
 
@@ -19794,7 +39773,23 @@ Pages._issueStatus = function(is) {
 
 
 
+
+
+
+
+
+
+
+
   if (is.appealContent) return '申诉中';
+
+
+
+
+
+
+
+
 
 
 
@@ -19810,7 +39805,30 @@ Pages._issueStatus = function(is) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19841,7 +39859,31 @@ Pages._issueFilter = 'all';
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages.inspectionIssues = function() {
+
+
+
+
+
+
+
+
 
 
 
@@ -19857,6 +39899,14 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
 
 
@@ -19865,7 +39915,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   var user = App.currentUser;
+
+
+
+
+
+
+
+
 
 
 
@@ -19889,7 +39955,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'inspection')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -19905,6 +39995,14 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
 
 
@@ -19913,7 +40011,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -19937,6 +40059,14 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (user.role === '店长' && user.storeId) {
 
 
@@ -19945,7 +40075,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     issues = issues.filter(function(is) { return is.storeId === user.storeId; });
+
+
+
+
+
+
+
+
 
 
 
@@ -19969,23 +40115,65 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '';
+
+
 
   var subHash = location.hash.replace('#', '');
 
+
+
   var subTabs = Pages._inspectionSubTabs(user);
+
+
 
   html += '<div class="sub-tabbar">';
 
+
+
   subTabs.forEach(function(t) {
+
+
 
     if (!t.show) return;
 
+
+
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20011,7 +40199,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 筛选
+
+
+
+
+
+
+
+
 
 
 
@@ -20027,7 +40239,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   var statuses = [
+
+
+
+
+
+
+
+
 
 
 
@@ -20043,7 +40271,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     { v: '待处理', l: '待处理' },
+
+
+
+
+
+
+
+
 
 
 
@@ -20059,7 +40303,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     { v: '已闭环', l: '已闭环' },
+
+
+
+
+
+
+
+
 
 
 
@@ -20075,7 +40335,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   ];
+
+
+
+
+
+
+
+
 
 
 
@@ -20091,7 +40367,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<button class="db-toggle-btn' + (Pages._issueFilter === s.v ? ' active' : '') + '" onclick="Pages._setIssueFilter(\'' + s.v + '\')">' + s.l + '</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20107,7 +40399,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20131,7 +40447,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   var pending = issues.filter(function(is) { return Pages._issueStatus(is) === '待处理'; }).length;
+
+
+
+
+
+
+
+
 
 
 
@@ -20147,7 +40479,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   var closed = issues.filter(function(is) { return Pages._issueStatus(is) === '已闭环'; }).length;
+
+
+
+
+
+
+
+
 
 
 
@@ -20163,7 +40511,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   var total = issues.length;
+
+
+
+
+
+
+
+
 
 
 
@@ -20187,7 +40551,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '<div class="stats-row">';
+
+
+
+
+
+
+
+
 
 
 
@@ -20203,7 +40591,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="stat-item"><span class="stat-num" style="color:#f59e0b">' + fixed + '</span><span class="stat-label">已整改</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20219,7 +40623,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="stat-item"><span class="stat-num" style="color:#6366f1">' + appealing + '</span><span class="stat-label">申诉中</span></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20235,7 +40655,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20259,7 +40703,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   var isManager = (user.role === '总部' || user.role === '稽核' || user.role === '稽核员' || user.role === '线上稽核' || user.role === '线下稽核');
+
+
+
+
+
+
+
+
 
 
 
@@ -20275,7 +40735,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+
+
+
+
+
+
+
+
 
 
 
@@ -20291,7 +40767,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueBatchClose()">批量关闭所选</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20307,7 +40799,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20331,7 +40847,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (Pages._issueFilter !== 'all') {
+
+
+
+
+
+
+
+
 
 
 
@@ -20347,7 +40879,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20371,7 +40927,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="empty-state"><div class="empty-icon">&#128221;</div><div>暂无问题工单</div></div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20387,7 +40959,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
     filtered.reverse().forEach(function(is) {
+
+
+
+
+
+
+
+
 
 
 
@@ -20403,7 +40991,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="list-item" style="border-left:3px solid ' + statusColor + '">';
+
+
+
+
+
+
+
+
 
 
 
@@ -20419,7 +41023,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<input type="checkbox" class="issue-checkbox" data-id="' + is.id + '" style="margin-right:8px;flex-shrink:0">';
+
+
+
+
+
+
+
+
 
 
 
@@ -20435,7 +41055,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-main">';
+
+
+
+
+
+
+
+
 
 
 
@@ -20451,7 +41087,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-sub">' + (is.date||'') + ' | ' + (is.category||'') + ' | 扣' + ((is.stdScore||0) - (is.actualScore||0)) + '分 | ' + (is.deductReason||'') + '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20467,6 +41119,14 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       if (is.fixAction) html += '<div class="li-sub">整改措施：' + is.fixAction + '</div>';
 
 
@@ -20475,7 +41135,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20499,7 +41183,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<div class="li-actions" style="margin-top:6px">';
+
+
+
+
+
+
+
+
 
 
 
@@ -20515,7 +41215,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueFix(\'' + is.id + '\')">填写整改</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20531,7 +41247,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -20547,6 +41279,14 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
         html += '<button class="btn btn-sm" onclick="Pages._issueAppeal(\'' + is.id + '\')">申诉</button>';
 
 
@@ -20555,7 +41295,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -20571,7 +41327,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
         if (Pages._issueStatus(is) === '已整改') {
+
+
+
+
+
+
+
+
 
 
 
@@ -20587,6 +41359,14 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
           html += '<button class="btn btn-sm btn-danger" onclick="Pages._issueVerify(\'' + is.id + '\', \'reject\')">驳回</button>';
 
 
@@ -20595,7 +41375,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -20611,7 +41407,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
           html += '<button class="btn btn-sm btn-primary" onclick="Pages._issueReviewAppeal(\'' + is.id + '\', \'通过\')">申诉通过</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20627,7 +41439,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -20643,6 +41471,14 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
 
 
@@ -20651,7 +41487,23 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20660,6 +41512,14 @@ Pages.inspectionIssues = function() {
 
 
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -20683,7 +41543,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -20699,7 +41583,31 @@ Pages.inspectionIssues = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20723,7 +41631,23 @@ Pages._setIssueFilter = function(filter) {
 
 
 
+
+
+
+
+
+
+
+
   Pages._issueFilter = filter;
+
+
+
+
+
+
+
+
 
 
 
@@ -20739,7 +41663,31 @@ Pages._setIssueFilter = function(filter) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20763,7 +41711,23 @@ Pages._issueSelectAll = function() {
 
 
 
+
+
+
+
+
+
+
+
   var checked = document.getElementById('issue-select-all').checked;
+
+
+
+
+
+
+
+
 
 
 
@@ -20779,7 +41743,31 @@ Pages._issueSelectAll = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20803,7 +41791,23 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
   var checked = document.querySelectorAll('.issue-checkbox:checked');
+
+
+
+
+
+
+
+
 
 
 
@@ -20819,7 +41823,23 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!confirm('确定要批量关闭 ' + checked.length + ' 个工单吗？')) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -20835,7 +41855,23 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
   checked.forEach(function(cb) { ids.push(cb.dataset.id); });
+
+
+
+
+
+
+
+
 
 
 
@@ -20851,7 +41887,23 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
   issues.forEach(function(is) {
+
+
+
+
+
+
+
+
 
 
 
@@ -20867,7 +41919,23 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
       is.status = '已闭环';
+
+
+
+
+
+
+
+
 
 
 
@@ -20883,7 +41951,23 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -20899,7 +41983,23 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.saveIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -20915,6 +42015,14 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
   App.toast('已批量关闭 ' + ids.length + ' 个工单');
 
 
@@ -20923,7 +42031,31 @@ Pages._issueBatchClose = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -20947,6 +42079,14 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var issues = App.getIssues();
 
 
@@ -20955,7 +42095,23 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var is = issues.find(function(x) { return x.id === id; });
+
+
+
+
+
+
+
+
 
 
 
@@ -20979,7 +42135,31 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
+
+
+
+
+
+
+
+
 
 
 
@@ -20995,7 +42175,23 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="modal-body">';
+
+
+
+
+
+
+
+
 
 
 
@@ -21011,7 +42207,23 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">整改措施</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -21027,7 +42239,23 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -21043,6 +42271,14 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
 
 
@@ -21051,7 +42287,23 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary" onclick="Pages._issueFixSubmit(\'' + id + '\')">提交整改</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -21075,7 +42327,31 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var div = document.createElement('div');
+
+
+
+
+
+
+
+
 
 
 
@@ -21091,6 +42367,14 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   document.body.appendChild(div.firstElementChild).classList.add('show');
 
 
@@ -21099,7 +42383,31 @@ Pages._issueFix = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21123,7 +42431,23 @@ Pages._issueFixSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var action = (document.getElementById('issue-fix-action')||{}).value || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -21139,7 +42463,23 @@ Pages._issueFixSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var issues = App.getIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -21155,7 +42495,23 @@ Pages._issueFixSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (is) {
+
+
+
+
+
+
+
+
 
 
 
@@ -21171,7 +42527,23 @@ Pages._issueFixSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     is.status = '已整改';
+
+
+
+
+
+
+
+
 
 
 
@@ -21187,7 +42559,23 @@ Pages._issueFixSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     App.toast('整改已提交');
+
+
+
+
+
+
+
+
 
 
 
@@ -21203,7 +42591,23 @@ Pages._issueFixSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   document.querySelector('.modal-overlay').remove();
+
+
+
+
+
+
+
+
 
 
 
@@ -21219,7 +42623,31 @@ Pages._issueFixSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21243,7 +42671,23 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
   var issues = App.getIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -21259,7 +42703,31 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
   if (!is) return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21283,7 +42751,23 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
     is.status = '已闭环';
+
+
+
+
+
+
+
+
 
 
 
@@ -21299,7 +42783,23 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
   } else {
+
+
+
+
+
+
+
+
 
 
 
@@ -21315,7 +42815,23 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
     is.fixAction = '';
+
+
+
+
+
+
+
+
 
 
 
@@ -21331,7 +42847,23 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -21347,6 +42879,14 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.inspectionIssues();
 
 
@@ -21355,7 +42895,31 @@ Pages._issueVerify = async function(id, action) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21379,6 +42943,14 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var issues = App.getIssues();
 
 
@@ -21387,7 +42959,23 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var is = issues.find(function(x) { return x.id === id; });
+
+
+
+
+
+
+
+
 
 
 
@@ -21411,7 +42999,31 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '<div class="modal-overlay" onclick="this.remove()"><div class="modal-box" onclick="event.stopPropagation()">';
+
+
+
+
+
+
+
+
 
 
 
@@ -21427,7 +43039,23 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="modal-body">';
+
+
+
+
+
+
+
+
 
 
 
@@ -21443,7 +43071,23 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="form-group"><label class="form-label">申诉内容</label>';
+
+
+
+
+
+
+
+
 
 
 
@@ -21459,7 +43103,23 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -21475,6 +43135,14 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn" onclick="this.closest(\'.modal-overlay\').remove()">取消</button>';
 
 
@@ -21483,7 +43151,23 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   html += '<button class="btn btn-primary" onclick="Pages._issueAppealSubmit(\'' + id + '\')">提交申诉</button>';
+
+
+
+
+
+
+
+
 
 
 
@@ -21507,7 +43191,31 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var div = document.createElement('div');
+
+
+
+
+
+
+
+
 
 
 
@@ -21523,6 +43231,14 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
   document.body.appendChild(div.firstElementChild).classList.add('show');
 
 
@@ -21531,7 +43247,31 @@ Pages._issueAppeal = function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21555,7 +43295,23 @@ Pages._issueAppealSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var content = (document.getElementById('issue-appeal-content')||{}).value || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -21571,7 +43327,23 @@ Pages._issueAppealSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   var issues = App.getIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -21587,7 +43359,23 @@ Pages._issueAppealSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   if (is) {
+
+
+
+
+
+
+
+
 
 
 
@@ -21603,7 +43391,23 @@ Pages._issueAppealSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     is.appealContent = content.trim();
+
+
+
+
+
+
+
+
 
 
 
@@ -21619,7 +43423,23 @@ Pages._issueAppealSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
     App.toast('申诉已提交');
+
+
+
+
+
+
+
+
 
 
 
@@ -21635,7 +43455,23 @@ Pages._issueAppealSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
   document.querySelector('.modal-overlay').remove();
+
+
+
+
+
+
+
+
 
 
 
@@ -21651,7 +43487,31 @@ Pages._issueAppealSubmit = async function(id) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21675,7 +43535,23 @@ Pages._issueReviewAppeal = async function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
   var issues = App.getIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -21691,7 +43567,23 @@ Pages._issueReviewAppeal = async function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
   if (is) {
+
+
+
+
+
+
+
+
 
 
 
@@ -21707,7 +43599,23 @@ Pages._issueReviewAppeal = async function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
     is.appealResult = result;
+
+
+
+
+
+
+
+
 
 
 
@@ -21723,7 +43631,23 @@ Pages._issueReviewAppeal = async function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
     App.toast('申诉审核' + result);
+
+
+
+
+
+
+
+
 
 
 
@@ -21739,7 +43663,23 @@ Pages._issueReviewAppeal = async function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
   Pages.inspectionIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -21763,7 +43703,31 @@ Pages._issueReviewAppeal = async function(id, result) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ==================== 稽核看板 ==================== */
+
+
+
+
+
+
+
+
 
 
 
@@ -21779,6 +43743,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   var el = document.getElementById('page-inspectionDashboard');
 
 
@@ -21787,7 +43759,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (!el) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -21811,7 +43799,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!App.Permissions.canAccess(user.role, 'inspection')) {
+
+
+
+
+
+
+
+
 
 
 
@@ -21827,6 +43839,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     return;
 
 
@@ -21835,7 +43855,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -21859,7 +43903,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   var issues = App.getIssues();
+
+
+
+
+
+
+
+
 
 
 
@@ -21883,7 +43943,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var now = new Date();
+
+
+
+
+
+
+
+
 
 
 
@@ -21907,7 +43991,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var monthResults = results.filter(function(r) { return r.date >= monthStart; });
+
+
+
+
+
+
+
+
 
 
 
@@ -21931,7 +44039,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var checkCount = monthResults.length;
+
+
+
+
+
+
+
+
 
 
 
@@ -21947,6 +44079,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   var issueCount = monthIssues.length;
 
 
@@ -21955,7 +44095,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   var fixedCount = monthIssues.filter(function(is) { return Pages._issueStatus(is) === '已闭环' || Pages._issueStatus(is) === '已整改'; }).length;
+
+
+
+
+
+
+
+
 
 
 
@@ -21979,7 +44135,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 门店筛选（持久化到 Pages 上，切换后重绘；店长强制锁定本人门店）
+
+
+
+
+
+
+
+
 
 
 
@@ -21995,7 +44175,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (storeFilter) {
+
+
+
+
+
+
+
+
 
 
 
@@ -22011,7 +44207,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     issues = issues.filter(function(is) { return is.storeId === storeFilter; });
+
+
+
+
+
+
+
+
 
 
 
@@ -22027,7 +44239,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     monthIssues = monthIssues.filter(function(is) { return is.storeId === storeFilter; });
+
+
+
+
+
+
+
+
 
 
 
@@ -22043,7 +44271,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     avgScore = monthResults.length > 0 ? Math.round(monthResults.reduce(function(s, r) { return s + (r.totalScore||0); }, 0) / monthResults.length) : 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -22059,7 +44303,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     fixedCount = monthIssues.filter(function(is) { return Pages._issueStatus(is) === '已闭环' || Pages._issueStatus(is) === '已整改'; }).length;
+
+
+
+
+
+
+
+
 
 
 
@@ -22075,7 +44335,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22099,7 +44383,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   var tplFilter = Pages._dbTplFilter || '';
+
+
+
+
+
+
+
+
 
 
 
@@ -22115,7 +44415,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     results = results.filter(function(r) { return r.templateId === tplFilter; });
+
+
+
+
+
+
+
+
 
 
 
@@ -22131,7 +44447,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     monthResults = monthResults.filter(function(r) { return r.templateId === tplFilter; });
+
+
+
+
+
+
+
+
 
 
 
@@ -22147,7 +44479,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     checkCount = monthResults.length;
+
+
+
+
+
+
+
+
 
 
 
@@ -22163,7 +44511,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     issueCount = monthIssues.length;
+
+
+
+
+
+
+
+
 
 
 
@@ -22179,7 +44543,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     fixRate = monthIssues.length > 0 ? Math.round(fixedCount / monthIssues.length * 100) : 0;
+
+
+
+
+
+
+
+
 
 
 
@@ -22203,23 +44583,73 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var html = '';
+
+
 
   var subHash = location.hash.replace('#', '');
 
+
+
   var subTabs = Pages._inspectionSubTabs(user);
+
+
 
   html += '<div class="sub-tabbar">';
 
+
+
   subTabs.forEach(function(t) {
+
+
 
     if (!t.show) return;
 
+
+
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22245,7 +44675,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (user.role !== '店长') {
+
+
+
+
+
+
+
+
 
 
 
@@ -22261,7 +44707,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22277,7 +44739,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<select id="db-store-filter" class="form-input" style="max-width:200px" onchange="Pages._dbStoreFilter=this.value;Pages.inspectionDashboard()">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22293,7 +44771,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     storeEntries.forEach(function(s) {
+
+
+
+
+
+
+
+
 
 
 
@@ -22309,7 +44803,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -22325,7 +44835,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22341,7 +44867,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22357,7 +44899,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<select id="db-tpl-filter" class="form-input" style="max-width:200px" onchange="Pages._dbTplFilter=this.value;Pages.inspectionDashboard()">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22373,7 +44931,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     (App.getTemplates() || []).forEach(function(t) {
+
+
+
+
+
+
+
+
 
 
 
@@ -22389,7 +44963,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -22405,7 +44995,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22421,7 +45027,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     var myStore = (App.getStores() || []).find(function(s) { return (s.id||s.storeId) === (user.storeId||''); });
+
+
+
+
+
+
+
+
 
 
 
@@ -22437,6 +45059,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '当前门店：<b style="color:#111">' + ((myStore && (myStore.name||myStore.store)) || user.store || user.storeId || '') + '</b>';
 
 
@@ -22445,7 +45075,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22461,7 +45107,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22477,7 +45139,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<select id="db-tpl-filter" class="form-input" style="max-width:200px" onchange="Pages._dbTplFilter=this.value;Pages.inspectionDashboard()">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22493,7 +45171,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     (App.getTemplates() || []).forEach(function(t) {
+
+
+
+
+
+
+
+
 
 
 
@@ -22509,7 +45203,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -22525,6 +45235,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</div>';
 
 
@@ -22533,7 +45251,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22557,7 +45299,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="db-kpi-grid">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22573,7 +45331,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += dbKpiCard('平均分', avgScore, '分', '#10b981', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z');
+
+
+
+
+
+
+
+
 
 
 
@@ -22589,6 +45363,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += dbKpiCard('整改率', fixRate, '%', '#f59e0b', 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15');
 
 
@@ -22597,7 +45379,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22621,7 +45427,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="db-card-3d"><div class="db-card-title">近期门店得分对比</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22637,7 +45459,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22661,7 +45507,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="db-card-3d" style="display:inline-block;width:48%;vertical-align:top"><div class="db-card-title">问题分类分布</div>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22677,7 +45539,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '</div>';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22701,6 +45587,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<div class="db-card-3d" style="display:inline-block;width:48%;vertical-align:top"><div class="db-card-title">月度趋势</div>';
 
 
@@ -22709,7 +45603,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   html += '<canvas id="insp-line-chart" width="250" height="250" style="width:100%;max-width:250px;height:250px"></canvas>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22733,7 +45643,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 机会点：本月 Top 扣分项
+
+
+
+
+
+
+
+
 
 
 
@@ -22749,7 +45683,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     return { content: is.content, category: is.category, deduct: (is.stdScore||0) - (is.actualScore||0), reason: is.deductReason };
+
+
+
+
+
+
+
+
 
 
 
@@ -22765,7 +45715,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   if (topDeducts.length > 0) {
+
+
+
+
+
+
+
+
 
 
 
@@ -22781,7 +45747,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '<div class="table-container" style="margin-top:8px"><table><thead><tr>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22797,7 +45779,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</tr></thead><tbody>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22813,7 +45811,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
       var barW = Math.round((d.deduct / topDeducts[0].deduct) * 80);
+
+
+
+
+
+
+
+
 
 
 
@@ -22829,7 +45843,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td><div style="position:relative">';
+
+
+
+
+
+
+
+
 
 
 
@@ -22845,7 +45875,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<span style="position:relative">' + (d.content||'') + '</span></div></td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22861,7 +45907,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '<td style="color:#ef4444;font-weight:600">-' + d.deduct + '分</td>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22877,7 +45939,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
       html += '</tr>';
+
+
+
+
+
+
+
+
 
 
 
@@ -22893,6 +45971,14 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     html += '</tbody></table></div></div>';
 
 
@@ -22901,7 +45987,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22933,7 +46043,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 延迟绘制图表
+
+
+
+
+
+
+
+
 
 
 
@@ -22949,7 +46083,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     Pages._drawInspBarChart(results, stores);
+
+
+
+
+
+
+
+
 
 
 
@@ -22965,7 +46115,23 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
     Pages._drawInspLineChart(results);
+
+
+
+
+
+
+
+
 
 
 
@@ -22981,7 +46147,31 @@ Pages.inspectionDashboard = function() {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23005,7 +46195,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   var canvas = document.getElementById('insp-bar-chart');
+
+
+
+
+
+
+
+
 
 
 
@@ -23021,7 +46227,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   var ctx = canvas.getContext('2d');
+
+
+
+
+
+
+
+
 
 
 
@@ -23037,7 +46259,31 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.clearRect(0, 0, W, H);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23061,7 +46307,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   var storeScores = {};
+
+
+
+
+
+
+
+
 
 
 
@@ -23077,7 +46339,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     if (!storeScores[r.storeId]) storeScores[r.storeId] = { name: r.store, scores: [] };
+
+
+
+
+
+
+
+
 
 
 
@@ -23093,7 +46371,31 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23117,7 +46419,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     return { name: s.name, avg: Math.round(s.scores.reduce(function(a,b){return a+b;},0) / s.scores.length) };
+
+
+
+
+
+
+
+
 
 
 
@@ -23141,7 +46459,39 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (entries.length === 0) return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23165,7 +46515,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   var chartW = W - pad.left - pad.right;
+
+
+
+
+
+
+
+
 
 
 
@@ -23181,6 +46547,14 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   var barW = chartW / entries.length * 0.6;
 
 
@@ -23189,7 +46563,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   var gap = chartW / entries.length * 0.4;
+
+
+
+
+
+
+
+
 
 
 
@@ -23213,7 +46603,31 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 坐标轴
+
+
+
+
+
+
+
+
 
 
 
@@ -23229,7 +46643,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.lineWidth = 1;
+
+
+
+
+
+
+
+
 
 
 
@@ -23245,7 +46675,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.moveTo(pad.left, pad.top);
+
+
+
+
+
+
+
+
 
 
 
@@ -23261,7 +46707,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.lineTo(pad.left + chartW, pad.top + chartH);
+
+
+
+
+
+
+
+
 
 
 
@@ -23285,7 +46747,31 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 柱状图
+
+
+
+
+
+
+
+
 
 
 
@@ -23301,7 +46787,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
   entries.forEach(function(e, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -23317,7 +46819,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     var x = pad.left + i * (barW + gap) + gap / 2;
+
+
+
+
+
+
+
+
 
 
 
@@ -23333,7 +46851,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillStyle = colors[i % colors.length];
+
+
+
+
+
+
+
+
 
 
 
@@ -23349,7 +46883,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     // 分值
+
+
+
+
+
+
+
+
 
 
 
@@ -23365,7 +46915,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.font = '10px sans-serif';
+
+
+
+
+
+
+
+
 
 
 
@@ -23381,7 +46947,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillText(e.avg, x + barW/2, y - 4);
+
+
+
+
+
+
+
+
 
 
 
@@ -23397,7 +46979,23 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillText((e.name||'').length > 4 ? (e.name||'').substring(0,4) : (e.name||''), x + barW/2, pad.top + chartH + 16);
+
+
+
+
+
+
+
+
 
 
 
@@ -23413,7 +47011,31 @@ Pages._drawInspBarChart = function(results, stores) {
 
 
 
+
+
+
+
+
+
+
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23437,7 +47059,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   var canvas = document.getElementById('insp-pie-chart');
+
+
+
+
+
+
+
+
 
 
 
@@ -23453,7 +47091,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   var ctx = canvas.getContext('2d');
+
+
+
+
+
+
+
+
 
 
 
@@ -23469,7 +47123,31 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.clearRect(0, 0, W, H);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23493,7 +47171,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   var cats = {};
+
+
+
+
+
+
+
+
 
 
 
@@ -23509,7 +47203,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     var cat = is.category || '其他';
+
+
+
+
+
+
+
+
 
 
 
@@ -23525,7 +47235,31 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23549,7 +47283,31 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   if (entries.length === 0) return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23573,6 +47331,14 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   var colors = ['#6366f1','#ef4444','#f59e0b','#10b981','#ec4899','#8b5cf6','#14b8a6','#3b82f6'];
 
 
@@ -23581,7 +47347,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   var cx = W/2, cy = H/2, r = Math.min(cx, cy) - 10;
+
+
+
+
+
+
+
+
 
 
 
@@ -23605,7 +47387,31 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   entries.forEach(function(e, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -23621,7 +47427,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.beginPath();
+
+
+
+
+
+
+
+
 
 
 
@@ -23637,7 +47459,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+
+
+
+
+
+
+
+
 
 
 
@@ -23653,7 +47491,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillStyle = colors[i % colors.length];
+
+
+
+
+
+
+
+
 
 
 
@@ -23669,6 +47523,14 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.strokeStyle = '#fff';
 
 
@@ -23677,7 +47539,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.lineWidth = 2;
+
+
+
+
+
+
+
+
 
 
 
@@ -23701,7 +47579,31 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 标签
+
+
+
+
+
+
+
+
 
 
 
@@ -23717,7 +47619,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     var lx = cx + Math.cos(midAngle) * (r * 0.7);
+
+
+
+
+
+
+
+
 
 
 
@@ -23733,7 +47651,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillStyle = '#fff';
+
+
+
+
+
+
+
+
 
 
 
@@ -23749,6 +47683,14 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.textAlign = 'center';
 
 
@@ -23757,7 +47699,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillText(e.count, lx, ly - 5);
+
+
+
+
+
+
+
+
 
 
 
@@ -23781,6 +47739,22 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     startAngle += sliceAngle;
 
 
@@ -23789,7 +47763,23 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -23813,7 +47803,31 @@ Pages._drawInspPieChart = function(issues) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Pages._drawInspLineChart = function(results) {
+
+
+
+
+
+
+
+
 
 
 
@@ -23829,7 +47843,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   if (!canvas) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -23845,7 +47875,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   var W = canvas.width, H = canvas.height;
+
+
+
+
+
+
+
+
 
 
 
@@ -23869,7 +47915,31 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 按月份聚合
+
+
+
+
+
+
+
+
 
 
 
@@ -23885,7 +47955,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   results.forEach(function(r) {
+
+
+
+
+
+
+
+
 
 
 
@@ -23901,7 +47987,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     if (!months[m]) months[m] = { total: 0, count: 0 };
+
+
+
+
+
+
+
+
 
 
 
@@ -23917,6 +48019,14 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     months[m].count += 1;
 
 
@@ -23925,7 +48035,31 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23949,6 +48083,14 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     return { month: k, avg: Math.round(months[k].total / months[k].count) };
 
 
@@ -23957,7 +48099,31 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -23989,7 +48155,31 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   var pad = { top: 20, bottom: 35, left: 35, right: 10 };
+
+
+
+
+
+
+
+
 
 
 
@@ -24005,7 +48195,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   var chartH = H - pad.top - pad.bottom;
+
+
+
+
+
+
+
+
 
 
 
@@ -24021,7 +48227,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   var maxVal = Math.max.apply(null, entries.map(function(e) { return e.avg; })) + 5;
+
+
+
+
+
+
+
+
 
 
 
@@ -24045,7 +48267,31 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 坐标轴
+
+
+
+
+
+
+
+
 
 
 
@@ -24061,7 +48307,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.beginPath();
+
+
+
+
+
+
+
+
 
 
 
@@ -24077,7 +48339,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.lineTo(pad.left, pad.top + chartH);
+
+
+
+
+
+
+
+
 
 
 
@@ -24093,7 +48371,31 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.stroke();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -24117,7 +48419,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.strokeStyle = '#6366f1';
+
+
+
+
+
+
+
+
 
 
 
@@ -24133,7 +48451,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   ctx.beginPath();
+
+
+
+
+
+
+
+
 
 
 
@@ -24149,7 +48483,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     var x = pad.left + (i / (entries.length - 1)) * chartW;
+
+
+
+
+
+
+
+
 
 
 
@@ -24165,6 +48515,14 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
 
 
@@ -24173,7 +48531,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -24197,7 +48571,31 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 数据点
+
+
+
+
+
+
+
+
 
 
 
@@ -24213,7 +48611,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   entries.forEach(function(e, i) {
+
+
+
+
+
+
+
+
 
 
 
@@ -24229,7 +48643,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     var y = pad.top + chartH - ((e.avg - minVal) / (maxVal - minVal)) * chartH;
+
+
+
+
+
+
+
+
 
 
 
@@ -24245,7 +48675,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.arc(x, y, 3, 0, 2*Math.PI);
+
+
+
+
+
+
+
+
 
 
 
@@ -24261,7 +48707,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillStyle = '#333';
+
+
+
+
+
+
+
+
 
 
 
@@ -24277,7 +48739,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.textAlign = 'center';
+
+
+
+
+
+
+
+
 
 
 
@@ -24293,7 +48771,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
     ctx.fillText((e.month||'').substring(5), x, pad.top + chartH + 14);
+
+
+
+
+
+
+
+
 
 
 
@@ -24309,7 +48803,23 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -24321,21 +48831,43 @@ Pages._drawInspLineChart = function(results) {
 
 
 
+
+
+
+
 /* ==================== 供应链问题模块 ==================== */
+
+
 
 Pages._supplyTabs = [
 
+
+
   { id: 'production', label: '生产', category: '生产' },
+
+
 
   { id: 'purchase', label: '采购', category: '采购' },
 
+
+
   { id: 'logistics', label: '物流', category: '物流' },
+
+
 
   { id: 'vegetable', label: '净菜', category: '净菜' },
 
+
+
   { id: 'board', label: '看板', category: '' }
 
+
+
 ];
+
+
+
+
 
 
 
@@ -24343,73 +48875,147 @@ Pages._supplyState = { tab: 'production', status: '全部', type: '全部' };
 
 
 
+
+
+
+
 Pages._supplyStatusClass = function(s) {
+
+
 
   if (s === '已闭环') return 'sc-status-done';
 
+
+
   if (s === '处理中') return 'sc-status-doing';
+
+
 
   return 'sc-status-wait';
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyEsc = function(s) {
 
+
+
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+
 
 };
 
 
 
+
+
+
+
 Pages.supplyChain = function() {
+
+
 
   var el = document.getElementById('page-supplyChain');
 
+
+
   if (!el) return;
+
+
 
   var user = App.currentUser;
 
+
+
   if (!user) return;
+
+
 
   if (!App.Permissions.canAccess(user.role, 'supply_chain')) {
 
+
+
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
+
 
     return;
 
+
+
   }
+
+
+
+
 
 
 
   var subHash = Pages._supplyState.tab;
 
+
+
   var html = '';
+
+
 
   html += Pages._bdTabs('supplyChain');
 
+
+
   html += '<div class="sub-tabbar sc-tabbar">';
+
+
 
   Pages._supplyTabs.forEach(function(t) {
 
+
+
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" onclick="Pages._supplySetTab(\'' + t.id + '\')">' + t.label + '</div>';
 
+
+
   });
+
+
 
   html += '</div>';
 
 
 
+
+
+
+
   if (subHash === 'board') {
+
+
 
     html += Pages._supplyRenderBoard(user);
 
+
+
   } else {
+
+
 
     html += Pages._supplyRenderCategory(user, subHash);
 
+
+
   }
+
+
+
+
 
 
 
@@ -24417,639 +49023,1281 @@ Pages.supplyChain = function() {
 
 
 
+
+
+
+
   el.innerHTML = html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplySetTab = function(id) {
 
+
+
   Pages._supplyState.tab = id;
+
+
 
   Pages._supplyState.status = '全部';
 
+
+
   Pages._supplyState.type = '全部';
+
+
 
   Pages.supplyChain();
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplySetFilter = function(key, val) {
 
+
+
   Pages._supplyState[key] = val;
+
+
 
   Pages.supplyChain();
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyRenderCategory = function(user, tabId) {
 
+
+
   var cat = '';
+
+
 
   Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
 
+
+
   var all = App.getSupplyIssues() || [];
+
+
 
   var list = all.filter(function(r) { return r.category === cat; });
 
 
 
+
+
+
+
   var status = Pages._supplyState.status;
+
+
 
   var type = Pages._supplyState.type;
 
+
+
   if (status && status !== '全部') list = list.filter(function(r) { return r.status === status; });
+
+
 
   if (type && type !== '全部') list = list.filter(function(r) { return r.type === type; });
 
 
 
+
+
+
+
   var typeSet = {};
 
+
+
   all.forEach(function(r) { if (r.category === cat && r.type) typeSet[r.type] = 1; });
+
+
 
   var typeArr = Object.keys(typeSet).sort();
 
 
 
+
+
+
+
   var today = new Date();
+
+
 
   var dateStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
 
 
 
+
+
+
+
   var html = '';
+
+
 
   html += '<div class="sc-head"><div class="sc-title">' + cat + '问题</div><div class="sc-date">' + dateStr + '</div></div>';
 
 
 
+
+
+
+
   html += '<div class="sc-filter">';
+
+
 
   html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'status\', this.value)">';
 
+
+
   ['全部','待处理','处理中','已闭环'].forEach(function(s) {
+
+
 
     html += '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
 
+
+
   });
 
+
+
   html += '</select>';
+
+
 
   html += '<select class="form-select sc-select" onchange="Pages._supplySetFilter(\'type\', this.value)">';
 
+
+
   html += '<option value="全部">全部类型</option>';
+
+
 
   typeArr.forEach(function(t) {
 
+
+
     html += '<option value="' + Pages._supplyEsc(t) + '"' + (type === t ? ' selected' : '') + '>' + Pages._supplyEsc(t) + '</option>';
+
+
 
   });
 
+
+
   html += '</select>';
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   var waitN = list.filter(function(r){ return r.status === '待处理'; }).length;
 
+
+
   var doingN = list.filter(function(r){ return r.status === '处理中'; }).length;
+
+
 
   var doneN = list.filter(function(r){ return r.status === '已闭环'; }).length;
 
+
+
   html += '<div class="sc-mini-stats">';
+
+
 
   html += '<div class="sc-mini"><span class="sc-mini-num">' + list.length + '</span><span class="sc-mini-label">共' + cat + '条</span></div>';
 
+
+
   html += '<div class="sc-mini sc-mini-wait"><span class="sc-mini-num">' + waitN + '</span><span class="sc-mini-label">待处理</span></div>';
+
+
 
   html += '<div class="sc-mini sc-mini-doing"><span class="sc-mini-num">' + doingN + '</span><span class="sc-mini-label">处理中</span></div>';
 
+
+
   html += '<div class="sc-mini sc-mini-done"><span class="sc-mini-num">' + doneN + '</span><span class="sc-mini-label">已闭环</span></div>';
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   list.sort(function(a, b) { return (b.date || '') < (a.date || '') ? -1 : 1; });
 
+
+
   if (list.length === 0) {
+
+
 
     html += '<div class="card sc-card"><div class="sc-empty">暂无符合条件的问题</div></div>';
 
+
+
   } else {
+
+
 
     html += '<div class="sc-list">';
 
+
+
     list.forEach(function(r) {
+
+
 
       html += '<div class="card sc-card" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
 
+
+
       html += '<div class="sc-card-top"><span class="sc-source">' + Pages._supplyEsc(r.source) + '</span>';
+
+
 
       html += '<span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
 
+
+
       if (r.product) html += '<div class="sc-product">' + Pages._supplyEsc(r.product) + '</div>';
+
+
 
       html += '<div class="sc-issue">' + Pages._supplyEsc(r.issue) + '</div>';
 
+
+
       html += '<div class="sc-card-bottom"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span><span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span></div>';
+
+
 
       html += '</div>';
 
+
+
     });
 
+
+
     html += '</div>';
+
+
 
   }
 
 
 
+
+
+
+
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyRenderBoard = function(user) {
 
+
+
   var all = App.getSupplyIssues() || [];
+
+
 
   var total = all.length;
 
+
+
   var waitN = all.filter(function(r){ return r.status === '待处理'; }).length;
 
+
+
   var doingN = all.filter(function(r){ return r.status === '处理中'; }).length;
+
+
 
   var doneN = all.filter(function(r){ return r.status === '已闭环'; }).length;
 
 
 
+
+
+
+
   var cats = ['生产','采购','物流','净菜'];
 
+
+
   var catCount = {};
+
+
 
   cats.forEach(function(c){ catCount[c] = all.filter(function(r){ return r.category === c; }).length; });
 
 
 
+
+
+
+
   var typeCount = {};
 
+
+
   all.forEach(function(r) { if (r.type) typeCount[r.type] = (typeCount[r.type] || 0) + 1; });
+
+
 
   var typeArr = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
 
 
 
+
+
+
+
   var srcCount = {};
 
+
+
   all.forEach(function(r) { if (r.source) srcCount[r.source] = (srcCount[r.source] || 0) + 1; });
+
+
 
   var srcArr = Object.keys(srcCount).map(function(k){ return { name: k, count: srcCount[k] }; }).sort(function(a,b){ return b.count - a.count; }).slice(0, 5);
 
 
 
+
+
+
+
   var days = [];
+
+
 
   var today = new Date();
 
+
+
   for (var i = 13; i >= 0; i--) {
+
+
 
     var d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
 
+
+
     var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+
+
 
     days.push({ key: key, count: 0 });
 
+
+
   }
+
+
 
   all.forEach(function(r) {
 
+
+
     if (!r.date) return;
+
+
 
     for (var j = 0; j < days.length; j++) {
 
+
+
       if (days[j].key === r.date) { days[j].count++; break; }
+
+
 
     }
 
+
+
   });
 
+
+
   var maxDay = 1;
+
+
 
   days.forEach(function(d){ if (d.count > maxDay) maxDay = d.count; });
 
 
 
+
+
+
+
   var html = '';
+
+
 
   html += '<div class="sc-head"><div class="sc-title">供应链问题看板</div></div>';
 
 
 
+
+
+
+
   html += '<div class="sc-board-nums">';
+
+
 
   html += '<div class="sc-num-card sc-num-total"><span class="sc-num-big">' + total + '</span><span class="sc-num-label">问题总数</span></div>';
 
+
+
   html += '<div class="sc-num-card sc-num-wait"><span class="sc-num-big">' + waitN + '</span><span class="sc-num-label">待处理</span></div>';
+
+
 
   html += '<div class="sc-num-card sc-num-doing"><span class="sc-num-big">' + doingN + '</span><span class="sc-num-label">处理中</span></div>';
 
+
+
   html += '<div class="sc-num-card sc-num-done"><span class="sc-num-big">' + doneN + '</span><span class="sc-num-label">已闭环</span></div>';
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   html += '<div class="card sc-card"><div class="sc-card-title">各环节问题占比</div>';
 
+
+
   cats.forEach(function(c) {
+
+
 
     var n = catCount[c] || 0;
 
+
+
     var pct = total > 0 ? Math.round(n / total * 100) : 0;
+
+
 
     html += '<div class="sc-cat-row"><div class="sc-cat-line"><span class="sc-cat-name">' + c + '</span><span class="sc-cat-num">' + n + ' (' + pct + '%)</span></div>';
 
+
+
     html += '<div class="sc-bar"><div class="sc-bar-inner" style="width:' + pct + '%"></div></div></div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   html += '<div class="card sc-card"><div class="sc-card-title">高频问题类型 TOP5</div>';
 
+
+
   if (typeArr.length === 0) {
+
+
 
     html += '<div class="sc-empty">暂无数据</div>';
 
+
+
   } else {
+
+
 
     typeArr.forEach(function(t, idx) {
 
+
+
       var pct = total > 0 ? Math.round(t.count / total * 100) : 0;
+
+
 
       html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(t.name) + '</span><div class="sc-bar sc-bar-flex"><div class="sc-bar-inner sc-bar-type" style="width:' + pct + '%"></div></div><span class="sc-rank-num">' + t.count + '</span></div>';
 
+
+
     });
+
+
 
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   html += '<div class="card sc-card"><div class="sc-card-title">反馈来源 TOP5</div>';
 
+
+
   if (srcArr.length === 0) {
+
+
 
     html += '<div class="sc-empty">暂无数据</div>';
 
+
+
   } else {
+
+
 
     srcArr.forEach(function(s, idx) {
 
+
+
       html += '<div class="sc-rank-row"><span class="sc-rank-idx">' + (idx+1) + '</span><span class="sc-rank-name">' + Pages._supplyEsc(s.name) + '</span><span class="sc-rank-num">' + s.count + ' 条</span></div>';
+
+
 
     });
 
+
+
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   html += '<div class="card sc-card"><div class="sc-card-title">每日趋势（近14天）</div>';
 
+
+
   html += '<div class="sc-trend">';
+
+
 
   days.forEach(function(d) {
 
+
+
     var h = d.count > 0 ? Math.max(4, Math.round(d.count / maxDay * 60)) : 2;
+
+
 
     html += '<div class="sc-trend-col"><div class="sc-trend-bar" style="height:' + h + 'px" title="' + d.key + ' ' + d.count + '条">' + (d.count > 0 ? d.count : '') + '</div><div class="sc-trend-day">' + d.key.slice(8) + '</div></div>';
 
+
+
   });
 
-  html += '</div>';
+
 
   html += '</div>';
+
+
+
+  html += '</div>';
+
+
+
+
 
 
 
   var pending = all.filter(function(r){ return r.status === '待处理'; }).sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; }).slice(0, 5);
 
+
+
   html += '<div class="card sc-card"><div class="sc-card-title">最新待处理</div>';
+
+
 
   if (pending.length === 0) {
 
+
+
     html += '<div class="sc-empty">暂无待处理问题</div>';
+
+
 
   } else {
 
+
+
     pending.forEach(function(r) {
+
+
 
       html += '<div class="sc-pending-row" onclick="Pages._supplyOpenDetail(\'' + r.id + '\')">';
 
+
+
       html += '<span class="sc-pending-cat">' + r.category + '</span>';
+
+
 
       html += '<span class="sc-pending-txt">' + Pages._supplyEsc(r.issue) + '</span>';
 
+
+
       html += '<span class="sc-date-tag">' + Pages._supplyEsc(r.date || '') + '</span>';
+
+
 
       html += '</div>';
 
+
+
     });
+
+
 
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyOpenDetail = function(id) {
 
+
+
   var all = App.getSupplyIssues() || [];
+
+
 
   var r = null;
 
+
+
   for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+
+
 
   if (!r) return;
 
+
+
   var html = '';
+
+
 
   html += '<div class="modal-header"><h3>问题详情</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
 
+
+
   html += '<div class="sc-detail">';
+
+
 
   html += '<div class="sc-detail-row"><span class="sc-detail-label">环节</span><span class="sc-detail-val">' + r.category + '</span></div>';
 
+
+
   html += '<div class="sc-detail-row"><span class="sc-detail-label">反馈来源</span><span class="sc-detail-val">' + Pages._supplyEsc(r.source) + '</span></div>';
+
+
 
   html += '<div class="sc-detail-row"><span class="sc-detail-label">产品</span><span class="sc-detail-val">' + Pages._supplyEsc(r.product || '-') + '</span></div>';
 
+
+
   html += '<div class="sc-detail-row"><span class="sc-detail-label">日期</span><span class="sc-detail-val">' + Pages._supplyEsc(r.date || '-') + '</span></div>';
+
+
 
   html += '<div class="sc-detail-row"><span class="sc-detail-label">类型</span><span class="sc-detail-val"><span class="sc-type-tag">' + Pages._supplyEsc(r.type || '未分类') + '</span></span></div>';
 
+
+
   html += '<div class="sc-detail-block"><span class="sc-detail-label">问题描述</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.issue) + '</div></div>';
+
+
 
   if (r.remark) html += '<div class="sc-detail-block"><span class="sc-detail-label">备注</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.remark) + '</div></div>';
 
+
+
   html += '<div class="sc-detail-row"><span class="sc-detail-label">状态</span><span class="sc-status ' + Pages._supplyStatusClass(r.status) + '">' + r.status + '</span></div>';
 
+
+
   if (r.handler) html += '<div class="sc-detail-row"><span class="sc-detail-label">处理人</span><span class="sc-detail-val">' + Pages._supplyEsc(r.handler) + '</span></div>';
+
+
 
   if (r.result) html += '<div class="sc-detail-block"><span class="sc-detail-label">处理结果</span><div class="sc-detail-issue">' + Pages._supplyEsc(r.result) + '</div></div>';
 
 
 
+
+
+
+
   html += '<div class="sc-flow">';
+
+
 
   if (r.status === '待处理') {
 
+
+
     html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(App.currentUser ? (App.currentUser.name || '') : '') + '"></div>';
+
+
 
     html += '<button class="btn sc-btn-main" onclick="Pages._supplyStart(\'' + id + '\')">开始处理</button>';
 
+
+
   } else if (r.status === '处理中') {
+
+
 
     html += '<div class="sc-flow-form"><input class="form-input sc-input" id="sc-handler-' + id + '" placeholder="处理人姓名" value="' + Pages._supplyEsc(r.handler || '') + '"></div>';
 
+
+
     html += '<div class="sc-flow-form"><textarea class="form-input sc-input sc-textarea" id="sc-result-' + id + '" placeholder="填写处理结果">' + Pages._supplyEsc(r.result || '') + '</textarea></div>';
+
+
 
     html += '<button class="btn sc-btn-done" onclick="Pages._supplyFinish(\'' + id + '\')">完成闭环</button>';
 
+
+
   } else {
+
+
 
     html += '<div class="sc-closed-tip">该问题已闭环，如需重新处理请上报新问题</div>';
 
+
+
   }
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   html += '<div style="margin-top:14px"><button class="btn btn-outline btn-sm" style="width:100%" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
 
+
+
   html += '</div>';
+
+
+
+
 
 
 
   document.querySelector('#modal-overlay .modal-box').innerHTML = html;
 
+
+
   document.getElementById('modal-overlay').classList.add('show');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyStart = function(id) {
 
+
+
   var all = App.getSupplyIssues() || [];
+
+
 
   var r = null;
 
+
+
   for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+
+
 
   if (!r) return;
 
+
+
   var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
+
+
 
   r.status = '处理中';
 
+
+
   r.handler = handler || (App.currentUser ? (App.currentUser.name || '') : '');
+
+
 
   App.saveSupplyIssues(all);
 
+
+
   Pages._toast('已开始处理');
+
+
 
   Pages._supplyOpenDetail(id);
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyFinish = function(id) {
 
+
+
   var all = App.getSupplyIssues() || [];
+
+
 
   var r = null;
 
+
+
   for (var i = 0; i < all.length; i++) { if (all[i].id === id) { r = all[i]; break; } }
+
+
 
   if (!r) return;
 
+
+
   var result = document.getElementById('sc-result-' + id) ? document.getElementById('sc-result-' + id).value.trim() : '';
+
+
 
   var handler = document.getElementById('sc-handler-' + id) ? document.getElementById('sc-handler-' + id).value.trim() : '';
 
+
+
   if (!result) {
+
+
 
     Pages._toast('请填写处理结果');
 
+
+
     return;
+
+
 
   }
 
+
+
   r.status = '已闭环';
+
+
 
   r.result = result;
 
+
+
   r.handler = handler || r.handler || (App.currentUser ? (App.currentUser.name || '') : '');
+
+
 
   r.closeDate = new Date().toISOString().slice(0, 10);
 
+
+
   App.saveSupplyIssues(all);
+
+
 
   Pages._toast('已闭环');
 
+
+
   Pages._supplyOpenDetail(id);
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyOpenReport = function(tabId) {
 
+
+
   var cat = '';
+
+
 
   Pages._supplyTabs.forEach(function(t) { if (t.id === tabId) cat = t.category; });
 
+
+
   var html = '';
+
+
 
   html += '<div class="modal-header"><h3>上报问题</h3><span class="modal-close" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'show\')">&times;</span></div>';
 
+
+
   html += '<div class="sc-report-form">';
+
+
 
   html += '<div class="sc-form-row"><label class="sc-form-label">环节</label><span class="sc-form-static">' + cat + '</span></div>';
 
+
+
   html += '<div class="sc-form-row"><label class="sc-form-label">反馈来源</label><input class="form-input sc-input" id="sc-r-source" placeholder="如：黄寺大街店 / 生产反馈"></div>';
+
+
 
   html += '<div class="sc-form-row"><label class="sc-form-label">产品</label><input class="form-input sc-input" id="sc-r-product" placeholder="如：小炒肉汁"></div>';
 
+
+
   html += '<div class="sc-form-row"><label class="sc-form-label">检查机会点</label><textarea class="form-input sc-input sc-textarea" id="sc-r-issue" placeholder="问题描述"></textarea></div>';
+
+
 
   html += '<div class="sc-form-row"><label class="sc-form-label">类型</label><input class="form-input sc-input" id="sc-r-type" placeholder="如：异物、少货、品质不佳"></div>';
 
+
+
   html += '<div class="sc-form-row"><label class="sc-form-label">备注</label><textarea class="form-input sc-input sc-textarea" id="sc-r-remark" placeholder="选填"></textarea></div>';
+
+
 
   html += '<button class="btn sc-btn-main" style="width:100%;margin-top:6px" onclick="Pages._supplyDoReport(\'' + cat + '\')">提交上报</button>';
 
+
+
   html += '</div>';
+
+
 
   document.querySelector('#modal-overlay .modal-box').innerHTML = html;
 
+
+
   document.getElementById('modal-overlay').classList.add('show');
 
+
+
 };
+
+
+
+
 
 
 
 Pages._supplyDoReport = function(cat) {
 
+
+
   var source = document.getElementById('sc-r-source') ? document.getElementById('sc-r-source').value.trim() : '';
+
+
 
   var product = document.getElementById('sc-r-product') ? document.getElementById('sc-r-product').value.trim() : '';
 
+
+
   var issue = document.getElementById('sc-r-issue') ? document.getElementById('sc-r-issue').value.trim() : '';
+
+
 
   var type = document.getElementById('sc-r-type') ? document.getElementById('sc-r-type').value.trim() : '';
 
+
+
   var remark = document.getElementById('sc-r-remark') ? document.getElementById('sc-r-remark').value.trim() : '';
+
+
 
   if (!source || !issue) {
 
+
+
     Pages._toast('请填写反馈来源和问题描述');
+
+
 
     return;
 
+
+
   }
+
+
 
   var all = App.getSupplyIssues() || [];
 
+
+
   var maxId = 0;
+
+
 
   all.forEach(function(r) {
 
+
+
     var n = parseInt(String(r.id).replace(/\D/g, ''), 10);
+
+
 
     if (!isNaN(n) && n > maxId) maxId = n;
 
+
+
   });
+
+
 
   var now = new Date();
 
+
+
   var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+
 
   var item = {
 
+
+
     id: 'sp' + String(maxId + 1).padStart(4, '0'),
+
+
 
     category: cat,
 
+
+
     date: dateStr,
+
+
 
     source: source,
 
+
+
     product: product,
+
+
 
     issue: issue,
 
+
+
     type: type,
+
+
 
     remark: remark,
 
+
+
     status: '待处理',
+
+
 
     result: '',
 
+
+
     handler: ''
+
+
 
   };
 
+
+
   all.unshift(item);
+
+
 
   App.saveSupplyIssues(all);
 
+
+
   Pages._toast('上报成功');
+
+
 
   document.getElementById('modal-overlay').classList.remove('show');
 
+
+
   Pages.supplyChain();
 
+
+
 };
+
+
+
+
 
 
 
 Pages._toast = function(msg) {
 
+
+
   var t = document.getElementById('toast');
+
+
 
   if (!t) return;
 
+
+
   t.textContent = msg;
+
+
 
   t.classList.add('show');
 
+
+
   setTimeout(function() { t.classList.remove('show'); }, 2000);
 
+
+
 };
+
+
+
+
+
+
 
 
 
@@ -25057,532 +50305,1063 @@ Pages._toast = function(msg) {
 
 /* ==================== 看板中心 · 差评看板 ==================== */
 
+
+
 Pages._cType = function(c) {
+
+
 
   var t = (c.opportunity || '') + ' ' + (c.content || '');
 
+
+
   var rules = [
+
+
 
     ['服务态度', ['服务','态度','店员','员工','不理','冷漠','回应','语气']],
 
+
+
     ['出品/口味', ['咸','淡','味道','口味','好吃','难吃','菜','饭','汤','食材','变质','异味','口感','量少','不熟']],
+
+
 
     ['环境/卫生', ['卫生','干净','脏','油渍','餐具','桌面','地面','苍蝇','虫','头发']],
 
+
+
     ['出餐/配送', ['等','慢','上菜','外卖','漏送','打包','配送','迟到']]
+
+
 
   ];
 
+
+
   for (var i = 0; i < rules.length; i++) {
+
+
 
     for (var j = 0; j < rules[i][1].length; j++) {
 
+
+
       if (t.indexOf(rules[i][1][j]) >= 0) return rules[i][0];
+
+
 
     }
 
+
+
   }
+
+
 
   return '其他';
 
+
+
 };
+
+
+
+
 
 
 
 Pages._bdTabs = function(activeId) {
 
+
+
   var tabs = [
+
+
 
     { id: 'dashboard', label: '看板中心' },
 
+
+
     { id: 'inspectionWorkbench', label: '稽核看板' },
+
+
 
     { id: 'complaintBoard', label: '差评看板' },
 
+
+
     { id: 'daily', label: '日报看板' },
+
+
 
     { id: 'penaltyBoard', label: '处罚看板' },
 
+
+
     { id: 'supplyChain', label: '供应链看板' }
+
+
 
   ];
 
+
+
   var html = '<div class="sub-tabbar bd-tabbar">';
+
+
 
   tabs.forEach(function(t) {
 
+
+
     html += '<div class="sub-tab-item' + (t.id === activeId ? ' active' : '') + '" onclick="Pages._gotoBoardTab(\'' + t.id + '\')">' + t.label + '</div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
 
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._bdDays = function(records, dateKeyFn) {
 
+
+
   // 最近 10 天（含今日）
+
+
 
   var days = [];
 
+
+
   var now = new Date();
+
+
 
   for (var i = 9; i >= 0; i--) {
 
+
+
     var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+
+
 
     days.push({ label: String(d.getDate()), key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), count: 0, amount: 0 });
 
+
+
   }
+
+
 
   var map = {};
 
+
+
   days.forEach(function(dd){ map[dd.key] = dd; });
+
+
 
   records.forEach(function(r) {
 
+
+
     var k = dateKeyFn(r);
+
+
 
     if (map[k]) { map[k].count++; map[k].amount += Pages._pAmount(r); }
 
+
+
   });
+
+
 
   return days;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._bdTrendHtml = function(days, color, valFn, valSuffix) {
 
+
+
   var max = 1;
+
+
 
   days.forEach(function(d){ var v = valFn(d); if (v > max) max = v; });
 
+
+
   var html = '<div class="bd-trend">';
+
+
 
   days.forEach(function(d) {
 
+
+
     var v = valFn(d);
+
+
 
     var h = Math.max(8, Math.round(v / max * 100));
 
+
+
     html += '<div class="bd-trend-col"><div class="bd-trend-bar-wrap"><div class="bd-trend-bar" style="height:' + h + '%;background:' + color + '"></div></div><div class="bd-trend-val">' + v + (valSuffix || '') + '</div><div class="bd-trend-label">' + d.label + '</div></div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
 
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._bdRankHtml = function(rows, color) {
 
+
+
   var medals = ['&#129351;', '&#129352;', '&#129353;'];
+
+
 
   var html = '<div class="bd-rank">';
 
+
+
   rows.forEach(function(r, i) {
+
+
 
     html += '<div class="bd-rank-row"><span class="bd-rank-idx" style="background:' + (i < 3 ? color + '1a' : '#f1f5f9') + ';color:' + (i < 3 ? color : '#94a3b8') + '">' + (i < 3 ? medals[i] : (i + 1)) + '</span><span class="bd-rank-name">' + r.name + '</span><span class="bd-rank-val" style="color:' + color + '">' + r.val + '</span></div>';
 
+
+
   });
+
+
 
   html += '</div>';
 
+
+
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._bdTypeHtml = function(rows, color, valKey) {
 
+
+
   var total = 0;
+
+
 
   rows.forEach(function(r){ total += r.count; });
 
+
+
   if (total === 0) total = 1;
+
+
 
   var html = '<div class="bd-type">';
 
+
+
   rows.forEach(function(r) {
+
+
 
     var w = Math.max(6, Math.round(r.count / total * 100));
 
+
+
     html += '<div class="bd-type-row"><div class="bd-type-name">' + r.name + '</div><div class="bd-type-track"><div class="bd-type-fill" style="width:' + w + '%;background:' + color + '"></div></div><div class="bd-type-val">' + (valKey === 'amount' ? r.count + '笔 · ¥' + r.amount.toLocaleString() : r.count + '条') + '</div></div>';
+
+
 
   });
 
+
+
   html += '</div>';
+
+
 
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages._pAmount = function(p) {
 
+
+
   if (!p) return 0;
+
+
 
   var num = function(v) {
 
+
+
     if (typeof v === 'number') return v;
+
+
 
     if (typeof v === 'string') {
 
+
+
       var n = parseFloat(v.replace(/[^\d.]/g, ''));
+
+
 
       return isNaN(n) ? 0 : n;
 
+
+
     }
+
+
 
     return 0;
 
+
+
   };
+
+
 
   if (p.dutyValue !== '' && p.dutyValue !== undefined && p.dutyValue !== null) {
 
+
+
     var dv = num(p.dutyValue);
+
+
 
     if (dv > 0) return dv;
 
+
+
   }
+
+
 
   return num(p.penaltyPerson) + num(p.penaltyManager);
 
+
+
 };
+
+
+
+
 
 
 
 Pages.complaintBoard = function() {
+
   var el = document.getElementById('page-complaintBoard');
+
   if (!el) return;
+
   var user = App.currentUser;
+
   if (!user) return;
+
   if (!App.Permissions.canAccess(user.role, 'dashboard')) {
+
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
     return;
+
   }
+
   el.innerHTML = Pages._bdTabs('complaintBoard') + Pages._complaintBoardHtml();
+
 };
 
+
+
 Pages._complaintBoardHtml = function() {
+
 var complaints = App.getComplaints() || [];
+
+
 
   var now = new Date();
 
+
+
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+
 
   var month = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
 
+
+
   var pending = month.filter(function(c){ return c.status === '待处理'; });
 
+
+
   var handled = month.filter(function(c){ return c.status !== '待处理'; });
+
+
 
   var rate = month.length ? Math.round(handled.length / month.length * 100) : 0;
 
 
 
+
+
+
+
   var days = Pages._bdDays(month, function(c){ return c.date || ''; });
+
+
 
   var storeCount = {};
 
+
+
   month.forEach(function(c){ storeCount[c.store] = (storeCount[c.store] || 0) + 1; });
+
+
 
   var storeRank = Object.keys(storeCount).map(function(k){ return { name: k, val: storeCount[k] + '条' }; }).sort(function(a, b){ return b.val.localeCompare(a.val) || b.val.length - a.val.length; }).slice(0, 5);
 
+
+
   var typeCount = {};
+
+
 
   month.forEach(function(c){ var t = Pages._cType(c); typeCount[t] = (typeCount[t] || 0) + 1; });
 
+
+
   var typeRows = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a, b){ return b.count - a.count; });
+
+
 
   var latest = month.filter(function(c){ return c.status === '待处理'; }).sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); }).slice(0, 5);
 
 
 
+
+
+
+
   var html = '';
+
+
 
   html += Pages._bdTabs('complaintBoard');
 
+
+
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#e0342c,#f87171)">';
+
+
 
   html += '<div class="bd-head-left"><div class="bd-title">差评看板</div><div class="bd-date">' + curMonth + '</div></div>';
 
+
+
   html += '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div>';
+
+
 
   html += '<div class="bd-stats">';
 
+
+
   html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月差评</div></div>';
+
+
 
   html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pending.length + '</div><div class="bd-stat-label">待审核</div></div>';
 
+
+
   html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">处理率</div></div>';
+
+
 
   html += '</div>';
 
+
+
   html += '<div class="bd-card"><div class="bd-card-title">每日差评趋势</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
+
+
 
   html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#complaint\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
 
+
+
   html += '<div class="bd-card"><div class="bd-card-title">差评类型分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeRows, '#e0342c', 'count') + '</div></div>';
+
+
 
   html += '<div class="bd-card"><div class="bd-card-title">最新待审核差评</div><div class="bd-list">';
 
+
+
   if (latest.length === 0) {
+
+
 
     html += '<div class="bd-empty">本月暂无待审核差评</div>';
 
+
+
   }
+
+
 
   latest.forEach(function(c) {
 
+
+
     html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
 
+
+
   });
+
+
 
   html += '</div></div></div>';
 
 
 
+
+
+
+
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages.penaltyBoard = function() {
+
   var el = document.getElementById('page-penaltyBoard');
+
   if (!el) return;
+
   var user = App.currentUser;
+
   if (!user) return;
+
   if (!App.Permissions.canAccess(user.role, 'dashboard')) {
+
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
     return;
+
   }
+
   el.innerHTML = Pages._bdTabs('penaltyBoard') + Pages._penaltyBoardHtml();
+
 };
 
+
+
 Pages._penaltyBoardHtml = function() {
+
 var penalties = App.getPenalties() || [];
+
+
 
   var now = new Date();
 
+
+
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+
 
   var month = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
 
+
+
   var totalAmount = 0;
 
+
+
   month.forEach(function(p){ totalAmount += Pages._pAmount(p); });
+
+
 
   var pendingFill = month.filter(function(p){ return p.status === '待补填'; });
 
 
 
+
+
+
+
   var days = Pages._bdDays(month, function(p){ return p.eventDate || ''; });
+
+
 
   var typeRows = {};
 
+
+
   month.forEach(function(p) {
+
+
 
     var k = p.category || '其他';
 
+
+
     if (!typeRows[k]) typeRows[k] = { count: 0, amount: 0 };
+
+
 
     typeRows[k].count++;
 
+
+
     typeRows[k].amount += Pages._pAmount(p);
 
+
+
   });
+
+
 
   var typeList = Object.keys(typeRows).map(function(k){ return { name: k, count: typeRows[k].count, amount: typeRows[k].amount }; }).sort(function(a, b){ return b.count - a.count; });
 
+
+
   var storeRows = {};
+
+
 
   month.forEach(function(p) {
 
+
+
     var k = p.store || '未知门店';
+
+
 
     if (!storeRows[k]) storeRows[k] = { count: 0, amount: 0 };
 
+
+
     storeRows[k].count++;
+
+
 
     storeRows[k].amount += Pages._pAmount(p);
 
+
+
   });
 
+
+
   var storeRank = Object.keys(storeRows).map(function(k){ return { name: k, val: storeRows[k].count + '笔 · ¥' + storeRows[k].amount.toLocaleString() }; }).sort(function(a, b){ return b.val.length - a.val.length || b.val.localeCompare(a.val); }).slice(0, 5);
+
+
 
   var latest = month.sort(function(a, b){ return (b.eventDate || '').localeCompare(a.eventDate || ''); }).slice(0, 5);
 
 
 
+
+
+
+
   var html = '';
+
+
 
   html += Pages._bdTabs('penaltyBoard');
 
+
+
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">';
+
+
 
   html += '<div class="bd-head-left"><div class="bd-title">处罚看板</div><div class="bd-date">' + curMonth + '</div></div>';
 
+
+
   html += '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div>';
+
+
 
   html += '<div class="bd-stats">';
 
+
+
   html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月处罚</div></div>';
+
+
 
   html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">处罚金额</div></div>';
 
+
+
   html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pendingFill.length + '</div><div class="bd-stat-label">待补填</div></div>';
+
+
 
   html += '</div>';
 
+
+
   html += '<div class="bd-card"><div class="bd-card-title">处罚类型分布（含金额）</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeList, '#7c3aed', 'amount') + '</div></div>';
+
+
 
   html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#penalty\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
 
+
+
   html += '<div class="bd-card"><div class="bd-card-title">每日处罚金额趋势</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
+
+
 
   html += '<div class="bd-card"><div class="bd-card-title">最新处罚记录</div><div class="bd-list">';
 
+
+
   if (latest.length === 0) {
+
+
 
     html += '<div class="bd-empty">本月暂无处罚记录</div>';
 
+
+
   }
+
+
 
   latest.forEach(function(p) {
 
+
+
     var cls = p.status === '已闭环' ? 'bd-tag-green' : (p.status === '超时' ? 'bd-tag-red' : 'bd-tag-amber');
+
+
 
     html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\'' + p.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
 
+
+
   });
+
+
 
   html += '</div></div></div>';
 
 
 
+
+
+
+
   return html;
 
+
+
 };
+
+
+
+
 
 
 
 Pages.taskBoard = function() {
+
   var el = document.getElementById('page-taskBoard');
+
   if (!el) return;
+
   var user = App.currentUser;
+
   if (!user) return;
+
   if (!App.Permissions.canAccess(user.role, 'task') && !App.Permissions.canAccess(user.role, 'dashboard')) {
+
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+
     return;
+
   }
+
   el.innerHTML = Pages._taskBoardHtml();
+
 };
 
+
+
 Pages._taskBoardHtml = function() {
+
 var tasks = App.getTasks() || [];
+
+
 
   var done = tasks.filter(function(t){ return t.status === '已完成'; });
 
+
+
   var doing = tasks.filter(function(t){ return t.status === '进行中'; });
 
+
+
   var todo = tasks.filter(function(t){ return t.status === '待办'; });
+
+
 
   var rate = tasks.length ? Math.round(done.length / tasks.length * 100) : 0;
 
 
 
+
+
+
+
   var statusRows = [
+
+
 
     { name: '已完成', count: done.length },
 
+
+
     { name: '进行中', count: doing.length },
+
+
 
     { name: '待办', count: todo.length }
 
+
+
   ];
+
+
 
   var personRows = {};
 
+
+
   tasks.forEach(function(t) {
+
+
 
     var k = t.person || '未分配';
 
+
+
     if (!personRows[k]) personRows[k] = { count: 0, done: 0 };
+
+
 
     personRows[k].count++;
 
+
+
     if (t.status === '已完成') personRows[k].done++;
 
+
+
   });
+
+
 
   var personRank = Object.keys(personRows).map(function(k){ return { name: k, val: personRows[k].done + '/' + personRows[k].count + ' 完成' }; }).sort(function(a, b){ return b.val.localeCompare(a.val); }).slice(0, 5);
 
 
 
+
+
+
+
   var today = new Date();
 
+
+
   var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+
 
   var upcoming = tasks.filter(function(t){ return t.status !== '已完成' && (t.dueDate || '') >= todayStr; }).sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); }).slice(0, 5);
 
 
 
+
+
+
+
   var html = '';
+
+
 
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#059669,#34d399)">';
 
+
+
   html += '<div class="bd-head-left"><div class="bd-title">任务看板</div><div class="bd-date">' + todayStr + '</div></div>';
+
+
 
   html += '<button class="bd-back" onclick="location.hash=\'#task\'">任务列表</button></div>';
 
+
+
   html += '<div class="bd-stats">';
+
+
 
   html += '<div class="bd-stat" style="--bd:#059669"><div class="bd-stat-num">' + tasks.length + '</div><div class="bd-stat-label">任务总数</div></div>';
 
+
+
   html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + doing.length + '</div><div class="bd-stat-label">进行中</div></div>';
+
+
 
   html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">完成率</div></div>';
 
+
+
   html += '</div>';
+
+
 
   html += '<div class="bd-card"><div class="bd-card-title">任务状态分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(statusRows, '#059669', 'count') + '</div></div>';
 
+
+
   html += '<div class="bd-card"><div class="bd-card-title">各人任务量排行</div><div style="padding:12px 16px">' + Pages._bdRankHtml(personRank, '#059669') + '</div></div>';
+
+
 
   html += '<div class="bd-card"><div class="bd-card-title">即将到期任务</div><div class="bd-list">';
 
+
+
   if (upcoming.length === 0) {
+
+
 
     html += '<div class="bd-empty">暂无即将到期任务</div>';
 
+
+
   }
+
+
 
   upcoming.forEach(function(t) {
 
+
+
     html += '<div class="bd-item" onclick="Pages.showTaskDetail(\'' + t.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="bd-tag bd-tag-amber">' + t.status + '</span></div><div class="bd-item-sub">' + t.person + ' · 截止 ' + t.dueDate + (t.priority === '高' ? ' · <span style="color:#e0342c">高优先级</span>' : '') + '</div></div>';
 
+
+
   });
+
+
 
   html += '</div></div></div>';
 
 
 
+
+
+
+
   return html;
 
+
+
 };
+
+
+
+
 
 
 
