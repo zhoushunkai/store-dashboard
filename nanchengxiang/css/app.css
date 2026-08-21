@@ -3020,6 +3020,14 @@ body {
 .bd-tabbar { background: #111827; border-bottom: none; }
 .bd-tabbar .sub-tab-item { color: #9ca3af; }
 .bd-tabbar .sub-tab-item.active { color: #fff; background: var(--primary); }
+.bd-tabbar { background: #111827; border-bottom: none; }
+/* 看板导航栏 + 模块子页签 双栏：子页签粘在看板导航栏下方 */
+.bd-tabbar + .sub-tabbar,
+.bd-tabbar + .sc-tabbar { top: 128px; }
+@media (min-width: 768px) {
+  .bd-tabbar + .sub-tabbar,
+  .bd-tabbar + .sc-tabbar { top: 88px; }
+}
 .bd-wrap { padding-bottom: 80px; }
 .bd-head { display: flex; justify-content: space-between; align-items: center; padding: 16px; color: #fff; }
 .bd-head-left { display: flex; align-items: baseline; gap: 8px; }

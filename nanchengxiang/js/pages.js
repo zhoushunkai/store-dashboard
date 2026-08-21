@@ -3683,6 +3683,8 @@ Pages.inspectionWorkbench = function() {
 
   var html = '';
 
+  html += Pages._bdTabs('inspectionWorkbench');
+
   html += '<div class="sub-tabbar">';
 
   var subHash = location.hash.replace('#', '');
@@ -11626,6 +11628,14 @@ Pages.daily = function() {
 
 
   }
+
+
+
+
+
+
+
+  html += Pages._bdTabs('daily');
 
 
 
@@ -24376,6 +24386,8 @@ Pages.supplyChain = function() {
   var subHash = Pages._supplyState.tab;
 
   var html = '';
+
+  html += Pages._bdTabs('supplyChain');
 
   html += '<div class="sub-tabbar sc-tabbar">';
 
