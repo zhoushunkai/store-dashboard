@@ -2961,44 +2961,37 @@ const App = {
 
 
   _snakeList(list) {
-
-
-
-
-
-
-
     var self = this;
-
-
-
-
-
-
-
     return list.map(function(r) { return self._snakeRow(r); });
-
-
-
-
-
-
-
   },
 
+  /* ---- 云表字段归一化：前端 camel 对象 -> inspection_results/issues 云表列 ---- */
 
+  _cloudResults(list) {
+    var self = this;
+    return list.map(function(r) {
+      var o = { id: r.id || '', store_id: r.storeId || r.store_id || '', inspector: r.inspector || '', date: r.date || '' };
+      o.score = (typeof r.score === 'number') ? r.score : ((typeof r.totalScore === 'number') ? r.totalScore : null);
+      o.max_score = (typeof r.maxScore === 'number') ? r.maxScore : ((typeof r.max_score === 'number') ? r.max_score : null);
+      o.findings = (r.findings != null) ? String(r.findings) : ((r.complianceIssues != null) ? String(r.complianceIssues) : null);
+      o.photos = (r.photos != null) ? (typeof r.photos === 'string' ? r.photos : JSON.stringify(r.photos)) : null;
+      o.created_at = r.createdAt || r.created_at || r.date || null;
+      return o;
+    });
+  },
 
-
-
-
-
-
-
-
-
-
-
-
+  _cloudIssues(list) {
+    var self = this;
+    return list.map(function(r) {
+      var o = { id: r.id || '', result_id: r.resultId || r.result_id || '', store_id: r.storeId || r.store_id || '' };
+      o.category = r.category || '';
+      o.description = r.description || r.content || '';
+      o.score = (typeof r.score === 'number') ? r.score : ((typeof r.stdScore === 'number') ? r.stdScore : null);
+      o.status = r.status || '待处理';
+      o.created_at = r.createdAt || r.created_at || r.date || null;
+      return o;
+    });
+  },
 
   /* ---- 表名映射 ---- */
 
@@ -5271,7 +5264,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('inspection_results').insert(this._snakeList(data));
+      if (data.length > 0) await this.supabase.from('inspection_results').insert(this._cloudResults(data));
 
 
 
@@ -5335,7 +5328,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('inspection_issues').insert(this._snakeList(data));
+      if (data.length > 0) await this.supabase.from('inspection_issues').insert(this._cloudIssues(data));
 
 
 
