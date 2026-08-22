@@ -34329,7 +34329,7 @@ Pages._fillLoadLastFailMap = function(storeId, tpl) {
   if (!storeId || !tpl) return map;
   try {
     var N = 3;
-    var results = App.getResults().filter(function(r) {
+    var results = App.getResultsFull().filter(function(r) {
       return r.storeId === storeId && r.status && r.status !== '草稿';
     });
     results.sort(function(a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
