@@ -33975,1084 +33975,60 @@ Pages._fillDraft = false;
 
 
 Pages.inspectionFill = function() {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var el = document.getElementById('page-inspectionFill');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   if (!el) return;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var user = App.currentUser;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var stores = App.getStores();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var templates = App.getTemplates().filter(function(t) { return t.isActive !== false; });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   if (!App.Permissions.canAccess(user.role, 'inspection_edit')) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     return;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   var html = '';
-
-
-
   var subHash = location.hash.replace('#', '');
-
-
-
   var subTabs = Pages._inspectionSubTabs(user);
-
-
-
   html += '<div class="sub-tabbar">';
-
-
-
   subTabs.forEach(function(t) {
-
-
-
     if (!t.show) return;
-
-
-
     html += '<div class="sub-tab-item' + (subHash === t.id ? ' active' : '') + '" data-sub="' + t.id + '" onclick="Pages._gotoSub(\'' + t.id + '\')">' + t.label + '</div>';
-
-
-
   });
-
-
-
   html += '</div>';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="card"><div class="card-title">稽核检查</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // 选模板 + 选门店
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">选择模板</label>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // 选择栏：模板 + 门店
+  html += '<div class="fill-selector">';
   html += '<select id="fill-template" class="form-input" onchange="Pages._fillOnTemplateChange()">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<option value="">-- 请选择 --</option>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  html += '<option value="">-- 请选择稽核模板 --</option>';
   templates.forEach(function(t) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     var sel = Pages._fillTemplateId === t.id ? ' selected' : '';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     html += '<option value="' + t.id + '"' + sel + '>' + t.name + ' (v' + (t.version||1) + ', ' + (t.items||[]).length + '项)</option>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '</select></div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="form-group"><label class="form-label">选择门店</label>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  html += '</select>';
   html += App.renderStoreSelect('fill-store', stores, Pages._fillStoreId, '搜索门店...');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   html += '</div>';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // 如果已选模板，显示检查表单
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // 已选模板：进页一次拉取该门店最近稽核结果做"上次不合格"映射，再渲染卡片式表单
+  var tpl = null;
   if (Pages._fillTemplateId) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var tpl = templates.find(function(t) { return t.id === Pages._fillTemplateId; });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    if (tpl && tpl.items) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '<div class="table-container"><table><thead><tr>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '<th>序号</th><th>类别</th><th>检查内容</th><th>标准分</th><th>实际得分</th><th>扣分原因</th><th>备注</th><th>现场图片</th>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '</tr></thead><tbody id="fill-items-body">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      tpl.items.forEach(function(item, i) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<tr class="fill-item-row" data-index="' + i + '" data-score="' + (item.score||0) + '">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<td>' + (i+1) + '</td>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<td>' + (item.category || '') + '</td>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<td>' + (item.content || '') + '</td>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<td class="fill-std-score">' + (item.score||0) + '</td>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<td><input type="number" class="form-input fill-actual" value="' + (item.score||0) + '" min="0" max="' + (item.score||0) + '" style="width:60px" onchange="Pages._fillCalcScore()"></td>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<td><input type="text" class="form-input fill-deduct-reason" placeholder="扣分原因" style="width:120px" oninput="Pages._fillOnDeductInput(this)"></td>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '<td><input type="text" class="form-input fill-remark" placeholder="备注" style="width:100px"></td>';
-
-        html += '<td style="min-width:170px"><button type="button" class="btn btn-sm" onclick="Pages._fillPickImages(' + i + ', \'gallery\')">图片</button> <button type="button" class="btn btn-sm" onclick="Pages._fillPickImages(' + i + ', \'camera\')">拍照</button><input type="file" accept="image/*" multiple style="display:none" id="fill-img-input-' + i + '"><div class="fill-thumbs" id="fill-thumbs-' + i + '"></div></td>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        html += '</tr>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '</tbody></table></div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      var totalScore = tpl.items.reduce(function(s, item) { return s + (item.score||0); }, 0);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '<div style="margin-top:8px;font-weight:bold">总分：<span id="fill-total-score" style="color:#c41a1a">' + totalScore + '</span> / ' + totalScore + '</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '<div style="margin-top:12px;display:flex;gap:8px">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '<button class="btn btn-primary" onclick="Pages._fillSubmit(false)">提交检查</button>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '<button class="btn" onclick="Pages._fillSubmit(true)">保存草稿</button>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      html += '</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    tpl = templates.find(function(t) { return t.id === Pages._fillTemplateId; });
+    if (tpl && tpl.items && tpl.items.length) {
+      Pages._fillLastFailMap = Pages._fillLoadLastFailMap(Pages._fillStoreId, tpl);
+      html += Pages._fillRenderForm(tpl);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   el.innerHTML = html;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if (Pages._fillTemplateId) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    App.initStoreSelect('fill-store', stores, function(sid) { Pages._fillStoreId = sid; });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  if (Pages._fillTemplateId && tpl && tpl.items) {
+    App.initStoreSelect('fill-store', stores, function(sid) {
+      Pages._fillStoreId = sid;
+      if (Pages._fillTemplateId) Pages.inspectionFill();
+    });
+    tpl.items.forEach(function(item, i) { Pages._renderFillThumbs(i); });
+    Pages._fillRefreshPanel();
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-};
+};;
 
 
 
@@ -35164,423 +34140,176 @@ Pages._fillOnTemplateChange = function() {
 
 
 
-Pages._fillCalcScore = function() {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var rows = document.querySelectorAll('.fill-item-row');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var total = 0, maxTotal = 0;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  rows.forEach(function(row) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var stdScore = parseInt(row.dataset.score) || 0;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var actual = parseInt((row.querySelector('.fill-actual')||{}).value);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    maxTotal += stdScore;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    if (!isNaN(actual)) total += actual; else total += stdScore;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var el = document.getElementById('fill-total-score');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if (el) el.textContent = total;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Pages._fillOnDeductInput = function(input) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var row = input.closest('.fill-item-row');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if (!row) return;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var stdScore = parseInt(row.dataset.score) || 0;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var reason = input.value.trim();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var actualEl = row.querySelector('.fill-actual');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if (reason && actualEl) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // 用户输入扣分原因时自动将实际得分设为标准分-1，用户可继续调整
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    if (parseInt(actualEl.value) >= stdScore) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      actualEl.value = Math.max(0, stdScore - 1);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Pages._fillRefreshPanel = function() {
+  var tpl = App.getTemplates().find(function(t) { return t.id === Pages._fillTemplateId; });
+  if (!tpl || !tpl.items) return;
+  var total = 0, maxTotal = 0, passN = 0, failN = 0, naN = 0;
+  tpl.items.forEach(function(item, i) {
+    var std = item.score || 0;
+    var st = Pages._fillStatus[i] || 'pass';
+    if (st === 'na') {
+      naN++;
+    } else {
+      maxTotal += std;
+      if (st === 'pass') { total += std; passN++; }
+      else { failN++; }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  Pages._fillCalcScore();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  });
+  var doneN = passN + failN + naN;
+  var rate = maxTotal > 0 ? Math.round(total / maxTotal * 1000) / 10 : 0;
+  var set = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+  set('fill-total-score', total);
+  set('fill-max-score', maxTotal);
+  set('fill-rate', rate + '%');
+  set('fill-stat-pass', passN);
+  set('fill-stat-fail', failN);
+  set('fill-stat-na', naN);
+  set('fill-stat-done', doneN);
+  var bar = document.getElementById('fill-progress');
+  if (bar) bar.style.width = (maxTotal > 0 ? Math.min(100, total / maxTotal * 100) : 0) + '%';
 };
+
+Pages._fillRate = function(i, s) {
+  Pages._fillStatus[i] = s;
+  Pages._fillRefreshPanel();
+  Pages._fillRenderCardStatus(i);
+};
+
+Pages._fillRenderCardStatus = function(i) {
+  var card = document.getElementById('fill-card-' + i);
+  if (!card) return;
+  var st = Pages._fillStatus[i];
+  var lastFail = card.getAttribute('data-lastfail') === '1';
+  var idx = card.querySelector('.fill-idx');
+  if (idx) {
+    idx.className = 'fill-idx';
+    if (st === 'fail') idx.className = 'fill-idx fail';
+    else if (st === 'na') idx.className = 'fill-idx na';
+    else if (!st && lastFail) idx.className = 'fill-idx warn';
+  }
+  var line = card.querySelector('.fill-status-line');
+  if (line) {
+    if (st === 'pass') { line.className = 'fill-status-line ok'; line.innerHTML = '<span class="fill-dot"></span>已通过'; }
+    else if (st === 'fail') { line.className = 'fill-status-line'; line.innerHTML = '<span class="fill-dot"></span>不通过'; }
+    else if (st === 'na') { line.className = 'fill-status-line na'; line.innerHTML = '<span class="fill-dot"></span>不适用'; }
+    else {
+      line.className = lastFail ? 'fill-status-line' : 'fill-status-line na';
+      line.innerHTML = lastFail ? '<span class="fill-dot"></span>上次不合格 · 待处理' : '<span class="fill-dot"></span>未检查';
+    }
+  }
+  var btns = card.querySelectorAll('.fill-rate-btn');
+  btns.forEach(function(b) {
+    var s2 = b.getAttribute('data-s');
+    b.className = 'fill-rate-btn' + (s2 === st ? ' active ' + s2 : '');
+  });
+  var sc = card.querySelector('.fill-rate-score');
+  if (sc) {
+    var std = parseInt(card.getAttribute('data-score')) || 0;
+    if (st === 'na') sc.innerHTML = '不计分';
+    else if (st === 'fail') sc.innerHTML = '得分 <b>0</b>';
+    else sc.innerHTML = '得分 <b>' + std + '</b>';
+  }
+};
+
+Pages._fillOnRemark = function(i, v) {
+  Pages._fillRemarks[i] = v;
+};
+
+Pages._fillClear = function(i) {
+  delete Pages._fillStatus[i];
+  Pages._fillRemarks[i] = '';
+  Pages._fillPhotos[i] = [];
+  var card = document.getElementById('fill-card-' + i);
+  if (card) {
+    var ta = card.querySelector('.fill-remark'); if (ta) ta.value = '';
+    var tb = document.getElementById('fill-thumbs-' + i); if (tb) tb.innerHTML = '';
+  }
+  Pages._fillRenderCardStatus(i);
+  Pages._fillRefreshPanel();
+  App.toast('已重置该项');
+};
+
+Pages._fillEsc = function(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+};
+
+Pages._fillLoadLastFailMap = function(storeId, tpl) {
+  var map = {};
+  if (!storeId || !tpl) return map;
+  try {
+    var results = App.getResults().filter(function(r) {
+      return r.storeId === storeId && r.status && r.status !== '草稿';
+    });
+    results.sort(function(a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+    if (!results.length) return map;
+    (results[0].details || []).forEach(function(d) {
+      if (d && d.content && d.actualScore != null && d.actualScore < (d.stdScore || 0)) map[d.content] = true;
+    });
+  } catch (e) { console.error('[fill] 上次不合格加载失败', e); }
+  return map;
+};
+
+Pages._fillRenderForm = function(tpl) {
+  var html = '';
+  // 分数面板
+  html += '<div class="fill-score-panel">';
+  html += '<div class="fill-score-head"><div class="fill-score-total">总分 <b id="fill-total-score">0</b> / <span id="fill-max-score">0</span></div>';
+  html += '<div class="fill-score-rate" id="fill-rate">0%</div></div>';
+  html += '<div class="fill-score-stats">';
+  html += '<div class="fill-stat pass"><div class="fill-stat-num" id="fill-stat-pass">0</div><div class="fill-stat-lbl">合格</div></div>';
+  html += '<div class="fill-stat fail"><div class="fill-stat-num" id="fill-stat-fail">0</div><div class="fill-stat-lbl">不合格</div></div>';
+  html += '<div class="fill-stat na"><div class="fill-stat-num" id="fill-stat-na">0</div><div class="fill-stat-lbl">不适用</div></div>';
+  html += '<div class="fill-stat"><div class="fill-stat-num" id="fill-stat-done">0</div><div class="fill-stat-lbl">已检</div></div>';
+  html += '</div>';
+  html += '<div class="fill-progress"><i id="fill-progress"></i></div>';
+  html += '<div class="fill-submit-row">';
+  html += '<button class="fill-submit-btn" onclick="Pages._fillSubmit(false)">提交稽核结果</button>';
+  html += '<button class="fill-draft-btn" onclick="Pages._fillSubmit(true)">保存草稿</button>';
+  html += '</div></div>';
+  // 检查项卡片
+  html += '<div class="fill-check-list">';
+  tpl.items.forEach(function(item, i) {
+    html += Pages._fillRenderCard(item, i);
+  });
+  html += '</div>';
+  html += '<div class="fill-list-foot">— 共 ' + tpl.items.length + ' 项，继续上滑查看更多 —</div>';
+  return html;
+};
+
+Pages._fillRenderCard = function(item, i) {
+  var std = item.score || 0;
+  var st = Pages._fillStatus[i];
+  var remark = Pages._fillRemarks[i] || '';
+  var lastFail = Pages._fillLastFailMap ? !!Pages._fillLastFailMap[item.content] : false;
+  var photos = Pages._fillPhotos[i] || [];
+  var html = '';
+  html += '<div class="fill-card" id="fill-card-' + i + '" data-index="' + i + '" data-score="' + std + '" data-lastfail="' + (lastFail ? '1' : '0') + '">';
+  html += '<div class="fill-idx' + (lastFail && !st ? ' warn' : '') + '">' + (i + 1) + '</div>';
+  html += '<div class="fill-body">';
+  html += '<div class="fill-title"><div class="fill-name"><span class="fill-score-tag">' + std + '分</span>' + Pages._fillEsc(item.content) + '</div></div>';
+  if (st === 'pass') { html += '<div class="fill-status-line ok"><span class="fill-dot"></span>已通过</div>'; }
+  else if (st === 'fail') { html += '<div class="fill-status-line"><span class="fill-dot"></span>不通过</div>'; }
+  else if (st === 'na') { html += '<div class="fill-status-line na"><span class="fill-dot"></span>不适用</div>'; }
+  else if (lastFail) { html += '<div class="fill-status-line"><span class="fill-dot"></span>上次不合格 · 待处理</div>'; }
+  else { html += '<div class="fill-status-line na"><span class="fill-dot"></span>未检查</div>'; }
+  html += '<div class="fill-rate-row">';
+  html += '<div class="fill-rate-btn' + (st === 'pass' ? ' active pass' : '') + '" data-s="pass" onclick="Pages._fillRate(' + i + ',\'pass\')">✓ 通过</div>';
+  html += '<div class="fill-rate-btn' + (st === 'fail' ? ' active fail' : '') + '" data-s="fail" onclick="Pages._fillRate(' + i + ',\'fail\')">✕ 不通过</div>';
+  html += '<div class="fill-rate-btn' + (st === 'na' ? ' active na' : '') + '" data-s="na" onclick="Pages._fillRate(' + i + ',\'na\')">⊖ 不适用</div>';
+  html += '<div class="fill-rate-score">' + (st === 'na' ? '不计分' : st === 'fail' ? '得分 <b>0</b>' : '得分 <b>' + std + '</b>') + '</div>';
+  html += '</div>';
+  html += '<textarea class="fill-remark" placeholder="备注 / 扣分原因..." oninput="Pages._fillOnRemark(' + i + ', this.value)">' + Pages._fillEsc(remark) + '</textarea>';
+  html += '<div class="fill-thumbs" id="fill-thumbs-' + i + '"></div>';
+  html += '<div class="fill-toolbar">';
+  html += '<span class="fill-tool hot" onclick="Pages._fillPickImages(' + i + ',\'camera\')"><span class="ic">📷</span>拍照' + (photos.length ? ' <span class="fill-cnt">' + photos.length + '</span>' : '') + '</span>';
+  html += '<span class="fill-tool" onclick="Pages._fillPickImages(' + i + ',\'gallery\')"><span class="ic">📎</span>附件</span>';
+  html += '<span class="fill-tool" onclick="document.getElementById(\'fill-card-' + i + '\').querySelector(\'.fill-remark\').focus()"><span class="ic">✏️</span>编辑</span>';
+  html += '<span class="fill-tool" onclick="Pages._fillClear(' + i + ')"><span class="ic">⋯</span>更多</span>';
+  html += '</div>';
+  html += '<input type="file" accept="image/*" multiple style="display:none" id="fill-img-input-' + i + '">';
+  html += '</div></div>';
+  return html;
+};;
 
 
 
@@ -35836,7 +34565,7 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
-  var rows = document.querySelectorAll('.fill-item-row');
+  var rows = tpl.items;
 
 
 
@@ -35900,343 +34629,26 @@ Pages._fillSubmit = async function(isDraft) {
 
 
 
-  rows.forEach(function(row, i) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    rows.forEach(function(row, i) {
     var item = tpl.items[i] || {};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     var stdScore = item.score || 0;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var actualEl = row.querySelector('.fill-actual');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var actual = actualEl ? parseInt(actualEl.value) : stdScore;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    if (isNaN(actual)) actual = stdScore;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var deductReason = (row.querySelector('.fill-deduct-reason')||{}).value || '';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var remark = (row.querySelector('.fill-remark')||{}).value || '';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    maxScore += stdScore;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    totalScore += actual;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    var st = Pages._fillStatus[i];
+    var na = st === 'na';
+    var actual = st === 'fail' ? 0 : stdScore;
+    var deductReason = Pages._fillRemarks[i] || '';
+    var remark = Pages._fillRemarks[i] || '';
+    if (!na) { maxScore += stdScore; totalScore += actual; }
     details.push({
       photos: (Pages._fillPhotos[i] || []).filter(function(x){ return x.status === 'uploaded' && x.url; }).map(function(x){ return x.url; }),
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       index: i,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       category: item.category || '',
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       content: item.content || '',
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       stdScore: stdScore,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       actualScore: actual,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      na: !!na,
       deductReason: deductReason,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       remark: remark
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   });
 
 
@@ -39291,7 +37703,7 @@ Pages._showResultDetail = function(id) {
 
 
 
-    html += '<td style="color:' + (isDeduct ? '#ef4444' : '#10b981') + '">' + (d.actualScore||0) + '</td>';
+    html += '<td style="color:' + (isDeduct ? '#ef4444' : '#10b981') + '">' + (d.na ? '不适用' : (d.actualScore||0)) + '</td>';
 
 
 
