@@ -34009,6 +34009,11 @@ Pages.inspectionFill = function() {
   html += '</div>';
 
   // 已选模板：进页一次拉取该门店最近稽核结果做"上次不合格"映射，再渲染卡片式表单
+  // 防御性初始化：进入检查页时确保三内存态数组可用（模板切换时已按检查项数重置）
+  if (!Array.isArray(Pages._fillStatus)) Pages._fillStatus = [];
+  if (!Array.isArray(Pages._fillRemarks)) Pages._fillRemarks = [];
+  if (!Array.isArray(Pages._fillPhotos)) Pages._fillPhotos = [];
+
   var tpl = null;
   if (Pages._fillTemplateId) {
     tpl = templates.find(function(t) { return t.id === Pages._fillTemplateId; });
@@ -34076,7 +34081,14 @@ Pages._fillOnTemplateChange = function() {
 
 
 
+  var oldTpl = Pages._fillTemplateId;
   Pages._fillTemplateId = document.getElementById('fill-template').value;
+  if (oldTpl !== Pages._fillTemplateId) {
+    var tpl = App.getTemplates().find(function(t) { return t.id === Pages._fillTemplateId; });
+    var n = tpl && tpl.items ? tpl.items.length : 0;
+    Pages._fillStatus = []; Pages._fillRemarks = []; Pages._fillPhotos = [];
+    for (var fi = 0; fi < n; fi++) { Pages._fillStatus[fi] = undefined; Pages._fillRemarks[fi] = ''; Pages._fillPhotos[fi] = []; }
+  }
 
 
 
@@ -34146,13 +34158,13 @@ Pages._fillRefreshPanel = function() {
   var total = 0, maxTotal = 0, passN = 0, failN = 0, naN = 0;
   tpl.items.forEach(function(item, i) {
     var std = item.score || 0;
-    var st = Pages._fillStatus[i] || 'pass';
+    var st = Pages._fillStatus[i];
     if (st === 'na') {
       naN++;
     } else {
       maxTotal += std;
       if (st === 'pass') { total += std; passN++; }
-      else { failN++; }
+      else if (st === 'fail') { failN++; }
     }
   });
   var doneN = passN + failN + naN;
