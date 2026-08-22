@@ -5052,6 +5052,7 @@ const App = {
 
 
   getResults()        { var d = this.dataCache.inspection_results || []; if (this.seedData.inspection_results && this.seedData.inspection_results.length > 0) { var ids={}; d.forEach(function(r){ids[r.id]=true}); this.seedData.inspection_results.forEach(function(r){if(!ids[r.id])d.push(r)}); } return d; },
+  getResultsFull()    { var d = this.getResults() || []; try { var raw = localStorage.getItem('nanchengxiang_inspection_results'); if (raw) { var arr = JSON.parse(raw) || []; if (arr.length) { var m = {}; arr.forEach(function(r){ if (r && r.id) m[r.id] = r; }); d.forEach(function(r){ if (r && r.id && !m[r.id]) m[r.id] = r; }); var out = []; for (var k in m) { if (m.hasOwnProperty(k)) out.push(m[k]); } return out; } } } catch (e) {} return d; },
 
 
 

@@ -7686,7 +7686,7 @@ Pages.inspectionWorkbench = function() {
 
 
   // 6. 重复犯错（同一门店同一检查项近3次稽核不合格≥2）
-  var repeatArr = Pages._repeatFailStats(results, 3);
+  var repeatArr = Pages._repeatFailStats(Pages._repeatFailSource(results), 3);
 
 
 
@@ -8536,6 +8536,22 @@ Pages._wbOpenStoreDetail = function(storeId) {
   modal.classList.add('show');
 };
 
+Pages._repeatFailSource = function(results) {
+  var full = App.getResultsFull() || [];
+  if (!full.length) return results;
+  var idSet = {}, keySet = {};
+  (results || []).forEach(function(r) {
+    if (!r) return;
+    if (r.id) idSet[r.id] = 1;
+    keySet[(r.storeId || '') + '|' + (r.date || '')] = 1;
+  });
+  var out = full.filter(function(r) {
+    if (!r) return false;
+    if (r.id && idSet[r.id]) return true;
+    return keySet[(r.storeId || '') + '|' + (r.date || '')] ? true : false;
+  });
+  return out.length ? out : results;
+};
 Pages._repeatFailStats = function(results, n) {
   n = n || 3;
   var itemMap = {};
@@ -8567,7 +8583,7 @@ Pages._repeatFailStats = function(results, n) {
 };
 
 Pages._wbOpenRepeatDetail = function(storeId, item) {
-  var results = App.getResults() || [];
+  var results = App.getResultsFull() || [];
   var rows = [];
   results.forEach(function(r) {
     (r.details || []).forEach(function(d) {
