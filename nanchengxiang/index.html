@@ -130,6 +130,10 @@
   <script async src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
           onerror="console.warn('xlsx CDN 加载失败，Excel 功能不可用')"></script>
 
+  <!-- 异步加载 jszip（稽核照片打包下载用） -->
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+          onerror="console.warn('jszip CDN 加载失败，照片打包降级为逐张下载')"></script>
+
   <!-- Service Worker -->
   <script>
   if ('serviceWorker' in navigator) {

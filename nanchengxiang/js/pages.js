@@ -7685,6 +7685,10 @@ Pages.inspectionWorkbench = function() {
   inspArr = inspArr.slice(0, 5);
 
 
+  // 6. 重复犯错（同一门店同一检查项近3次稽核不合格≥2）
+  var repeatArr = Pages._repeatFailStats(results, 3);
+
+
 
 
 
@@ -8105,9 +8109,20 @@ Pages.inspectionWorkbench = function() {
   html += '</div>';
 
 
-
-
-
+  // 重复犯错 TOP（同店同检查项近3次不合格≥2）
+  html += '<div class="card wb-card">';
+  html += '<div class="wb-card-head"><span class="wb-card-title">重复犯错</span><span style="font-size:11px;color:#e74c3c;background:#fdeaea;padding:2px 8px;border-radius:10px">同店同检查项近3次不合格≥2</span></div>';
+  if (repeatArr.length === 0) {
+    html += '<div class="wb-empty">暂无重复犯错记录</div>';
+  } else {
+    repeatArr.slice(0, 5).forEach(function(o) {
+      html += '<div class="wb-sp-row" onclick="Pages._wbOpenRepeatDetail(\'' + o.storeId + '\',\'' + String(o.item).replace(/'/g, "\\'") + '\')">';
+      html += '<span class="wb-sp-name">' + Pages._wbStoreName(o.storeId) + ' · ' + o.item + '</span>';
+      html += '<span class="wb-sp-count wb-sp-hot">近' + o.total + '次不合格' + o.cnt + '次</span>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
 
 
   // 稽核员动态
@@ -8519,16 +8534,64 @@ Pages._wbOpenStoreDetail = function(storeId) {
 
 
   modal.classList.add('show');
-
-
-
 };
 
+Pages._repeatFailStats = function(results, n) {
+  n = n || 3;
+  var itemMap = {};
+  (results || []).forEach(function(r) {
+    var date = r.date || '';
+    (r.details || []).forEach(function(d) {
+      if (!d || !d.content) return;
+      var key = r.storeId + '|' + d.content;
+      if (!itemMap[key]) itemMap[key] = { storeId: r.storeId, item: d.content, records: [] };
+      var bad = d.na ? null : (d.actualScore != null && d.actualScore < (d.stdScore || 0));
+      itemMap[key].records.push({ date: date, bad: bad, id: r.id });
+    });
+  });
+  var out = [];
+  Object.keys(itemMap).forEach(function(k) {
+    var o = itemMap[k];
+    var recs = o.records.slice().sort(function(a, b) { return (a.date || '') < (b.date || '') ? 1 : -1; });
+    var recent = recs.slice(0, n);
+    var cnt = 0;
+    recent.forEach(function(x) { if (x.bad === true) cnt++; });
+    if (cnt >= 2) {
+      var last = '';
+      for (var i = 0; i < recent.length; i++) { if (recent[i].bad === true) { last = recent[i].date; break; } }
+      out.push({ storeId: o.storeId, item: o.item, cnt: cnt, total: recent.length, last: last });
+    }
+  });
+  out.sort(function(a, b) { return b.cnt - a.cnt || ((a.last || '') < (b.last || '') ? 1 : -1); });
+  return out;
+};
 
-
-
-
-
+Pages._wbOpenRepeatDetail = function(storeId, item) {
+  var results = App.getResults() || [];
+  var rows = [];
+  results.forEach(function(r) {
+    (r.details || []).forEach(function(d) {
+      if ((d.content || '') !== item) return;
+      var bad = d.na ? null : (d.actualScore != null && d.actualScore < (d.stdScore || 0));
+      rows.push({ date: r.date || '', std: d.stdScore || 0, got: d.na ? '不适用' : (d.actualScore || 0), st: d.na ? '不适用' : (bad ? '不通过' : '通过'), note: (d.deductReason || d.remark || '') });
+    });
+  });
+  rows.sort(function(a, b) { return (a.date || '') < (b.date || '') ? 1 : -1; });
+  var html = '<div class="modal-box dd-modal-box"><div class="modal-title">' + Pages._wbStoreName(storeId) + ' — ' + item + '</div><div class="dd-modal-body">';
+  if (!rows.length) {
+    html += '<div class="wb-empty">暂无明细</div>';
+  } else {
+    html += '<table class="m-table dd-modal-table"><thead><tr><th>日期</th><th>标准分</th><th>得分</th><th>状态</th><th>备注/发现</th></tr></thead><tbody>';
+    rows.forEach(function(x) {
+      html += '<tr><td>' + x.date + '</td><td>' + x.std + '</td><td>' + x.got + '</td><td>' + x.st + '</td><td>' + (x.note || '—') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  }
+  html += '</div><button class="btn btn-outline btn-sm" style="margin-top:12px" onclick="this.closest(\'.modal-overlay\').classList.remove(\'show\')">关闭</button></div>';
+  var modal = document.getElementById('modal-overlay');
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
 
 Pages._wbOpenCategory = function(cat) {
 
@@ -34249,15 +34312,23 @@ Pages._fillLoadLastFailMap = function(storeId, tpl) {
   var map = {};
   if (!storeId || !tpl) return map;
   try {
+    var N = 3;
     var results = App.getResults().filter(function(r) {
       return r.storeId === storeId && r.status && r.status !== '草稿';
     });
     results.sort(function(a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
     if (!results.length) return map;
-    (results[0].details || []).forEach(function(d) {
-      if (d && d.content && d.actualScore != null && d.actualScore < (d.stdScore || 0)) map[d.content] = true;
+    var recent = results.slice(0, N);
+    recent.forEach(function(r) {
+      (r.details || []).forEach(function(d) {
+        if (d && d.content && d.actualScore != null && d.actualScore < (d.stdScore || 0)) {
+          if (!map[d.content]) map[d.content] = { cnt: 0, total: recent.length, last: '' };
+          map[d.content].cnt++;
+          if ((r.date || '') > (map[d.content].last || '')) map[d.content].last = r.date || '';
+        }
+      });
     });
-  } catch (e) { console.error('[fill] 上次不合格加载失败', e); }
+  } catch (e) { console.error('[fill] 不合格统计加载失败', e); }
   return map;
 };
 
@@ -34292,7 +34363,9 @@ Pages._fillRenderCard = function(item, i) {
   var std = item.score || 0;
   var st = Pages._fillStatus[i];
   var remark = Pages._fillRemarks[i] || '';
-  var lastFail = Pages._fillLastFailMap ? !!Pages._fillLastFailMap[item.content] : false;
+  var lastFailObj = Pages._fillLastFailMap ? Pages._fillLastFailMap[item.content] : null;
+  var lastFail = !!lastFailObj;
+  var lastFailTip = lastFailObj ? (lastFailObj.cnt >= 2 ? ('近' + (lastFailObj.total || 3) + '次不合格' + lastFailObj.cnt + '次') : '上次不合格') : '';
   var photos = Pages._fillPhotos[i] || [];
   var html = '';
   html += '<div class="fill-card" id="fill-card-' + i + '" data-index="' + i + '" data-score="' + std + '" data-lastfail="' + (lastFail ? '1' : '0') + '">';
@@ -34302,7 +34375,7 @@ Pages._fillRenderCard = function(item, i) {
   if (st === 'pass') { html += '<div class="fill-status-line ok"><span class="fill-dot"></span>已通过</div>'; }
   else if (st === 'fail') { html += '<div class="fill-status-line"><span class="fill-dot"></span>不通过</div>'; }
   else if (st === 'na') { html += '<div class="fill-status-line na"><span class="fill-dot"></span>不适用</div>'; }
-  else if (lastFail) { html += '<div class="fill-status-line"><span class="fill-dot"></span>上次不合格 · 待处理</div>'; }
+  else if (lastFail) { html += '<div class="fill-status-line"><span class="fill-dot"></span>' + lastFailTip + ' · 待处理</div>'; }
   else { html += '<div class="fill-status-line na"><span class="fill-dot"></span>未检查</div>'; }
   html += '<div class="fill-rate-row">';
   html += '<div class="fill-rate-btn' + (st === 'pass' ? ' active pass' : '') + '" data-s="pass" onclick="Pages._fillRate(' + i + ',\'pass\')">✓ 通过</div>';
@@ -36188,17 +36261,28 @@ Pages.inspectionResults = function() {
   html += '</select>';
 
 
+  html += '<select id="res-filter-region" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()"><option value="">全部区域</option>';
 
 
+  var regionSet = {};
 
 
+  stores.forEach(function(s) {
+    var rr = (s && (s.region || s.adminArea || s.bizArea)) || '';
+    if (rr) regionSet[rr] = 1;
+  });
 
 
+  Object.keys(regionSet).sort().forEach(function(rr) {
 
 
+    html += '<option value="' + rr + '">' + rr + '</option>';
 
 
+  });
 
+
+  html += '</select>';
 
 
   html += '<input type="date" id="res-filter-date" class="form-input" style="flex:1;min-width:120px" onchange="Pages._filterResults()">';
@@ -36329,7 +36413,9 @@ Pages.inspectionResults = function() {
 
 
 
-  html += '<button class="btn btn-sm" onclick="Pages._exportResults()">导出Excel</button>';
+  if (user && (user.role === '总部' || user.role === '稽核员')) {
+    html += '<button class="btn btn-sm" onclick="Pages._exportResults()">导出Excel</button>';
+  }
 
 
 
@@ -36838,6 +36924,19 @@ Pages._filterResults = function() {
   var storeFilter = (document.getElementById('res-filter-store')||{}).value || '';
 
 
+  var regionFilter = (document.getElementById('res-filter-region')||{}).value || '';
+
+
+  var regionStoreIds = {};
+
+
+  if (regionFilter) {
+    (App.getStores() || []).forEach(function(s) {
+      if (s && (s.region === regionFilter || s.adminArea === regionFilter || s.bizArea === regionFilter)) regionStoreIds[s.id] = 1;
+    });
+  }
+
+
 
 
 
@@ -36932,6 +37031,9 @@ Pages._filterResults = function() {
 
 
     if (storeFilter && row.dataset.store !== storeFilter) show = false;
+
+
+    if (regionFilter && !regionStoreIds[row.dataset.store]) show = false;
 
 
 
@@ -37358,7 +37460,103 @@ Pages._showPhoto = function(src) {
   img.src = src;
   img.style.cssText = 'max-width:92vw;max-height:92vh;border-radius:8px;object-fit:contain';
   ov.appendChild(img);
+  var a = document.createElement('a');
+  a.href = src;
+  a.download = '';
+  a.target = '_blank';
+  a.textContent = '下载原图';
+  a.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#fff;color:#111;padding:8px 18px;border-radius:20px;font-size:14px;text-decoration:none;z-index:100000;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+  a.onclick = function(e) { e.stopPropagation(); };
+  ov.appendChild(a);
   document.body.appendChild(ov);
+};
+
+Pages._downloadResultPhotos = function(id) {
+  var results = App.getResults();
+  var r = results.find(function(x) { return x.id === id; });
+  if (!r) return;
+  var groups = [];
+  (r.details || []).forEach(function(d, i) {
+    var urls = d.photos || [];
+    if (!urls.length) return;
+    groups.push({ name: String(i + 1) + '-' + (d.content || '检查项' + (i + 1)), urls: urls });
+  });
+  if (!groups.length) { App.toast('该结果无照片'); return; }
+  var all = [];
+  groups.forEach(function(g) {
+    g.urls.forEach(function(u) { if (u) all.push({ group: g.name, url: u }); });
+  });
+  if (!all.length) { App.toast('该结果无照片'); return; }
+  if (typeof JSZip === 'undefined') {
+    App.toast('打包库未就绪，将逐张下载 ' + all.length + ' 张');
+    all.forEach(function(x, i) {
+      setTimeout(function() {
+        var a = document.createElement('a');
+        a.href = x.url;
+        a.download = x.group + '_' + (i + 1) + '.jpg';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, i * 350);
+    });
+    return;
+  }
+  var zip = new JSZip();
+  var folderName = String(r.storeId || r.store || 'result') + '_' + (r.date || '');
+  var folder = zip.folder(folderName);
+  var done = 0;
+  var failed = 0;
+  App.toast('正在打包 ' + all.length + ' 张照片...');
+  all.forEach(function(x, i) {
+    Pages._fetchPhotoBlob(x.url).then(function(blob) {
+      var ext = (x.url.split('?')[0].split('.').pop() || 'jpg').toLowerCase();
+      if (['jpg','jpeg','png','webp','gif','bmp'].indexOf(ext) < 0) ext = 'jpg';
+      folder.file(x.group + '_' + (i + 1) + '.' + ext, blob);
+      done++;
+      if (done + failed === all.length) Pages._saveZip(r, zip, all.length, failed);
+    }).catch(function() {
+      failed++;
+      if (done + failed === all.length) Pages._saveZip(r, zip, all.length, failed);
+    });
+  });
+};
+
+Pages._saveZip = function(r, zip, total, failed) {
+  zip.generateAsync({ type: 'blob' }).then(function(blob) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'inspection_photos_' + (r.storeId || r.store || 'result') + '_' + (r.date || '') + '.zip';
+    a.click();
+    App.toast(failed > 0 ? ('打包完成，' + failed + ' 张获取失败（可逐张下载）') : '打包下载完成');
+  }).catch(function(e) {
+    console.error('[photos] 打包失败', e);
+    App.toast('打包失败，请逐张下载');
+  });
+};
+
+Pages._fetchPhotoBlob = function(url) {
+  return new Promise(function(resolve, reject) {
+    function tryFetch() {
+      fetch(url).then(function(resp) { return resp.blob(); }).then(resolve).catch(function() {
+        tryXhr();
+      });
+    }
+    function tryXhr() {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'blob';
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response);
+          else reject(new Error('HTTP ' + xhr.status));
+        };
+        xhr.onerror = function() { reject(new Error('xhr error')); };
+        xhr.send();
+      } catch (e) { reject(e); }
+    }
+    tryFetch();
+  });
 };
 
 Pages._showResultDetail = function(id) {
@@ -37524,6 +37722,7 @@ Pages._showResultDetail = function(id) {
   html += '<p><b>总分：</b>' + (r.totalScore||0) + ' / ' + (r.maxScore||0) + '</p>';
 
   html += '<p><b>现场图片：</b>' + Pages._detailPhotosHtml(r.photos, r) + '</p>';
+  html += '<div style="margin:6px 0"><button class="btn btn-sm btn-primary" onclick="Pages._downloadResultPhotos(\' + r.id + \')">打包下载全部照片</button> <span style="font-size:11px;color:#94a3b8">按检查项分组 · 需联网获取</span></div>';
 
 
 
@@ -37974,389 +38173,63 @@ Pages._showResultDetail = function(id) {
 
 
 Pages._exportResults = function() {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var results = App.getResults();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  var stores = App.getStores() || [];
   if (results.length === 0) { App.toast('无数据可导出'); return; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var rows = [['门店', '模板', '日期', '稽核员', '总分', '满分', '状态', '序号', '类别', '检查内容', '标准分', '实际得分', '扣分原因', '备注']];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  results.forEach(function(r) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    (r.details||[]).forEach(function(d, i) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      rows.push([Pages._storeName(r.storeId, r.store), r.templateName||'', r.date||'', r.inspector||'',
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        r.totalScore||0, r.maxScore||0, r.status||'',
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        i+1, d.category||'', d.content||'', d.stdScore||0, d.actualScore||0, d.deductReason||'', d.remark||'']);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // 应用页面筛选（门店/区域/日期/模板）
+  var storeFilter = (document.getElementById('res-filter-store')||{}).value || '';
+  var regionFilter = (document.getElementById('res-filter-region')||{}).value || '';
+  var dateFilter = (document.getElementById('res-filter-date')||{}).value || '';
+  var tplFilter = (document.getElementById('res-filter-tpl')||{}).value || '';
+  var regionStoreIds = {};
+  if (regionFilter) {
+    stores.forEach(function(s) {
+      if (s && (s.region === regionFilter || s.adminArea === regionFilter || s.bizArea === regionFilter)) regionStoreIds[s.id] = 1;
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  }
+  var list = results.filter(function(r) {
+    if (storeFilter && r.storeId !== storeFilter) return false;
+    if (regionFilter && !regionStoreIds[r.storeId]) return false;
+    if (dateFilter && (r.date||'') !== dateFilter) return false;
+    if (tplFilter && r.templateId !== tplFilter) return false;
+    return true;
   });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  var ws = XLSX.utils.aoa_to_sheet(rows);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  if (!list.length) { App.toast('当前筛选下无数据可导出'); return; }
+  var storeMap = {};
+  stores.forEach(function(s){ storeMap[s.id] = s; });
+  function regionOf(r) {
+    var s = storeMap[r.storeId];
+    return s ? (s.region || s.adminArea || s.bizArea || '') : '';
+  }
+  // 汇总 sheet
+  var sumRows = [['门店', '区域', '稽核员', '日期', '总分', '满分', '得分率']];
+  list.forEach(function(r) {
+    var max = r.maxScore || 0;
+    var tot = (typeof r.totalScore === 'number') ? r.totalScore : (typeof r.score === 'number' ? r.score : 0);
+    var pct = max > 0 ? Math.round(tot / max * 10000) / 100 : 0;
+    sumRows.push([Pages._storeName(r.storeId, r.store), regionOf(r), r.inspector||'', r.date||'', tot, max, pct + '%']);
+  });
+  // 明细 sheet（按检查项展开）
+  var detRows = [['门店', '区域', '日期', '检查项名称', '类别', '标准分', '得分', '状态', '备注/发现']];
+  list.forEach(function(r) {
+    (r.details||[]).forEach(function(d) {
+      var bad = d.actualScore != null && d.actualScore < (d.stdScore || 0);
+      var st = d.na ? '不适用' : bad ? '不通过' : '通过';
+      var note = (d.deductReason||'') + (d.remark ? (' | ' + d.remark) : '');
+      detRows.push([Pages._storeName(r.storeId, r.store), regionOf(r), r.date||'', d.content||'', d.category||'', d.stdScore||0, d.na ? '不适用' : (d.actualScore||0), st, note]);
+    });
+  });
   var wb = XLSX.utils.book_new();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  XLSX.utils.book_append_sheet(wb, ws, '检查结果');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sumRows), '汇总');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detRows), '明细');
   var wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var blob = new Blob([wbout], { type: 'application/vnd.ms-excel' });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var a = document.createElement('a');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   a.href = URL.createObjectURL(blob);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   var now = new Date();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   a.download = 'inspection_results_' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '.xlsx';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   a.click();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   App.toast('导出成功');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 };
 
 
