@@ -23180,172 +23180,51 @@ Pages._taskSetTab = function(mode) {
 
 
 Pages.task = function() {
-
-
-
   var el = document.getElementById('page-task');
-
-
-
   if (!el) return;
-
-
-
   var user = App.currentUser;
-
-
-
   if (!user) return;
-
-
-
   if (!App.Permissions.canAccess(user.role, 'task')) {
-
-
-
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
-
-
-
     return;
-
-
-
   }
-
-
-
-
-
-
-
-  var tasks = App.getTasks() || [];
-
-
-
-  tasks.sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); });
-
-
-
-
-
-
-
   var html = '';
-
-
-
+  // 主双页签：整改任务 / 公司任务
   html += '<div class="sub-tabbar dcb-tabbar">';
-
-
-
-  html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? '' : ' active') + '" onclick="Pages._taskSetTab(\'list\')">任务列表</div>';
-
-
-
-  html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? ' active' : '') + '" onclick="Pages._taskSetTab(\'board\')">看板</div>';
-
-
-
+  html += '<div class="sub-tab-item' + (Pages._taskMainTab === 'company' ? '' : ' active') + '" onclick="Pages._taskSetMain(\'rect\')">整改任务</div>';
+  html += '<div class="sub-tab-item' + (Pages._taskMainTab === 'company' ? ' active' : '') + '" onclick="Pages._taskSetMain(\'company\')">公司任务</div>';
   html += '</div>';
-
-
-
-
-
-
-
-  if (Pages._taskMode === 'board') {
-
-
-
-    html += Pages._taskBoardHtml();
-
-
-
+  if (Pages._taskMainTab === 'company') {
+    html += Pages._companyTaskPageHtml(user);
     el.innerHTML = html;
-
-
-
     return;
-
-
-
   }
-
-
-
+  // ---- 整改任务（现有行为，任务列表按 source 过滤） ----
+  html += '<div class="sub-tabbar dcb-tabbar">';
+  html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? '' : ' active') + '" onclick="Pages._taskSetTab(\'list\')">任务列表</div>';
+  html += '<div class="sub-tab-item' + (Pages._taskMode === 'board' ? ' active' : '') + '" onclick="Pages._taskSetTab(\'board\')">看板</div>';
+  html += '</div>';
+  if (Pages._taskMode === 'board') {
+    html += Pages._taskBoardHtml();
+    el.innerHTML = html;
+    return;
+  }
+  var tasks = Pages._rectTasks();
+  tasks.sort(function(a, b){ return (a.dueDate || '').localeCompare(b.dueDate || ''); });
   html += '<div class="task-total">共 ' + tasks.length + ' 项任务 · ' + tasks.filter(function(t){ return t.status === '进行中'; }).length + ' 项进行中</div>';
-
-
-
-
-
-
-
   tasks.forEach(function(t) {
-
-
-
     var tagCls = t.status === '已完成' ? 'tag-done' : (t.status === '待办' ? 'tag-pending' : 'tag-overdue');
-
-
-
     var tagText = t.status === '进行中' ? '进行中' : t.status;
-
-
-
     html += '<div class="list-item" onclick="Pages.showTaskDetail(\'' + t.id + '\')">';
-
-
-
     html += '<div class="list-item-top"><span class="task-title">' + (t.store ? '[' + t.store + '] ' : '') + t.title + '</span><span class="tag ' + tagCls + '">' + tagText + '</span></div>';
-
-
-
     html += '<div class="task-sub">负责人：' + t.person + ' ｜ 截止：' + t.dueDate + (t.priority === '高' ? ' ｜ <span style="color:#e0342c">高优先级</span>' : '') + '</div>';
-
-
-
     html += '</div>';
-
-
-
   });
-
-
-
-
-
-
-
   if (tasks.length === 0) {
-
-
-
     html += '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无任务</div></div>';
-
-
-
   }
-
-
-
-
-
-
-
   el.innerHTML = html;
-
-
-
 };
-
-
-
-
-
-
 
 Pages.showTaskDetail = function(id) {
 
@@ -23429,6 +23308,353 @@ Pages.showTaskDetail = function(id) {
 
 
 
+
+
+
+
+
+/* ==================== 公司任务（每日/临时） ==================== */
+
+Pages._taskMainTab = Pages._taskMainTab || 'rect';          // 'rect' | 'company'
+Pages._companyFilter = Pages._companyFilter || 'daily';      // 'daily' | 'temp'
+Pages._companyBoardOpen = !!Pages._companyBoardOpen;
+Pages._companyBoardTab = Pages._companyBoardTab || 'task';   // 'task' | 'person' | 'day'
+Pages._companyBoardDate = Pages._companyBoardDate || '';
+Pages._ctTypeV = Pages._ctTypeV || 'daily';
+Pages._ctAssignV = Pages._ctAssignV || 'person';
+
+Pages._taskSetMain = function(mode) { Pages._taskMainTab = mode; Pages.task(); };
+Pages._companySetFilter = function(type) { Pages._companyFilter = type; Pages.task(); };
+
+Pages._todayStr = function() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+Pages._nowStr = function() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+};
+Pages._esc = function(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+};
+
+/* 整改任务 = 现有任务按 source 过滤 */
+Pages._rectTasks = function() {
+  var srcs = ['稽核工单', '专项检查', '培训验收'];
+  return (App.getTasks() || []).filter(function(t) { return srcs.indexOf(t.source) >= 0; });
+};
+
+Pages._openModalHtml = function(html) {
+  var modal = document.getElementById('modal-overlay');
+  if (!modal) return;
+  modal.querySelector('.modal-box').outerHTML = html;
+  modal.classList.add('show');
+};
+Pages._closeModal = function() {
+  var modal = document.getElementById('modal-overlay');
+  if (modal) modal.classList.remove('show');
+};
+
+/* ---- 公司任务页 ---- */
+Pages._companyTaskPageHtml = function(user) {
+  var canCreate = App.Permissions.canAccess(user.role, 'task_create');
+  var canBoard = App.Permissions.canAccess(user.role, 'task_board');
+  var list = App.visibleCompanyTasks(user) || [];
+  var html = '';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 4px;background:#fff;border-bottom:1px solid #f0f0f0">';
+  html += '<div style="display:flex;gap:8px">';
+  html += '<span onclick="Pages._companySetFilter(\'daily\')" style="padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;' + (Pages._companyFilter === 'daily' ? 'background:#C41A1A;color:#fff' : 'background:#f2f2f2;color:#666') + '">每日任务</span>';
+  html += '<span onclick="Pages._companySetFilter(\'temp\')" style="padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;' + (Pages._companyFilter === 'temp' ? 'background:#C41A1A;color:#fff' : 'background:#f2f2f2;color:#666') + '">临时任务</span>';
+  html += '</div>';
+  if (canBoard) html += '<span onclick="Pages._companyBoardOpen=true;Pages.task()" style="font-size:13px;color:#C41A1A;cursor:pointer">📊 看板</span>';
+  html += '</div>';
+  if (Pages._companyBoardOpen) {
+    html += Pages._companyBoardHtml(user);
+    return html;
+  }
+  var type = Pages._companyFilter;
+  var items = list.filter(function(t) { return t.taskType === type; });
+  items.sort(function(a, b) { return (a.dueDate || '').localeCompare(b.dueDate || ''); });
+  html += '<div style="padding:10px 14px 80px">';
+  if (items.length === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无' + (type === 'daily' ? '每日' : '临时') + '任务</div></div>';
+  }
+  items.forEach(function(t) { html += Pages._companyCardHtml(t, user); });
+  html += '</div>';
+  if (canCreate) {
+    html += '<div onclick="Pages._companyOpenCreate()" style="position:fixed;right:18px;bottom:86px;width:52px;height:52px;border-radius:50%;background:#C41A1A;color:#fff;font-size:30px;line-height:52px;text-align:center;box-shadow:0 4px 14px rgba(196,26,26,.4);cursor:pointer;z-index:50">＋</div>';
+  }
+  return html;
+};
+
+Pages._companyCardHtml = function(t, user) {
+  var done = t.status === '已完成';
+  var canDone = !done && App.Permissions.canAccess(user.role, 'task_done') && (t.assignee === user.name || t.creator === user.name);
+  var assigneeText = t.assigneeType === 'store' ? '门店：' + t.assignee : '人员：' + t.assignee;
+  var priText = t.priority === '高' ? '高优先级' : (t.priority === '低' ? '低优先级' : '中优先级');
+  var priColor = t.priority === '高' ? '#e0342c' : (t.priority === '低' ? '#999' : '#f59e0b');
+  var html = '';
+  html += '<div style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);border-left:3px solid ' + (done ? '#10b981' : '#C41A1A') + '">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+  html += '<div style="font-size:15px;font-weight:600;color:#222;flex:1">' + Pages._esc(t.title) + '</div>';
+  html += '<span style="flex-shrink:0;margin-left:8px;padding:2px 8px;border-radius:10px;font-size:11px;' + (done ? 'background:#e6f7ee;color:#10b981' : (t.status === '进行中' ? 'background:#fff3e0;color:#f59e0b' : 'background:#fdecea;color:#e0342c')) + '">' + (done ? '已完成' : t.status) + '</span>';
+  html += '</div>';
+  html += '<div style="font-size:12px;color:#888;margin-top:6px">' + assigneeText + ' ｜ 截止 ' + Pages._esc(t.dueDate || '-') + (t.priority ? ' ｜ <span style="color:' + priColor + '">' + priText + '</span>' : '') + '</div>';
+  if (t.content) html += '<div style="font-size:13px;color:#555;margin-top:6px;line-height:1.5">' + Pages._esc(t.content) + '</div>';
+  if (t.remindAt) html += '<div style="font-size:11px;color:#C41A1A;margin-top:6px">已催办：' + Pages._esc(t.remindNote || t.remindAt) + '</div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">';
+  html += '<span style="font-size:11px;color:#bbb">' + Pages._esc(t.creator || '') + ' 下发 · ' + Pages._esc((t.createdAt || '').slice(5, 10)) + '</span>';
+  if (done) {
+    html += '<span style="font-size:11px;color:#10b981">✓ ' + Pages._esc((t.completedAt || '').slice(5, 16)) + ' 完成</span>';
+  } else if (canDone) {
+    html += '<button style="background:#C41A1A;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:13px;cursor:pointer" onclick="Pages._companyMarkDone(\'' + t.id + '\')">标记完成</button>';
+  }
+  html += '</div></div>';
+  return html;
+};
+
+/* ---- 下发任务表单 ---- */
+Pages._companyOpenCreate = function() {
+  var html = '<div class="modal-box">';
+  html += '<div class="modal-title">下发任务</div>';
+  html += '<div style="padding:12px 16px">';
+  html += '<label style="font-size:13px;color:#333">任务标题 *</label>';
+  html += '<input id="ct_title" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" placeholder="如：完成门店卫生巡检" />';
+  html += '<label style="font-size:13px;color:#333">任务类型 *</label>';
+  html += '<div style="margin:4px 0 10px">';
+  html += '<span onclick="Pages._ctType(\'daily\')" id="ct_type_daily" style="padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;background:#C41A1A;color:#fff">每日任务</span> ';
+  html += '<span onclick="Pages._ctType(\'temp\')" id="ct_type_temp" style="padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;background:#f2f2f2;color:#666">临时任务</span>';
+  html += '</div>';
+  html += '<label style="font-size:13px;color:#333">接收方式 *</label>';
+  html += '<div style="margin:4px 0 10px">';
+  html += '<span onclick="Pages._ctAssignType(\'person\')" id="ct_at_person" style="padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;background:#C41A1A;color:#fff">个人</span> ';
+  html += '<span onclick="Pages._ctAssignType(\'store\')" id="ct_at_store" style="padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;background:#f2f2f2;color:#666">门店</span>';
+  html += '</div>';
+  html += '<label style="font-size:13px;color:#333">接收人 *</label>';
+  html += '<select id="ct_assignee" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff">' + Pages._ctUserOptions() + '</select>';
+  html += '<label style="font-size:13px;color:#333">截止日期 *</label>';
+  html += '<input id="ct_due" type="date" value="' + Pages._todayStr() + '" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" />';
+  html += '<label style="font-size:13px;color:#333">优先级</label>';
+  html += '<select id="ct_pri" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff"><option>中</option><option>高</option><option>低</option></select>';
+  html += '<label style="font-size:13px;color:#333">内容说明</label>';
+  html += '<textarea id="ct_content" rows="3" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" placeholder="任务内容、要求等"></textarea>';
+  html += '<button style="width:100%;background:#C41A1A;color:#fff;border:none;border-radius:8px;padding:10px;font-size:15px;cursor:pointer" onclick="Pages._companySubmitCreate()">发布任务</button>';
+  html += '</div></div>';
+  Pages._openModalHtml(html);
+  Pages._ctTypeV = 'daily';
+  Pages._ctAssignV = 'person';
+};
+
+Pages._ctUserOptions = function() {
+  var opts = '';
+  (App.getUsers() || []).forEach(function(u) {
+    opts += '<option value="' + Pages._esc(u.name) + '">' + Pages._esc(u.name) + '（' + Pages._esc(u.role) + '）</option>';
+  });
+  return opts;
+};
+Pages._ctStoreOptions = function() {
+  var opts = '<option value="全部门店">全部门店</option>';
+  (App.getStores() || []).forEach(function(s) {
+    var n = s.name || s.storeName || s.store || '';
+    if (n) opts += '<option value="' + Pages._esc(n) + '">' + Pages._esc(n) + '</option>';
+  });
+  return opts;
+};
+
+Pages._ctType = function(v) {
+  Pages._ctTypeV = v;
+  var d = document.getElementById('ct_type_daily'), t = document.getElementById('ct_type_temp');
+  if (d) { d.style.background = v === 'daily' ? '#C41A1A' : '#f2f2f2'; d.style.color = v === 'daily' ? '#fff' : '#666'; }
+  if (t) { t.style.background = v === 'temp' ? '#C41A1A' : '#f2f2f2'; t.style.color = v === 'temp' ? '#fff' : '#666'; }
+};
+Pages._ctAssignType = function(v) {
+  Pages._ctAssignV = v;
+  var p = document.getElementById('ct_at_person'), s = document.getElementById('ct_at_store');
+  if (p) { p.style.background = v === 'person' ? '#C41A1A' : '#f2f2f2'; p.style.color = v === 'person' ? '#fff' : '#666'; }
+  if (s) { s.style.background = v === 'store' ? '#C41A1A' : '#f2f2f2'; s.style.color = v === 'store' ? '#fff' : '#666'; }
+  var sel = document.getElementById('ct_assignee');
+  if (sel) sel.innerHTML = v === 'store' ? Pages._ctStoreOptions() : Pages._ctUserOptions();
+};
+
+Pages._companySubmitCreate = function() {
+  var title = ((document.getElementById('ct_title') || {}).value || '').trim();
+  var assignee = ((document.getElementById('ct_assignee') || {}).value || '').trim();
+  var due = ((document.getElementById('ct_due') || {}).value || '').trim();
+  var pri = ((document.getElementById('ct_pri') || {}).value || '中').trim();
+  var content = ((document.getElementById('ct_content') || {}).value || '').trim();
+  if (!title) { alert('请填写任务标题'); return; }
+  if (!assignee) { alert('请选择接收人'); return; }
+  if (!due) { alert('请选择截止日期'); return; }
+  var user = App.currentUser;
+  var t = {
+    id: 'ct' + Date.now(),
+    title: title,
+    taskType: Pages._ctTypeV === 'temp' ? 'temp' : 'daily',
+    content: content,
+    priority: pri,
+    creator: user ? user.name : '',
+    creatorRole: user ? user.role : '',
+    assignee: assignee,
+    assigneeType: Pages._ctAssignV === 'store' ? 'store' : 'person',
+    dueDate: due,
+    status: '待办',
+    completedAt: '',
+    createdAt: Pages._nowStr(),
+    updatedAt: Pages._nowStr(),
+    remindAt: '',
+    remindNote: ''
+  };
+  var list = App.getCompanyTasks() || [];
+  list.unshift(t);
+  App.saveCompanyTasks(list).then(function() { Pages._closeModal(); Pages.task(); });
+};
+
+/* ---- 完成 / 催办 ---- */
+Pages._companyMarkDone = function(id) {
+  var list = App.getCompanyTasks() || [];
+  var t = null;
+  list.forEach(function(x) { if (x.id === id) t = x; });
+  if (!t) return;
+  var user = App.currentUser;
+  if (t.assignee !== user.name && t.creator !== user.name) { alert('仅接收人或下发人可标记完成'); return; }
+  t.status = '已完成';
+  t.completedAt = Pages._nowStr();
+  t.updatedAt = Pages._nowStr();
+  App.saveCompanyTasks(list).then(function() { Pages.task(); });
+};
+
+Pages._companyRemind = function(id) {
+  var list = App.getCompanyTasks() || [];
+  var t = null;
+  list.forEach(function(x) { if (x.id === id) t = x; });
+  if (!t || t.status === '已完成') return;
+  var user = App.currentUser;
+  t.remindAt = Pages._nowStr();
+  t.remindNote = (user ? user.name : '总部') + ' ' + Pages._nowStr().slice(11, 16) + ' 催办';
+  t.updatedAt = Pages._nowStr();
+  App.saveCompanyTasks(list).then(function() { Pages.task(); });
+};
+
+Pages._companyRemindAll = function() {
+  var list = App.getCompanyTasks() || [];
+  var pending = list.filter(function(t) { return t.status !== '已完成'; });
+  if (pending.length === 0) { alert('当前无未完成任务'); return; }
+  var user = App.currentUser;
+  var note = (user ? user.name : '总部') + ' ' + Pages._nowStr().slice(11, 16) + ' 一键催办';
+  pending.forEach(function(t) { t.remindAt = Pages._nowStr(); t.remindNote = note; t.updatedAt = Pages._nowStr(); });
+  App.saveCompanyTasks(list).then(function() { Pages.task(); });
+};
+
+/* ---- 完成看板（三视图） ---- */
+Pages._companyBoardHtml = function(user) {
+  var list = App.visibleCompanyTasks(user) || [];
+  var html = '';
+  html += '<div style="padding:10px 14px 4px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid #f0f0f0">';
+  html += '<span onclick="Pages._companyBoardOpen=false;Pages.task()" style="font-size:13px;color:#C41A1A;cursor:pointer">‹ 返回列表</span>';
+  html += '<span style="font-size:15px;font-weight:600;color:#222">完成看板</span>';
+  html += '<span onclick="Pages._companyRemindAll()" style="font-size:13px;color:#C41A1A;cursor:pointer">一键催办</span>';
+  html += '</div>';
+  html += '<div style="display:flex;padding:8px 14px;gap:8px;background:#fff;border-bottom:1px solid #f0f0f0">';
+  var tabs = [['task', '按任务'], ['person', '按人/门店'], ['day', '按日']];
+  tabs.forEach(function(pair) {
+    var active = Pages._companyBoardTab === pair[0];
+    html += '<span onclick="Pages._companyBoardTab=\'' + pair[0] + '\';Pages.task()" style="flex:1;text-align:center;padding:7px 0;border-radius:8px;font-size:13px;cursor:pointer;' + (active ? 'background:#C41A1A;color:#fff' : 'background:#f5f5f5;color:#666') + '">' + pair[1] + '</span>';
+  });
+  html += '</div>';
+  html += '<div style="padding:12px 14px 40px">';
+  if (Pages._companyBoardTab === 'task') html += Pages._companyBoardTaskHtml(list);
+  else if (Pages._companyBoardTab === 'person') html += Pages._companyBoardPersonHtml(list);
+  else html += Pages._companyBoardDayHtml(list);
+  html += '</div>';
+  return html;
+};
+
+Pages._companyBoardTaskHtml = function(list) {
+  var done = list.filter(function(t) { return t.status === '已完成'; });
+  var pending = list.filter(function(t) { return t.status !== '已完成'; });
+  var rate = list.length ? Math.round(done.length / list.length * 100) : 0;
+  var html = '';
+  html += '<div style="display:flex;gap:8px;margin-bottom:12px">';
+  html += '<div style="flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)"><div style="font-size:22px;font-weight:700;color:#222">' + list.length + '</div><div style="font-size:12px;color:#888">应完成</div></div>';
+  html += '<div style="flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)"><div style="font-size:22px;font-weight:700;color:#10b981">' + done.length + '</div><div style="font-size:12px;color:#888">已完成</div></div>';
+  html += '<div style="flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)"><div style="font-size:22px;font-weight:700;color:#e0342c">' + pending.length + '</div><div style="font-size:12px;color:#888">未完成</div></div>';
+  html += '<div style="flex:1;background:#fff;border-radius:10px;padding:10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)"><div style="font-size:22px;font-weight:700;color:#C41A1A">' + rate + '%</div><div style="font-size:12px;color:#888">完成率</div></div>';
+  html += '</div>';
+  html += '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)"><div style="font-size:14px;font-weight:600;color:#222;margin-bottom:8px">任务明细</div>';
+  if (list.length === 0) html += '<div style="font-size:13px;color:#999;padding:8px 0">暂无任务</div>';
+  list.forEach(function(t) {
+    var d = t.status === '已完成';
+    html += '<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px">';
+    html += '<span style="width:16px;height:16px;border-radius:50%;flex-shrink:0;margin-right:8px;background:' + (d ? '#10b981' : '#f0f0f0') + ';display:inline-block"></span>';
+    html += '<span style="flex:1;color:' + (d ? '#999' : '#333') + ';text-decoration:' + (d ? 'line-through' : 'none') + '">' + Pages._esc(t.title) + '</span>';
+    html += '<span style="color:#888;margin:0 6px">' + Pages._esc(t.assignee) + '</span>';
+    html += '<span style="color:#bbb;font-size:12px">' + Pages._esc((t.dueDate || '').slice(5)) + '</span>';
+    if (!d) html += '<span style="margin-left:8px;color:#C41A1A;font-size:12px;cursor:pointer" onclick="Pages._companyRemind(\'' + t.id + '\')">催办</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  var undone = list.filter(function(t) { return t.status !== '已完成'; });
+  html += '<div style="background:#fff;border-radius:10px;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05)"><div style="font-size:14px;font-weight:600;color:#e0342c;margin-bottom:8px">谁没做（' + undone.length + '）</div>';
+  if (undone.length === 0) html += '<div style="font-size:13px;color:#10b981">全部完成</div>';
+  undone.forEach(function(t) {
+    html += '<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid #fafafa;font-size:13px">';
+    html += '<span style="flex:1;color:#333">' + Pages._esc(t.title) + '</span>';
+    html += '<span style="color:#e0342c">' + Pages._esc(t.assignee) + ' 未完成</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+};
+
+Pages._companyBoardPersonHtml = function(list) {
+  var map = {};
+  list.forEach(function(t) {
+    var k = (t.assigneeType === 'store' ? '门店·' : '个人·') + t.assignee;
+    if (!map[k]) map[k] = { count: 0, done: 0 };
+    map[k].count++;
+    if (t.status === '已完成') map[k].done++;
+  });
+  var keys = Object.keys(map);
+  if (keys.length === 0) return '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无任务</div></div>';
+  var html = '';
+  keys.forEach(function(k) {
+    var m = map[k];
+    var pct = Math.round(m.done / m.count * 100);
+    var allDone = m.done === m.count;
+    html += '<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    html += '<span style="font-size:14px;font-weight:600;color:#222">' + Pages._esc(k.split('·')[1] || k) + '</span>';
+    if (allDone) html += '<span style="font-size:12px;color:#10b981;background:#e6f7ee;padding:2px 8px;border-radius:10px">全部完成</span>';
+    else html += '<span style="font-size:12px;color:#e0342c">未完成 ' + (m.count - m.done) + ' 项</span>';
+    html += '</div>';
+    html += '<div style="height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (allDone ? '#10b981' : '#C41A1A') + ';border-radius:4px"></div></div>';
+    html += '<div style="font-size:12px;color:#888;margin-top:6px">完成 ' + m.done + '/' + m.count + '（' + pct + '%）</div>';
+    html += '</div>';
+  });
+  return html;
+};
+
+Pages._companyBoardDayHtml = function(list) {
+  var date = Pages._companyBoardDate || Pages._todayStr();
+  var html = '';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+  html += '<input type="date" value="' + date + '" onchange="Pages._companyBoardDate=this.value;Pages.task()" style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" />';
+  html += '<span onclick="Pages._companyBoardDate=\'\';Pages.task()" style="padding:7px 12px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#666;cursor:pointer">今天</span>';
+  html += '</div>';
+  var dayTasks = list.filter(function(t) { return t.dueDate === date; });
+  if (dayTasks.length === 0) return '<div class="empty-state"><div class="empty-icon">&#128197;</div><div>当日无任务</div></div>';
+  dayTasks.forEach(function(t) {
+    var d = t.status === '已完成';
+    html += '<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);border-left:3px solid ' + (d ? '#10b981' : '#e0342c') + '">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+    html += '<span style="flex:1;font-size:14px;font-weight:600;color:' + (d ? '#999' : '#222') + '">' + Pages._esc(t.title) + '</span>';
+    html += '<span style="font-size:12px;padding:2px 8px;border-radius:10px;' + (d ? 'background:#e6f7ee;color:#10b981' : 'background:#fdecea;color:#e0342c') + '">' + (d ? '已完成' : '未完成') + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#888;margin-top:6px">' + Pages._esc(t.assigneeType === 'store' ? '门店·' + t.assignee : '人员·' + t.assignee) + '</div>';
+    html += '</div>';
+  });
+  return html;
+};
 
 
 /* ==================== 稽核员日报 ==================== */
@@ -49912,8 +50138,7 @@ Pages.taskBoard = function() {
 
 
 Pages._taskBoardHtml = function() {
-
-var tasks = App.getTasks() || [];
+var tasks = Pages._rectTasks();
 
 
 

@@ -3001,7 +3001,7 @@ const App = {
 
 
 
-  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues', 'work_records', 'supply_issues', 'correction_reviews', 'permission_configs'],
+  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues', 'work_records', 'supply_issues', 'correction_reviews', 'permission_configs', 'company_tasks'],
 
 
 
@@ -3041,7 +3041,7 @@ const App = {
 
 
 
-      '总部':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true },
+      '总部':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: true, task_done: true, task_board: true},
 
 
 
@@ -3049,7 +3049,7 @@ const App = {
 
 
 
-      '线上稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true },
+      '线上稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3057,7 +3057,7 @@ const App = {
 
 
 
-      '线下稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true },
+      '线下稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3065,7 +3065,7 @@ const App = {
 
 
 
-      '稽核员':   { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true },
+      '稽核员':   { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3073,7 +3073,7 @@ const App = {
 
 
 
-      '客服':     { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true },
+      '客服':     { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3081,7 +3081,7 @@ const App = {
 
 
 
-      '营运':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true },
+      '营运':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3089,7 +3089,7 @@ const App = {
 
 
 
-      '店长':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true, supply_chain: true },
+      '店长':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3097,7 +3097,7 @@ const App = {
 
 
 
-      '区域教练': { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true },
+      '区域教练': { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3105,7 +3105,7 @@ const App = {
 
 
 
-      '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true },
+      '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3113,7 +3113,7 @@ const App = {
 
 
 
-      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true }
+      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true , task_create: true, task_done: true, task_board: true }
 
 
 
@@ -3932,6 +3932,14 @@ const App = {
 
 
     this.dataCache.notices = JSON.parse(localStorage.getItem('nanchengxiang_notices') || '[]');
+
+
+
+
+
+
+
+    this.dataCache.company_tasks = JSON.parse(localStorage.getItem('nanchengxiang_company_tasks') || '[]');
 
 
 
@@ -5409,6 +5417,49 @@ const App = {
       await this.supabase.from('permission_configs').delete().neq('id', '__none__');
       if (data && data.length > 0) await this.supabase.from('permission_configs').insert(this._cloudPermissionConfigs(data));
     }
+  },
+
+  /* ---- 公司任务（company_tasks：每日/临时，总部下发、接收人完成） ---- */
+  getCompanyTasks() { return this.dataCache.company_tasks || []; },
+
+  _cloudCompanyTasks(list) {
+    return (list || []).map(function(r) {
+      return {
+        id: r.id || '', title: r.title || '', task_type: r.taskType || r.task_type || 'daily',
+        content: r.content || '', priority: r.priority || '中',
+        creator: r.creator || '', creator_role: r.creatorRole || r.creator_role || '',
+        assignee: r.assignee || '', assignee_type: r.assigneeType || r.assignee_type || 'person',
+        due_date: r.dueDate || r.due_date || '', status: r.status || '待办',
+        completed_at: r.completedAt || r.completed_at || '',
+        created_at: r.createdAt || r.created_at || '', updated_at: r.updatedAt || r.updated_at || '',
+        remind_at: r.remindAt || r.remind_at || '', remind_note: r.remindNote || r.remind_note || ''
+      };
+    });
+  },
+
+  async saveCompanyTasks(data) {
+    this._touchCache('company_tasks', data || []);
+    localStorage.setItem('nanchengxiang_company_tasks', JSON.stringify(data || []));
+    if (this.supabase) {
+      await this.supabase.from('company_tasks').delete().neq('id', '__none__');
+      if (data && data.length > 0) await this.supabase.from('company_tasks').insert(this._cloudCompanyTasks(data));
+    }
+  },
+
+  /* 当前用户可见的公司任务：总部/admin 全量；其余仅本人（person）或本门店（store，全部门店除外） */
+  visibleCompanyTasks(user) {
+    var all = this.getCompanyTasks() || [];
+    if (!user) return all;
+    if (user.role === '总部' || user.role === 'admin') return all;
+    var myName = user.name || '';
+    var myStore = user.store || '';
+    return all.filter(function(t) {
+      if (t.assigneeType === 'store') {
+        if (t.assignee === '全部门店') return true;
+        return t.assignee === myStore;
+      }
+      return t.assignee === myName;
+    });
   },
 
   /* 解析权限配置：{ submitRoles:[], reviewRoles:[], storeScope:{mode:'all',stores:[]} } */
