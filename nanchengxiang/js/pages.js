@@ -35984,25 +35984,28 @@ Pages.inspectionResults = function() {
 
 
 
-  // 稽核员只看本人提交（线上稽核/线下稽核/稽核员）
-  if (user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员') {
-    results = results.filter(function(r) { return (r.inspector || '') === user.name; });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+  // 稽核员只看本人提交（线上稽核/线下稽核/稽核员）
+  if (user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员') {
+    results = results.filter(function(r) { return (r.inspector || '') === user.name; });
   }
 
 
