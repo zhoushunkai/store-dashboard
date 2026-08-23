@@ -3139,22 +3139,6 @@ Pages.home = function() {
 
 
 
-    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     html += '<div class="quick-entry" onclick="location.hash=\'#complaint\'"><span class="qe-icon">\u{1F4AC}</span>差评申诉</div>';
 
 
@@ -8109,7 +8093,8 @@ Pages.inspectionWorkbench = function() {
   html += '</div>';
 
 
-  // 重复犯错 TOP（同店同检查项近3次不合格≥2）
+  // 重复犯错 TOP（同店同检查项近3次不合格≥2）—— 稽核员不展示查重统计
+  if (user.role !== '线上稽核' && user.role !== '线下稽核' && user.role !== '稽核员') {
   html += '<div class="card wb-card">';
   html += '<div class="wb-card-head"><span class="wb-card-title">重复犯错</span><span style="font-size:11px;color:#e74c3c;background:#fdeaea;padding:2px 8px;border-radius:10px">同店同检查项近3次不合格≥2</span></div>';
   if (repeatArr.length === 0) {
@@ -8123,6 +8108,7 @@ Pages.inspectionWorkbench = function() {
     });
   }
   html += '</div>';
+  }
 
 
   // 稽核员动态
@@ -35998,6 +35984,13 @@ Pages.inspectionResults = function() {
 
 
 
+  // 稽核员只看本人提交（线上稽核/线下稽核/稽核员）
+  if (user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员') {
+    results = results.filter(function(r) { return (r.inspector || '') === user.name; });
+  }
+
+
+
 
 
 
@@ -36429,7 +36422,7 @@ Pages.inspectionResults = function() {
 
 
 
-  if (user && (user.role === '总部' || user.role === '稽核员')) {
+  if (user && (user.role === '总部' || user.role === 'admin' || user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员')) {
     html += '<button class="btn btn-sm" onclick="Pages._exportResults()">导出Excel</button>';
   }
 
@@ -38191,6 +38184,11 @@ Pages._showResultDetail = function(id) {
 Pages._exportResults = function() {
   var results = App.getResults();
   var stores = App.getStores() || [];
+  var user = App.currentUser;
+  // 稽核员导出仅本人数据
+  if (user && (user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员')) {
+    results = results.filter(function(r) { return (r.inspector || '') === user.name; });
+  }
   if (results.length === 0) { App.toast('无数据可导出'); return; }
   // 应用页面筛选（门店/区域/日期/模板）
   var storeFilter = (document.getElementById('res-filter-store')||{}).value || '';
