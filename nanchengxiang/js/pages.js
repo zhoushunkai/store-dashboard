@@ -23389,7 +23389,8 @@ Pages._companyTaskPageHtml = function(user) {
 
 Pages._companyCardHtml = function(t, user) {
   var done = t.status === '已完成';
-  var canDone = !done && App.Permissions.canAccess(user.role, 'task_done') && (t.assignee === user.name || t.creator === user.name);
+  var isStoreReceiver = t.assigneeType === 'store' && (t.assignee === user.store || t.assignee === '全部门店');
+  var canDone = !done && App.Permissions.canAccess(user.role, 'task_done') && (t.assignee === user.name || t.creator === user.name || isStoreReceiver);
   var assigneeText = t.assigneeType === 'store' ? '门店：' + t.assignee : '人员：' + t.assignee;
   var priText = t.priority === '高' ? '高优先级' : (t.priority === '低' ? '低优先级' : '中优先级');
   var priColor = t.priority === '高' ? '#e0342c' : (t.priority === '低' ? '#999' : '#f59e0b');
@@ -23516,7 +23517,8 @@ Pages._companyMarkDone = function(id) {
   list.forEach(function(x) { if (x.id === id) t = x; });
   if (!t) return;
   var user = App.currentUser;
-  if (t.assignee !== user.name && t.creator !== user.name) { alert('仅接收人或下发人可标记完成'); return; }
+  var isStoreReceiver = t.assigneeType === 'store' && (t.assignee === user.store || t.assignee === '全部门店');
+  if (t.assignee !== user.name && t.creator !== user.name && !isStoreReceiver) { alert('仅接收人或下发人可标记完成'); return; }
   t.status = '已完成';
   t.completedAt = Pages._nowStr();
   t.updatedAt = Pages._nowStr();
@@ -23642,7 +23644,7 @@ Pages._companyBoardDayHtml = function(list) {
   html += '<span onclick="Pages._companyBoardDate=\'\';Pages.task()" style="padding:7px 12px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#666;cursor:pointer">今天</span>';
   html += '</div>';
   var dayTasks = list.filter(function(t) { return t.dueDate === date; });
-  if (dayTasks.length === 0) return '<div class="empty-state"><div class="empty-icon">&#128197;</div><div>当日无任务</div></div>';
+  if (dayTasks.length === 0) html += '<div class="empty-state"><div class="empty-icon">&#128197;</div><div>当日无任务</div></div>';
   dayTasks.forEach(function(t) {
     var d = t.status === '已完成';
     html += '<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);border-left:3px solid ' + (d ? '#10b981' : '#e0342c') + '">';
