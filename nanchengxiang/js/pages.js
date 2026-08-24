@@ -34380,7 +34380,7 @@ Pages._fillOnTemplateChange = function() {
     var tpl = App.getTemplates().find(function(t) { return t.id === Pages._fillTemplateId; });
     var n = tpl && tpl.items ? tpl.items.length : 0;
     Pages._fillStatus = []; Pages._fillRemarks = []; Pages._fillPhotos = [];
-    for (var fi = 0; fi < n; fi++) { Pages._fillStatus[fi] = undefined; Pages._fillRemarks[fi] = ''; Pages._fillPhotos[fi] = []; }
+    for (var fi = 0; fi < n; fi++) { Pages._fillStatus[fi] = 'pass'; Pages._fillRemarks[fi] = ''; Pages._fillPhotos[fi] = []; }
   }
 
 
@@ -34582,6 +34582,7 @@ Pages._fillRenderForm = function(tpl) {
   // 检查项卡片
   html += '<div class="fill-check-list">';
   tpl.items.forEach(function(item, i) {
+    if (Pages._fillStatus[i] === undefined) Pages._fillStatus[i] = 'pass';
     html += Pages._fillRenderCard(item, i);
   });
   html += '</div>';
@@ -34599,12 +34600,12 @@ Pages._fillRenderCard = function(item, i) {
   var photos = Pages._fillPhotos[i] || [];
   var html = '';
   html += '<div class="fill-card" id="fill-card-' + i + '" data-index="' + i + '" data-score="' + std + '" data-lastfail="' + (lastFail ? '1' : '0') + '">';
-  html += '<div class="fill-idx' + (lastFail && !st ? ' warn' : '') + '">' + (i + 1) + '</div>';
+  html += '<div class="fill-idx' + (lastFail && st !== 'fail' && st !== 'na' ? ' warn' : '') + '">' + (i + 1) + '</div>';
   html += '<div class="fill-body">';
   html += '<div class="fill-title"><div class="fill-name"><span class="fill-score-tag">' + std + '分</span>' + Pages._fillEsc(item.content) + '</div></div>';
-  if (st === 'pass') { html += '<div class="fill-status-line ok"><span class="fill-dot"></span>已通过</div>'; }
-  else if (st === 'fail') { html += '<div class="fill-status-line"><span class="fill-dot"></span>不通过</div>'; }
+  if (st === 'fail') { html += '<div class="fill-status-line"><span class="fill-dot"></span>不通过</div>'; }
   else if (st === 'na') { html += '<div class="fill-status-line na"><span class="fill-dot"></span>不适用</div>'; }
+  else if (st === 'pass') { html += '<div class="fill-status-line ok"><span class="fill-dot"></span>已通过' + (lastFail ? ' · ' + lastFailTip : '') + '</div>'; }
   else if (lastFail) { html += '<div class="fill-status-line"><span class="fill-dot"></span>' + lastFailTip + ' · 待处理</div>'; }
   else { html += '<div class="fill-status-line na"><span class="fill-dot"></span>未检查</div>'; }
   html += '<div class="fill-rate-row">';
@@ -36654,6 +36655,7 @@ Pages.inspectionResults = function() {
 
 
   if (user && (user.role === '总部' || user.role === 'admin' || user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员')) {
+    html += '<button class="btn btn-sm btn-primary" onclick="Pages._exportResults()">导出集合报表</button>';
     html += '<button class="btn btn-sm" onclick="Pages._exportResults()">导出Excel</button>';
   }
 
