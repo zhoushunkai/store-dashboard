@@ -50184,7 +50184,7 @@ var tasks = Pages._rectTasks();
 
 
 
-  var personRows = {};
+  var storeRows = {};
 
 
 
@@ -50192,19 +50192,19 @@ var tasks = Pages._rectTasks();
 
 
 
-    var k = t.person || '未分配';
+    var k = t.store || '未分配';
 
 
 
-    if (!personRows[k]) personRows[k] = { count: 0, done: 0 };
+    if (!storeRows[k]) storeRows[k] = { count: 0, done: 0 };
 
 
 
-    personRows[k].count++;
+    storeRows[k].count++;
 
 
 
-    if (t.status === '已完成') personRows[k].done++;
+    if (t.status === '已完成') storeRows[k].done++;
 
 
 
@@ -50212,7 +50212,7 @@ var tasks = Pages._rectTasks();
 
 
 
-  var personRank = Object.keys(personRows).map(function(k){ return { name: k, val: personRows[k].done + '/' + personRows[k].count + ' 完成' }; }).sort(function(a, b){ return b.val.localeCompare(a.val); }).slice(0, 5);
+  var storeRank = Object.keys(storeRows).map(function(k){ return { name: k, val: storeRows[k].done + '/' + storeRows[k].count + ' 完成' }; }).sort(function(a, b){ return b.val.localeCompare(a.val); }).slice(0, 5);
 
 
 
@@ -50276,7 +50276,7 @@ var tasks = Pages._rectTasks();
 
 
 
-  html += '<div class="bd-card"><div class="bd-card-title">各人任务量排行</div><div style="padding:12px 16px">' + Pages._bdRankHtml(personRank, '#059669') + '</div></div>';
+  html += '<div class="bd-card"><div class="bd-card-title">各门店任务量排行</div><div style="padding:12px 16px">' + Pages._bdRankHtml(storeRank, '#059669') + '</div></div>';
 
 
 
