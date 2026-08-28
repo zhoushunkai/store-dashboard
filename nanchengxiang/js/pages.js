@@ -49405,6 +49405,40 @@ Pages._bdTabs = function(activeId) {
 
 
 
+
+Pages._boardAcc = { complaintBoard: false, penaltyBoard: false };
+
+Pages._bdMonths = function(records, dateKeyFn) {
+  var months = [];
+  var now = new Date();
+  for (var i = 11; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    months.push({ label: (d.getMonth() + 1) + '月', key: key, count: 0, amount: 0 });
+  }
+  var map = {};
+  months.forEach(function(m){ map[m.key] = m; });
+  records.forEach(function(r) {
+    var k = (dateKeyFn(r) || '').substring(0, 7);
+    if (map[k]) { map[k].count++; map[k].amount += Pages._pAmount(r); }
+  });
+  return months;
+};
+
+Pages._bdSegHtml = function(which, acc, color) {
+  var onStyle = 'background:#fff;opacity:1;color:' + color;
+  var offStyle = 'opacity:.8';
+  return '<div style="display:flex;background:rgba(255,255,255,.28);border-radius:999px;padding:3px;flex:0 0 auto">' +
+    '<span style="font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;color:#fff;cursor:pointer;' + (acc ? offStyle : onStyle) + '" onclick="Pages._toggleBoardMode(\'' + which + '\')">本月</span>' +
+    '<span style="font-size:12px;font-weight:800;padding:5px 12px;border-radius:999px;color:#fff;cursor:pointer;' + (acc ? onStyle : offStyle) + '" onclick="Pages._toggleBoardMode(\'' + which + '\')">累计</span></div>';
+};
+
+Pages._toggleBoardMode = function(which) {
+  Pages._boardAcc[which] = !Pages._boardAcc[which];
+  if (which === 'complaintBoard') Pages.complaintBoard();
+  else Pages.penaltyBoard();
+};
+
 Pages._bdDays = function(records, dateKeyFn) {
 
 
@@ -49710,167 +49744,45 @@ Pages.complaintBoard = function() {
 
 
 Pages._complaintBoardHtml = function() {
-
-var complaints = App.getComplaints() || [];
-
-
-
+  var complaints = App.getComplaints() || [];
+  var acc = !!Pages._boardAcc.complaintBoard;
   var now = new Date();
-
-
-
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-
-
-
-  var month = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
-
-
-
+  var month = acc ? complaints : complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
   var pending = month.filter(function(c){ return c.status === '待处理'; });
-
-
-
   var handled = month.filter(function(c){ return c.status !== '待处理'; });
-
-
-
   var rate = month.length ? Math.round(handled.length / month.length * 100) : 0;
-
-
-
-
-
-
-
-  var days = Pages._bdDays(month, function(c){ return c.date || ''; });
-
-
-
+  var days = acc ? Pages._bdMonths(month, function(c){ return c.date || ''; }) : Pages._bdDays(month, function(c){ return c.date || ''; });
   var storeCount = {};
-
-
-
   month.forEach(function(c){ storeCount[c.store] = (storeCount[c.store] || 0) + 1; });
-
-
-
   var storeRank = Object.keys(storeCount).map(function(k){ return { name: k, val: storeCount[k] + '条' }; }).sort(function(a, b){ return b.val.localeCompare(a.val) || b.val.length - a.val.length; }).slice(0, 5);
-
-
-
   var typeCount = {};
-
-
-
   month.forEach(function(c){ var t = Pages._cType(c); typeCount[t] = (typeCount[t] || 0) + 1; });
-
-
-
   var typeRows = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a, b){ return b.count - a.count; });
-
-
-
   var latest = month.filter(function(c){ return c.status === '待处理'; }).sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); }).slice(0, 5);
-
-
-
-
-
-
-
+  var segHtml = Pages._bdSegHtml('complaintBoard', acc, '#e0342c');
   var html = '';
-
-
-
   html += Pages._bdTabs('complaintBoard');
-
-
-
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#e0342c,#f87171)">';
-
-
-
-  html += '<div class="bd-head-left"><div class="bd-title">差评看板</div><div class="bd-date">' + curMonth + '</div></div>';
-
-
-
-  html += '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div>';
-
-
-
+  html += '<div class="bd-head-left"><div class="bd-title">差评看板' + (acc ? '<span style="font-size:10px;font-weight:900;background:#fff;color:#e0342c;border-radius:999px;padding:1px 7px;vertical-align:middle">累计</span>' : '') + '</div><div class="bd-date">' + (acc ? '全量历史 · 含已闭环 · 截至 ' + curMonth : curMonth) + '</div></div>';
+  html += '<div style="display:flex;align-items:center;gap:8px">' + segHtml + '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div></div>';
   html += '<div class="bd-stats">';
-
-
-
-  html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月差评</div></div>';
-
-
-
+  html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">' + (acc ? '累计差评' : '本月差评') + '</div></div>';
   html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pending.length + '</div><div class="bd-stat-label">待审核</div></div>';
-
-
-
-  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">处理率</div></div>';
-
-
-
+  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">' + (acc ? '历史处理率' : '处理率') + '</div></div>';
   html += '</div>';
-
-
-
-  html += '<div class="bd-card"><div class="bd-card-title">每日差评趋势</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
-
-
-
+  html += '<div class="bd-card"><div class="bd-card-title">' + (acc ? '月度差评趋势' : '每日差评趋势') + '</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
   html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#complaint\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
-
-
-
   html += '<div class="bd-card"><div class="bd-card-title">差评类型分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeRows, '#e0342c', 'count') + '</div></div>';
-
-
-
   html += '<div class="bd-card"><div class="bd-card-title">最新待审核差评</div><div class="bd-list">';
-
-
-
   if (latest.length === 0) {
-
-
-
-    html += '<div class="bd-empty">本月暂无待审核差评</div>';
-
-
-
+    html += '<div class="bd-empty">' + (acc ? '暂无待审核差评' : '本月暂无待审核差评') + '</div>';
   }
-
-
-
   latest.forEach(function(c) {
-
-
-
     html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
-
-
-
   });
-
-
-
   html += '</div></div></div>';
-
-
-
-
-
-
-
   return html;
-
-
-
 };
 
 
@@ -49904,211 +49816,56 @@ Pages.penaltyBoard = function() {
 
 
 Pages._penaltyBoardHtml = function() {
-
-var penalties = App.getPenalties() || [];
-
-
-
+  var penalties = App.getPenalties() || [];
+  var acc = !!Pages._boardAcc.penaltyBoard;
   var now = new Date();
-
-
-
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-
-
-
-  var month = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
-
-
-
+  var month = acc ? penalties : penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
   var totalAmount = 0;
-
-
-
   month.forEach(function(p){ totalAmount += Pages._pAmount(p); });
-
-
-
   var pendingFill = month.filter(function(p){ return p.status === '待补填'; });
-
-
-
-
-
-
-
-  var days = Pages._bdDays(month, function(p){ return p.eventDate || ''; });
-
-
-
+  var days = acc ? Pages._bdMonths(month, function(p){ return p.eventDate || ''; }) : Pages._bdDays(month, function(p){ return p.eventDate || ''; });
   var typeRows = {};
-
-
-
   month.forEach(function(p) {
-
-
-
     var k = p.category || '其他';
-
-
-
     if (!typeRows[k]) typeRows[k] = { count: 0, amount: 0 };
-
-
-
     typeRows[k].count++;
-
-
-
     typeRows[k].amount += Pages._pAmount(p);
-
-
-
   });
-
-
-
   var typeList = Object.keys(typeRows).map(function(k){ return { name: k, count: typeRows[k].count, amount: typeRows[k].amount }; }).sort(function(a, b){ return b.count - a.count; });
-
-
-
   var storeRows = {};
-
-
-
   month.forEach(function(p) {
-
-
-
     var k = p.store || '未知门店';
-
-
-
     if (!storeRows[k]) storeRows[k] = { count: 0, amount: 0 };
-
-
-
     storeRows[k].count++;
-
-
-
     storeRows[k].amount += Pages._pAmount(p);
-
-
-
   });
-
-
-
   var storeRank = Object.keys(storeRows).map(function(k){ return { name: k, val: storeRows[k].count + '笔 · ¥' + storeRows[k].amount.toLocaleString() }; }).sort(function(a, b){ return b.val.length - a.val.length || b.val.localeCompare(a.val); }).slice(0, 5);
-
-
-
   var latest = month.sort(function(a, b){ return (b.eventDate || '').localeCompare(a.eventDate || ''); }).slice(0, 5);
-
-
-
-
-
-
-
+  var segHtml = Pages._bdSegHtml('penaltyBoard', acc, '#7c3aed');
   var html = '';
-
-
-
   html += Pages._bdTabs('penaltyBoard');
-
-
-
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">';
-
-
-
-  html += '<div class="bd-head-left"><div class="bd-title">处罚看板</div><div class="bd-date">' + curMonth + '</div></div>';
-
-
-
-  html += '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div>';
-
-
-
+  html += '<div class="bd-head-left"><div class="bd-title">处罚看板' + (acc ? '<span style="font-size:10px;font-weight:900;background:#fff;color:#7c3aed;border-radius:999px;padding:1px 7px;vertical-align:middle">累计</span>' : '') + '</div><div class="bd-date">' + (acc ? '全量历史 · 含已闭环 · 截至 ' + curMonth : curMonth) + '</div></div>';
+  html += '<div style="display:flex;align-items:center;gap:8px">' + segHtml + '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div></div>';
   html += '<div class="bd-stats">';
-
-
-
-  html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">本月处罚</div></div>';
-
-
-
-  html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">处罚金额</div></div>';
-
-
-
+  html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">' + (acc ? '累计笔数' : '本月处罚') + '</div></div>';
+  html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">' + (acc ? '累计金额' : '处罚金额') + '</div></div>';
   html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pendingFill.length + '</div><div class="bd-stat-label">待补填</div></div>';
-
-
-
   html += '</div>';
-
-
-
   html += '<div class="bd-card"><div class="bd-card-title">处罚类型分布（含金额）</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeList, '#7c3aed', 'amount') + '</div></div>';
-
-
-
   html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#penalty\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
-
-
-
-  html += '<div class="bd-card"><div class="bd-card-title">每日处罚金额趋势</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
-
-
-
+  html += '<div class="bd-card"><div class="bd-card-title">' + (acc ? '月度处罚金额趋势' : '每日处罚金额趋势') + '</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
   html += '<div class="bd-card"><div class="bd-card-title">最新处罚记录</div><div class="bd-list">';
-
-
-
   if (latest.length === 0) {
-
-
-
-    html += '<div class="bd-empty">本月暂无处罚记录</div>';
-
-
-
+    html += '<div class="bd-empty">' + (acc ? '暂无处罚记录' : '本月暂无处罚记录') + '</div>';
   }
-
-
-
   latest.forEach(function(p) {
-
-
-
     var cls = p.status === '已闭环' ? 'bd-tag-green' : (p.status === '超时' ? 'bd-tag-red' : 'bd-tag-amber');
-
-
-
     html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\'' + p.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
-
-
-
   });
-
-
-
   html += '</div></div></div>';
-
-
-
-
-
-
-
   return html;
-
-
-
 };
 
 
