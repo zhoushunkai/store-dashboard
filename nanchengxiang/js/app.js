@@ -2965,6 +2965,17 @@ const App = {
     return list.map(function(r) { return self._snakeRow(r); });
   },
 
+  /* P1 改造：云端增量写。按主键 id upsert（替代全量 delete+insert），失败仅本地保存 */
+  async _upsertToCloud(table, rows, onConflict) {
+    if (!this.supabase) return;
+    if (!rows || rows.length === 0) return;
+    try {
+      await this.supabase.from(table).upsert(rows, { onConflict: onConflict || 'id' });
+    } catch (e) {
+      console.warn('[Supabase] upsert ' + table + ' 失败，仅本地保存:', e.message);
+    }
+  },
+
   /* ---- 云表字段归一化：前端 camel 对象 -> inspection_results/issues 云表列 ---- */
 
   _cloudResults(list) {
@@ -5077,8 +5088,8 @@ const App = {
     localStorage.setItem('nanchengxiang_supply_issues', JSON.stringify(data));
     if (this.supabase) {
       try {
-        await this.supabase.from('supply_issues').delete().neq('id','__none__');
-        if (data.length > 0) await this.supabase.from('supply_issues').insert(this._snakeList(data));
+        
+        await this._upsertToCloud('supply_issues', this._snakeList(data));
       } catch (e) {
         console.warn('[Supabase] save supply_issues 失败，仅本地保存:', e.message);
       }
@@ -5131,7 +5142,7 @@ const App = {
 
 
 
-      await this.supabase.from('daily_reports').delete().neq('id', '__none__');
+      
 
 
 
@@ -5139,7 +5150,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('daily_reports').insert(this._snakeList(data));
+      await this._upsertToCloud('daily_reports', this._snakeList(data));
 
 
 
@@ -5203,7 +5214,7 @@ const App = {
 
 
 
-      await this.supabase.from('inspection_templates').delete().neq('id','__none__');
+      
 
 
 
@@ -5211,7 +5222,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('inspection_templates').insert(this._snakeList(data));
+      await this._upsertToCloud('inspection_templates', this._snakeList(data));
 
 
 
@@ -5267,7 +5278,7 @@ const App = {
 
 
 
-      await this.supabase.from('inspection_results').delete().neq('id','__none__');
+      
 
 
 
@@ -5275,7 +5286,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('inspection_results').insert(this._cloudResults(data));
+      await this._upsertToCloud('inspection_results', this._cloudResults(data));
 
 
 
@@ -5331,7 +5342,7 @@ const App = {
 
 
 
-      await this.supabase.from('inspection_issues').delete().neq('id','__none__');
+      
 
 
 
@@ -5339,7 +5350,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('inspection_issues').insert(this._cloudIssues(data));
+      await this._upsertToCloud('inspection_issues', this._cloudIssues(data));
 
 
 
@@ -5405,8 +5416,8 @@ const App = {
     this._touchCache('correction_reviews', data || []);
     localStorage.setItem('nanchengxiang_correction_reviews', JSON.stringify(data || []));
     if (this.supabase) {
-      await this.supabase.from('correction_reviews').delete().neq('id', '__none__');
-      if (data && data.length > 0) await this.supabase.from('correction_reviews').insert(this._cloudCorrections(data));
+      
+      await this._upsertToCloud('correction_reviews', this._cloudCorrections(data));
     }
   },
 
@@ -5414,8 +5425,8 @@ const App = {
     this._touchCache('permission_configs', data || []);
     localStorage.setItem('nanchengxiang_permission_configs', JSON.stringify(data || []));
     if (this.supabase) {
-      await this.supabase.from('permission_configs').delete().neq('id', '__none__');
-      if (data && data.length > 0) await this.supabase.from('permission_configs').insert(this._cloudPermissionConfigs(data));
+      
+      await this._upsertToCloud('permission_configs', this._cloudPermissionConfigs(data));
     }
   },
 
@@ -5441,8 +5452,8 @@ const App = {
     this._touchCache('company_tasks', data || []);
     localStorage.setItem('nanchengxiang_company_tasks', JSON.stringify(data || []));
     if (this.supabase) {
-      await this.supabase.from('company_tasks').delete().neq('id', '__none__');
-      if (data && data.length > 0) await this.supabase.from('company_tasks').insert(this._cloudCompanyTasks(data));
+      
+      await this._upsertToCloud('company_tasks', this._cloudCompanyTasks(data));
     }
   },
 
@@ -5536,7 +5547,7 @@ const App = {
 
 
 
-      await this.supabase.from('penalties').delete().neq('id', '__none__');
+      
 
 
 
@@ -5544,7 +5555,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('penalties').insert(this._snakeList(data));
+      await this._upsertToCloud('penalties', this._snakeList(data));
 
 
 
@@ -5600,7 +5611,7 @@ const App = {
 
 
 
-      await this.supabase.from('complaints').delete().neq('id', '__none__');
+      
 
 
 
@@ -5608,7 +5619,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('complaints').insert(this._snakeList(data));
+      await this._upsertToCloud('complaints', this._snakeList(data));
 
 
 
@@ -5664,7 +5675,7 @@ const App = {
 
 
 
-      await this.supabase.from('online_records').delete().neq('id', '__none__');
+      
 
 
 
@@ -5672,7 +5683,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('online_records').insert(this._snakeList(data));
+      await this._upsertToCloud('online_records', this._snakeList(data));
 
 
 
@@ -5728,7 +5739,7 @@ const App = {
 
 
 
-      await this.supabase.from('offline_records').delete().neq('id', '__none__');
+      
 
 
 
@@ -5736,7 +5747,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('offline_records').insert(this._snakeList(data));
+      await this._upsertToCloud('offline_records', this._snakeList(data));
 
 
 
@@ -5800,7 +5811,7 @@ const App = {
 
 
 
-        await this.supabase.from('users').delete().neq('id', '__none__');
+        
 
 
 
@@ -5808,7 +5819,7 @@ const App = {
 
 
 
-        if (data.length > 0) await this.supabase.from('users').insert(this._snakeList(data));
+        await this._upsertToCloud('users', this._snakeList(data));
 
 
 
@@ -6096,7 +6107,7 @@ const App = {
 
 
 
-      await this.supabase.from('stores').delete().neq('id', '__none__');
+      
 
 
 
@@ -6104,7 +6115,7 @@ const App = {
 
 
 
-      if (data.length > 0) await this.supabase.from('stores').insert(this._snakeList(data));
+      await this._upsertToCloud('stores', this._snakeList(data));
 
 
 

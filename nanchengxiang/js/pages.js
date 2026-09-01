@@ -6676,6 +6676,10 @@ Pages.correction = function() {
   var submitted = corrs.slice().sort(function(a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); });
 
   var html = '';
+  var corrQueueN = Pages._corrQueueCount();
+  if (corrQueueN > 0) {
+    html += '<div class="corr-offline-banner">&#128190; 离线提交 ' + corrQueueN + ' 条整改待同步，联网后自动重传</div>';
+  }
   var subHash = location.hash.replace('#', '');
   var subTabs = Pages._inspectionSubTabs(user);
   html += '<div class="sub-tabbar">';
@@ -6827,6 +6831,71 @@ Pages._renderCorrectionThumbs = function() {
   box.innerHTML = html;
 };
 
+/* ===== 离线整改自动重传队列（P1-04） ===== */
+Pages._corrQueueKey = 'nanchengxiang_corr_queue';
+Pages._corrQueueLoad = function() {
+  try { return JSON.parse(localStorage.getItem(Pages._corrQueueKey) || '[]'); } catch (e) { return []; }
+};
+Pages._corrQueueSave = function(q) {
+  try { localStorage.setItem(Pages._corrQueueKey, JSON.stringify(q)); } catch (e) {}
+};
+Pages._corrQueuePush = function(item) {
+  var q = Pages._corrQueueLoad();
+  q.push(item);
+  if (q.length > 30) q.splice(0, q.length - 30);
+  Pages._corrQueueSave(q);
+};
+Pages._corrQueueCount = function() { return Pages._corrQueueLoad().length; };
+Pages._corrCloudOnline = function() {
+  if (!App.supabase) return Promise.resolve(false);
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve(false);
+  return new Promise(function(resolve) {
+    var timer = setTimeout(function() { resolve(false); }, 3000);
+    App.supabase.from('correction_reviews').select('id').limit(1).then(function() {
+      clearTimeout(timer); resolve(true);
+    }).catch(function() { clearTimeout(timer); resolve(false); });
+  });
+};
+Pages._corrFlushItem = async function(item) {
+  if (!App.supabase) return false;
+  var imgs = item._pendingImages || [];
+  if (imgs.length) {
+    var urls = [];
+    for (var k = 0; k < imgs.length; k++) {
+      var name = 'cr' + item.id + '_' + k;
+      try {
+        urls.push(await Pages._uploadFillPhoto(imgs[k], item.storeId, (item.createdAt || '').substring(0, 10) || 'nodate', name));
+      } catch (e) { return false; }
+    }
+    var corrs = App.getCorrections() || [];
+    var c = corrs.find(function(x) { return x.id === item.id; });
+    if (c) { c.correctionImages = urls; delete c._pendingImages; }
+    try { await App.saveCorrections(corrs); } catch (e) { return false; }
+  } else {
+    try { await App.saveCorrections(App.getCorrections() || []); } catch (e) { return false; }
+  }
+  return Pages._corrCloudOnline();
+};
+Pages._corrQueueFlush = async function() {
+  if (Pages._corrFlushing) return;
+  Pages._corrFlushing = true;
+  var q = Pages._corrQueueLoad();
+  if (!q.length) { Pages._corrFlushing = false; return; }
+  var left = [];
+  for (var i = 0; i < q.length; i++) {
+    var ok = await Pages._corrFlushItem(q[i]);
+    if (!ok) left.push(q[i]);
+  }
+  Pages._corrQueueSave(left);
+  Pages._corrFlushing = false;
+  if (left.length === 0) {
+    App.toast('离线整改已全部同步');
+    if (location.hash && location.hash.indexOf('correction') >= 0) Pages.correction();
+  } else if (left.length < q.length) {
+    App.toast('部分离线整改已同步，剩余 ' + left.length + ' 条待重试');
+  }
+};
+
 /* 提交整改 */
 Pages._submitCorrection = async function() {
   var text = (document.getElementById('corr-text') || {}).value || '';
@@ -6840,6 +6909,7 @@ Pages._submitCorrection = async function() {
   if (!d) { App.toast('扣分项不存在'); Pages._corrUploading = false; return; }
 
   var images = [];
+  var pendingImgs = [];
   for (var k = 0; k < Pages._corrPhotos.length; k++) {
     var ph = Pages._corrPhotos[k];
     try {
@@ -6848,10 +6918,8 @@ Pages._submitCorrection = async function() {
       images.push(url);
       ph.status = 'uploaded';
     } catch (err) {
-      console.error('[corr] 图片上传失败', err);
-      App.toast('图片上传失败：' + (err.message || '网络错误'));
-      Pages._corrUploading = false;
-      return;
+      console.warn('[corr] 图片上传失败，转入离线队列', err);
+      pendingImgs.push(ph.dataUrl);
     }
   }
 
@@ -6859,7 +6927,7 @@ Pages._submitCorrection = async function() {
   var now = new Date();
   var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
   var nowStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
-  corrs.push({
+  var newCorr = {
     id: App.nextCorrectionId(),
     issueId: d.key,
     storeId: d.storeId,
@@ -6873,11 +6941,20 @@ Pages._submitCorrection = async function() {
     reviewReason: '',
     createdAt: nowStr,
     updatedAt: nowStr
-  });
+  };
+  if (pendingImgs.length) newCorr._pendingImages = pendingImgs;
+  corrs.push(newCorr);
   await App.saveCorrections(corrs);
   Pages._corrUploading = false;
   document.querySelector('.modal-overlay').remove();
-  App.toast('整改已提交，等待审核');
+  var cloudOk = await Pages._corrCloudOnline();
+  if (!cloudOk) {
+    Pages._corrQueuePush(newCorr);
+    App.toast('网络不可用，整改已保存到本地队列，联网后自动重传');
+    Pages._corrQueueFlush();
+  } else {
+    App.toast('整改已提交，等待审核');
+  }
   Pages.correction();
 };
 
@@ -37565,6 +37642,59 @@ Pages._doWithdraw = function(id) {
 /* 已选图片暂存：{ 行号: [ {dataUrl, status:'pending'|'uploaded'|'failed', url} ] } */
 Pages._fillPhotos = {};
 
+/* ===== 稽核拍照压缩+水印（P1-03） ===== */
+Pages._storeNameOf = function(storeId) {
+  if (!storeId) return '';
+  var s = App.getStores ? (App.getStores() || []) : [];
+  for (var i = 0; i < s.length; i++) if (s[i].id === storeId) return s[i].name || storeId;
+  return storeId;
+};
+Pages._compressPhotoWithWatermark = function(dataUrl, storeId, date) {
+  return new Promise(function(resolve, reject) {
+    var img = new Image();
+    img.onerror = function() { reject(new Error('图片解析失败')); };
+    img.onload = function() {
+      var MAX = 1280;
+      var scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      var w = Math.max(1, Math.round(img.width * scale));
+      var h = Math.max(1, Math.round(img.height * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      var storeName = Pages._storeNameOf(storeId);
+      var now = new Date();
+      function pad(n) { return n < 10 ? '0' + n : '' + n; }
+      var ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      var label = storeName + ' ' + ts;
+      var fontSize = Math.max(12, Math.round(w / 28));
+      ctx.font = 'bold ' + fontSize + 'px sans-serif';
+      var padX = Math.round(fontSize * 0.6), padY = Math.round(fontSize * 0.9);
+      var tw = ctx.measureText(label).width;
+      var bw = tw + padX * 2, bh = fontSize + padY * 1.6;
+      var bx = w - bw - 8, by = h - bh - 8;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = '#fff';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, bx + padX, by + bh / 2 + 1);
+      var quality = 0.7;
+      var out = canvas.toDataURL('image/jpeg', quality);
+      var MAXLEN = 300 * 1024 * 1.34;
+      var guard = 0;
+      while (out.length > MAXLEN && quality > 0.25 && guard < 6) {
+        quality -= 0.1;
+        out = canvas.toDataURL('image/jpeg', quality);
+        guard++;
+      }
+      resolve(out);
+    };
+    img.src = dataUrl;
+  });
+};
+
 Pages._compressImage = function(file) {
   return new Promise(function(resolve, reject) {
     var reader = new FileReader();
@@ -37611,6 +37741,11 @@ Pages._dataUrlToBlob = function(dataUrl) {
 Pages._uploadFillPhoto = async function(dataUrl, storeId, date, name) {
   var supabase = App.supabase;
   if (!supabase) throw new Error('云端未连接');
+  try {
+    dataUrl = await Pages._compressPhotoWithWatermark(dataUrl, storeId, date);
+  } catch (e) {
+    console.warn('[photo] 水印/压缩失败，使用原图上传', e);
+  }
   var blob = Pages._dataUrlToBlob(dataUrl);
   var path = (storeId || 'unknown') + '/' + (date || 'nodate') + '/' + name + '.jpg';
   var { error } = await supabase.storage.from('inspection-photos').upload(path, blob, {
@@ -48317,7 +48452,7 @@ Pages._supplyRenderBoard = function(user) {
 
 
 
-  var all = App.getSupplyIssues() || [];
+  var all = Pages._bdFilterApply(App.getSupplyIssues() || []);
 
 
 
@@ -48454,6 +48589,10 @@ Pages._supplyRenderBoard = function(user) {
 
 
   var html = '';
+
+
+
+  html += Pages._bdFilterBarHtml();
 
 
 
@@ -49406,6 +49545,99 @@ Pages._bdTabs = function(activeId) {
 
 
 
+/* ===== 看板区域/门店筛选（P1-02） ===== */
+Pages._bdFilter = { region: '', stores: [] };
+Pages._bdRegionOrder = ['经营一区','经营二区','经营三区','经营四区','经营五区','经营六区','经营七区','经营八区','经营九区','经营十区','训练店','上海'];
+Pages._bdRegions = function() {
+  var set = {}; var out = [];
+  (App.getStores() || []).forEach(function(s) { if (s.region && !set[s.region]) { set[s.region] = 1; out.push(s.region); } });
+  out.sort(function(a, b) {
+    var ia = Pages._bdRegionOrder.indexOf(a), ib = Pages._bdRegionOrder.indexOf(b);
+    if (ia >= 0 && ib >= 0) return ia - ib;
+    if (ia >= 0) return -1;
+    if (ib >= 0) return 1;
+    return a.localeCompare(b);
+  });
+  return out;
+};
+Pages._bdStoreMap = function() {
+  var byId = {}, byName = {};
+  (App.getStores() || []).forEach(function(s) {
+    if (s.id) byId[s.id] = s;
+    if (s.name) byName[s.name] = s;
+  });
+  return { byId: byId, byName: byName };
+};
+Pages._bdItemStore = function(r, map) {
+  if (r.storeId && map.byId[r.storeId]) return map.byId[r.storeId].name;
+  if (r.store) return r.store;
+  if (r.source) return r.source;
+  return '';
+};
+Pages._bdItemRegion = function(r, map) {
+  if (r.region) return r.region;
+  var name = Pages._bdItemStore(r, map);
+  if (name && map.byName[name]) return map.byName[name].region || '';
+  return '';
+};
+Pages._bdFilterApply = function(list) {
+  var f = Pages._bdFilter;
+  if (!f.region && (!f.stores || !f.stores.length)) return list;
+  var map = Pages._bdStoreMap();
+  return (list || []).filter(function(r) {
+    if (f.region && Pages._bdItemRegion(r, map) !== f.region) return false;
+    if (f.stores && f.stores.length && f.stores.indexOf(Pages._bdItemStore(r, map)) < 0) return false;
+    return true;
+  });
+};
+Pages._bdStoreList = function() {
+  var f = Pages._bdFilter;
+  var map = Pages._bdStoreMap();
+  var names = Object.keys(map.byName).sort(function(a, b) { return a.localeCompare(b, 'zh'); });
+  if (!f.region) return names;
+  return names.filter(function(n) { return (map.byName[n].region || '') === f.region; });
+};
+Pages._bdFilterBarHtml = function() {
+  var f = Pages._bdFilter;
+  var regions = Pages._bdRegions();
+  var html = '<div class="bd-filter"><div class="bd-filter-row"><span class="bd-filter-label">区域</span>';
+  html += '<select class="bd-filter-select" onchange="Pages._bdSetRegion(this.value)">';
+  html += '<option value="">全部区域</option>';
+  regions.forEach(function(r) { html += '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>'; });
+  html += '</select>';
+  html += '<span class="bd-filter-label" style="margin-left:12px">门店</span>';
+  html += '<div class="bd-filter-chips" id="bdFilterChips">';
+  Pages._bdStoreList().forEach(function(n) {
+    var on = f.stores.indexOf(n) >= 0;
+    html += '<span class="bd-chip' + (on ? ' on' : '') + '" onclick="Pages._bdToggleStore(\'' + n.replace(/'/g, "\\'") + '\')">' + n + '</span>';
+  });
+  html += '</div>';
+  if (f.region || f.stores.length) html += '<button class="bd-filter-clear" onclick="Pages._bdClearFilter()">清空筛选</button>';
+  html += '</div></div>';
+  return html;
+};
+Pages._bdSetRegion = function(v) {
+  Pages._bdFilter.region = v;
+  Pages._bdFilter.stores = [];
+  Pages._bdRerenderBoard();
+};
+Pages._bdToggleStore = function(n) {
+  var i = Pages._bdFilter.stores.indexOf(n);
+  if (i >= 0) Pages._bdFilter.stores.splice(i, 1); else Pages._bdFilter.stores.push(n);
+  Pages._bdRerenderBoard();
+};
+Pages._bdClearFilter = function() {
+  Pages._bdFilter.region = '';
+  Pages._bdFilter.stores = [];
+  Pages._bdRerenderBoard();
+};
+Pages._bdRerenderBoard = function() {
+  var h = location.hash || '';
+  if (h.indexOf('complaintBoard') >= 0) Pages.complaintBoard();
+  else if (h.indexOf('penaltyBoard') >= 0) Pages.penaltyBoard();
+  else if (h.indexOf('supplyChain') >= 0) Pages.supplyChain();
+};
+
 Pages._boardAcc = { complaintBoard: false, penaltyBoard: false };
 
 Pages._bdMonths = function(records, dateKeyFn) {
@@ -49744,7 +49976,7 @@ Pages.complaintBoard = function() {
 
 
 Pages._complaintBoardHtml = function() {
-  var complaints = App.getComplaints() || [];
+  var complaints = Pages._bdFilterApply(App.getComplaints() || []);
   var acc = !!Pages._boardAcc.complaintBoard;
   var now = new Date();
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -49763,6 +49995,7 @@ Pages._complaintBoardHtml = function() {
   var segHtml = Pages._bdSegHtml('complaintBoard', acc, '#e0342c');
   var html = '';
   html += Pages._bdTabs('complaintBoard');
+  html += Pages._bdFilterBarHtml();
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#e0342c,#f87171)">';
   html += '<div class="bd-head-left"><div class="bd-title">差评看板' + (acc ? '<span style="font-size:10px;font-weight:900;background:#fff;color:#e0342c;border-radius:999px;padding:1px 7px;vertical-align:middle">累计</span>' : '') + '</div><div class="bd-date">' + (acc ? '全量历史 · 含已闭环 · 截至 ' + curMonth : curMonth) + '</div></div>';
   html += '<div style="display:flex;align-items:center;gap:8px">' + segHtml + '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div></div>';
@@ -49816,7 +50049,7 @@ Pages.penaltyBoard = function() {
 
 
 Pages._penaltyBoardHtml = function() {
-  var penalties = App.getPenalties() || [];
+  var penalties = Pages._bdFilterApply(App.getPenalties() || []);
   var acc = !!Pages._boardAcc.penaltyBoard;
   var now = new Date();
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -49845,6 +50078,7 @@ Pages._penaltyBoardHtml = function() {
   var segHtml = Pages._bdSegHtml('penaltyBoard', acc, '#7c3aed');
   var html = '';
   html += Pages._bdTabs('penaltyBoard');
+  html += Pages._bdFilterBarHtml();
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">';
   html += '<div class="bd-head-left"><div class="bd-title">处罚看板' + (acc ? '<span style="font-size:10px;font-weight:900;background:#fff;color:#7c3aed;border-radius:999px;padding:1px 7px;vertical-align:middle">累计</span>' : '') + '</div><div class="bd-date">' + (acc ? '全量历史 · 含已闭环 · 截至 ' + curMonth : curMonth) + '</div></div>';
   html += '<div style="display:flex;align-items:center;gap:8px">' + segHtml + '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div></div>';
@@ -50087,3 +50321,11 @@ var tasks = Pages._rectTasks();
 
 
 
+/* P1-04: 离线整改队列自动重传触发 */
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.addEventListener) {
+    window.addEventListener('online', function() { Pages._corrQueueFlush(); });
+    window.addEventListener('pageshow', function() { setTimeout(function() { Pages._corrQueueFlush(); }, 1500); });
+  }
+  setTimeout(function() { Pages._corrQueueFlush(); }, 3000);
+});
