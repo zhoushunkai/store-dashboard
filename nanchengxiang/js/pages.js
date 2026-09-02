@@ -2334,6 +2334,7 @@ Pages.home = function() {
 
 
 
+    html += Pages._homeYesterdaySection(user);
     html += '<div class="card">';
 
 
@@ -3795,6 +3796,114 @@ Pages.home = function() {
 
 
 
+};
+
+/* ==================== 店长首页 · 门店日报（昨日概览看板） ==================== */
+Pages._homeYesterdaySection = function(user) {
+  if (!user || !user.storeId) return '';
+  var esc = Pages._esc || function(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var clip = function(s, n) { s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n) + '…' : s; };
+  var pad2 = function(n) { return n < 10 ? '0' + n : String(n); };
+  var fmt = function(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+  // 看板日期偏移：0 = 昨日（默认），>0 = 往前 N 天；不得早于昨日（offset 不取负）
+  var offset = (typeof Pages._ybOffset === 'number' && Pages._ybOffset >= 0) ? Math.floor(Pages._ybOffset) : 0;
+  var base = new Date();
+  base.setHours(0, 0, 0, 0);
+  // 本地日历日构造，避免 DST 导致的 86400000 误差
+  var cursor = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 1 - offset);
+  var curDate = fmt(cursor);
+  var prevDate = fmt(new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1));
+  var subText = offset === 0 ? '昨日 ' + curDate : (offset === 1 ? '前天 ' + curDate : '往前 ' + offset + ' 天 · ' + curDate);
+  var isDate = function(v) { return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v); };
+  var sameDay = function(v, k) { return isDate(v) && v === k; };
+  var mine = function(list) { return (list || []).filter(function(r) { return r && r.storeId === user.storeId; }); };
+  var penalties = mine(App.getPenalties());
+  var complaints = mine(App.getComplaints());
+  var supply = mine(App.getSupplyIssues());
+  var curPen = penalties.filter(function(r) { return sameDay(r.eventDate, curDate); });
+  var prevPen = penalties.filter(function(r) { return sameDay(r.eventDate, prevDate); });
+  var curCom = complaints.filter(function(r) { return sameDay(r.date, curDate); });
+  var prevCom = complaints.filter(function(r) { return sameDay(r.date, prevDate); });
+  var curSup = supply.filter(function(r) { return sameDay(r.date, curDate); });
+  var prevSup = supply.filter(function(r) { return sameDay(r.date, prevDate); });
+  var dateKey = function(r) { return r.date || r.eventDate || ''; };
+  var sortRisk = function(a, b) {
+    var ka = a.status === '已闭环' ? 1 : 0;
+    var kb = b.status === '已闭环' ? 1 : 0;
+    if (ka !== kb) return ka - kb;
+    return dateKey(a) < dateKey(b) ? 1 : (dateKey(a) > dateKey(b) ? -1 : 0);
+  };
+  var delta = function(y, p) {
+    var d = y - p;
+    if (d > 0) return '<div class="yb-delta up">▲ +' + d + '</div>';
+    if (d < 0) return '<div class="yb-delta down">▼ ' + d + '</div>';
+    return '<div class="yb-delta flat">—</div>';
+  };
+  var statCard = function(hash, color, num, label, del) {
+    return '<div class="yb-stat" style="border-top-color:' + color + '" onclick="location.hash=\'' + hash + '\'">' +
+      '<div class="yb-num" style="color:' + color + '">' + num + '</div>' +
+      '<div class="yb-label">' + label + '</div>' + del + '</div>';
+  };
+  var cardLabel = function(name) {
+    if (offset === 0) return '昨日' + name;
+    if (offset === 1) return '前天' + name;
+    return name + ' · 往前' + offset + '天';
+  };
+  var group = function(hash, color, label, rows) {
+    var h = '<div class="yb-group"><div class="yb-group-head"><span class="yb-bar" style="background:' + color + '"></span>' + label + '<span class="yb-count">' + rows.length + '</span></div>';
+    if (rows.length === 0) { h += '<div class="yb-none">无</div>'; }
+    else {
+      var show = rows.slice(0, 6);
+      for (var i = 0; i < show.length; i++) h += show[i];
+      if (rows.length > show.length) h += '<div class="yb-more">… 共 ' + rows.length + ' 条，点击进入列表查看全部</div>';
+    }
+    return h + '</div>';
+  };
+  var row = function(hash, color, text, status) {
+    var st = '';
+    if (status) st = '<span class="yb-st">' + esc(status) + '</span>';
+    return '<div class="yb-item" style="border-left-color:' + color + '" onclick="location.hash=\'' + hash + '\'">' +
+      '<span class="yb-txt">' + text + '</span>' + st + '</div>';
+  };
+  var html = '';
+  html += '<div class="card yb-daily-card">';
+  html += '<div class="yb-head"><div class="yb-title">门店日报</div><div class="yb-sub">' + subText + '</div></div>';
+  html += '<div class="yb-nav">' +
+    '<div class="yb-nav-btn" onclick="Pages._ybShift(1)">◀ 更早一天</div>' +
+    '<div class="yb-nav-btn' + (offset === 0 ? ' disabled' : '') + '" onclick="Pages._ybShift(-1)">▶ 更新一天</div>' +
+    '</div>';
+  var curTotal = curPen.length + curCom.length + curSup.length;
+  if (curTotal === 0) {
+    html += '<div class="yb-empty">该日暂无记录</div>';
+  } else {
+    html += '<div class="yb-stats-row">';
+    html += statCard('#complaint', 'var(--primary)', curCom.length, cardLabel('差评'), delta(curCom.length, prevCom.length));
+    html += statCard('#penalty', 'var(--status-pending)', curPen.length, cardLabel('处罚'), delta(curPen.length, prevPen.length));
+    html += statCard('#supplyChain', 'var(--status-info)', curSup.length, cardLabel('供应链'), delta(curSup.length, prevSup.length));
+    html += '</div>';
+    var comRows = [];
+    curCom.sort(sortRisk);
+    curCom.forEach(function(c) { comRows.push(row('#complaint', 'var(--primary)', clip((c.platform ? c.platform + '：' : '') + (c.content || ''), 30), c.status)); });
+    var penRows = [];
+    curPen.sort(sortRisk);
+    curPen.forEach(function(p) { penRows.push(row('#penalty', 'var(--status-pending)', clip((p.category ? p.category + '：' : '') + (p.event || ''), 30), p.status)); });
+    var supRows = [];
+    curSup.sort(sortRisk);
+    curSup.forEach(function(s) { supRows.push(row('#supplyChain', 'var(--status-info)', clip((s.type ? s.type + '：' : '') + (s.product || s.issue || ''), 30), s.status)); });
+    html += '<div class="yb-detail-title">' + (offset === 0 ? '昨日明细' : '当日明细') + '</div>';
+    html += group('#complaint', 'var(--primary)', '差评', comRows);
+    html += group('#penalty', 'var(--status-pending)', '处罚', penRows);
+    html += group('#supplyChain', 'var(--status-info)', '供应链', supRows);
+  }
+  html += '</div>';
+  return html;
+};
+Pages._ybShift = function(deltaDay) {
+  var o = (typeof Pages._ybOffset === 'number' && Pages._ybOffset >= 0) ? Math.floor(Pages._ybOffset) : 0;
+  o += deltaDay;
+  if (o < 0) o = 0;
+  Pages._ybOffset = o;
+  Pages.home();
 };
 
 

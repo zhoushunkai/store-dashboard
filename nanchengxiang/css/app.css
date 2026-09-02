@@ -3242,3 +3242,36 @@ body {
 .fill-tool.hot { color: #e64340; }
 .fill-tool .fill-cnt { color: #e64340; font-weight: 600; }
 .fill-list-foot { text-align: center; color: #bbb; font-size: 11px; padding: 6px 0 14px; }
+
+
+/* ==================== 店长首页 · 门店日报（昨日概览看板） ==================== */
+.yb-daily-card { margin-bottom: 12px; }
+.yb-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.yb-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.yb-sub { font-size: 12px; color: var(--text-secondary); }
+.yb-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 16px 0 6px; }
+.yb-stats-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.yb-stat { flex: 1; background: var(--card-bg); border-radius: var(--radius); padding: 12px 6px; text-align: center; box-shadow: var(--shadow); cursor: pointer; border-top: 3px solid transparent; }
+.yb-num { font-size: 28px; font-weight: 800; line-height: 1.15; }
+.yb-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; }
+.yb-delta { font-size: 11px; font-weight: 700; margin-top: 6px; }
+.yb-delta.up { color: var(--status-overdue); }
+.yb-delta.down { color: var(--status-done); }
+.yb-delta.flat { color: #bbb; }
+.yb-detail-title { font-size: 14px; font-weight: 700; color: var(--text); margin: 4px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.yb-group { margin-bottom: 10px; }
+.yb-group:last-child { margin-bottom: 0; }
+.yb-group-head { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text); margin: 6px 0; }
+.yb-bar { width: 4px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+.yb-count { font-size: 11px; color: var(--text-muted); font-weight: 600; background: #f5f5f5; border-radius: 8px; padding: 1px 7px; }
+.yb-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #fafafa; border-left: 3px solid transparent; border-radius: 8px; margin-bottom: 6px; cursor: pointer; font-size: 13px; color: var(--text); }
+.yb-item:active { background: #f0f0f0; }
+.yb-txt { flex: 1; line-height: 1.4; word-break: break-all; }
+.yb-st { flex-shrink: 0; font-size: 11px; color: var(--text-muted); }
+.yb-none { font-size: 12px; color: #ccc; padding: 2px 2px 8px; }
+.yb-more { font-size: 11px; color: #999; padding: 0 2px 6px; }
+
+.yb-nav { display: flex; gap: 10px; margin: -4px 0 12px; }
+.yb-nav-btn { flex: 1; text-align: center; font-size: 13px; font-weight: 600; color: var(--primary); background: var(--primary-light); border-radius: 8px; padding: 8px 0; cursor: pointer; user-select: none; }
+.yb-nav-btn:active { opacity: 0.8; }
+.yb-nav-btn.disabled { color: #b9b9b9; background: #f0f0f0; cursor: default; pointer-events: none; }
