@@ -39053,6 +39053,41 @@ Pages._issueStatus = function(is) {
 
 
 
+/* issue 字段归一化：兼容云端新 schema(camelCase: description/category/storeId/score/createdAt/resultId/archived) 与本地旧 schema(content/stdScore/actualScore/inspector/date) */
+Pages._issueStoreName = function(is) {
+  if (!is) return '';
+  var sid = is.storeId || is.store_id || is.store || '';
+  if (!sid) return '';
+  return Pages._storeNameOf(sid) || sid;
+};
+Pages._issueDesc = function(is) {
+  return (is && (is.description || is.content)) || '';
+};
+Pages._issueDeduct = function(is) {
+  if (!is) return 0;
+  if (typeof is.score === 'number') return is.score;
+  if (is.score != null && is.score !== '') { var n = Number(is.score); if (!isNaN(n)) return n; }
+  return ((Number(is.stdScore) || 0) - (Number(is.actualScore) || 0));
+};
+Pages._issueDate = function(is) {
+  var d = (is && (is.createdAt || is.created_at || is.date)) || '';
+  return String(d).slice(0, 10);
+};
+Pages._issueInspector = function(is) {
+  if (!is) return '';
+  if (is.inspector) return is.inspector;
+  var rid = is.resultId || is.result_id || '';
+  if (rid && App.getResults) {
+    var results = App.getResults() || [];
+    for (var i = 0; i < results.length; i++) {
+      if (results[i] && results[i].id === rid && results[i].inspector) return results[i].inspector;
+    }
+  }
+  return '';
+};
+Pages._issueActive = function(is) {
+  return !(is && (is.archived === true || is.archived === 'true'));
+};
 Pages._issueFilter = 'all';
 
 
@@ -39649,6 +39684,8 @@ Pages.inspectionIssues = function() {
 
 
 
+  // 已归档工单不参与统计与列表（活跃口径与检查结果页归档一致）
+  issues = issues.filter(function(is) { return Pages._issueActive(is); });
   // 统计
 
 
@@ -40289,7 +40326,7 @@ Pages.inspectionIssues = function() {
 
 
 
-      html += '<div class="li-title">[' + (is.store||'') + '] ' + (is.content||'') + '</div>';
+      html += '<div class="li-title">[' + Pages._esc(Pages._issueStoreName(is)) + '] ' + Pages._esc(Pages._issueDesc(is)) + '</div>';
 
 
 
@@ -40305,7 +40342,7 @@ Pages.inspectionIssues = function() {
 
 
 
-      html += '<div class="li-sub">' + (is.date||'') + ' | ' + (is.category||'') + ' | 扣' + ((is.stdScore||0) - (is.actualScore||0)) + '分 | ' + (is.deductReason||'') + '</div>';
+      html += '<div class="li-sub">' + Pages._issueDate(is) + ' | ' + Pages._esc(is.category || '') + ' | 扣' + Pages._issueDeduct(is) + '分' + (is.deductReason ? ' | ' + Pages._esc(is.deductReason) : '') + '</div>';
 
 
 
@@ -40321,7 +40358,7 @@ Pages.inspectionIssues = function() {
 
 
 
-      html += '<div class="li-sub">稽核员：' + (is.inspector||'') + ' | 状态：<span style="color:' + statusColor + '">' + Pages._issueStatus(is) + '</span></div>';
+      html += '<div class="li-sub">稽核员：' + Pages._esc(Pages._issueInspector(is)) + ' | 状态：<span style="color:' + statusColor + '">' + Pages._issueStatus(is) + '</span></div>';
 
 
 
@@ -41409,7 +41446,7 @@ Pages._issueFix = function(id) {
 
 
 
-  html += '<p><b>问题：</b>' + (is.content||'') + '（' + (is.store||'') + '）</p>';
+  html += '<p><b>问题：</b>' + Pages._esc(Pages._issueDesc(is)) + '（' + Pages._esc(Pages._issueStoreName(is)) + '）</p>';
 
 
 
@@ -42273,7 +42310,7 @@ Pages._issueAppeal = function(id) {
 
 
 
-  html += '<p><b>问题：</b>' + (is.content||'') + '（' + (is.store||'') + '）</p>';
+  html += '<p><b>问题：</b>' + Pages._esc(Pages._issueDesc(is)) + '（' + Pages._esc(Pages._issueStoreName(is)) + '）</p>';
 
 
 
