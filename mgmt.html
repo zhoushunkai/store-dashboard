@@ -316,6 +316,14 @@ header h1 { font-size: 20px; font-weight: 600; }
 
 }
 
+
+/* 级别统计卡点击跳转 */
+.stat-click { transition: .2s; cursor: pointer; }
+.stat-click:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+.stat-click.active { outline: 2px solid #1a237e; outline-offset: -2px; background: #f0f2ff; }
+.filter-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f5f7ff; border: 1px solid #dde3ff; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #333; flex-wrap: wrap; }
+.filter-back { background: #1a237e; color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
+.filter-back:hover { background: #283593; }
 </style>
 
 </head>
@@ -454,106 +462,77 @@ var CATEGORIES = {
 
 
 
+var levelFilter = null;
+
 function getCurrentMonth() { return document.getElementById('monthSelect').value; }
 
 function getMonthData(month) { return (ALL_DATA[month] || []).filter(function(d){ return d.total != null; }); }
 
 function getValid() { return getMonthData(getCurrentMonth()); }
 
-function onMonthChange() { renderStats(); switchTab(document.querySelector('.tab-btn.active').dataset.tab); }
-
-
-
-function renderStats() {
-
+function onMonthChange() { levelFilter = null; renderStats(); switchTab(document.querySelector('.tab-btn.active').dataset.tab); }function renderStats() {
   var valid = getValid();
-
   var levels = {S:0,A:0,B:0,C:0,D:0};
-
   var maxS=0,minS=100,direct=0;
-
   valid.forEach(function(d){
-
     var lv=d.mgmt_level; if(lv) levels[lv]=(levels[lv]||0)+1;
-
     if(d.total>maxS) maxS=d.total; if(d.total<minS) minS=d.total;
-
     if(d.manager==='区域代管'||d.manager==='区域直管') direct++;
-
   });
-
+  function levelCard(lv,color,label){
+    return '<div class="stat-card stat-click'+(levelFilter===lv?' active':'')+'" onclick="toggleLevelFilter(\''+lv+'\')" title="点击查看'+lv+'级门店"><div class="num" style="color:'+color+'">'+(levels[lv]||0)+'</div><div class="label">'+label+'</div></div>';
+  }
   document.getElementById('statsBar').innerHTML =
-
     '<div class="stat-card"><div class="num">'+valid.length+'</div><div class="label">参评门店</div></div>'+
-
-    '<div class="stat-card"><div class="num" style="color:#D4A017">'+(levels.S||0)+'</div><div class="label">S级 ≥90</div></div>'+
-
-    '<div class="stat-card"><div class="num" style="color:#2E7D32">'+(levels.A||0)+'</div><div class="label">A级 ≥85</div></div>'+
-
-    '<div class="stat-card"><div class="num" style="color:#1565C0">'+(levels.B||0)+'</div><div class="label">B级 ≥75</div></div>'+
-
-    '<div class="stat-card"><div class="num" style="color:#E65100">'+(levels.C||0)+'</div><div class="label">C级 ≥65</div></div>'+
-
-    '<div class="stat-card"><div class="num" style="color:#B71C1C">'+(levels.D||0)+'</div><div class="label">D级 &lt;65</div></div>'+
-
+    levelCard('S','#D4A017','S级 ≥90')+
+    levelCard('A','#2E7D32','A级 ≥85')+
+    levelCard('B','#1565C0','B级 ≥75')+
+    levelCard('C','#E65100','C级 ≥65')+
+    levelCard('D','#B71C1C','D级 <65')+
     '<div class="stat-card"><div class="num" style="color:#6A1B9A">'+direct+'</div><div class="label">区域直管</div></div>'+
-
     '<div class="stat-card"><div class="num">'+maxS.toFixed(1)+'</div><div class="label">最高分</div></div>'+
-
     '<div class="stat-card"><div class="num">'+minS.toFixed(1)+'</div><div class="label">最低分</div></div>';
-
 }
-
-
-
+function toggleLevelFilter(lv) {
+  levelFilter = (levelFilter === lv) ? null : lv;
+  renderStats();
+  var btns = document.querySelectorAll('.tab-btn');
+  btns.forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('[data-tab="ranking"]').classList.add('active');
+  document.getElementById('content').innerHTML = renderRanking();
+}
 function renderRanking() {
-
   var valid = getValid();
-
   var levelOrder = ['S','A','B','C','D'];
-
   var grouped = {};
-
   levelOrder.forEach(function(l){ grouped[l]=[]; });
-
   valid.forEach(function(d){
-
     var lv = d.mgmt_level;
-
     if (grouped[lv]) grouped[lv].push(d);
-
   });
-
-  var html = '';
-
-  levelOrder.forEach(function(lv){
-
+  var renderSection = function(lv){
     var stores = grouped[lv];
-
-    if (!stores.length) return;
-
+    if (!stores.length) return '';
     stores.sort(function(a,b){ return b.total-a.total; });
-
-    html += '<div class="level-section"><div class="level-header"><span class="level-badge '+lv+'">'+lv+'</span><span class="level-count">'+stores.length+' 家门店 · '+stores[stores.length-1].total+' ~ '+stores[0].total+' 分</span></div><div class="store-grid">';
-
+    var h = '<div class="level-section"><div class="level-header"><span class="level-badge '+lv+'">'+lv+'</span><span class="level-count">'+stores.length+' 家门店 · '+stores[stores.length-1].total+' ~ '+stores[0].total+' 分</span></div><div class="store-grid">';
     stores.forEach(function(s){
-
       var isDirect = s.manager==='区域代管' ? ' <span style="font-size:10px;background:#f3e5f5;color:#6A1B9A;padding:1px 5px;border-radius:3px">直管</span>' : '';
-
-      html += '<div class="store-card '+lv+'"><div class="sc-top"><div><div class="sc-name">'+s.store+isDirect+'</div><div class="sc-region">'+s.region+'</div></div><div class="sc-score">'+s.total+'</div></div><div class="sc-manager">负责人：'+(s.manager||'—')+'</div><div class="sc-rank">排名 #'+s.rank+'</div></div>';
-
+      h += '<div class="store-card '+lv+'"><div class="sc-top"><div><div class="sc-name">'+s.store+isDirect+'</div><div class="sc-region">'+s.region+'</div></div><div class="sc-score">'+s.total+'</div></div><div class="sc-manager">负责人：'+(s.manager||'—')+'</div><div class="sc-rank">排名 #'+s.rank+'</div></div>';
     });
-
-    html += '</div></div>';
-
-  });
-
+    h += '</div></div>';
+    return h;
+  };
+  var html = '';
+  if (levelFilter) {
+    var lv = levelFilter;
+    var cnt = (grouped[lv]||[]).length;
+    html += '<div class="filter-banner"><span>当前筛选：<b style="font-size:14px">'+lv+'级</b> · '+cnt+' 家门店</span><button class="filter-back" onclick="toggleLevelFilter(\''+lv+'\')">返回全部级别</button></div>';
+    html += renderSection(lv);
+    return html;
+  }
+  levelOrder.forEach(function(lv){ html += renderSection(lv); });
   return html;
-
 }
-
-
-
 function renderRegion() {
 
   var valid = getValid();
