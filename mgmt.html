@@ -471,19 +471,22 @@ function getMonthData(month) { return (ALL_DATA[month] || []).filter(function(d)
 function getValid() { return getMonthData(getCurrentMonth()); }
 
 function onMonthChange() { levelFilter = null; renderStats(); switchTab(document.querySelector('.tab-btn.active').dataset.tab); }function renderStats() {
-  var valid = getValid();
+  var validAll = getValid();
+  function isDirect(d){ return d.manager==='区域代管'||d.manager==='区域直管'; }
+  var valid = validAll.filter(function(d){ return !isDirect(d); });
   var levels = {S:0,A:0,B:0,C:0,D:0};
   var maxS=0,minS=100,direct=0;
+  validAll.forEach(function(d){ if(isDirect(d)) direct++; });
   valid.forEach(function(d){
     var lv=d.mgmt_level; if(lv) levels[lv]=(levels[lv]||0)+1;
     if(d.total>maxS) maxS=d.total; if(d.total<minS) minS=d.total;
-    if(d.manager==='区域代管'||d.manager==='区域直管') direct++;
   });
+  if(!valid.length){ maxS=0; minS=0; }
   function levelCard(lv,color,label){
     return '<div class="stat-card stat-click'+(levelFilter===lv?' active':'')+'" onclick="toggleLevelFilter(\''+lv+'\')" title="点击查看'+lv+'级门店"><div class="num" style="color:'+color+'">'+(levels[lv]||0)+'</div><div class="label">'+label+'</div></div>';
   }
   document.getElementById('statsBar').innerHTML =
-    '<div class="stat-card"><div class="num">'+valid.length+'</div><div class="label">参评门店</div></div>'+
+    '<div class="stat-card"><div class="num">'+valid.length+'</div><div class="label">店长参评门店</div></div>'+
     levelCard('S','#D4A017','S级 ≥90')+
     levelCard('A','#2E7D32','A级 ≥85')+
     levelCard('B','#1565C0','B级 ≥75')+
@@ -502,7 +505,11 @@ function toggleLevelFilter(lv) {
   document.getElementById('content').innerHTML = renderRanking();
 }
 function renderRanking() {
-  var valid = getValid();
+  var validAll = getValid();
+  function isDirect(d){ return d.manager==='区域代管'||d.manager==='区域直管'; }
+  var valid = validAll.filter(function(d){ return !isDirect(d); });
+  var rankOf = {};
+  valid.forEach(function(d){ rankOf[d.store] = 1 + valid.filter(function(x){ return x.total > d.total; }).length; });
   var levelOrder = ['S','A','B','C','D'];
   var grouped = {};
   levelOrder.forEach(function(l){ grouped[l]=[]; });
@@ -516,8 +523,7 @@ function renderRanking() {
     stores.sort(function(a,b){ return b.total-a.total; });
     var h = '<div class="level-section"><div class="level-header"><span class="level-badge '+lv+'">'+lv+'</span><span class="level-count">'+stores.length+' 家门店 · '+stores[stores.length-1].total+' ~ '+stores[0].total+' 分</span></div><div class="store-grid">';
     stores.forEach(function(s){
-      var isDirect = s.manager==='区域代管' ? ' <span style="font-size:10px;background:#f3e5f5;color:#6A1B9A;padding:1px 5px;border-radius:3px">直管</span>' : '';
-      h += '<div class="store-card '+lv+'"><div class="sc-top"><div><div class="sc-name">'+s.store+isDirect+'</div><div class="sc-region">'+s.region+'</div></div><div class="sc-score">'+s.total+'</div></div><div class="sc-manager">负责人：'+(s.manager||'—')+'</div><div class="sc-rank">排名 #'+s.rank+'</div></div>';
+      h += '<div class="store-card '+lv+'"><div class="sc-top"><div><div class="sc-name">'+s.store+'</div><div class="sc-region">'+s.region+'</div></div><div class="sc-score">'+s.total+'</div></div><div class="sc-manager">负责人：'+(s.manager||'—')+'</div><div class="sc-rank">排名 #'+rankOf[s.store]+'</div></div>';
     });
     h += '</div></div>';
     return h;
