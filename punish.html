@@ -170,7 +170,7 @@ var PUNISH_DATA_LOADED = true;
 // ─── Data Loading ───
 let ALL_DATA = null;
 let currentYear = '2026';
-let currentMonth = '6月';
+let currentMonth = '';  // 自动定位：年份数据加载后默认切到最新月份
 let currentPage = 1;
 const PAGE_SIZE = 25;
 const LOAD_TIMEOUT = 15000;
@@ -306,7 +306,7 @@ function switchYear(year) {
 
   const availableMonths = monthsInYear.concat(['all']);
   if (!availableMonths.includes(currentMonth)) {
-    currentMonth = monthsInYear[0];
+    currentMonth = monthsInYear[monthsInYear.length - 1];
   }
 
   document.querySelectorAll('.month-tab').forEach(t => {
