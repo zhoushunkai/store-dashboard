@@ -1399,6 +1399,8 @@ function filterAnnual() {
 
 function switchTab(tab) {
 
+  if (tab !== 'ranking') { levelFilter = null; renderStats(); }
+
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
 
   document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
