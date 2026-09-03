@@ -163,7 +163,7 @@ const App = {
 
 
   dataReady: false,    // 缓存是否就绪
-
+  syncError: false,      // v90: 云数据同步失败标记（loadAll 阶段任一表拉取异常置 true）
 
 
 
@@ -3772,7 +3772,7 @@ const App = {
 
 
 
-    if (!localStorage.getItem('nanchengxiang_stores')) {
+    if (false && !localStorage.getItem('nanchengxiang_stores')) {  // v90: 禁用云端失败时写入演示种子数据
 
 
 
@@ -4106,7 +4106,10 @@ const App = {
 
 
 
-    this.dataReady = true;
+    if (this._syncError) {
+      console.error('[App] 云数据同步失败：部分数据表加载异常，请检查网络后刷新重试');
+      // v90: 不置 dataReady，登录页将明确提示同步异常，避免静默进入空数据/演示数据态
+    } else { this.dataReady = true; }
 
 
 
@@ -4178,7 +4181,7 @@ const App = {
 
 
 
-      if (error) { console.error('[Supabase] load ' + table + ':', error.message); break; }
+      if (error) { this._syncError = true; console.error('[Supabase] load ' + table + ':', error.message); break; }
 
 
 
@@ -4306,7 +4309,7 @@ const App = {
 
 
 
-    if (this.seedData[table] && this.seedData[table].length > 0) {
+    if (false && this.seedData[table] && this.seedData[table].length > 0) {  // v90: 禁用种子合并，演示数据不再混入生产缓存
 
 
 

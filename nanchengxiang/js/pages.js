@@ -1231,6 +1231,7 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
   var users = App.getUsers();
+  if (!users || !users.length) { App.toast('无法连接服务器且本机无账号缓存，请检查网络后刷新重试'); return; }  // v90: 云同步失败/无缓存时明确提示，不再误报未注册
 
 
 
