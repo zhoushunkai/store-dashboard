@@ -3588,7 +3588,7 @@ const App = {
 
 
 
-        if (this.seedData[table] && this.seedData[table].length > 0) {
+        if (false && this.seedData[table] && this.seedData[table].length > 0) {  // v91: 禁用空库自动播种，杜绝任何演示/种子数据写入云库（真实数据一律通过人工导入）
 
 
 
@@ -6939,7 +6939,7 @@ const App = {
 
 
 
-      var seedUsers = this.seedData && this.seedData.users ? this.seedData.users : [];
+      var seedUsers = [];  // v91: 禁用演示号兜底（仅云库白名单账号）
 
 
 

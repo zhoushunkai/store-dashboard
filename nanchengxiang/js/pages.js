@@ -1375,7 +1375,7 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
-    var seedUsers = App.seedData && App.seedData.users ? App.seedData.users : [];
+    var seedUsers = [];  // v91: 禁用演示号 fallback 登录，仅允许云库白名单账号
 
 
 
