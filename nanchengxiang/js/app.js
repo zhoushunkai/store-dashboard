@@ -3118,6 +3118,8 @@ const App = {
 
       '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
+      '总部经理': { dashboard: true, inspection: false, inspection_edit: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: false, task: false, supply_chain: false, task_create: false, task_done: false, task_board: false},
+
 
 
 
@@ -3196,7 +3198,9 @@ const App = {
 
 
 
-      '客服': '客服', '营运': '营运', '区域教练': '区域教练', '店长': '店长', 'admin': '预览模式'
+      '客服': '客服', '营运': '营运', '区域教练': '区域教练', '店长': '店长', 'admin': '预览模式',
+
+      '总部经理': '总部经理'
 
 
 
@@ -3228,7 +3232,9 @@ const App = {
 
 
 
-      '客服': '#059669', '营运': '#d97706', '区域教练': '#d97706', '店长': '#059669', 'admin': '#6b7280'
+      '客服': '#059669', '营运': '#d97706', '区域教练': '#d97706', '店长': '#059669', 'admin': '#6b7280',
+
+      '总部经理': '#c41a1a'
 
 
 
@@ -6215,6 +6221,30 @@ const App = {
 
 
     this.currentHash = hash;
+
+    // v92: 页面级权限守卫——无对应模块权限时拦截并回首页，避免手动改 hash 越权访问
+    if (this.currentUser) {
+      var _guardRole = this.currentUser.role;
+      var guardMap = { 'inspection': 'inspection', 'inspectionTemplates': 'inspection', 'inspectionFill': 'inspection_edit',
+                       'inspectionResults': 'inspection_results', 'inspectionIssues': 'inspection',
+                       'inspectionDashboard': 'inspection', 'inspectionWorkbench': 'inspection',
+                       'daily': 'daily', 'penalty': 'penalty', 'complaint': 'complaint',
+                       'template': 'notice', 'task': 'task', 'dashboard': 'dashboard',
+                       'penaltyBoard': 'penalty', 'complaintBoard': 'complaint', 'taskBoard': 'task_board',
+                       'supplyChain': 'supply_chain' };
+      var canGo = true;
+      var _needModule = guardMap[hash];
+      if (_needModule) canGo = this.Permissions.canAccess(_guardRole, _needModule);
+      if (hash === 'inspection' && this.Permissions.canAccess(_guardRole, 'inspection_results')) canGo = true;
+      if (hash === 'correction') canGo = ['店长', '总部', 'admin', '线上稽核', '线下稽核', '稽核员'].indexOf(_guardRole) >= 0;
+      if (hash === 'permissionConfig') canGo = ['总部', 'admin'].indexOf(_guardRole) >= 0;
+      if (hash === 'admin') canGo = ['总部', 'admin', '客服'].indexOf(_guardRole) >= 0;
+      if (!canGo) {
+        App.toast('当前账号无此页面权限');
+        location.hash = '#home';
+        return;
+      }
+    }
 
 
 
