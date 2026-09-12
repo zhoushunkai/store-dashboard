@@ -3118,7 +3118,7 @@ const App = {
 
       '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
-      '总部经理': { dashboard: true, inspection: false, inspection_edit: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: false, task: false, supply_chain: false, task_create: false, task_done: false, task_board: false},
+      '总部经理': { dashboard: true, board_view: true, inspection: false, inspection_edit: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: false, task: false, supply_chain: false, task_create: false, task_done: false, task_board: false},
 
 
 
@@ -6239,6 +6239,9 @@ const App = {
       if (hash === 'correction') canGo = ['店长', '总部', 'admin', '线上稽核', '线下稽核', '稽核员'].indexOf(_guardRole) >= 0;
       if (hash === 'permissionConfig') canGo = ['总部', 'admin'].indexOf(_guardRole) >= 0;
       if (hash === 'admin') canGo = ['总部', 'admin', '客服'].indexOf(_guardRole) >= 0;
+      // v93: 只看板角色（总部经理）放行看板中心内全部看板页
+      var _boardHashes = { 'dashboard': 1, 'inspectionWorkbench': 1, 'complaintBoard': 1, 'daily': 1, 'penaltyBoard': 1, 'supplyChain': 1, 'taskBoard': 1 };
+      if (!canGo && _boardHashes[hash] && this.Permissions.canAccess(_guardRole, 'board_view')) canGo = true;
       if (!canGo) {
         App.toast('当前账号无此页面权限');
         location.hash = '#home';
