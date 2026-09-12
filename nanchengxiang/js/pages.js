@@ -7436,7 +7436,8 @@ Pages.inspectionWorkbench = function() {
 
 
 
-  var canView = App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results');
+  var canView = App.Permissions.canAccess(user.role, 'inspection') || App.Permissions.canAccess(user.role, 'inspection_results')
+    || App.Permissions.canAccess(user.role, 'board_view'); // v93: 只看板角色可看稽核看板
 
 
 
@@ -23997,7 +23998,9 @@ Pages.daily = function() {
 
 
 
-  var mode = Pages._dailyMode;
+  // v93: 只看板角色（总部经理）固定进入看板模式
+  var _bdViewOnly = App.Permissions.canAccess(user.role, 'board_view') && !App.Permissions.canAccess(user.role, 'daily');
+  var mode = _bdViewOnly ? 'board' : Pages._dailyMode;
 
 
 
@@ -24093,7 +24096,7 @@ Pages.daily = function() {
 
 
 
-  if (!App.Permissions.canAccess(user.role, 'daily')) {
+  if (!App.Permissions.canAccess(user.role, 'daily') && !_bdViewOnly) {
 
 
 
@@ -24221,7 +24224,7 @@ Pages.daily = function() {
 
 
 
-  html += '<div class="daily-mode-bar">';
+  html += '<div class="daily-mode-bar" style="' + (_bdViewOnly ? 'display:none' : '') + '">';
 
 
 
@@ -48214,6 +48217,9 @@ Pages.supplyChain = function() {
 
 
 
+  // v93: 只看板角色（总部经理）直达供应链看板，不显示子tab与上报入口
+  var _bdViewOnlySC = App.Permissions.canAccess(user.role, 'board_view') && !App.Permissions.canAccess(user.role, 'supply_chain');
+  if (_bdViewOnlySC) { el.innerHTML = Pages._bdTabs('supplyChain') + Pages._supplyRenderBoard(user); return; }
   var subHash = Pages._supplyState.tab;
 
 
