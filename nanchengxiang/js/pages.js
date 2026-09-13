@@ -7212,7 +7212,7 @@ Pages._gotoSub = function(id) {
 
 
 
-Pages._wbFilter = { storeId: '', region: '', days: 0 };
+Pages._wbFilter = { storeId: '', region: '', days: 0, period: 'today' }; // v94
 
 
 
@@ -7578,6 +7578,12 @@ Pages.inspectionWorkbench = function() {
 
 
   }
+  var resultsAll = results, issuesAll = issues; // v94: 待办/长期分析类不受时间档位影响
+  var wbPeriod = Pages._wbFilter.period || 'today';
+  if (wbPeriod === 'today' || wbPeriod === 'month' || wbPeriod === 'year') {
+    results = Pages._pdFilter(results, function(r){ return r.date || ''; }, wbPeriod);
+    issues = Pages._pdFilter(issues, function(r){ return r.date || ''; }, wbPeriod);
+  }
 
 
 
@@ -7605,7 +7611,7 @@ Pages.inspectionWorkbench = function() {
 
 
 
-  var pending = issues.filter(function(r){ return r.status === '待处理'; });
+  var pending = issuesAll.filter(function(r){ return r.status === '待处理'; });
 
 
 
@@ -7865,7 +7871,7 @@ Pages.inspectionWorkbench = function() {
 
 
   // 6. 重复犯错（同一门店同一检查项近3次稽核不合格≥2）
-  var repeatArr = Pages._repeatFailStats(Pages._repeatFailSource(results), 3);
+  var repeatArr = Pages._repeatFailStats(Pages._repeatFailSource(resultsAll), 3);
 
 
 
@@ -7929,7 +7935,7 @@ Pages.inspectionWorkbench = function() {
 
 
 
-  var daysOptions = '<option value="0">全部时间</option>';
+  var daysOptions = '<option value="0">更多区间</option>';
 
 
 
@@ -8013,6 +8019,7 @@ Pages.inspectionWorkbench = function() {
 
 
 
+  html += Pages._pdSegHtml('inspectionWorkbench', '#0ea5e9', false);
   html += '<div class="wb-filter">';
 
 
@@ -8025,7 +8032,7 @@ Pages.inspectionWorkbench = function() {
 
 
 
-  html += '<select class="form-select wb-select" onchange="Pages._wbSetFilter(\'days\', this.value)">' + daysOptions + '</select>';
+  html += '<select class="form-select wb-select" title="更多区间" onchange="Pages._wbSetFilter(\'days\', this.value)">' + daysOptions + '</select>';
 
 
 
@@ -8415,6 +8422,7 @@ Pages._wbSetFilter = function(key, val) {
 
 
   Pages._wbFilter[key] = key === 'days' ? parseInt(val || '0', 10) : val;
+  if (key === 'days') Pages._wbFilter.period = Pages._wbFilter[key] > 0 ? 'custom' : 'all';
 
 
 
@@ -20162,7 +20170,7 @@ Pages.dashboard = function() {
 
 
 
-  var supplyTotal = supplyIssues.length;
+  var supplyTotal = Pages._pdFilter(supplyIssues, function(r){ return r.date || ''; }, Pages._pdGet('supplyChain')).length;
 
 
 
@@ -20182,11 +20190,11 @@ Pages.dashboard = function() {
 
 
 
-  var monthComplaints = complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
+  var monthComplaints = Pages._pdFilter(complaints, function(c){ return c.date || ''; }, Pages._pdGet('complaintBoard'));
 
 
 
-  var monthPenalties = penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
+  var monthPenalties = Pages._pdFilter(penalties, function(p){ return p.eventDate || ''; }, Pages._pdGet('penaltyBoard'));
 
 
 
@@ -20194,7 +20202,7 @@ Pages.dashboard = function() {
 
 
 
-  var monthReports = reports.filter(function(r){ return (r.date || '').indexOf(curMonth) === 0; });
+  var monthReports = Pages._pdFilter(reports, function(r){ return r.date || ''; }, Pages._pdGet('daily'));
 
 
 
@@ -20266,7 +20274,7 @@ Pages.dashboard = function() {
 
 
 
-  html += '<div class="dcb-head"><div class="dcb-title">看板中心</div><div class="dcb-date">' + curMonth + ' · 数据实时更新</div></div>';
+  html += '<div class="dcb-head"><div class="dcb-title">看板中心</div><div class="dcb-date">各卡片口径见角标 · 实时更新</div></div>';
 
 
 
@@ -20274,23 +20282,23 @@ Pages.dashboard = function() {
 
 
 
-  html += Pages._dcCard('inspectionWorkbench', '稽核待整改', pendingIssues.length, '项', '#e0342c', 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z', '待处理工单');
+  html += Pages._dcCard('inspectionWorkbench', '稽核待整改', pendingIssues.length, '项', '#e0342c', 'M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z', '待处理工单', '实时');
 
 
 
-  html += Pages._dcCard('complaintBoard', '差评', monthComplaints.length, '条', '#f59e0b', 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', '本月差评');
+  html += Pages._dcCard('complaintBoard', '差评', monthComplaints.length, '条', '#f59e0b', 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', Pages._pdScope(Pages._pdGet('complaintBoard')), Pages._pdLabel(Pages._pdGet('complaintBoard')));
 
 
 
-  html += Pages._dcCard('daily', '日报', monthReports.length, '篇', '#3b82f6', 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z', inspectorCount + ' 位稽核员');
+  html += Pages._dcCard('daily', '日报', monthReports.length, '篇', '#3b82f6', 'M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z', inspectorCount + ' 位稽核员', Pages._pdLabel(Pages._pdGet('daily')));
 
 
 
-  html += Pages._dcCard('penaltyBoard', '处罚', monthPenalties.length, '笔 · ¥' + monthAmount.toLocaleString(), '#8b5cf6', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', '本月处罚');
+  html += Pages._dcCard('penaltyBoard', '处罚', monthPenalties.length, '笔 · ¥' + monthAmount.toLocaleString(), '#8b5cf6', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', Pages._pdScope(Pages._pdGet('penaltyBoard')), Pages._pdLabel(Pages._pdGet('penaltyBoard')));
 
 
 
-  html += Pages._dcCard('supplyChain', '供应链', supplyTotal, '项', '#0ea5e9', 'M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H6a2 2 0 0 0-2 2z', supplyPending + ' 待处理');
+  html += Pages._dcCard('supplyChain', '供应链', supplyTotal, '项', '#0ea5e9', 'M4 7v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H6a2 2 0 0 0-2 2z', supplyPending + ' 待处理', Pages._pdLabel(Pages._pdGet('supplyChain')));
 
 
 
@@ -20370,11 +20378,12 @@ Pages._gotoBoardTab = function(id) {
 
 
 
-Pages._dcCard = function(id, title, value, unit, color, iconPath, sub) {
+Pages._dcCard = function(id, title, value, unit, color, iconPath, sub, badge) {
+  var badgeHtml = badge ? '<span class="dcb-badge" style="background:' + color + '1a;color:' + color + '">' + badge + '</span>' : '';
 
 
 
-  return '<div class="dcb-card" onclick="Pages._gotoBoardTab(\'' + id + '\')" style="--dc:' + color + '"><div class="dcb-card-top"><div class="dcb-card-icon" style="background:' + color + '1a;color:' + color + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div><div class="dcb-card-go" style="color:' + color + '">&#8250;</div></div><div class="dcb-card-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div><div class="dcb-card-title">' + title + '</div><div class="dcb-card-sub">' + sub + '</div></div>';
+  return '<div class="dcb-card" onclick="Pages._gotoBoardTab(\'' + id + '\')" style="--dc:' + color + '"><div class="dcb-card-top"><div class="dcb-card-icon" style="background:' + color + '1a;color:' + color + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="' + iconPath + '"/></svg></div>' + badgeHtml + '<div class="dcb-card-go" style="color:' + color + '">&#8250;</div></div><div class="dcb-card-val" style="color:' + color + '">' + value + '<small>' + unit + '</small></div><div class="dcb-card-title">' + title + '</div><div class="dcb-card-sub">' + sub + '</div></div>';
 
 
 
@@ -27580,7 +27589,7 @@ Pages._toggleDailyDetail = function(id) {
 
 
 
-Pages._dailyBoardPeriod = 'all'; // 'week' | 'month' | 'all'
+Pages._dailyBoardPeriod = 'today'; // v94 四档：today | month | year | all
 
 
 
@@ -27692,7 +27701,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-  html += '<div class="db-toggle-bar">';
+  html += Pages._pdSegHtml('daily', '#3b82f6', false);
 
 
 
@@ -27708,7 +27717,6 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='week'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'week\')">本周</button>';
 
 
 
@@ -27724,7 +27732,6 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='month'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'month\')">本月</button>';
 
 
 
@@ -27740,7 +27747,6 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-  html += '<button class="db-toggle-btn' + (Pages._dailyBoardPeriod==='all'?' active':'') + '" onclick="Pages._switchBoardPeriod(\'all\')">全部</button>';
 
 
 
@@ -27756,7 +27762,10 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-  html += '</div>';
+
+
+
+
 
 
 
@@ -27820,7 +27829,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-  if (Pages._dailyBoardPeriod === 'week') {
+  var _dp = Pages._pdGet('daily') || 'today'; // v94.1 统一档位取值，避免与 _bdPeriod 双轨脱节
 
 
 
@@ -27836,7 +27845,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-    var weekStart = new Date(now);
+  if (_dp === 'today') {
 
 
 
@@ -27852,7 +27861,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-    weekStart.setDate(now.getDate() - now.getDay());
+    filtered = reports.filter(function(r) { return (r.date || '').substring(0, 10) === Pages._pdToday(); });
 
 
 
@@ -27868,7 +27877,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-    weekStart.setHours(0,0,0,0);
+  } else if (_dp === 'month') {
 
 
 
@@ -27884,7 +27893,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-    filtered = reports.filter(function(r) { return new Date(r.date) >= weekStart; });
+    filtered = Pages._pdFilter(reports, function(r) { return r.date || ''; }, 'month');
 
 
 
@@ -27900,7 +27909,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-  } else if (Pages._dailyBoardPeriod === 'month') {
+  } else if (_dp === 'year') {
 
 
 
@@ -27916,23 +27925,7 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
-    var monthStart = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    filtered = reports.filter(function(r) { return r.date >= monthStart; });
+    filtered = Pages._pdFilter(reports, function(r) { return r.date || ''; }, 'year');
 
 
 
@@ -27949,6 +27942,22 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -48612,7 +48621,9 @@ Pages._supplyRenderBoard = function(user) {
 
 
 
-  var all = Pages._bdFilterApply(App.getSupplyIssues() || []);
+  var period = Pages._pdGet('supplyChain');
+  var allRaw = Pages._bdFilterApply(App.getSupplyIssues() || []);
+  var all = Pages._pdFilter(allRaw, function(r) { return r.date || ''; }, period);
 
 
 
@@ -48753,10 +48764,11 @@ Pages._supplyRenderBoard = function(user) {
 
 
   html += Pages._bdFilterBarHtml();
+  html += Pages._pdSegHtml('supplyChain', '#0ea5e9', false);
 
 
 
-  html += '<div class="sc-head"><div class="sc-title">供应链问题看板</div></div>';
+  html += '<div class="sc-head"><div class="sc-title">供应链问题看板' + Pages._pdChip('supplyChain') + '</div></div>';
 
 
 
@@ -48768,7 +48780,7 @@ Pages._supplyRenderBoard = function(user) {
 
 
 
-  html += '<div class="sc-num-card sc-num-total"><span class="sc-num-big">' + total + '</span><span class="sc-num-label">问题总数</span></div>';
+  html += '<div class="sc-num-card sc-num-total"><span class="sc-num-big">' + total + '</span><span class="sc-num-label">' + Pages._pdStatLabel(period, '问题', '问题总数') + '</span></div>';
 
 
 
@@ -48948,7 +48960,7 @@ Pages._supplyRenderBoard = function(user) {
 
 
 
-  var pending = all.filter(function(r){ return r.status === '待处理'; }).sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; }).slice(0, 5);
+  var pending = allRaw.filter(function(r){ return r.status === '待处理'; }).sort(function(a,b){ return (b.date||'') < (a.date||'') ? -1 : 1; }).slice(0, 5);
 
 
 
@@ -49798,6 +49810,60 @@ Pages._bdRerenderBoard = function() {
   else if (h.indexOf('supplyChain') >= 0) Pages.supplyChain();
 };
 
+/* ===== v94: 看板时间档位（今天/本月/今年/全部） ===== */
+Pages._bdPeriod = { daily: 'today', complaintBoard: 'today', penaltyBoard: 'today', inspectionWorkbench: 'today', supplyChain: 'today' };
+Pages._pdDate = function(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+Pages._pdToday = function() { return Pages._pdDate(new Date()); };
+Pages._pdMonthKey = function() { return Pages._pdToday().substring(0, 7); };
+Pages._pdYearKey = function() { return Pages._pdToday().substring(0, 4); };
+Pages._pdLabel = function(period) { return ({ today: '今天', month: '本月', year: '今年', all: '全部' })[period] || '全部'; };
+Pages._pdMatch = function(dateStr, period) {
+  var ds = String(dateStr || '').substring(0, 10);
+  if (period === 'today') return ds === Pages._pdToday();
+  if (period === 'month') return ds.substring(0, 7) === Pages._pdMonthKey();
+  if (period === 'year') return ds.substring(0, 4) === Pages._pdYearKey();
+  return true;
+};
+Pages._pdFilter = function(list, dateFn, period) {
+  var arr = list || [];
+  if (!period || period === 'all') return arr;
+  return arr.filter(function(r) { return Pages._pdMatch(dateFn ? dateFn(r) : (r && r.date), period); });
+};
+Pages._pdScope = function(period) {
+  if (period === 'today') return Pages._pdToday() + ' 00:00 至今';
+  if (period === 'month') return Pages._pdMonthKey().substring(0, 7) + '-01 至今';
+  if (period === 'year') return Pages._pdYearKey() + '-01-01 至今';
+  return '全部历史累计';
+};
+Pages._pdStatLabel = function(period, suffix, allSuffix) { return period === 'all' ? (allSuffix || ('累计' + suffix)) : (Pages._pdLabel(period) + suffix); };
+Pages._pdGet = function(key) { return Pages._bdPeriod[key] || 'today'; };
+Pages._pdSegHtml = function(key, color, dark) {
+  var period = Pages._pdGet(key);
+  var items = [['today', '今天'], ['month', '本月'], ['year', '今年'], ['all', '全部']];
+  var html = '<div class="pd-seg' + (dark ? ' pd-seg-dark' : '') + '" style="--pd:' + (color || '#0ea5e9') + '">';
+  items.forEach(function(it) {
+    html += '<button type="button" class="pd-seg-btn' + (period === it[0] ? ' active' : '') + '" onclick="Pages._pdSetPeriod(\'' + key + '\',\'' + it[0] + '\')">' + it[1] + '</button>';
+  });
+  html += '<span class="pd-seg-scope">' + Pages._pdScope(period) + '</span>';
+  html += '</div>';
+  return html;
+};
+Pages._pdChip = function(key) { return '<span class="bd-scope-chip">' + Pages._pdLabel(Pages._pdGet(key)) + '</span>'; };
+Pages._pdRerender = function(key) {
+  if (key === 'daily') { Pages.daily(); return; }
+  if (key === 'complaintBoard') { Pages.complaintBoard(); return; }
+  if (key === 'penaltyBoard') { Pages.penaltyBoard(); return; }
+  if (key === 'inspectionWorkbench') { Pages.inspectionWorkbench(); return; }
+  if (key === 'supplyChain') { Pages.supplyChain(); return; }
+  Pages.dashboard();
+};
+Pages._pdSetPeriod = function(key, period) {
+  Pages._bdPeriod[key] = period;
+  if (key === 'daily') Pages._dailyBoardPeriod = period;
+  if (key === 'inspectionWorkbench') Pages._wbFilter.days = 0;
+  Pages._pdRerender(key);
+};
+
 Pages._boardAcc = { complaintBoard: false, penaltyBoard: false };
 
 Pages._bdMonths = function(records, dateKeyFn) {
@@ -50137,14 +50203,14 @@ Pages.complaintBoard = function() {
 
 Pages._complaintBoardHtml = function() {
   var complaints = Pages._bdFilterApply(App.getComplaints() || []);
-  var acc = !!Pages._boardAcc.complaintBoard;
+  var period = Pages._pdGet('complaintBoard');
   var now = new Date();
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  var month = acc ? complaints : complaints.filter(function(c){ return (c.date || '').indexOf(curMonth) === 0; });
+  var month = Pages._pdFilter(complaints, function(c){ return c.date || ''; }, period);
   var pending = month.filter(function(c){ return c.status === '待处理'; });
   var handled = month.filter(function(c){ return c.status !== '待处理'; });
   var rate = month.length ? Math.round(handled.length / month.length * 100) : 0;
-  var days = acc ? Pages._bdMonths(month, function(c){ return c.date || ''; }) : Pages._bdDays(month, function(c){ return c.date || ''; });
+  var days = (period === 'year' || period === 'all') ? Pages._bdMonths(month, function(c){ return c.date || ''; }) : Pages._bdDays(month, function(c){ return c.date || ''; });
   var storeCount = {};
   month.forEach(function(c){ storeCount[c.store] = (storeCount[c.store] || 0) + 1; });
   var storeRank = Object.keys(storeCount).map(function(k){ return { name: k, val: storeCount[k] + '条' }; }).sort(function(a, b){ return b.val.localeCompare(a.val) || b.val.length - a.val.length; }).slice(0, 5);
@@ -50152,24 +50218,25 @@ Pages._complaintBoardHtml = function() {
   month.forEach(function(c){ var t = Pages._cType(c); typeCount[t] = (typeCount[t] || 0) + 1; });
   var typeRows = Object.keys(typeCount).map(function(k){ return { name: k, count: typeCount[k] }; }).sort(function(a, b){ return b.count - a.count; });
   var latest = month.filter(function(c){ return c.status === '待处理'; }).sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); }).slice(0, 5);
-  var segHtml = Pages._bdSegHtml('complaintBoard', acc, '#e0342c');
+  var segHtml = '';
   var html = '';
   html += Pages._bdTabs('complaintBoard');
   html += Pages._bdFilterBarHtml();
+  html += Pages._pdSegHtml('complaintBoard', '#e0342c', false);
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#e0342c,#f87171)">';
-  html += '<div class="bd-head-left"><div class="bd-title">差评看板' + (acc ? '<span style="font-size:10px;font-weight:900;background:#fff;color:#e0342c;border-radius:999px;padding:1px 7px;vertical-align:middle">累计</span>' : '') + '</div><div class="bd-date">' + (acc ? '全量历史 · 含已闭环 · 截至 ' + curMonth : curMonth) + '</div></div>';
+  html += '<div class="bd-head-left"><div class="bd-title">差评看板' + Pages._pdChip('complaintBoard') + '</div><div class="bd-date">' + (period === 'all' ? '全部历史 · 含已闭环' : Pages._pdScope(period) + ' · 已闭环') + '</div></div>';
   html += '<div style="display:flex;align-items:center;gap:8px">' + segHtml + '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div></div>';
   html += '<div class="bd-stats">';
-  html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">' + (acc ? '累计差评' : '本月差评') + '</div></div>';
+  html += '<div class="bd-stat" style="--bd:#e0342c"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">' + Pages._pdStatLabel(period, '差评', '累计差评') + '</div></div>';
   html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pending.length + '</div><div class="bd-stat-label">待审核</div></div>';
-  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">' + (acc ? '历史处理率' : '处理率') + '</div></div>';
+  html += '<div class="bd-stat" style="--bd:#10b981"><div class="bd-stat-num">' + rate + '%</div><div class="bd-stat-label">' + (period === 'all' ? '历史处理率' : '处理率') + '</div></div>';
   html += '</div>';
-  html += '<div class="bd-card"><div class="bd-card-title">' + (acc ? '月度差评趋势' : '每日差评趋势') + '</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">' + ((period === 'year' || period === 'all') ? '近12个月差评趋势' : '近10天差评趋势') + '</div>' + Pages._bdTrendHtml(days, '#e0342c', function(d){ return d.count; }, '') + '</div>';
   html += '<div class="bd-card"><div class="bd-card-title">差评门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#complaint\'">' + Pages._bdRankHtml(storeRank, '#e0342c') + '</div></div>';
   html += '<div class="bd-card"><div class="bd-card-title">差评类型分布</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeRows, '#e0342c', 'count') + '</div></div>';
   html += '<div class="bd-card"><div class="bd-card-title">最新待审核差评</div><div class="bd-list">';
   if (latest.length === 0) {
-    html += '<div class="bd-empty">' + (acc ? '暂无待审核差评' : '本月暂无待审核差评') + '</div>';
+    html += '<div class="bd-empty">' + '暂无待审核差评' + '</div>';
   }
   latest.forEach(function(c) {
     html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
@@ -50210,14 +50277,14 @@ Pages.penaltyBoard = function() {
 
 Pages._penaltyBoardHtml = function() {
   var penalties = Pages._bdFilterApply(App.getPenalties() || []);
-  var acc = !!Pages._boardAcc.penaltyBoard;
+  var period = Pages._pdGet('penaltyBoard');
   var now = new Date();
   var curMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  var month = acc ? penalties : penalties.filter(function(p){ return (p.eventDate || '').indexOf(curMonth) === 0; });
+  var month = Pages._pdFilter(penalties, function(p){ return p.eventDate || ''; }, period);
   var totalAmount = 0;
   month.forEach(function(p){ totalAmount += Pages._pAmount(p); });
   var pendingFill = month.filter(function(p){ return p.status === '待补填'; });
-  var days = acc ? Pages._bdMonths(month, function(p){ return p.eventDate || ''; }) : Pages._bdDays(month, function(p){ return p.eventDate || ''; });
+  var days = (period === 'year' || period === 'all') ? Pages._bdMonths(month, function(p){ return p.eventDate || ''; }) : Pages._bdDays(month, function(p){ return p.eventDate || ''; });
   var typeRows = {};
   month.forEach(function(p) {
     var k = p.category || '其他';
@@ -50234,25 +50301,26 @@ Pages._penaltyBoardHtml = function() {
     storeRows[k].amount += Pages._pAmount(p);
   });
   var storeRank = Object.keys(storeRows).map(function(k){ return { name: k, val: storeRows[k].count + '笔 · ¥' + storeRows[k].amount.toLocaleString() }; }).sort(function(a, b){ return b.val.length - a.val.length || b.val.localeCompare(a.val); }).slice(0, 5);
-  var latest = month.sort(function(a, b){ return (b.eventDate || '').localeCompare(a.eventDate || ''); }).slice(0, 5);
-  var segHtml = Pages._bdSegHtml('penaltyBoard', acc, '#7c3aed');
+  var latest = month.slice().sort(function(a, b){ return (b.eventDate || '').localeCompare(a.eventDate || ''); }).slice(0, 5);
+  var segHtml = '';
   var html = '';
   html += Pages._bdTabs('penaltyBoard');
   html += Pages._bdFilterBarHtml();
+  html += Pages._pdSegHtml('penaltyBoard', '#7c3aed', false);
   html += '<div class="bd-wrap"><div class="bd-head" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">';
-  html += '<div class="bd-head-left"><div class="bd-title">处罚看板' + (acc ? '<span style="font-size:10px;font-weight:900;background:#fff;color:#7c3aed;border-radius:999px;padding:1px 7px;vertical-align:middle">累计</span>' : '') + '</div><div class="bd-date">' + (acc ? '全量历史 · 含已闭环 · 截至 ' + curMonth : curMonth) + '</div></div>';
+  html += '<div class="bd-head-left"><div class="bd-title">处罚看板' + Pages._pdChip('penaltyBoard') + '</div><div class="bd-date">' + (period === 'all' ? '全部历史' : Pages._pdScope(period)) + '</div></div>';
   html += '<div style="display:flex;align-items:center;gap:8px">' + segHtml + '<button class="bd-back" onclick="location.hash=\'#dashboard\'">看板中心</button></div></div>';
   html += '<div class="bd-stats">';
-  html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">' + (acc ? '累计笔数' : '本月处罚') + '</div></div>';
-  html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">' + (acc ? '累计金额' : '处罚金额') + '</div></div>';
+  html += '<div class="bd-stat" style="--bd:#7c3aed"><div class="bd-stat-num">' + month.length + '</div><div class="bd-stat-label">' + Pages._pdStatLabel(period, '处罚', '累计笔数') + '</div></div>';
+  html += '<div class="bd-stat" style="--bd:#8b5cf6"><div class="bd-stat-num">¥' + totalAmount.toLocaleString() + '</div><div class="bd-stat-label">' + Pages._pdStatLabel(period, '处罚金额', '累计金额') + '</div></div>';
   html += '<div class="bd-stat" style="--bd:#f59e0b"><div class="bd-stat-num">' + pendingFill.length + '</div><div class="bd-stat-label">待补填</div></div>';
   html += '</div>';
   html += '<div class="bd-card"><div class="bd-card-title">处罚类型分布（含金额）</div><div style="padding:12px 16px">' + Pages._bdTypeHtml(typeList, '#7c3aed', 'amount') + '</div></div>';
   html += '<div class="bd-card"><div class="bd-card-title">处罚门店 TOP5</div><div style="padding:12px 16px" onclick="location.hash=\'#penalty\'">' + Pages._bdRankHtml(storeRank, '#7c3aed') + '</div></div>';
-  html += '<div class="bd-card"><div class="bd-card-title">' + (acc ? '月度处罚金额趋势' : '每日处罚金额趋势') + '</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
+  html += '<div class="bd-card"><div class="bd-card-title">' + ((period === 'year' || period === 'all') ? '近12个月处罚金额趋势' : '近10天处罚金额趋势') + '</div>' + Pages._bdTrendHtml(days, '#8b5cf6', function(d){ return Math.round(d.amount); }, '') + '</div>';
   html += '<div class="bd-card"><div class="bd-card-title">最新处罚记录</div><div class="bd-list">';
   if (latest.length === 0) {
-    html += '<div class="bd-empty">' + (acc ? '暂无处罚记录' : '本月暂无处罚记录') + '</div>';
+    html += '<div class="bd-empty">' + '暂无处罚记录' + '</div>';
   }
   latest.forEach(function(p) {
     var cls = p.status === '已闭环' ? 'bd-tag-green' : (p.status === '超时' ? 'bd-tag-red' : 'bd-tag-amber');

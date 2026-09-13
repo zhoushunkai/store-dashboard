@@ -3275,3 +3275,16 @@ body {
 .yb-nav-btn { flex: 1; text-align: center; font-size: 13px; font-weight: 600; color: var(--primary); background: var(--primary-light); border-radius: 8px; padding: 8px 0; cursor: pointer; user-select: none; }
 .yb-nav-btn:active { opacity: 0.8; }
 .yb-nav-btn.disabled { color: #b9b9b9; background: #f0f0f0; cursor: default; pointer-events: none; }
+
+/* ===== v94: 看板时间档位条（今天/本月/今年/全部） ===== */
+.pd-seg { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: #fff; border-bottom: 1px solid #f1f2f4; flex-wrap: wrap; }
+.pd-seg-dark { background: transparent; border-bottom: none; padding: 0; }
+.pd-seg-btn { font-size: 12px; font-weight: 700; color: #64748b; background: #f1f5f9; border: none; border-radius: 999px; padding: 6px 14px; cursor: pointer; transition: all .15s; }
+.pd-seg-btn.active { background: var(--pd, #0ea5e9); color: #fff; box-shadow: 0 2px 8px rgba(15,23,42,.18); }
+.pd-seg-scope { font-size: 11px; color: #94a3b8; margin-left: auto; white-space: nowrap; }
+.pd-seg-dark .pd-seg-btn { background: rgba(255,255,255,.22); color: #fff; }
+.pd-seg-dark .pd-seg-btn.active { background: #fff; color: var(--pd, #0ea5e9); }
+.pd-seg-dark .pd-seg-scope { color: rgba(255,255,255,.85); }
+.bd-scope-chip { font-size: 10px; font-weight: 900; background: rgba(255,255,255,.95); color: #0f172a; border-radius: 999px; padding: 2px 9px; margin-left: 8px; vertical-align: middle; }
+.dcb-badge { font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 8px; margin-left: auto; margin-right: 6px; }
+@media (max-width: 400px) { .pd-seg-scope { display: none; } }
