@@ -121,6 +121,93 @@
     <div class="modal-box"></div>
   </div>
 
+  <!-- 安装到桌面引导（PWA） -->
+  <script>
+  (function () {
+    var DISMISS_KEY = 'ic_dismiss_until';
+    var deferred = null;
+    var ua = navigator.userAgent || '';
+    var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var isWeChat = /MicroMessenger|WeWork|QQ\//i.test(ua);
+    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferred = e;
+    });
+    window.addEventListener('appinstalled', function () {
+      deferred = null;
+      try { localStorage.setItem(DISMISS_KEY, String(Date.now() + 3650 * 86400000)); } catch (err) {}
+      if (window.App && App.toast) { App.toast('已安装到桌面'); }
+    });
+
+    function dismissed() {
+      try { return Date.now() < Number(localStorage.getItem(DISMISS_KEY) || 0); } catch (err) { return false; }
+    }
+
+    function closeSheet() {
+      var m = document.getElementById('ic-sheet-mask');
+      if (m && m.parentNode) { m.parentNode.removeChild(m); }
+    }
+
+    function openSheet(title, steps) {
+      closeSheet();
+      var mask = document.createElement('div');
+      mask.className = 'ic-mask';
+      mask.id = 'ic-sheet-mask';
+      mask.onclick = function (e) { if (e.target === mask) { closeSheet(); } };
+      var items = '';
+      for (var i = 0; i < steps.length; i++) {
+        items += '<div class="ic-step"><span class="ic-step-no">' + (i + 1) + '</span><span>' + steps[i] + '</span></div>';
+      }
+      mask.innerHTML = '<div class="ic-sheet">'
+        + '<div class="ic-sheet-title">' + title + '</div>'
+        + items
+        + '<button class="ic-sheet-btn" onclick="Installer.closeSheet()">知道了</button>'
+        + '</div>';
+      document.body.appendChild(mask);
+    }
+
+    var Installer = {
+      shouldShow: function () {
+        if (standalone) { return false; }
+        if (dismissed()) { return false; }
+        return isMobile;
+      },
+      dismiss: function () {
+        try { localStorage.setItem(DISMISS_KEY, String(Date.now() + 7 * 86400000)); } catch (err) {}
+        var el = document.getElementById('ic-card');
+        if (el && el.parentNode) { el.parentNode.removeChild(el); }
+      },
+      closeSheet: closeSheet,
+      openSheet: openSheet,
+      trigger: function () {
+        if (deferred) {
+          var p = deferred;
+          deferred = null;
+          p.prompt();
+          if (p.userChoice && p.userChoice.then) {
+            p.userChoice.then(function (r) {
+              if (r && r.outcome === 'accepted') { Installer.dismiss(); }
+            });
+          }
+          return;
+        }
+        if (isWeChat) {
+          openSheet('请先在浏览器中打开', ['点击右上角「···」按钮', '选择「在浏览器打开」', '再点菜单里的「安装应用 / 添加到主屏幕」']);
+        } else if (isIOS) {
+          openSheet('添加到主屏幕', ['点击底部「分享」按钮', '向下滑动找到「添加到主屏幕」', '点右上角「添加」，桌面即出现图标']);
+        } else {
+          openSheet('添加到主屏幕', ['点击浏览器右上角菜单（⋮ 或 ≡）', '选择「安装应用」或「添加到主屏幕」', '确认后桌面即出现图标']);
+        }
+      }
+    };
+
+    window.Installer = Installer;
+  })();
+  </script>
+
   <script src="vendor/supabase.min.js"></script>
   <script src="js/app.js"></script>
   <script src="js/pages.js"></script>

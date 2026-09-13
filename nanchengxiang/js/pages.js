@@ -3788,6 +3788,7 @@ Pages.home = function() {
 
 
 
+  html += Pages._installCardHtml();
   el.innerHTML = html;
 
 
@@ -50557,3 +50558,18 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   setTimeout(function() { Pages._corrQueueFlush(); }, 3000);
 });
+
+/* ==================== 安装到桌面引导卡片（PWA） ==================== */
+Pages._installCardHtml = function() {
+  var ic = window.Installer;
+  if (!ic || !ic.shouldShow()) { return ''; }
+  return '<div class="ic-card" id="ic-card">'
+    + '<div class="ic-icon">\uD83D\uDCF2</div>'
+    + '<div class="ic-main">'
+    + '<div class="ic-title">安装到手机桌面</div>'
+    + '<div class="ic-sub">全屏打开，和 App 一样用</div>'
+    + '</div>'
+    + '<button class="ic-btn" onclick="window.Installer.trigger()">安装</button>'
+    + '<span class="ic-close" onclick="window.Installer.dismiss()">\u2715</span>'
+    + '</div>';
+};
