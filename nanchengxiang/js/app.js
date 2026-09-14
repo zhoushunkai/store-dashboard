@@ -6238,7 +6238,7 @@ const App = {
       if (hash === 'inspection' && this.Permissions.canAccess(_guardRole, 'inspection_results')) canGo = true;
       if (hash === 'correction') canGo = ['店长', '总部', 'admin', '线上稽核', '线下稽核', '稽核员'].indexOf(_guardRole) >= 0;
       if (hash === 'permissionConfig') canGo = ['总部', 'admin'].indexOf(_guardRole) >= 0;
-      if (hash === 'admin') canGo = ['总部', 'admin', '客服'].indexOf(_guardRole) >= 0;
+      if (hash === 'admin') canGo = ['总部', 'admin'].indexOf(_guardRole) >= 0;
       // v93: 只看板角色（总部经理）放行看板中心内全部看板页
       var _boardHashes = { 'dashboard': 1, 'inspectionWorkbench': 1, 'complaintBoard': 1, 'daily': 1, 'penaltyBoard': 1, 'supplyChain': 1, 'taskBoard': 1 };
       if (!canGo && _boardHashes[hash] && this.Permissions.canAccess(_guardRole, 'board_view')) canGo = true;

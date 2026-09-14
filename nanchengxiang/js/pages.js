@@ -3692,7 +3692,7 @@ Pages.home = function() {
 
 
 
-    if (user.role === '总部' || user.role === 'admin' || user.role === '客服') {
+    if (user.role === '总部' || user.role === 'admin') {
 
 
 
@@ -3708,7 +3708,7 @@ Pages.home = function() {
 
 
 
-      html += '<div class="quick-entry" onclick="location.hash=\'#admin\'"><span class="qe-icon">\u{2699}</span>数据管理</div>';
+      html += '<div class="quick-entry" onclick="location.hash=\'#admin\'"><span class="qe-icon">\u{1F465}</span>用户管理</div>';
 
 
 
@@ -3993,7 +3993,7 @@ Pages.admin = function() {
 
 
 
-  if (user.role !== '总部' && user.role !== 'admin' && user.role !== '客服') {
+  if (user.role !== '总部' && user.role !== 'admin') {
 
 
 
@@ -4153,7 +4153,7 @@ Pages.admin = function() {
 
 
 
-  html += '<div class="section-title">&#128101; 人员管理（' + users.length + '人）</div>';
+  html += '<div class="section-title">&#128101; 用户管理（' + users.length + '人）</div>';
 
 
 
