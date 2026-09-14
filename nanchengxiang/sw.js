@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'v95';
+﻿const CACHE_NAME = 'v96';
 
 
 
@@ -7,85 +7,17 @@
 
 
 const ASSETS = [
-
-
-
-
-
-
-
-  '/',
-
-
-
-
-
-
-
-  '/index.html',
-
-
-
-
-
-
-
-  '/manifest.json',
-
-
-
-
-
-
-
-  '/apple-touch-icon.png',
-
-
-
-
-
-
-
-  '/icon-192.png',
-
-
-
-
-
-
-
-  '/icon-512.png',
-
-
-
-
-
-
-
-  '/css/app.css',
-
-
-
-
-
-
-
-  '/js/app.js',
-
-
-
-
-
-
-
-  '/js/pages.js'
-
-
-
-
-
-
-
+  './',
+  './index.html',
+  './manifest.json',
+  './apple-touch-icon.png',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-512-maskable.png',
+  './css/app.css',
+  './js/app.js',
+  './js/pages.js',
+  './vendor/supabase.min.js'
 ];
 
 
