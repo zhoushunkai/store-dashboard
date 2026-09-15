@@ -8400,6 +8400,17 @@ Pages.inspectionWorkbench = function() {
 
   html += '<div class="wb-footnote">数据口径：得分=门店最近一次现场检查得分（百分制，剔除0分）；待处理=status 为「待处理」；高频问题按描述关键词互斥归类。</div>';
 
+  // v95: 逐店明细（谁家已闭环 / 谁家未闭环）
+  html += Pages._bdPerStoreHtml('inspection', issues, {
+    title: '稽核 · 逐店问题闭环明细',
+    color: '#0ea5e9',
+    nameFn: function(r) { return Pages._issueStoreName(r); },
+    statusFn: function(r) { return Pages._issueStatus(r); },
+    titleFn: function(r) { return Pages._issueDesc(r); },
+    dateFn: function(r) { return Pages._issueDate(r); }
+  });
+
+
 
 
 
@@ -28998,6 +29009,24 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+  // v95: 逐店明细（谁家已闭环 / 谁家未闭环）
+  var _dailyUnits = [];
+  filtered.forEach(function(r) {
+    (r.items || []).forEach(function(item) {
+      _dailyUnits.push({ store: item.store, score: item.score, findings: item.findings,
+                         date: r.date, inspector: r.inspector,
+                         closed: !(item.findings && String(item.findings).trim()) });
+    });
+  });
+  html += Pages._bdPerStoreHtml('daily', _dailyUnits, {
+    title: '日报 · 逐店闭环明细',
+    color: '#3b82f6',
+    nameFn: function(u) { return u.store; },
+    statusFn: function(u) { return u.closed ? '已闭环' : '未闭环'; },
+    titleFn: function(u) { return '得分 ' + (u.score == null || u.score === '' ? '—' : u.score) + (u.findings ? ' · ' + String(u.findings).replace(/\n/g, '；') : ' · 未发现问题'); },
+    dateFn: function(u) { return u.date || ''; }
+  });
   return html;
 
 
@@ -48207,7 +48236,9 @@ Pages.supplyChain = function() {
 
 
 
-  if (!App.Permissions.canAccess(user.role, 'supply_chain')) {
+  // v95: 只看板角色（总部经理）可查看看板内容，仅隐藏编辑/上报入口
+  var _scViewOnly = App.Permissions.canAccess(user.role, 'board_view') && !App.Permissions.canAccess(user.role, 'supply_chain');
+  if (!App.Permissions.canAccess(user.role, 'supply_chain') && !_scViewOnly) {
 
 
 
@@ -48228,8 +48259,12 @@ Pages.supplyChain = function() {
 
 
   // v93: 只看板角色（总部经理）直达供应链看板，不显示子tab与上报入口
-  var _bdViewOnlySC = App.Permissions.canAccess(user.role, 'board_view') && !App.Permissions.canAccess(user.role, 'supply_chain');
-  if (_bdViewOnlySC) { el.innerHTML = Pages._bdTabs('supplyChain') + Pages._supplyRenderBoard(user); return; }
+  var _bdViewOnlySC = _scViewOnly;
+  if (_bdViewOnlySC) {
+    // v95: 只看板角色不显示任何上报/编辑入口
+    el.innerHTML = Pages._bdTabs('supplyChain') + Pages._supplyRenderBoard(user);
+    return;
+  }
   var subHash = Pages._supplyState.tab;
 
 
@@ -49021,6 +49056,16 @@ Pages._supplyRenderBoard = function(user) {
 
 
 
+
+  // v95: 逐店明细（谁家已闭环 / 谁家未闭环）
+  html += Pages._bdPerStoreHtml('supplyChain', all, {
+    title: '供应链 · 逐店闭环明细',
+    color: '#10b981',
+    nameFn: function(r) { return r.store || r.source || '未知门店'; },
+    statusFn: function(r) { return r.status; },
+    titleFn: function(r) { return (r.category ? r.category + ' · ' : '') + (r.issue || ''); },
+    dateFn: function(r) { return r.date || ''; }
+  });
   return html;
 
 
@@ -50243,6 +50288,16 @@ Pages._complaintBoardHtml = function() {
     html += '<div class="bd-item" onclick="Pages.showComplaintDetail(\'' + c.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + c.store + ' · ' + c.meal + '</span><span class="bd-tag bd-tag-red">' + c.status + '</span></div><div class="bd-item-sub">' + (c.date || '') + ' · ' + (c.content || '') + '</div></div>';
   });
   html += '</div></div></div>';
+
+  // v95: 逐店明细（谁家已闭环 / 谁家未闭环）
+  html += Pages._bdPerStoreHtml('complaintBoard', month, {
+    title: '差评 · 逐店闭环明细',
+    color: '#e0342c',
+    nameFn: function(c) { return c.store || '未知门店'; },
+    statusFn: function(c) { return c.status; },
+    titleFn: function(c) { return (c.meal ? c.meal + ' · ' : '') + (c.content || ''); },
+    dateFn: function(c) { return c.date || ''; }
+  });
   return html;
 };
 
@@ -50328,6 +50383,16 @@ Pages._penaltyBoardHtml = function() {
     html += '<div class="bd-item" onclick="Pages.showPenaltyDetail(\'' + p.id + '\')"><div class="bd-item-top"><span class="bd-item-title">' + p.store + ' · ' + (p.category || '') + '</span><span class="bd-tag ' + cls + '">' + p.status + '</span></div><div class="bd-item-sub">' + (p.eventDate || '') + ' · ' + (p.event || '') + '</div></div>';
   });
   html += '</div></div></div>';
+
+  // v95: 逐店明细（谁家已闭环 / 谁家未闭环）
+  html += Pages._bdPerStoreHtml('penaltyBoard', month, {
+    title: '处罚 · 逐店闭环明细',
+    color: '#7c3aed',
+    nameFn: function(p) { return p.store || '未知门店'; },
+    statusFn: function(p) { return p.status; },
+    titleFn: function(p) { var a = Pages._pAmount(p); return (p.category || '') + ' · ' + (p.event || '') + (a ? '（¥' + a + '）' : ''); },
+    dateFn: function(p) { return p.eventDate || ''; }
+  });
   return html;
 };
 
@@ -50560,14 +50625,142 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* ==================== 安装到桌面引导卡片（PWA） ==================== */
+/* ===== v95: 逐店明细通用组件（五大看板共用） ===== */
+Pages._bdOnlyOpen = { inspection: false, complaintBoard: false, daily: false, penaltyBoard: false, supplyChain: false };
+Pages._bdPsdCache = {};
+Pages._bdClosedWords = ['已闭环', '已整改', '已完成', '已处理', '已审核', '已通过', '已关闭', '已归档', '已验收', '已解决'];
+Pages._bdIsClosed = function(s) { return Pages._bdClosedWords.indexOf(String(s == null ? '' : s).trim()) >= 0; };
+Pages._bdEsc = function(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+};
+Pages._bdToggleOnlyOpen = function(key) {
+  Pages._bdOnlyOpen[key] = !Pages._bdOnlyOpen[key];
+  Pages._bdRerenderBoardByKey(key);
+};
+Pages._bdRerenderBoardByKey = function(key) {
+  if (key === 'inspection') Pages.inspectionWorkbench();
+  else if (key === 'daily') Pages.daily();
+  else if (key === 'complaintBoard') Pages.complaintBoard();
+  else if (key === 'penaltyBoard') Pages.penaltyBoard();
+  else if (key === 'supplyChain') Pages.supplyChain();
+};
+
+/* 逐店明细卡片：records 为原始记录数组，按门店聚合出「数量 / 已闭环 / 未闭环」 */
+Pages._bdPerStoreHtml = function(key, records, opts) {
+  opts = opts || {};
+  var list = records || [];
+  var bag = {}, order = [];
+  list.forEach(function(r) {
+    var nm = opts.nameFn ? opts.nameFn(r) : '';
+    nm = String(nm == null ? '' : nm).trim() || '未标注门店';
+    var st = opts.statusFn ? opts.statusFn(r) : (r && r.status);
+    if (!bag[nm]) { bag[nm] = { name: nm, total: 0, open: 0, closed: 0, items: [] }; order.push(nm); }
+    var g = bag[nm];
+    g.total++;
+    if (Pages._bdIsClosed(st)) g.closed++; else g.open++;
+    g.items.push({
+      title: (opts.titleFn ? opts.titleFn(r) : '') || '',
+      status: st == null || st === '' ? '未闭环' : String(st),
+      date: (opts.dateFn ? opts.dateFn(r) : ((r && (r.date || r.eventDate)) || '')) || ''
+    });
+  });
+  var rows = order.map(function(n) { return bag[n]; });
+  var openStores = 0, openTotal = 0, closedTotal = 0;
+  rows.forEach(function(g) { if (g.open > 0) openStores++; openTotal += g.open; closedTotal += g.closed; });
+  var onlyOpen = !!Pages._bdOnlyOpen[key];
+  var shown = rows.filter(function(g) { return !onlyOpen || g.open > 0; });
+  shown.sort(function(a, b) {
+    if (b.open !== a.open) return b.open - a.open;
+    if (b.total !== a.total) return b.total - a.total;
+    return String(a.name).localeCompare(String(b.name), 'zh');
+  });
+  Pages._bdPsdCache[key] = rows;
+
+  var color = opts.color || '#0ea5e9';
+  var html = '<div class="bd-card psd-card" style="--psd:' + color + '">';
+  html += '<div class="psd-head">';
+  html += '<div class="psd-title">' + (opts.title || '逐店明细');
+  html += '<span class="psd-sub">共 ' + rows.length + ' 家门店 · 未闭环 ' + openStores + ' 家 / ' + openTotal + ' 项 · 已闭环 ' + closedTotal + ' 项</span></div>';
+  html += '<button class="psd-toggle' + (onlyOpen ? ' on' : '') + '" onclick="Pages._bdToggleOnlyOpen(\'' + key + '\')">' + (onlyOpen ? '显示全部' : '只看未闭环') + '</button>';
+  html += '</div>';
+  html += '<div class="psd-note">排序规则：未闭环数量由多到少；点门店行可查看该店全部明细。</div>';
+  if (shown.length === 0) {
+    html += '<div class="bd-empty" style="padding:14px 16px">' + (rows.length === 0 ? '暂无明细数据' : '当前筛选下没有未闭环门店') + '</div>';
+  } else {
+    html += '<div class="psd-list">';
+    shown.forEach(function(g) {
+      var i = rows.indexOf(g);
+      var pct = g.total ? Math.round(g.closed / g.total * 100) : 0;
+      html += '<div class="psd-row" onclick="Pages._bdOpenStoreItems(\'' + key + '\',' + i + ')">';
+      html += '<div class="psd-line"><span class="psd-name">' + Pages._bdEsc(g.name) + '</span>';
+      if (g.open > 0) html += '<span class="psd-badge psd-open">未闭环 ' + g.open + '</span>';
+      else html += '<span class="psd-badge psd-done">已闭环</span>';
+      html += '<span class="psd-num">共 ' + g.total + ' 项</span></div>';
+      html += '<div class="psd-bar"><span style="width:' + pct + '%"></span></div>';
+      html += '<div class="psd-meta">已闭环 ' + g.closed + ' · 未闭环 ' + g.open + ' · 闭环率 ' + pct + '%</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+};
+
+/* 门店明细弹窗 */
+Pages._bdOpenStoreItems = function(key, idx) {
+  var rows = Pages._bdPsdCache[key] || [];
+  var g = rows[idx];
+  if (!g) return;
+  var items = g.items.slice();
+  items.sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); });
+  var html = '<div class="modal-box psd-modal">';
+  html += '<div class="modal-title">' + Pages._bdEsc(g.name) + '<span class="psd-modal-sub">共 ' + g.total + ' 项 · 已闭环 ' + g.closed + ' · 未闭环 ' + g.open + '</span></div>';
+  html += '<div class="psd-modal-body">';
+  items.forEach(function(it) {
+    var closed = Pages._bdIsClosed(it.status);
+    html += '<div class="psd-mi">';
+    html += '<div class="psd-mi-top"><span class="psd-tag ' + (closed ? 'psd-done' : 'psd-open') + '">' + Pages._bdEsc(it.status) + '</span><span class="psd-mi-date">' + Pages._bdEsc(it.date) + '</span></div>';
+    if (it.title) html += '<div class="psd-mi-txt">' + Pages._bdEsc(it.title) + '</div>';
+    html += '</div>';
+  });
+  if (items.length === 0) html += '<div class="bd-empty">暂无明细</div>';
+  html += '</div>';
+  html += '<div class="psd-modal-foot"><button class="btn btn-primary" onclick="Pages._closeModal()">关闭</button></div>';
+  html += '</div>';
+  Pages._openModalHtml(html);
+};
+
+/* 安装卡片在点击「安装」后按环境刷新 */
+Pages.refreshInstallCard = function() {
+  var old = document.getElementById('ic-card');
+  var oldMini = document.getElementById('ic-mini');
+  if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (oldMini && oldMini.parentNode) oldMini.parentNode.removeChild(oldMini);
+  var html = Pages._installCardHtml();
+  if (!html) return;
+  var wrap = document.getElementById('page-home') || document.body;
+  var box = document.createElement('div');
+  box.innerHTML = html;
+  var node = box.firstChild;
+  if (node) wrap.appendChild(node);
+};
+
+/* ==================== 安装到桌面引导卡片（PWA） ==================== */
 Pages._installCardHtml = function() {
   var ic = window.Installer;
   if (!ic || !ic.shouldShow()) { return ''; }
+  if (ic.dismissed && ic.dismissed()) {
+    return '<div class="ic-mini" id="ic-mini" onclick="window.Installer.trigger()">'
+      + '<span class="ic-mini-ico">\uD83D\uDCF2</span><span>安装到桌面</span>'
+      + '<span class="ic-mini-go">立即安装 &#8250;</span></div>';
+  }
   return '<div class="ic-card" id="ic-card">'
     + '<div class="ic-icon">\uD83D\uDCF2</div>'
     + '<div class="ic-main">'
-    + '<div class="ic-title">安装到手机桌面</div>'
-    + '<div class="ic-sub">全屏打开，和 App 一样用</div>'
+    + '<div class="ic-title">安装到桌面，像 App 一样用</div>'
+    + '<div class="ic-sub">' + (ic.hintText ? ic.hintText() : '全屏打开，启动更快') + '</div>'
     + '</div>'
     + '<button class="ic-btn" onclick="window.Installer.trigger()">安装</button>'
     + '<span class="ic-close" onclick="window.Installer.dismiss()">\u2715</span>'

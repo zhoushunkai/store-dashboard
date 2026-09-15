@@ -3303,3 +3303,41 @@ body {
 .ic-step { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #334155; line-height: 1.6; margin-bottom: 10px; }
 .ic-step-no { flex: none; width: 20px; height: 20px; border-radius: 50%; background: #C41A1A; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
 .ic-sheet-btn { width: 100%; margin-top: 8px; border: 0; border-radius: 10px; background: #C41A1A; color: #fff; font-size: 15px; font-weight: 700; padding: 12px; }
+
+/* ===== v95: 安装引导（收缩入口 + 步骤补充） ===== */
+.ic-mini { display: flex; align-items: center; gap: 6px; margin: 10px 12px 4px; padding: 9px 14px; border-radius: 999px; background: #fff; color: #C41A1A; font-size: 13px; font-weight: 700; border: 1px solid rgba(196,26,26,.25); box-shadow: 0 2px 8px rgba(196,26,26,.10); }
+.ic-mini-ico { font-size: 15px; line-height: 1; }
+.ic-mini-go { margin-left: auto; font-size: 12px; font-weight: 400; color: #9aa3af; }
+.ic-sheet-tip { font-size: 12px; color: #92400e; background: #fef3c7; border-radius: 8px; padding: 8px 10px; line-height: 1.6; margin-bottom: 12px; }
+.ic-sheet-btn.ic-sheet-copy { background: #fff; color: #C41A1A; border: 1px solid #C41A1A; }
+
+/* ===== v95: 逐店明细（五大看板通用） ===== */
+.psd-card { --psd: #0ea5e9; }
+.psd-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px 6px; flex-wrap: wrap; }
+.psd-title { font-size: 14px; font-weight: 700; color: #1e293b; display: flex; flex-direction: column; gap: 2px; }
+.psd-sub { font-size: 11px; font-weight: 400; color: #94a3b8; }
+.psd-toggle { border: 1px solid var(--psd); color: var(--psd); background: #fff; border-radius: 999px; font-size: 12px; padding: 4px 12px; cursor: pointer; white-space: nowrap; }
+.psd-toggle.on { background: var(--psd); color: #fff; }
+.psd-note { font-size: 11px; color: #94a3b8; padding: 0 16px 6px; }
+.psd-list { padding: 0 16px 10px; }
+.psd-row { padding: 10px 0; border-bottom: 1px dashed #eef2f7; cursor: pointer; }
+.psd-row:last-child { border-bottom: none; }
+.psd-line { display: flex; align-items: center; gap: 8px; }
+.psd-name { font-size: 13px; font-weight: 600; color: #0f172a; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psd-badge { font-size: 11px; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.psd-open { background: #fee2e2; color: #dc2626; }
+.psd-done { background: #dcfce7; color: #16a34a; }
+.psd-num { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+.psd-bar { height: 4px; background: #f1f5f9; border-radius: 999px; margin-top: 6px; overflow: hidden; }
+.psd-bar > span { display: block; height: 100%; background: var(--psd); border-radius: 999px; }
+.psd-meta { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.psd-modal { max-width: 560px; width: 92%; }
+.psd-modal-sub { display: block; font-size: 11px; font-weight: 400; color: #94a3b8; margin-top: 3px; }
+.psd-modal-body { max-height: 58vh; overflow: auto; padding: 4px 0; }
+.psd-mi { padding: 10px 0; border-bottom: 1px dashed #eef2f7; }
+.psd-mi:last-child { border-bottom: none; }
+.psd-mi-top { display: flex; align-items: center; gap: 8px; }
+.psd-tag { font-size: 11px; border-radius: 4px; padding: 1px 6px; white-space: nowrap; }
+.psd-mi-date { font-size: 11px; color: #94a3b8; margin-left: auto; }
+.psd-mi-txt { font-size: 12px; color: #475569; margin-top: 4px; line-height: 1.5; word-break: break-word; }
+.psd-modal-foot { display: flex; justify-content: flex-end; padding-top: 12px; }

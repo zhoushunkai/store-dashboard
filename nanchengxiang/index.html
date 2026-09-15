@@ -130,15 +130,18 @@
     var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
     var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var isWeChat = /MicroMessenger|WeWork|QQ\//i.test(ua);
+    var isAndroid = /Android|Adr/i.test(ua);
     var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
 
     window.addEventListener('beforeinstallprompt', function (e) {
       e.preventDefault();
       deferred = e;
+      try { if (window.Installer) window.Installer.refreshCard(); } catch (err) {}
     });
     window.addEventListener('appinstalled', function () {
       deferred = null;
       try { localStorage.setItem(DISMISS_KEY, String(Date.now() + 3650 * 86400000)); } catch (err) {}
+      removeCard();
       if (window.App && App.toast) { App.toast('已安装到桌面'); }
     });
 
@@ -146,12 +149,20 @@
       try { return Date.now() < Number(localStorage.getItem(DISMISS_KEY) || 0); } catch (err) { return false; }
     }
 
+    function removeCard() {
+      var el = document.getElementById('ic-card');
+      if (el && el.parentNode) { el.parentNode.removeChild(el); }
+      var mini = document.getElementById('ic-mini');
+      if (mini && mini.parentNode) { mini.parentNode.removeChild(mini); }
+    }
+
     function closeSheet() {
       var m = document.getElementById('ic-sheet-mask');
       if (m && m.parentNode) { m.parentNode.removeChild(m); }
     }
 
-    function openSheet(title, steps) {
+    function openSheet(title, steps, opts) {
+      opts = opts || {};
       closeSheet();
       var mask = document.createElement('div');
       mask.className = 'ic-mask';
@@ -161,45 +172,104 @@
       for (var i = 0; i < steps.length; i++) {
         items += '<div class="ic-step"><span class="ic-step-no">' + (i + 1) + '</span><span>' + steps[i] + '</span></div>';
       }
+      var tip = opts.tip ? '<div class="ic-sheet-tip">' + opts.tip + '</div>' : '';
+      var copyBtn = opts.copy ? '<button class="ic-sheet-btn ic-sheet-copy" onclick="Installer.copyLink()">复制当前链接</button>' : '';
       mask.innerHTML = '<div class="ic-sheet">'
         + '<div class="ic-sheet-title">' + title + '</div>'
+        + tip
         + items
+        + copyBtn
         + '<button class="ic-sheet-btn" onclick="Installer.closeSheet()">知道了</button>'
         + '</div>';
       document.body.appendChild(mask);
     }
 
     var Installer = {
+      canPrompt: function () { return !!deferred; },
+      dismissed: dismissed,
       shouldShow: function () {
         if (standalone) { return false; }
-        if (dismissed()) { return false; }
-        return isMobile;
+        return true;
+      },
+      hintText: function () {
+        if (deferred) { return '点击「安装」，浏览器会直接弹出安装确认'; }
+        if (isWeChat) { return '微信内无法直接安装，先复制链接到浏览器打开'; }
+        if (isIOS) { return 'iOS 请通过「分享 → 添加到主屏幕」完成安装'; }
+        if (isAndroid) { return '点击查看安卓手机安装步骤'; }
+        return '点击查看电脑浏览器安装步骤';
+      },
+      refreshCard: function () {
+        if (window.Pages && typeof Pages.refreshInstallCard === 'function') { Pages.refreshInstallCard(); }
       },
       dismiss: function () {
         try { localStorage.setItem(DISMISS_KEY, String(Date.now() + 7 * 86400000)); } catch (err) {}
-        var el = document.getElementById('ic-card');
-        if (el && el.parentNode) { el.parentNode.removeChild(el); }
+        removeCard();
+        Installer.refreshCard();
       },
       closeSheet: closeSheet,
       openSheet: openSheet,
+      copyLink: function () {
+        var url = location.href;
+        function ok() { if (window.App && App.toast) { App.toast('链接已复制，请到浏览器粘贴打开'); } }
+        function fallback() {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            ta.setSelectionRange(0, url.length);
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            ok();
+          } catch (err) {
+            if (window.App && App.toast) { App.toast('请手动长按页面地址复制链接'); }
+          }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(ok, fallback);
+        } else {
+          fallback();
+        }
+      },
       trigger: function () {
         if (deferred) {
           var p = deferred;
           deferred = null;
-          p.prompt();
+          try { p.prompt(); } catch (err) {}
           if (p.userChoice && p.userChoice.then) {
             p.userChoice.then(function (r) {
               if (r && r.outcome === 'accepted') { Installer.dismiss(); }
+              else { Installer.refreshCard(); }
             });
           }
           return;
         }
         if (isWeChat) {
-          openSheet('请先在浏览器中打开', ['点击右上角「···」按钮', '选择「在浏览器打开」', '再点菜单里的「安装应用 / 添加到主屏幕」']);
+          Installer.openSheet('微信内无法直接安装', [
+            '点击下方「复制当前链接」按钮',
+            '在手机浏览器（安卓浏览器 / Safari）中粘贴并打开',
+            '在浏览器里再点「安装应用 / 添加到主屏幕」'
+          ], { copy: true, tip: '微信内置浏览器不支持安装到桌面，必须用系统浏览器打开本页面。' });
         } else if (isIOS) {
-          openSheet('添加到主屏幕', ['点击底部「分享」按钮', '向下滑动找到「添加到主屏幕」', '点右上角「添加」，桌面即出现图标']);
+          Installer.openSheet('添加到主屏幕', [
+            '点击底部（或顶部）的「分享」按钮',
+            '向下滑动找到「添加到主屏幕」',
+            '点右上角「添加」，桌面即出现图标'
+          ], { copy: true, tip: '若当前在微信内，请先点「复制当前链接」，再用 Safari 打开。' });
+        } else if (isAndroid) {
+          Installer.openSheet('安装到桌面', [
+            '点击浏览器右上角菜单（⋮）',
+            '选择「安装应用」或「添加到主屏幕」',
+            '确认后桌面即出现独立图标'
+          ], { copy: true, tip: '若菜单中没有「安装应用」，请改用 Chrome 等标准浏览器打开本页面。' });
         } else {
-          openSheet('添加到主屏幕', ['点击浏览器右上角菜单（⋮ 或 ≡）', '选择「安装应用」或「添加到主屏幕」', '确认后桌面即出现图标']);
+          Installer.openSheet('安装到桌面', [
+            '点击地址栏右侧的「安装」图标（显示器 / ⊕ 图标）',
+            '或点击浏览器右上角菜单（⋮）→「安装南城香协作」',
+            '确认后即可以独立窗口运行'
+          ], { copy: true, tip: 'Chrome / Edge 支持一键安装为独立窗口应用。' });
         }
       }
     };
