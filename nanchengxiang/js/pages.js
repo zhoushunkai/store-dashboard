@@ -48220,7 +48220,35 @@ Pages._supplyEsc = function(s) {
 
 
 
-/* ==================== SSC 模块（仅管理员可见） ==================== */
+/* ==================== SSC 共享服务工单（仅管理员可见） ==================== */
+Pages._sscDepts = ['信息部', '人力部', '企划部', '产品部', '营运部', '物流部', '财务部', '采购部'];
+Pages._sscTypes = ['咨询', '需求', '报障', '建议', '其他'];
+Pages._sscUrgencies = ['普通', '紧急', '特急'];
+Pages._sscStatusAll = ['待受理', '处理中', '已闭环'];
+Pages._sscSt = { status: '全部', dept: '全部', kw: '', desc: true, mode: 'list', detailId: '' };
+
+Pages._sscStatusColor = function(s) {
+  if (s === '待受理') return { bg: '#fff3e0', fg: '#d97706' };
+  if (s === '处理中') return { bg: '#e8efff', fg: '#1d4ed8' };
+  if (s === '已闭环') return { bg: '#e6f7ee', fg: '#059669' };
+  return { bg: '#f2f2f2', fg: '#666666' };
+};
+Pages._sscUrgencyColor = function(u) {
+  if (u === '特急') return '#dc2626';
+  if (u === '紧急') return '#d97706';
+  return '#8a8a8a';
+};
+Pages._sscStats = function(list) {
+  var s = { total: list.length, wait: 0, doing: 0, done: 0, urgent: 0 };
+  (list || []).forEach(function(t) {
+    if (t.status === '待受理') s.wait++;
+    else if (t.status === '处理中') s.doing++;
+    else if (t.status === '已闭环') s.done++;
+    if (t.status !== '已闭环' && (t.urgency === '紧急' || t.urgency === '特急')) s.urgent++;
+  });
+  return s;
+};
+
 Pages.ssc = function() {
   var el = document.getElementById('page-ssc');
   if (!el) return;
@@ -48230,14 +48258,360 @@ Pages.ssc = function() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
     return;
   }
+  if (Pages._sscSt.mode === 'detail' && Pages._sscSt.detailId) {
+    el.innerHTML = Pages._sscDetailHtml(Pages._sscSt.detailId, user);
+    return;
+  }
+  el.innerHTML = Pages._sscListHtml(user);
+};
+
+/* ---- 列表页 ---- */
+Pages._sscListHtml = function(user) {
+  var all = App.getSscTickets() || [];
+  var st = Pages._sscSt;
+  var s = Pages._sscStats(all);
   var html = '';
+  // 顶部统计概览
+  html += '<div style="display:flex;gap:8px;padding:10px 12px 0">';
+  var tiles = [
+    { k: '全部工单', v: s.total, c: '#C41A1A' },
+    { k: '待受理', v: s.wait, c: '#d97706' },
+    { k: '处理中', v: s.doing, c: '#1d4ed8' },
+    { k: '已闭环', v: s.done, c: '#059669' }
+  ];
+  tiles.forEach(function(t) {
+    html += '<div style="flex:1;background:#fff;border-radius:10px;padding:9px 2px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)">'
+      + '<div style="font-size:19px;font-weight:600;color:' + t.c + '">' + t.v + '</div>'
+      + '<div style="font-size:11px;color:#888;margin-top:2px">' + t.k + '</div></div>';
+  });
+  html += '</div>';
+  if (s.urgent > 0) {
+    html += '<div style="margin:8px 12px 0;background:#fdecea;color:#c0392b;border-radius:8px;padding:7px 10px;font-size:12px">紧急/特急未闭环工单 ' + s.urgent + ' 件，请优先处理</div>';
+  }
+  // 状态筛选
+  html += '<div style="display:flex;gap:6px;overflow-x:auto;padding:10px 12px 0">';
+  var statusTabs = ['全部'].concat(Pages._sscStatusAll);
+  statusTabs.forEach(function(t) {
+    var on = st.status === t;
+    html += '<span onclick="Pages._sscSetStatus(\'' + t + '\')" style="flex-shrink:0;padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;'
+      + (on ? 'background:#C41A1A;color:#fff' : 'background:#f2f2f2;color:#666') + '">' + t + '</span>';
+  });
+  html += '</div>';
+  // 部门 / 关键词 / 排序
+  html += '<div style="display:flex;gap:8px;padding:10px 12px 0;align-items:center">';
+  html += '<select onchange="Pages._sscSetDept(this.value)" style="flex:0 0 108px;padding:7px 8px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fff">';
+  html += '<option value="全部"' + (st.dept === '全部' ? ' selected' : '') + '>全部部门</option>';
+  Pages._sscDepts.forEach(function(d) {
+    html += '<option value="' + d + '"' + (st.dept === d ? ' selected' : '') + '>' + d + '</option>';
+  });
+  html += '</select>';
+  html += '<input id="ssc_kw" value="' + Pages._esc(st.kw) + '" oninput="Pages._sscKw(this.value)" placeholder="搜索标题 / 内容 / 提交人" style="flex:1;min-width:0;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px" />';
+  html += '<span onclick="Pages._sscToggleSort()" style="flex-shrink:0;font-size:12px;color:#C41A1A;cursor:pointer;white-space:nowrap">' + (st.desc ? '时间↓' : '时间↑') + '</span>';
+  html += '</div>';
+  // 列表
+  html += '<div id="ssc_list" style="padding:10px 12px 86px">' + Pages._sscCardsHtml() + '</div>';
+  // 新建入口
+  html += '<div onclick="Pages._sscOpenCreate()" style="position:fixed;right:18px;bottom:86px;width:52px;height:52px;border-radius:50%;background:#C41A1A;color:#fff;font-size:30px;line-height:52px;text-align:center;box-shadow:0 4px 14px rgba(196,26,26,.4);cursor:pointer;z-index:50">＋</div>';
+  return html;
+};
+
+Pages._sscFiltered = function() {
+  var st = Pages._sscSt;
+  var kw = (st.kw || '').trim().toLowerCase();
+  var list = (App.getSscTickets() || []).filter(function(t) {
+    if (st.status !== '全部' && t.status !== st.status) return false;
+    if (st.dept !== '全部' && t.department !== st.dept) return false;
+    if (kw) {
+      var hay = [t.title, t.content, t.submitter, t.ticketType, t.department, t.id, t.handler].join(' ').toLowerCase();
+      if (hay.indexOf(kw) < 0) return false;
+    }
+    return true;
+  });
+  list.sort(function(a, b) {
+    var x = a.createdAt || '', y = b.createdAt || '';
+    if (x === y) {
+      // 同一分钟内创建的工单按 id 兜底排序，保证顺序稳定
+      var ax = a.id || '', bx = b.id || '';
+      if (ax === bx) return 0;
+      return st.desc ? (ax > bx ? -1 : 1) : (ax > bx ? 1 : -1);
+    }
+    return st.desc ? (x > y ? -1 : 1) : (x > y ? 1 : -1);
+  });
+  return list;
+};
+
+Pages._sscCardsHtml = function() {
+  var list = Pages._sscFiltered();
+  if (list.length === 0) {
+    return '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>暂无符合条件的工单</div></div>';
+  }
+  var html = '';
+  list.forEach(function(t) {
+    var c = Pages._sscStatusColor(t.status);
+    html += '<div onclick="Pages._sscOpenDetail(\'' + t.id + '\')" style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);border-left:3px solid ' + (t.status === '已闭环' ? '#10b981' : (t.status === '处理中' ? '#1d4ed8' : '#d97706')) + ';cursor:pointer">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+    html += '<div style="font-size:15px;font-weight:600;color:#222;flex:1;line-height:1.4">' + Pages._esc(t.title) + '</div>';
+    html += '<span style="flex-shrink:0;margin-left:8px;padding:2px 8px;border-radius:10px;font-size:11px;background:' + c.bg + ';color:' + c.fg + '">' + Pages._esc(t.status) + '</span>';
+    html += '</div>';
+    html += '<div style="font-size:12px;color:#888;margin-top:6px">';
+    html += Pages._esc(t.department || '-') + ' ｜ ' + Pages._esc(t.ticketType || '-');
+    html += ' ｜ <span style="color:' + Pages._sscUrgencyColor(t.urgency) + '">' + Pages._esc(t.urgency || '普通') + '</span>';
+    html += '</div>';
+    if (t.content) {
+      var brief = String(t.content).length > 46 ? String(t.content).slice(0, 46) + '…' : String(t.content);
+      html += '<div style="font-size:13px;color:#555;margin-top:6px;line-height:1.5">' + Pages._esc(brief) + '</div>';
+    }
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">';
+    html += '<span style="font-size:11px;color:#bbb">' + Pages._esc(t.submitter || '') + ' 提交 · ' + Pages._esc((t.createdAt || '').slice(5, 16)) + '</span>';
+    html += '<span style="font-size:11px;color:#bbb">期望 ' + Pages._esc(t.expectDate || '-') + '</span>';
+    html += '</div></div>';
+  });
+  return html;
+};
+
+Pages._sscRenderList = function() {
+  var box = document.getElementById('ssc_list');
+  if (box) box.innerHTML = Pages._sscCardsHtml();
+};
+Pages._sscSetStatus = function(v) { Pages._sscSt.status = v; Pages.ssc(); };
+Pages._sscSetDept = function(v) { Pages._sscSt.dept = v; Pages._sscRenderList(); };
+Pages._sscKw = function(v) { Pages._sscSt.kw = v || ''; Pages._sscRenderList(); };
+Pages._sscToggleSort = function() { Pages._sscSt.desc = !Pages._sscSt.desc; Pages.ssc(); };
+Pages._sscBack = function() { Pages._sscSt.mode = 'list'; Pages._sscSt.detailId = ''; Pages.ssc(); };
+
+/* ---- 新建工单 ---- */
+Pages._sscOpenDetail = function(id) {
+  var list = App.getSscTickets() || [];
+  var hit = null;
+  list.forEach(function(t) { if (t.id === id) hit = t; });
+  if (!hit) { if (App.toast) App.toast('工单不存在'); return; }
+  Pages._sscSt.mode = 'detail';
+  Pages._sscSt.detailId = id;
+  Pages.ssc();
+};
+
+Pages._sscOpenCreate = function() {
+  var user = App.currentUser;
+  var dd = new Date(Date.now() + 3 * 86400000);
+  var defExpect = dd.getFullYear() + '-' + String(dd.getMonth() + 1).padStart(2, '0') + '-' + String(dd.getDate()).padStart(2, '0');
+  var html = '<div class="modal-box">';
+  html += '<div class="modal-title">新建共享服务工单</div>';
+  html += '<div style="padding:12px 16px;max-height:66vh;overflow-y:auto">';
+  html += '<label style="font-size:13px;color:#333">需求部门 *</label>';
+  html += '<select id="ssc_dept" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff">';
+  Pages._sscDepts.forEach(function(d) { html += '<option value="' + d + '">' + d + '</option>'; });
+  html += '</select>';
+  html += '<label style="font-size:13px;color:#333">工单类型 *</label>';
+  html += '<select id="ssc_type" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff">';
+  Pages._sscTypes.forEach(function(d) { html += '<option value="' + d + '">' + d + '</option>'; });
+  html += '</select>';
+  html += '<label style="font-size:13px;color:#333">工单标题 *</label>';
+  html += '<input id="ssc_title" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" placeholder="一句话说明你的需求" />';
+  html += '<label style="font-size:13px;color:#333">问题/需求描述</label>';
+  html += '<textarea id="ssc_content" rows="4" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" placeholder="背景、期望结果、涉及门店等"></textarea>';
+  html += '<label style="font-size:13px;color:#333">紧急程度 *</label>';
+  html += '<div style="margin:4px 0 10px">';
+  Pages._sscUrgencies.forEach(function(u, i) {
+    html += '<span onclick="Pages._sscPickUrg(\'' + u + '\')" id="ssc_urg_' + i + '" style="padding:5px 14px;border-radius:14px;font-size:13px;cursor:pointer;' + (i === 0 ? 'background:#C41A1A;color:#fff' : 'background:#f2f2f2;color:#666') + '">' + u + '</span> ';
+  });
+  html += '</div>';
+  html += '<label style="font-size:13px;color:#333">提交人 *</label>';
+  html += '<input id="ssc_submitter" value="' + Pages._esc(user && user.name ? user.name : '') + '" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" />';
+  html += '<label style="font-size:13px;color:#333">期望完成时间 *</label>';
+  html += '<input id="ssc_expect" type="date" value="' + defExpect + '" style="width:100%;box-sizing:border-box;margin:4px 0 10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" />';
+  html += '<div style="display:flex;gap:10px;margin-top:4px">';
+  html += '<button style="flex:1;background:#f2f2f2;color:#666;border:none;border-radius:8px;padding:10px;font-size:15px;cursor:pointer" onclick="Pages._closeModal()">取消</button>';
+  html += '<button style="flex:2;background:#C41A1A;color:#fff;border:none;border-radius:8px;padding:10px;font-size:15px;cursor:pointer" onclick="Pages._sscSubmitCreate()">提交工单</button>';
+  html += '</div></div></div>';
+  Pages._sscUrgV = Pages._sscUrgencies[0];
+  Pages._openModalHtml(html);
+};
+
+Pages._sscPickUrg = function(u) {
+  Pages._sscUrgV = u;
+  Pages._sscUrgencies.forEach(function(x, i) {
+    var el = document.getElementById('ssc_urg_' + i);
+    if (!el) return;
+    el.style.background = x === u ? '#C41A1A' : '#f2f2f2';
+    el.style.color = x === u ? '#fff' : '#666';
+  });
+};
+
+Pages._sscSubmitCreate = function() {
+  var dept = ((document.getElementById('ssc_dept') || {}).value || '').trim();
+  var type = ((document.getElementById('ssc_type') || {}).value || '').trim();
+  var title = ((document.getElementById('ssc_title') || {}).value || '').trim();
+  var content = ((document.getElementById('ssc_content') || {}).value || '').trim();
+  var submitter = ((document.getElementById('ssc_submitter') || {}).value || '').trim();
+  var expect = ((document.getElementById('ssc_expect') || {}).value || '').trim();
+  if (!dept) { alert('请选择需求部门'); return; }
+  if (!type) { alert('请选择工单类型'); return; }
+  if (!title) { alert('请填写工单标题'); return; }
+  if (!submitter) { alert('请填写提交人'); return; }
+  if (!expect) { alert('请选择期望完成时间'); return; }
+  var user = App.currentUser;
+  var now = Pages._nowStr();
+  var t = {
+    id: App.nextSscTicketId ? App.nextSscTicketId() : ('ssc' + Date.now()),
+    department: dept,
+    ticketType: type,
+    title: title,
+    content: content,
+    urgency: Pages._sscUrgV || '普通',
+    submitter: submitter,
+    submitterRole: user ? user.role : '',
+    expectDate: expect,
+    status: '待受理',
+    handler: '',
+    logs: [{ time: now, operator: submitter, action: '提交工单', from: '', to: '待受理', note: '' }],
+    createdAt: now,
+    updatedAt: now
+  };
+  var list = App.getSscTickets() || [];
+  list.unshift(t);
+  App.saveSscTickets(list).then(function() {
+    Pages._closeModal();
+    Pages._sscSt.mode = 'detail';
+    Pages._sscSt.detailId = t.id;
+    Pages.ssc();
+    if (App.toast) App.toast('工单已提交');
+  });
+};
+
+/* ---- 工单详情与处理 ---- */
+Pages._sscDetailHtml = function(id, user) {
+  var list = App.getSscTickets() || [];
+  var t = null;
+  list.forEach(function(x) { if (x.id === id) t = x; });
+  if (!t) {
+    return '<div style="padding:12px">' + Pages._sscBackBar() + '<div class="empty-state"><div class="empty-icon">&#128203;</div><div>工单不存在或已被删除</div></div></div>';
+  }
+  var c = Pages._sscStatusColor(t.status);
+  var html = '';
+  html += '<div style="padding:10px 12px 0">' + Pages._sscBackBar() + '</div>';
+  html += '<div style="padding:10px 12px 86px">';
+  html += '<div class="card" style="margin-bottom:10px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start">';
+  html += '<div style="font-size:16px;font-weight:600;color:#222;flex:1;line-height:1.4">' + Pages._esc(t.title) + '</div>';
+  html += '<span style="flex-shrink:0;margin-left:8px;padding:2px 8px;border-radius:10px;font-size:11px;background:' + c.bg + ';color:' + c.fg + '">' + Pages._esc(t.status) + '</span>';
+  html += '</div>';
+  html += '<div style="font-size:12px;color:#999;margin-top:4px">' + Pages._esc(t.id) + '</div>';
+  html += '<div style="margin-top:10px;font-size:13px;color:#444;line-height:2">';
+  html += Pages._sscRow('需求部门', t.department) + Pages._sscRow('工单类型', t.ticketType);
+  html += Pages._sscRow('紧急程度', '<span style="color:' + Pages._sscUrgencyColor(t.urgency) + '">' + Pages._esc(t.urgency || '普通') + '</span>');
+  html += Pages._sscRow('提交人', t.submitter + (t.submitterRole ? '（' + t.submitterRole + '）' : ''));
+  html += Pages._sscRow('期望完成时间', t.expectDate);
+  html += Pages._sscRow('当前处理人', t.handler || '未指派');
+  html += Pages._sscRow('创建时间', t.createdAt);
+  html += Pages._sscRow('最近更新', t.updatedAt);
+  html += '</div></div>';
+  if (t.content) {
+    html += '<div class="card" style="margin-bottom:10px">';
+    html += '<div class="card-title">问题 / 需求描述</div>';
+    html += '<div style="font-size:13px;color:#444;line-height:1.7;white-space:pre-wrap">' + Pages._esc(t.content) + '</div>';
+    html += '</div>';
+  }
+  // 处理记录
+  html += '<div class="card" style="margin-bottom:10px">';
+  html += '<div class="card-title">处理记录（' + ((t.logs || []).length) + '）</div>';
+  var logs = t.logs || [];
+  if (logs.length === 0) {
+    html += '<div style="font-size:13px;color:#999">暂无处理记录</div>';
+  } else {
+    logs.forEach(function(l) {
+      html += '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px dashed #f0f0f0">';
+      html += '<div style="flex:0 0 6px;padding-top:6px"><div style="width:6px;height:6px;border-radius:50%;background:#C41A1A"></div></div>';
+      html += '<div style="flex:1">';
+      html += '<div style="font-size:13px;color:#333">' + Pages._esc(l.action || '') + (l.from && l.to ? '：' + Pages._esc(l.from) + ' → ' + Pages._esc(l.to) : '') + '</div>';
+      if (l.note) html += '<div style="font-size:13px;color:#555;margin-top:3px;line-height:1.6;white-space:pre-wrap">' + Pages._esc(l.note) + '</div>';
+      html += '<div style="font-size:11px;color:#bbb;margin-top:3px">' + Pages._esc(l.operator || '') + ' · ' + Pages._esc(l.time || '') + '</div>';
+      html += '</div></div>';
+    });
+  }
+  html += '</div>';
+  // 当前处理区
   html += '<div class="card">';
-  html += '<div class="card-title">SSC</div>';
-  html += '<div style="color:var(--text-secondary);font-size:13px;line-height:1.9;padding:4px 0;">';
-  html += '模块建设中，敬请期待。';
+  if (t.status === '待受理') {
+    html += '<div class="card-title">受理工单</div>';
+    html += '<div style="font-size:13px;color:#666;margin-bottom:8px">受理后工单进入「处理中」，可指派处理人（默认当前账号）。</div>';
+    html += '<input id="ssc_handler" value="' + Pages._esc(user && user.name ? user.name : '') + '" placeholder="处理人" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px" />';
+    html += '<button style="width:100%;background:#C41A1A;color:#fff;border:none;border-radius:8px;padding:10px;font-size:15px;cursor:pointer" onclick="Pages._sscAccept(\'' + t.id + '\')">受理工单</button>';
+  } else if (t.status === '处理中') {
+    html += '<div class="card-title">添加处理记录</div>';
+    html += '<textarea id="ssc_note" rows="3" placeholder="填写处理进展、结论或需要提报人配合的事项" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px"></textarea>';
+    html += '<div style="display:flex;gap:10px">';
+    html += '<button style="flex:1;background:#f2f2f2;color:#666;border:none;border-radius:8px;padding:10px;font-size:15px;cursor:pointer" onclick="Pages._sscAddLog(\'' + t.id + '\')">仅记录</button>';
+    html += '<button style="flex:1.4;background:#059669;color:#fff;border:none;border-radius:8px;padding:10px;font-size:15px;cursor:pointer" onclick="Pages._sscClose(\'' + t.id + '\')">记录并闭环</button>';
+    html += '</div>';
+  } else {
+    html += '<div class="card-title">工单已闭环</div>';
+    html += '<div style="font-size:13px;color:#666">该工单已完成闭环，处理记录已归档保留。如需追加说明，可在下方补充记录。</div>';
+    html += '<textarea id="ssc_note" rows="3" placeholder="补充说明（可选）" style="width:100%;box-sizing:border-box;margin:10px 0;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px"></textarea>';
+    html += '<button style="width:100%;background:#f2f2f2;color:#444;border:none;border-radius:8px;padding:10px;font-size:15px;cursor:pointer" onclick="Pages._sscAddLog(\'' + t.id + '\')">补充记录</button>';
+  }
   html += '</div>';
   html += '</div>';
-  el.innerHTML = html;
+  return html;
+};
+
+Pages._sscBackBar = function() {
+  return '<div onclick="Pages._sscBack()" style="display:inline-block;font-size:13px;color:#C41A1A;cursor:pointer;padding:2px 0">← 返回工单列表</div>';
+};
+Pages._sscRow = function(k, v) {
+  return '<div><span style="color:#999;display:inline-block;width:88px">' + k + '</span><span style="color:#333">' + (v == null || v === '' ? '-' : v) + '</span></div>';
+};
+
+Pages._sscAccept = function(id) {
+  var list = App.getSscTickets() || [];
+  var t = null;
+  list.forEach(function(x) { if (x.id === id) t = x; });
+  if (!t) return;
+  if (t.status !== '待受理') { alert('该工单已受理'); return; }
+  var handler = ((document.getElementById('ssc_handler') || {}).value || '').trim();
+  if (!handler) { alert('请填写处理人'); return; }
+  var user = App.currentUser;
+  t.status = '处理中';
+  t.handler = handler;
+  t.updatedAt = Pages._nowStr();
+  t.logs = (t.logs || []).concat([{ time: t.updatedAt, operator: user ? user.name : '', action: '受理工单', from: '待受理', to: '处理中', note: '处理人：' + handler }]);
+  App.saveSscTickets(list).then(function() {
+    Pages.ssc();
+    if (App.toast) App.toast('工单已受理');
+  });
+};
+
+Pages._sscAddLog = function(id) {
+  var list = App.getSscTickets() || [];
+  var t = null;
+  list.forEach(function(x) { if (x.id === id) t = x; });
+  if (!t) return;
+  var note = ((document.getElementById('ssc_note') || {}).value || '').trim();
+  if (!note) { alert('请先填写处理记录'); return; }
+  var user = App.currentUser;
+  t.updatedAt = Pages._nowStr();
+  t.logs = (t.logs || []).concat([{ time: t.updatedAt, operator: user ? user.name : '', action: '处理记录', from: '', to: '', note: note }]);
+  App.saveSscTickets(list).then(function() {
+    Pages.ssc();
+    if (App.toast) App.toast('已记录');
+  });
+};
+
+Pages._sscClose = function(id) {
+  var list = App.getSscTickets() || [];
+  var t = null;
+  list.forEach(function(x) { if (x.id === id) t = x; });
+  if (!t) return;
+  if (t.status !== '处理中') { alert('仅处理中的工单可闭环'); return; }
+  var note = ((document.getElementById('ssc_note') || {}).value || '').trim();
+  if (!note) { alert('闭环前请填写处理结论'); return; }
+  var user = App.currentUser;
+  t.updatedAt = Pages._nowStr();
+  t.logs = (t.logs || []).concat([{ time: t.updatedAt, operator: user ? user.name : '', action: '闭环工单', from: '处理中', to: '已闭环', note: note }]);
+  t.status = '已闭环';
+  App.saveSscTickets(list).then(function() {
+    Pages.ssc();
+    if (App.toast) App.toast('工单已闭环');
+  });
 };
 
 Pages.supplyChain = function() {

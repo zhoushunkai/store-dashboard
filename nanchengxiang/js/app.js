@@ -3012,7 +3012,7 @@ const App = {
 
 
 
-  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues', 'work_records', 'supply_issues', 'correction_reviews', 'permission_configs', 'company_tasks'],
+  tables: ['stores', 'users', 'region_coaches', 'penalties', 'complaints', 'online_records', 'offline_records', 'daily_reports', 'inspection_templates', 'inspection_results', 'inspection_issues', 'work_records', 'supply_issues', 'correction_reviews', 'permission_configs', 'company_tasks', 'ssc_tickets'],
 
 
 
@@ -3957,6 +3957,7 @@ const App = {
 
 
     this.dataCache.company_tasks = JSON.parse(localStorage.getItem('nanchengxiang_company_tasks') || '[]');
+    this.dataCache.ssc_tickets = JSON.parse(localStorage.getItem('nanchengxiang_ssc_tickets') || '[]');
 
 
 
@@ -4558,7 +4559,7 @@ const App = {
 
 
       'supplyChain': ['supply_issues', 'stores'],
-      'ssc': [],
+      'ssc': ['ssc_tickets'],
 
 
 
@@ -5437,6 +5438,54 @@ const App = {
     if (this.supabase) {
       
       await this._upsertToCloud('permission_configs', this._cloudPermissionConfigs(data));
+    }
+  },
+
+  /* ---- SSC 共享服务工单（ssc_tickets：仅 admin 可见） ---- */
+  getSscTickets() { return this.dataCache.ssc_tickets || []; },
+
+  /* 生成下一条工单 id：ssc0001 递增 */
+  nextSscTicketId() {
+    var list = this.getSscTickets() || [];
+    var max = 0;
+    list.forEach(function(t) {
+      var m = /^ssc(\d+)$/.exec(t.id || '');
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return 'ssc' + String(max + 1).padStart(4, '0');
+  },
+
+  /* 云表字段归一化：前端 camel 对象 -> ssc_tickets 云表列 */
+  _cloudSscTickets(list) {
+    return (list || []).map(function(r) {
+      return {
+        id: r.id || '',
+        department: r.department || '',
+        ticket_type: r.ticketType || r.ticket_type || '',
+        title: r.title || '',
+        content: r.content || '',
+        urgency: r.urgency || '普通',
+        submitter: r.submitter || '',
+        submitter_role: r.submitterRole || r.submitter_role || '',
+        expect_date: r.expectDate || r.expect_date || '',
+        status: r.status || '待受理',
+        handler: r.handler || '',
+        logs: Array.isArray(r.logs) ? r.logs : [],
+        created_at: r.createdAt || r.created_at || '',
+        updated_at: r.updatedAt || r.updated_at || ''
+      };
+    });
+  },
+
+  async saveSscTickets(data) {
+    this._touchCache('ssc_tickets', data || []);
+    localStorage.setItem('nanchengxiang_ssc_tickets', JSON.stringify(data || []));
+    if (this.supabase) {
+      try {
+        await this._upsertToCloud('ssc_tickets', this._cloudSscTickets(data));
+      } catch (e) {
+        console.warn('[Supabase] ssc_tickets 云端写入失败，已保存本地缓存:', e && e.message);
+      }
     }
   },
 

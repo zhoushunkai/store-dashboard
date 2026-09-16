@@ -113,3 +113,23 @@ CREATE TABLE offline_records (
 );
 ALTER TABLE offline_records ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "offline_records_all" ON offline_records FOR ALL USING (true);
+
+-- SSC 共享服务工单（仅 admin 前端可见）
+CREATE TABLE ssc_tickets (
+  id TEXT PRIMARY KEY,
+  department TEXT DEFAULT '',
+  ticket_type TEXT DEFAULT '',
+  title TEXT DEFAULT '',
+  content TEXT DEFAULT '',
+  urgency TEXT DEFAULT '普通',
+  submitter TEXT DEFAULT '',
+  submitter_role TEXT DEFAULT '',
+  expect_date TEXT DEFAULT '',
+  status TEXT DEFAULT '待受理',
+  handler TEXT DEFAULT '',
+  logs JSONB DEFAULT '[]'::jsonb,
+  created_at TEXT DEFAULT '',
+  updated_at TEXT DEFAULT ''
+);
+ALTER TABLE ssc_tickets ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "ssc_tickets_all" ON ssc_tickets FOR ALL USING (true);
