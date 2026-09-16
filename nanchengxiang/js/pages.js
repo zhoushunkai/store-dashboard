@@ -3692,6 +3692,10 @@ Pages.home = function() {
 
 
 
+    if (user.role === 'admin') {
+      html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F3E2}</span>SSC</div>';
+    }
+
     if (user.role === '总部' || user.role === 'admin') {
 
 
@@ -48215,6 +48219,26 @@ Pages._supplyEsc = function(s) {
 
 
 
+
+/* ==================== SSC 模块（仅管理员可见） ==================== */
+Pages.ssc = function() {
+  var el = document.getElementById('page-ssc');
+  if (!el) return;
+  var user = App.currentUser;
+  if (!user) return;
+  if (!App.Permissions.canAccess(user.role, 'ssc')) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128683;</div><div>当前角色无权限访问此页面</div></div>';
+    return;
+  }
+  var html = '';
+  html += '<div class="card">';
+  html += '<div class="card-title">SSC</div>';
+  html += '<div style="color:var(--text-secondary);font-size:13px;line-height:1.9;padding:4px 0;">';
+  html += '模块建设中，敬请期待。';
+  html += '</div>';
+  html += '</div>';
+  el.innerHTML = html;
+};
 
 Pages.supplyChain = function() {
 

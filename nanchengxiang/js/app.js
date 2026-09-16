@@ -3126,7 +3126,7 @@ const App = {
 
 
 
-      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true , task_create: true, task_done: true, task_board: true }
+      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true , task_create: true, task_done: true, task_board: true, ssc: true }
 
 
 
@@ -4558,6 +4558,7 @@ const App = {
 
 
       'supplyChain': ['supply_issues', 'stores'],
+      'ssc': [],
 
 
 
@@ -6231,7 +6232,7 @@ const App = {
                        'daily': 'daily', 'penalty': 'penalty', 'complaint': 'complaint',
                        'template': 'notice', 'task': 'task', 'dashboard': 'dashboard',
                        'penaltyBoard': 'penalty', 'complaintBoard': 'complaint', 'taskBoard': 'task_board',
-                       'supplyChain': 'supply_chain' };
+                       'supplyChain': 'supply_chain', 'ssc': 'ssc' };
       var canGo = true;
       var _needModule = guardMap[hash];
       if (_needModule) canGo = this.Permissions.canAccess(_guardRole, _needModule);
@@ -6580,7 +6581,7 @@ const App = {
 
 
 
-                           'inspectionDashboard': 'inspection', 'inspectionWorkbench': 'inspection', 'supplyChain': 'supply_chain' };
+                           'inspectionDashboard': 'inspection', 'inspectionWorkbench': 'inspection', 'supplyChain': 'supply_chain', 'ssc': 'ssc' };
 
 
 
@@ -6696,7 +6697,7 @@ const App = {
 
 
 
-      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台', supplyChain: '供应链问题', complaintBoard: '差评看板', penaltyBoard: '处罚看板', taskBoard: '任务看板',
+      inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台', supplyChain: '供应链问题', complaintBoard: '差评看板', penaltyBoard: '处罚看板', taskBoard: '任务看板', ssc: 'SSC',
       correction: '本店整改', permissionConfig: '权限配置'
 
 
