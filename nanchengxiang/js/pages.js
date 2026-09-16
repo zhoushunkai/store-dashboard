@@ -3207,9 +3207,10 @@ Pages.home = function() {
 
   } else if (user.role === '总部经理') {
 
-    // v92: 总部经理——仅保留领导看板入口，其余模块一律不展示
+    // v101: 总部经理——领导看板 + SSC 共享服务工单
     html += '<div class="quick-entries">';
     html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>领导看板</div>';
+    html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F3E2}</span>SSC</div>';
     html += '</div>';
 
   } else if (user.role === '总部' || user.role === '区域教练' || user.role === 'admin' || user.role === '客服' || user.role === '营运') {
@@ -3692,7 +3693,7 @@ Pages.home = function() {
 
 
 
-    if (user.role === 'admin') {
+    if (user.role === 'admin' || user.role === '总部') {
       html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F3E2}</span>SSC</div>';
     }
 

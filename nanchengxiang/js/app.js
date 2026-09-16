@@ -3052,7 +3052,7 @@ const App = {
 
 
 
-      '总部':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: true, task_done: true, task_board: true},
+      '总部':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: true, task_done: true, task_board: true, ssc: true},
 
 
 
@@ -3118,7 +3118,7 @@ const App = {
 
       '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
 
-      '总部经理': { dashboard: true, board_view: true, inspection: false, inspection_edit: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: false, task: false, supply_chain: false, task_create: false, task_done: false, task_board: false},
+      '总部经理': { dashboard: true, board_view: true, inspection: false, inspection_edit: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: false, task: false, supply_chain: false, task_create: false, task_done: false, task_board: false, ssc: true},
 
 
 
