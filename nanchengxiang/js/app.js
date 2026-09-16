@@ -3118,7 +3118,7 @@ const App = {
 
 
 
-      '店长':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '店长':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true, supply_chain: false, task_create: false, task_done: true, task_board: false},
 
 
 
@@ -3126,7 +3126,7 @@ const App = {
 
 
 
-      '区域教练': { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '区域教练': { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: false, task_create: false, task_done: true, task_board: false},
 
 
 
