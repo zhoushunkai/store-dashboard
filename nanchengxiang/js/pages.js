@@ -1983,7 +1983,7 @@ Pages.home = function() {
 
 
 
-  html += '<div class="user-role">' + (roleNames[user.role] || user.role) + '</div>';
+  html += '<div class="user-role">' + (roleNames[user.role] || user.role) + ' · ' + ((App.Portals && App.Portals.nameOf(user.role)) || '') + '</div>';
 
 
 
@@ -2837,7 +2837,7 @@ Pages.home = function() {
 
 
 
-  } else if (user.role === '线上稽核' || user.role === '线下稽核') {
+  } else if (user.role === '线上稽核' || user.role === '线下稽核' || user.role === '稽核员') {
 
 
 
@@ -3213,7 +3213,19 @@ Pages.home = function() {
     html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F3E2}</span>SSC</div>';
     html += '</div>';
 
-  } else if (user.role === '总部' || user.role === '区域教练' || user.role === 'admin' || user.role === '客服' || user.role === '营运') {
+  } else if (user.role === '客服' || user.role === '营运') {
+      /* v102: 职能端工作台——稽核结果 + SSC 提报 */
+      html += '<div class="quick-entries">';
+      html += '<div class="quick-entry" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>稽核结果</div>';
+      html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F3E2}</span>SSC 提报</div>';
+      html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
+      html += '</div>';
+    } else if (user.role === '供应链') {
+      /* v102: 供应链端工作台——工单处理（不提报） */
+      html += '<div class="quick-entries">';
+      html += '<div class="quick-entry" onclick="location.hash=\'#supplyChain\'"><span class="qe-icon">\u{1F69A}</span>供应链工单</div>';
+      html += '</div>';
+    } else if (user.role === '总部' || user.role === '区域教练' || user.role === 'admin') {
 
 
 

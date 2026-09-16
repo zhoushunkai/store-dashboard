@@ -3036,6 +3036,24 @@ const App = {
 
 
 
+  /* v102: 四端分流——登录身份到端口映射（门店端/职能端/供应链端/总部端） */
+  Portals: {
+    map: { '店长': 'store', '区域教练': 'store',
+           '稽核员': 'func', '线上稽核': 'func', '线下稽核': 'func', '稽核': 'func', '营运': 'func', '客服': 'func',
+           '供应链': 'scm',
+           '总部': 'hq', 'admin': 'hq', '总部经理': 'hq' },
+    names: { store: '门店端', func: '职能端', scm: '供应链端', hq: '总部端' },
+    of: function(role) { return this.map[role] || 'hq'; },
+    nameOf: function(role) { return this.names[this.of(role)] || '总部端'; }
+  },
+
+
+
+
+
+
+
+
   Permissions: {
 
 
@@ -3060,7 +3078,7 @@ const App = {
 
 
 
-      '线上稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '线上稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
 
 
 
@@ -3068,7 +3086,7 @@ const App = {
 
 
 
-      '线下稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '线下稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
 
 
 
@@ -3076,7 +3094,7 @@ const App = {
 
 
 
-      '稽核员':   { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '稽核员':   { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
 
 
 
@@ -3084,7 +3102,7 @@ const App = {
 
 
 
-      '客服':     { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '客服':     { inspection: false, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
 
 
 
@@ -3092,7 +3110,7 @@ const App = {
 
 
 
-      '营运':     { inspection: false, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '营运':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
 
 
 
@@ -3126,7 +3144,15 @@ const App = {
 
 
 
-      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true , task_create: true, task_done: true, task_board: true, ssc: true }
+      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true , task_create: true, task_done: true, task_board: true, ssc: true },
+
+
+
+
+
+
+
+      '供应链': { inspection: false, daily: false, penalty: false, complaint: false, notice: true, dashboard: false, task: false, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: false},
 
 
 
@@ -3198,7 +3224,7 @@ const App = {
 
 
 
-      '客服': '客服', '营运': '营运', '区域教练': '区域教练', '店长': '店长', 'admin': '预览模式',
+      '客服': '客服', '营运': '营运', '区域教练': '区域教练', '店长': '店长', '供应链': '供应链', 'admin': '预览模式',
 
       '总部经理': '总部经理'
 
@@ -3232,7 +3258,7 @@ const App = {
 
 
 
-      '客服': '#059669', '营运': '#d97706', '区域教练': '#d97706', '店长': '#059669', 'admin': '#6b7280',
+      '客服': '#059669', '营运': '#d97706', '区域教练': '#d97706', '店长': '#059669', '供应链': '#0891b2', 'admin': '#6b7280',
 
       '总部经理': '#c41a1a'
 
