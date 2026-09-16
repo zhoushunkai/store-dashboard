@@ -5548,6 +5548,18 @@ const App = {
     if (!user) return all;
     if (user.role === '总部' || user.role === 'admin') return all;
     var myName = user.name || '';
+    /* v104: 区域教练 —— 本区域门店任务 + 指派给本人的个人任务 */
+    if (user.role === '区域教练' && user.area) {
+      var _areaNames = {};
+      (this.getStores() || []).forEach(function(s) { if (s && s.region === user.area && s.name) _areaNames[s.name] = 1; });
+      return all.filter(function(t) {
+        if (t.assigneeType === 'store') {
+          if (t.assignee === '全部门店') return true;
+          return !!_areaNames[t.assignee];
+        }
+        return t.assignee === myName;
+      });
+    }
     var myStore = user.store || '';
     return all.filter(function(t) {
       if (t.assigneeType === 'store') {

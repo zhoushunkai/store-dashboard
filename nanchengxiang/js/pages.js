@@ -20209,6 +20209,19 @@ Pages.dashboard = function() {
 
 
 
+  /* v104: 区域教练看板中心按所属区域收口 */
+  var _dashScope = Pages._areaScope(user);
+  if (_dashScope.scoped) {
+    complaints = complaints.filter(function(c) { return Pages._recInArea(c, _dashScope); });
+    penalties = penalties.filter(function(p) { return Pages._recInArea(p, _dashScope); });
+    issues = issues.filter(function(r) { return Pages._recInArea(r, _dashScope); });
+    reports = reports.filter(function(r) {
+      if (r && r.items && r.items.length) return r.items.some(function(it) { return Pages._recInArea(it, _dashScope); });
+      return Pages._recInArea(r, _dashScope);
+    });
+    supplyIssues = supplyIssues.filter(function(r) { return Pages._recInArea(r, _dashScope); });
+  }
+
   var supplyTotal = Pages._pdFilter(supplyIssues, function(r){ return r.date || ''; }, Pages._pdGet('supplyChain')).length;
 
 
@@ -23584,7 +23597,14 @@ Pages._esc = function(s) {
 /* 整改任务 = 现有任务按 source 过滤 */
 Pages._rectTasks = function() {
   var srcs = ['稽核工单', '专项检查', '培训验收'];
-  return (App.getTasks() || []).filter(function(t) { return srcs.indexOf(t.source) >= 0; });
+  var list = (App.getTasks() || []).filter(function(t) { return srcs.indexOf(t.source) >= 0; });
+  /* v104: 区域教练仅见本区域门店任务（含本人负责） */
+  var scope = Pages._areaScope();
+  if (scope.scoped) {
+    var me = (App.currentUser && App.currentUser.name) || '';
+    list = list.filter(function(t) { return Pages._recInArea(t, scope) || (!!me && t.person === me); });
+  }
+  return list;
 };
 
 Pages._openModalHtml = function(html) {
@@ -24014,7 +24034,7 @@ Pages.daily = function() {
 
 
 
-  var stores = App.getStores();
+  var stores = Pages._areaStoreList();
 
 
 
@@ -26108,7 +26128,7 @@ Pages._dailyRow = function(index) {
 
 
 
-  var stores = App.getStores();
+  var stores = Pages._areaStoreList();
 
 
 
@@ -28027,6 +28047,25 @@ Pages._renderDailyBoard = function(reports, stores, workRecords) {
 
 
 
+
+  /* v104: 区域教练日报看板仅保留本区域门店的填报项 */
+  var _dailyScope = Pages._areaScope();
+  if (_dailyScope.scoped) {
+    var _scopedReports = [];
+    filtered.forEach(function(r) {
+      var o = {}; for (var _k in r) { if (Object.prototype.hasOwnProperty.call(r, _k)) o[_k] = r[_k]; }
+      var rawItems = r.items || [];
+      if (rawItems.length) {
+        var _its = rawItems.filter(function(it) { return Pages._recInArea(it, _dailyScope); });
+        if (!_its.length) return;
+        o.items = _its;
+      } else if (!Pages._recInArea(r, _dailyScope)) {
+        return;
+      }
+      _scopedReports.push(o);
+    });
+    filtered = _scopedReports;
+  }
 
   // 按稽核员分组
 
@@ -50184,11 +50223,50 @@ Pages._bdTabs = function(activeId) {
 
 
 
+/* ===== v104: 区域教练按所属区域收口（通用辅助） ===== */
+Pages._areaScope = function(user) {
+  user = user || App.currentUser || {};
+  var scoped = (user.role === '区域教练') && !!user.area;
+  var all = App.getStores() || [];
+  var byId = {}, byName = {}, ids = [], names = [];
+  all.forEach(function(s) {
+    if (!s) return;
+    if (s.id) byId[s.id] = s;
+    if (s.name) byName[s.name] = s;
+  });
+  if (!scoped) return { scoped: false, area: '', stores: all, storeIds: ids, storeNames: names, byId: byId, byName: byName };
+  var list = all.filter(function(s) { return s && s.region === user.area; });
+  list.forEach(function(s) {
+    if (s.id) ids.push(s.id);
+    if (s.name) names.push(s.name);
+  });
+  return { scoped: true, area: user.area, stores: list, storeIds: ids, storeNames: names, byId: byId, byName: byName };
+};
+Pages._recInArea = function(rec, scope) {
+  scope = scope || Pages._areaScope();
+  if (!scope || !scope.scoped) return true;
+  if (!rec) return false;
+  var id = rec.storeId || rec.store_id || '';
+  if (id && scope.byId[id]) return scope.byId[id].region === scope.area;
+  var nm = String(rec.store || rec.storeName || rec.store_name || rec.source || '').trim();
+  if (!nm) return false;
+  if (scope.byName[nm]) return scope.byName[nm].region === scope.area;
+  for (var i = 0; i < scope.storeNames.length; i++) {
+    if (nm.indexOf(scope.storeNames[i]) >= 0 || scope.storeNames[i].indexOf(nm) >= 0) return true;
+  }
+  return false;
+};
+Pages._areaStoreList = function(scope) {
+  scope = scope || Pages._areaScope();
+  return scope.scoped ? scope.stores : (App.getStores() || []);
+};
 /* ===== 看板区域/门店筛选（P1-02） ===== */
 Pages._bdFilter = { region: '', stores: [] };
 Pages._bdRegionOrder = ['经营一区','经营二区','经营三区','经营四区','经营五区','经营六区','经营七区','经营八区','经营九区','经营十区','训练店','上海'];
 Pages._bdRegions = function() {
   var set = {}; var out = [];
+  var _rs = Pages._areaScope();
+  if (_rs.scoped) return [_rs.area];
   (App.getStores() || []).forEach(function(s) { if (s.region && !set[s.region]) { set[s.region] = 1; out.push(s.region); } });
   out.sort(function(a, b) {
     var ia = Pages._bdRegionOrder.indexOf(a), ib = Pages._bdRegionOrder.indexOf(b);
@@ -50221,9 +50299,13 @@ Pages._bdItemRegion = function(r, map) {
 };
 Pages._bdFilterApply = function(list) {
   var f = Pages._bdFilter;
-  if (!f.region && (!f.stores || !f.stores.length)) return list;
+  var _as = Pages._areaScope();
+  var arr = list || [];
+  /* v104: 区域教练仅可见本区域数据 */
+  if (_as.scoped) arr = arr.filter(function(r) { return Pages._recInArea(r, _as); });
+  if (!f.region && (!f.stores || !f.stores.length)) return arr;
   var map = Pages._bdStoreMap();
-  return (list || []).filter(function(r) {
+  return arr.filter(function(r) {
     if (f.region && Pages._bdItemRegion(r, map) !== f.region) return false;
     if (f.stores && f.stores.length && f.stores.indexOf(Pages._bdItemStore(r, map)) < 0) return false;
     return true;
@@ -50233,11 +50315,15 @@ Pages._bdStoreList = function() {
   var f = Pages._bdFilter;
   var map = Pages._bdStoreMap();
   var names = Object.keys(map.byName).sort(function(a, b) { return a.localeCompare(b, 'zh'); });
+  var _ss = Pages._areaScope();
+  if (_ss.scoped) names = names.filter(function(n) { return (map.byName[n].region || '') === _ss.area; });
   if (!f.region) return names;
   return names.filter(function(n) { return (map.byName[n].region || '') === f.region; });
 };
 Pages._bdFilterBarHtml = function() {
   var f = Pages._bdFilter;
+  var _bs = Pages._areaScope();
+  if (_bs.scoped && f.region !== _bs.area) { f.region = _bs.area; f.stores = []; }
   var regions = Pages._bdRegions();
   var html = '<div class="bd-filter"><div class="bd-filter-row"><span class="bd-filter-label">区域</span>';
   html += '<select class="bd-filter-select" onchange="Pages._bdSetRegion(this.value)">';
@@ -50256,6 +50342,8 @@ Pages._bdFilterBarHtml = function() {
   return html;
 };
 Pages._bdSetRegion = function(v) {
+  var _vs = Pages._areaScope();
+  if (_vs.scoped) v = _vs.area;
   Pages._bdFilter.region = v;
   Pages._bdFilter.stores = [];
   Pages._bdRerenderBoard();
