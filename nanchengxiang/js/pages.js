@@ -3137,6 +3137,12 @@ Pages.home = function() {
       html += '<div class="quick-entries">';
       html += '<div class="quick-entry" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>稽核结果</div>';
       html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F3E2}</span>SSC 申请</div>';
+      if (Pages._sscCap().receive) {
+        html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F4E5}</span>SSC 接收分发</div>';
+      }
+      if (Pages._sscCap().handle) {
+        html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F4CB}</span>SSC 申请办理</div>';
+      }
       html += '<div class="quick-entry" onclick="location.hash=\'#dashboard\'"><span class="qe-icon">\u{1F4CA}</span>数据看板</div>';
       html += '</div>';
     } else if (user.role === '供应链') {
@@ -48218,9 +48224,14 @@ Pages._sscCap = function(role) {
     handle: !!App.Permissions.canAccess(r, 'ssc_handle')
   };
 };
+/* v107: 2.0事业部营运教练——area 承载区域名（营运部），SSC 部门归属改用显式映射，
+   不改动 users.area 语义与 v104 区域收口逻辑 */
+Pages._sscDeptOf = { 'y01': '2.0事业部', 'y02': '2.0事业部', 'y03': '2.0事业部', 'y04': '2.0事业部',
+  'y05': '2.0事业部', 'y06': '2.0事业部', 'y09': '2.0事业部', 'h04': '2.0事业部' };
 Pages._sscMyDept = function() {
   var u = App.currentUser || {};
-  return String(u.department || u.area || '').trim();
+  var mapped = Pages._sscDeptOf[String(u.id || '').trim()];
+  return String(mapped || u.department || u.area || '').trim();
 };
 Pages._sscIsWait = function(s) { return s === '待接收' || s === '待受理'; };
 

@@ -3178,39 +3178,27 @@ const App = {
 
 
 
-    canAccess: function(role, module) {
-
-
-
-
-
-
-
-      var perm = this.matrix[role];
-
-
-
-
-
-
-
-      if (!perm) return false;
-
-
-
-
-
-
-
-      return perm[module] === true;
-
-
-
-
-
-
-
-    },
+    /* v107: 权限叠加层——不改动角色矩阵，按 账号ID / area 追加能力（只增不减，门店端角色不受影响） */
+  grants: {
+    ssc_receive: { areas: ['优化部'] },
+    ssc_handle: { ids: ['y01', 'y02', 'y03', 'y04', 'y05', 'y06', 'y09'] },
+  },
+  grantsHit: function(module, user) {
+    var g = this.grants && this.grants[module];
+    if (!g) return false;
+    var u = user || (typeof App !== 'undefined' && App.currentUser) || null;
+    if (!u) return false;
+    var uid = String(u.id || '').trim();
+    if (uid && (g.ids || []).indexOf(uid) >= 0) return true;
+    var ua = String(u.area || '').trim();
+    if (ua && (g.areas || []).indexOf(ua) >= 0) return true;
+    return false;
+  },
+  canAccess: function(role, module, user) {
+    var perm = this.matrix[role];
+    if (perm && perm[module] === true) return true;
+    return this.grantsHit(module, user);
+  },
 
 
 

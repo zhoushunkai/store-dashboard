@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'v106';
+﻿const CACHE_NAME = 'v107';
 
 
 
