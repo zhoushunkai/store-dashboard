@@ -3039,7 +3039,7 @@ const App = {
   /* v102: 四端分流——登录身份到端口映射（门店端/职能端/供应链端/总部端） */
   Portals: {
     map: { '店长': 'store', '区域教练': 'store',
-           '稽核员': 'func', '线上稽核': 'func', '线下稽核': 'func', '稽核': 'func', '营运': 'func', '客服': 'func',
+           '稽核员': 'func', '线上稽核': 'func', '线下稽核': 'func', '稽核': 'func', '营运': 'func', '客服': 'func', '职能部门': 'func', '优化部': 'func',
            '供应链': 'scm',
            '总部': 'hq', 'admin': 'hq', '总部经理': 'hq' },
     names: { store: '门店端', func: '职能端', scm: '供应链端', hq: '总部端' },
@@ -3070,7 +3070,7 @@ const App = {
 
 
 
-      '总部':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: true, task_done: true, task_board: true, ssc: true},
+      '总部':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: true, task_done: true, task_board: true, ssc: true, ssc_submit: false, ssc_receive: true, ssc_handle: true},
 
 
 
@@ -3078,7 +3078,7 @@ const App = {
 
 
 
-      '线上稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
+      '线上稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: false, ssc_receive: true, ssc_handle: false},
 
 
 
@@ -3086,7 +3086,7 @@ const App = {
 
 
 
-      '线下稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
+      '线下稽核': { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: false, ssc_receive: true, ssc_handle: false},
 
 
 
@@ -3094,7 +3094,7 @@ const App = {
 
 
 
-      '稽核员':   { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
+      '稽核员':   { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: false, complaint: false, notice: true, dashboard: false, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: false, ssc_receive: true, ssc_handle: false},
 
 
 
@@ -3102,7 +3102,7 @@ const App = {
 
 
 
-      '客服':     { inspection: false, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
+      '客服':     { inspection: false, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: true, ssc_receive: false, ssc_handle: false},
 
 
 
@@ -3110,7 +3110,7 @@ const App = {
 
 
 
-      '营运':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true},
+      '营运':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: true, ssc_receive: false, ssc_handle: false},
 
 
 
@@ -3118,7 +3118,7 @@ const App = {
 
 
 
-      '店长':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true, supply_chain: false, task_create: false, task_done: true, task_board: false},
+      '店长':     { inspection: false, inspection_results: true, daily: false, penalty: true, complaint: true, notice: true, dashboard: false, task: true, supply_chain: false, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: true, ssc_receive: false, ssc_handle: false},
 
 
 
@@ -3126,7 +3126,7 @@ const App = {
 
 
 
-      '区域教练': { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: false, task_create: false, task_done: true, task_board: false},
+      '区域教练': { inspection: false, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: false, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: true, ssc_receive: false, ssc_handle: false},
 
 
 
@@ -3134,9 +3134,9 @@ const App = {
 
 
 
-      '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false},
+      '稽核':     { inspection: true, inspection_edit: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: false, ssc_receive: true, ssc_handle: false},
 
-      '总部经理': { dashboard: true, board_view: true, inspection: false, inspection_edit: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: false, task: false, supply_chain: false, task_create: false, task_done: false, task_board: false, ssc: true},
+      '总部经理': { dashboard: true, board_view: true, inspection: false, inspection_edit: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: false, task: false, supply_chain: false, task_create: false, task_done: false, task_board: false, ssc: true, ssc_submit: false, ssc_receive: true, ssc_handle: true},
 
 
 
@@ -3144,7 +3144,7 @@ const App = {
 
 
 
-      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true , task_create: true, task_done: true, task_board: true, ssc: true },
+      'admin':   { inspection: true, inspection_results: true, daily: true, penalty: true, complaint: true, notice: true, dashboard: true, task: true, supply_chain: true , task_create: true, task_done: true, task_board: true, ssc: true, ssc_submit: true, ssc_receive: true, ssc_handle: true },
 
 
 
@@ -3152,7 +3152,7 @@ const App = {
 
 
 
-      '供应链': { inspection: false, daily: false, penalty: false, complaint: false, notice: true, dashboard: false, task: false, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: false},
+      '供应链': { inspection: false, daily: false, penalty: false, complaint: false, notice: true, dashboard: false, task: false, supply_chain: true, task_create: false, task_done: true, task_board: false, ssc: false, ssc_submit: false, ssc_receive: false, ssc_handle: false},
 
 
 
@@ -3160,6 +3160,8 @@ const App = {
 
 
 
+      '职能部门': { inspection: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: true, dashboard: false, task: false, supply_chain: false, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: false, ssc_receive: false, ssc_handle: true},
+      '优化部':   { inspection: false, inspection_results: false, daily: false, penalty: false, complaint: false, notice: true, dashboard: false, task: false, supply_chain: false, task_create: false, task_done: true, task_board: false, ssc: true, ssc_submit: false, ssc_receive: true, ssc_handle: true},
     },
 
 
