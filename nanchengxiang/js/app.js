@@ -3181,7 +3181,7 @@ const App = {
     /* v107: 权限叠加层——不改动角色矩阵，按 账号ID / area 追加能力（只增不减，门店端角色不受影响） */
   grants: {
     ssc_receive: { areas: ['优化部'] },
-    ssc_handle: { ids: ['y01', 'y02', 'y03', 'y04', 'y05', 'y06', 'y09'] },
+    ssc_handle: { ids: ['y01', 'y02', 'y03', 'y04', 'y05', 'y06', 'y09', 'y11', 'y12'] },
   },
   grantsHit: function(module, user) {
     var g = this.grants && this.grants[module];

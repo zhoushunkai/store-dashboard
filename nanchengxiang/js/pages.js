@@ -48227,7 +48227,8 @@ Pages._sscCap = function(role) {
 /* v107: 2.0事业部营运教练——area 承载区域名（营运部），SSC 部门归属改用显式映射，
    不改动 users.area 语义与 v104 区域收口逻辑 */
 Pages._sscDeptOf = { 'y01': '2.0事业部', 'y02': '2.0事业部', 'y03': '2.0事业部', 'y04': '2.0事业部',
-  'y05': '2.0事业部', 'y06': '2.0事业部', 'y09': '2.0事业部', 'h04': '2.0事业部' };
+  'y05': '2.0事业部', 'y06': '2.0事业部', 'y09': '2.0事业部', 'y11': '2.0事业部',
+  'y12': '2.0事业部', 'h04': '2.0事业部' };
 Pages._sscMyDept = function() {
   var u = App.currentUser || {};
   var mapped = Pages._sscDeptOf[String(u.id || '').trim()];
