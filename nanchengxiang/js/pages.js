@@ -110,405 +110,299 @@ const Pages = {};
 
 
 
+/* ---- 登录页（v106：统一口令 + 选人登录） ---- */
+
+Pages._loginStep = 'pass';
+
+Pages._peopleKeyword = '';
+
+Pages._peopleRetry = 0;
+
+Pages._peopleTimer = null;
+
 Pages.login = function() {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   const el = document.getElementById('page-login');
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   if (!el) return;
 
+  // 本设备已通过口令校验则自动跳过口令，直接进入选人
 
+  Pages._loginStep = App.isDeviceVerified() ? 'person' : 'pass';
 
+  Pages._peopleRetry = 0;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  let html = '<div class="login-page">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="login-logo">&#9749;</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="login-title">南城香协作终端</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="login-subtitle">门店协作管理平台</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // 手机号登录表单
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="phone-login-card">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="card-title">手机号登录</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="phone-input-group">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<span class="phone-prefix">+86</span>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<input type="tel" id="phone-input" class="phone-input" placeholder="请输入手机号" maxlength="11" value="' + (App._phoneLoginNumber || '') + '" oninput="Pages.onPhoneInput()">';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<button class="sms-btn" id="sms-btn" onclick="Pages.doPhoneLogin()" disabled>登录</button>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<div class="login-divider"><span>或</span></div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '<button class="skip-btn" onclick="App.quickLogin(); location.hash=\'#home\';">跳过登录，直接预览首页</button>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  html += '</div>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  el.innerHTML = html;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  Pages.renderLogin();
 
 };
 
+Pages.renderLogin = function() {
 
+  const el = document.getElementById('page-login');
 
+  if (!el) return;
 
+  let html = '<div class="login-page">';
 
+  html += '<div class="login-logo">&#9749;</div>';
 
+  html += '<div class="login-title">南城香协作终端</div>';
 
+  html += '<div class="login-subtitle">门店协作管理平台</div>';
 
+  if (Pages._loginStep === 'pass') {
 
+    html += '<div class="phone-login-card">';
 
+    html += '<div class="card-title">访问口令</div>';
 
+    html += '<div class="phone-input-group">';
 
+    html += '<input type="password" id="access-pass-input" class="phone-input" placeholder="请输入访问口令" maxlength="32" onkeydown="if(event.key===\'Enter\'){Pages.doPassVerify();}">';
 
+    html += '</div>';
 
+    html += '<button class="sms-btn" id="pass-btn" onclick="Pages.doPassVerify()">进入</button>';
 
+    html += '<div class="login-pass-tip">口令由总部统一下发，验证通过后本设备将自动记住</div>';
 
+    html += '</div>';
 
+  } else {
 
+    html += Pages.personStepHtml();
 
+    html += '<div class="login-divider"><span>或</span></div>';
 
+    html += '<button class="skip-btn" onclick="App.quickLogin(); location.hash=\'#home\';">跳过登录，直接预览首页</button>';
 
+    html += '<button class="skip-btn clear-memory-btn" onclick="Pages.clearDeviceMemory()">清除本设备记忆（下次需重新输入口令）</button>';
 
+  }
 
+  html += '</div>';
 
+  el.innerHTML = html;
 
+  if (Pages._loginStep === 'pass') {
 
+    const box = document.getElementById('access-pass-input');
 
+    if (box) box.focus();
 
+  } else {
 
+    Pages.renderPeopleList();
 
+  }
+
+};
+
+Pages.personStepHtml = function() {
+
+  let h = '';
+
+  h += '<div class="phone-login-card">';
+
+  h += '<div class="card-title">选择本人姓名</div>';
+
+  h += '<div class="phone-input-group">';
+
+  h += '<input type="text" id="people-search" class="phone-input" placeholder="搜索姓名 / 门店 / 部门" value="' + Pages.esc(Pages._peopleKeyword) + '" oninput="Pages.onPeopleSearch()">';
+
+  h += '</div>';
+
+  h += '<div class="people-list" id="people-list"></div>';
+
+  h += '</div>';
+
+  return h;
+
+};
+
+Pages.esc = function(s) {
+
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+};
+
+/* ---- 口令校验 ---- */
+
+Pages.doPassVerify = function() {
+
+  const box = document.getElementById('access-pass-input');
+
+  const val = box ? box.value : '';
+
+  if (!val) { App.toast('请输入访问口令'); if (box) box.focus(); return; }
+
+  if (!App.verifyPasscode(val)) { App.toast('口令不正确，请重新输入'); if (box) { box.value = ''; box.focus(); } return; }
+
+  App.rememberDevice();
+
+  Pages._loginStep = 'person';
+
+  App.toast('口令验证通过，本设备已记住');
+
+  Pages.renderLogin();
+
+};
+
+Pages.clearDeviceMemory = function() {
+
+  App.forgetDevice();
+
+  Pages._loginStep = 'pass';
+
+  Pages._peopleKeyword = '';
+
+  App.toast('已清除本设备记忆，请重新输入口令');
+
+  Pages.renderLogin();
+
+};
+
+/* ---- 人员列表（来源 users 表） ---- */
+
+Pages.peopleSource = function() { return App.getUsers() || []; };
+
+Pages.onPeopleSearch = function() {
+
+  const box = document.getElementById('people-search');
+
+  Pages._peopleKeyword = box ? box.value : '';
+
+  Pages.renderPeopleList();
+
+};
+
+Pages.personLabel = function(user, dupCount) {
+
+  const name = user.name || '未命名';
+
+  if (dupCount > 1) {
+
+    // 重名人员用「姓名·门店/部门」区分
+
+    return name + ' · ' + (user.store || user.area || user.role || '未标注');
+
+  }
+
+  return name;
+
+};
+
+Pages.renderPeopleList = function() {
+
+  const box = document.getElementById('people-list');
+
+  if (!box || Pages._loginStep !== 'person') return;
+
+  if (Pages._peopleTimer) { clearTimeout(Pages._peopleTimer); Pages._peopleTimer = null; }
+
+  const list = Pages.peopleSource();
+
+  if (!list.length) {
+
+    box.innerHTML = '<div class="people-empty">人员数据尚未同步完成，请检查网络后刷新重试</div>';
+
+    // 云数据仍在同步时自动重试渲染
+
+    if (App.supabase && !App.dataReady && Pages._peopleRetry < 40) {
+
+      Pages._peopleRetry++;
+
+      Pages._peopleTimer = setTimeout(function() { Pages.renderPeopleList(); }, 500);
+
+    }
+
+    return;
+
+  }
+
+  const kw = (Pages._peopleKeyword || '').trim().toLowerCase();
+
+  const dup = {};
+
+  for (let i = 0; i < list.length; i++) {
+
+    const n = list[i].name || '';
+
+    dup[n] = (dup[n] || 0) + 1;
+
+  }
+
+  const hit = [];
+
+  for (let j = 0; j < list.length; j++) {
+
+    const u = list[j];
+
+    if (!kw) { hit.push(u); continue; }
+
+    const text = ((u.name || '') + ' ' + (u.store || '') + ' ' + (u.area || '') + ' ' + (u.role || '') + ' ' + (u.phone || '')).toLowerCase();
+
+    if (text.indexOf(kw) >= 0) hit.push(u);
+
+  }
+
+  if (!hit.length) {
+
+    box.innerHTML = '<div class="people-empty">没有匹配的人员，请检查姓名是否输入有误</div>';
+
+    return;
+
+  }
+
+  let html = '';
+
+  for (let k = 0; k < hit.length; k++) {
+
+    const u = hit[k];
+
+    const label = Pages.personLabel(u, dup[u.name || ''] || 0);
+
+    const place = u.store || u.area || '';
+
+    const meta = (u.role || '') + (place ? ' · ' + place : '');
+
+    html += '<div class="people-item" onclick="Pages.doPersonLogin(\'' + u.id + '\')">';
+
+    html += '<div class="people-name">' + Pages.esc(label) + '</div>';
+
+    if (meta) html += '<div class="people-meta">' + Pages.esc(meta) + '</div>';
+
+    html += '</div>';
+
+  }
+
+  box.innerHTML = html;
+
+};
+
+Pages.doPersonLogin = function(userId) {
+
+  const list = Pages.peopleSource();
+
+  let user = null;
+
+  for (let i = 0; i < list.length; i++) {
+
+    if (list[i].id === userId) { user = list[i]; break; }
+
+  }
+
+  if (!user) { App.toast('未找到该人员，请刷新页面后重试'); return; }
+
+  if (!user.phone) { App.toast('该人员未登记手机号，请联系管理员'); return; }
+
+  Pages._phoneLoginNumber = '';
+
+  // 复用原有「按手机号精确匹配」的登录流程
+
+  Pages._doPhoneLoginCore(user.phone);
+
+};
 
 Pages._phoneLoginNumber = '';
 

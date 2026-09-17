@@ -950,6 +950,26 @@ body {
 
 .skip-btn:active { background: rgba(255,255,255,0.15); color: #fff; }
 
+/* v106: 统一口令 + 选人登录 */
+
+.people-list { max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
+
+.people-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+
+.people-item:last-child { border-bottom: none; }
+
+.people-item:active { background: #f7f7f7; }
+
+.people-name { font-size: 15px; font-weight: 600; color: var(--text); }
+
+.people-meta { font-size: 12px; color: #888; margin-top: 2px; }
+
+.people-empty { padding: 18px 10px; text-align: center; font-size: 13px; color: #888; line-height: 1.5; }
+
+.login-pass-tip { margin-top: 4px; font-size: 12px; color: #999; text-align: center; line-height: 1.5; }
+
+.clear-memory-btn { margin-top: 8px; }
+
 
 
 /* === Score Card === */

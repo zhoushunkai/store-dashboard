@@ -70,6 +70,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 
 
+/* ---------------- 统一登录口令（v106 唯一集中定义处：日后修改只改这一行） ---------------- */
+
+const GLOBAL_LOGIN_PASSCODE = '123456';
+
+/* 本设备口令校验通过标记（localStorage 持久化，清除即需重新输入口令） */
+
+const DEVICE_PASS_KEY = 'nanchengxiang_pass_device_ok';
+
 /* ---------------- 全局工具函数 ---------------- */
 
 
@@ -7182,6 +7190,16 @@ const App = {
 
 
 
+  /* ---- v106: 统一访问口令（本设备记忆） ---- */
+
+  isDeviceVerified() { try { return localStorage.getItem(DEVICE_PASS_KEY) === '1'; } catch(e) { return false; } },
+
+  verifyPasscode(input) { return String(input == null ? '' : input).trim() === String(GLOBAL_LOGIN_PASSCODE); },
+
+  rememberDevice() { try { localStorage.setItem(DEVICE_PASS_KEY, '1'); } catch(e) {} },
+
+  forgetDevice() { try { localStorage.removeItem(DEVICE_PASS_KEY); } catch(e) {} },
+
   logout() {
 
 
@@ -7199,6 +7217,8 @@ const App = {
 
 
     localStorage.removeItem('nanchengxiang_current_user');
+
+    this.forgetDevice();  // v106: 退出登录同时清除本设备口令记忆，下次需重新输入口令
 
 
 
