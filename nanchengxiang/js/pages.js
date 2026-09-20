@@ -51448,16 +51448,24 @@ Pages.RC = {
     }
     return { id: u.id || '', name: u.name || '', user: u, role: u.role || '', storeId: u.storeId || '', store: u.store || '', region: region };
   },
-  canViewStore: function(storeId) {
+  HQ_ROLES: ['admin', '总部', '总部经理'],
+  scope: function() {
     var me = Pages.RC.me();
-    if (me.role === '店长') return String(me.storeId) === String(storeId || '');
-    if (me.region) { var st = Pages.RC.storeById(storeId); return !!(st && st.region === me.region); }
-    return true;
+    if (me.role === '店长') return { type: 'store', storeId: me.storeId, region: '', role: me.role };
+    if (me.region) return { type: 'region', region: me.region, storeId: '', role: me.role };
+    if (Pages.RC.HQ_ROLES.indexOf(me.role) >= 0) return { type: 'all', region: '', storeId: '', role: me.role };
+    return { type: 'none', region: '', storeId: '', role: me.role };
+  },
+  canViewStore: function(storeId) {
+    var sc = Pages.RC.scope();
+    if (sc.type === 'store') return String(sc.storeId) === String(storeId || '');
+    if (sc.type === 'region') { var st = Pages.RC.storeById(storeId); return !!(st && st.region === sc.region); }
+    return sc.type === 'all';
   },
   canHandle: function(storeId) {
-    var me = Pages.RC.me();
-    if (me.role === '店长') return String(me.storeId) === String(storeId || '');
-    if (me.region) { var st = Pages.RC.storeById(storeId); return !!(st && st.region === me.region); }
+    var sc = Pages.RC.scope();
+    if (sc.type === 'store') return String(sc.storeId) === String(storeId || '');
+    if (sc.type === 'region') { var st = Pages.RC.storeById(storeId); return !!(st && st.region === sc.region); }
     return false;
   },
   /* ---- 时间 ---- */
@@ -51787,8 +51795,9 @@ Pages.regionConfirm = function() {
   var el = document.getElementById('page-regionConfirm');
   if (!el) return;
   var user = Pages.RC.me();
-  var regions = user.region ? [user.region] : Pages.RC.allRegions();
-  if (!regions.length) { el.innerHTML = '<div class="rc-empty">暂无区域数据</div>'; return; }
+  var sc = Pages.RC.scope();
+  var regions = sc.type === 'region' ? [sc.region] : (sc.type === 'all' ? Pages.RC.allRegions() : []);
+  if (!regions.length) { el.innerHTML = '<div class="rc-empty">当前账号（' + Pages.esc(user.role || '未知角色') + '）没有区域管理范围，无法查看门店确认明细。</div>'; return; }
   if (Pages._rcRegionPick && regions.indexOf(Pages._rcRegionPick) < 0) Pages._rcRegionPick = null;
   var region = Pages._rcRegionPick || regions[0];
   Pages._rcRegionPick = region;
