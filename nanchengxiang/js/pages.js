@@ -51428,8 +51428,10 @@ Pages.RC = {
   },
   storeManagerName: function(store) {
     if (!store) return '';
+    var sid = String((typeof store === 'object' ? store.id : store) || '');
+    if (!sid) return '';
     var hit = (App.getUsers() || []).filter(function(u) {
-      return u && u.role === '店长' && String(u.storeId || '') === String(store.id || '');
+      return u && u.role === '店长' && String(u.storeId || '') === sid;
     });
     return hit.length ? (hit[0].name || '') : '';
   },
