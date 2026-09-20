@@ -3737,6 +3737,8 @@ Pages.home = function() {
 
 
 
+  html += Pages._homeConfirmCard(user);
+  html += Pages._homeRegionConfirmCard(user);
   html += Pages._installCardHtml();
   el.innerHTML = html;
 
@@ -51303,4 +51305,551 @@ Pages._installCardHtml = function() {
     + '<button class="ic-btn" onclick="window.Installer.trigger()">安装</button>'
     + '<span class="ic-close" onclick="window.Installer.dismiss()">\u2715</span>'
     + '</div>';
+};
+
+
+/* =====================================================================
+   v109 新增：责任人确认（处罚 / 差评）
+   —— 待办口径：confirmStatus 缺失或 pending 的记录
+   —— 店长处理：confirmed（确认无误 / 修改后确认）、disputed（有异议退回稽核）
+   —— 区域经理视角：users.region 识别，仅本区域；无店长门店由区域经理兜底承接
+   ===================================================================== */
+Pages.RC = {
+  /* ---- 基础口径 ---- */
+  statusOf: function(rec) {
+    var s = rec ? rec.confirmStatus : '';
+    if (s === 'confirmed' || s === 'disputed') return s;
+    return 'pending';
+  },
+  statusLabel: function(s) {
+    if (s === 'confirmed') return '已确认';
+    if (s === 'disputed') return '有异议';
+    return '待确认';
+  },
+  statusPill: function(s) {
+    if (s === 'confirmed') return 'rc-pill-green';
+    if (s === 'disputed') return 'rc-pill-red';
+    return 'rc-pill-amber';
+  },
+  kindLabel: function(kind) { return kind === 'complaint' ? '差评' : '处罚'; },
+  kindClass: function(kind) { return kind === 'complaint' ? 'rc-kind-complaint' : 'rc-kind-penalty'; },
+  srcOf: function(kind) { return (kind === 'complaint' ? App.getComplaints() : App.getPenalties()) || []; },
+  find: function(kind, id) {
+    var list = Pages.RC.srcOf(kind);
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].id) === String(id)) return list[i];
+    }
+    return null;
+  },
+  /* ---- 统一「确认条目」结构 ---- */
+  entry: function(kind, rec) {
+    var base = {
+      kind: kind, id: rec.id, storeId: rec.storeId || '', store: rec.store || '',
+      status: Pages.RC.statusOf(rec),
+      preset: '', presetTitle: '', title: '', meta: '', date: '', recorder: '',
+      confirmUserName: rec.confirmUserName || '', confirmAt: rec.confirmAt || '', confirmNote: rec.confirmNote || ''
+    };
+    if (kind === 'complaint') {
+      base.title = rec.content ? ('点评：' + rec.content) : '差评记录';
+      base.meta = [rec.platform || '差评', rec.responsibleTitle || ''].filter(Boolean).join(' · ');
+      base.date = rec.date || rec.eventDate || '';
+      base.recorder = rec.recorder || rec.inspector || rec.creator || '';
+      base.preset = rec.responsible || '';
+      base.presetTitle = rec.responsibleTitle || '';
+    } else {
+      base.title = rec.event || '处罚记录';
+      base.meta = [rec.category || '', rec.level || ''].filter(Boolean).join(' · ');
+      base.date = rec.eventDate || rec.date || '';
+      base.recorder = rec.recorder || rec.inspector || rec.creator || '';
+      base.preset = rec.dutyPerson || '';
+      base.presetTitle = rec.personLevel || rec.personType || '';
+    }
+    return base;
+  },
+  sortEntries: function(list) {
+    return list.sort(function(a, b) {
+      var pa = a.status === 'pending' ? 0 : 1, pb = b.status === 'pending' ? 0 : 1;
+      if (pa !== pb) return pa - pb;
+      return String(b.date || '').localeCompare(String(a.date || ''));
+    });
+  },
+  entriesOfStore: function(storeId) {
+    var out = [];
+    Pages.RC.srcOf('penalty').forEach(function(r) { if (r && r.storeId === storeId) out.push(Pages.RC.entry('penalty', r)); });
+    Pages.RC.srcOf('complaint').forEach(function(r) { if (r && r.storeId === storeId) out.push(Pages.RC.entry('complaint', r)); });
+    return Pages.RC.sortEntries(out);
+  },
+  pendingOfStore: function(storeId) {
+    return Pages.RC.entriesOfStore(storeId).filter(function(e) { return e.status === 'pending'; });
+  },
+  /* ---- 门店维度统计 ---- */
+  storeStat: function(storeId) {
+    var list = Pages.RC.entriesOfStore(storeId);
+    var done = 0, pending = 0;
+    list.forEach(function(e) { if (e.status === 'pending') pending++; else done++; });
+    var level = 'none';
+    if (list.length) level = (pending === 0) ? 'green' : (done === 0 ? 'red' : 'amber');
+    return { total: list.length, done: done, pending: pending, level: level };
+  },
+  /* ---- 区域维度 ---- */
+  storesOfRegion: function(region) {
+    return (App.getStores() || []).filter(function(s) { return s && s.region === region; });
+  },
+  allRegions: function() {
+    var seen = {}, out = [];
+    (App.getStores() || []).forEach(function(s) {
+      if (s && s.region && !seen[s.region]) { seen[s.region] = 1; out.push(s.region); }
+    });
+    return out;
+  },
+  regionSummary: function(region) {
+    var stores = Pages.RC.storesOfRegion(region);
+    var doneStore = 0, pendStore = 0, idle = 0, totRec = 0, doneRec = 0, pendRec = 0, rows = [];
+    stores.forEach(function(s) {
+      var st = Pages.RC.storeStat(s.id);
+      rows.push({ id: s.id, name: s.name, manager: Pages.RC.storeManagerName(s), stat: st });
+      if (st.total === 0) { idle++; return; }
+      totRec += st.total; doneRec += st.done; pendRec += st.pending;
+      if (st.pending === 0) doneStore++; else pendStore++;
+    });
+    rows.sort(function(a, b) {
+      var pa = a.stat.pending > 0 ? 0 : 1, pb = b.stat.pending > 0 ? 0 : 1;
+      if (pa !== pb) return pa - pb;
+      if (b.stat.pending !== a.stat.pending) return b.stat.pending - a.stat.pending;
+      return String(a.name || '').localeCompare(String(b.name || ''), 'zh');
+    });
+    var need = stores.length - idle;
+    return {
+      region: region, stores: stores, rows: rows, idle: idle, needStores: need, totalStore: stores.length,
+      doneStore: doneStore, pendStore: pendStore,
+      rate: need > 0 ? Math.round(doneStore / need * 100) : 100,
+      totalRec: totRec, doneRec: doneRec, pendRec: pendRec
+    };
+  },
+  storeManagerName: function(store) {
+    if (!store) return '';
+    var hit = (App.getUsers() || []).filter(function(u) {
+      return u && u.role === '店长' && String(u.storeId || '') === String(store.id || '');
+    });
+    return hit.length ? (hit[0].name || '') : '';
+  },
+  storeById: function(storeId) {
+    var hit = (App.getStores() || []).filter(function(s) { return s && String(s.id) === String(storeId); });
+    return hit.length ? hit[0] : null;
+  },
+  /* ---- 权限（账号级作用域，不改权限矩阵） ---- */
+  isRegionUser: function(user) { return !!(user && user.region); },
+  me: function() {
+    var u = App.currentUser || {};
+    var region = u.region || '';
+    if (!region && u.id) {
+      var hit = (App.getUsers() || []).filter(function(x) { return x && String(x.id) === String(u.id); });
+      if (hit.length && hit[0].region) region = hit[0].region;
+    }
+    return { id: u.id || '', name: u.name || '', user: u, role: u.role || '', storeId: u.storeId || '', store: u.store || '', region: region };
+  },
+  canViewStore: function(storeId) {
+    var me = Pages.RC.me();
+    if (me.role === '店长') return String(me.storeId) === String(storeId || '');
+    if (me.region) { var st = Pages.RC.storeById(storeId); return !!(st && st.region === me.region); }
+    return true;
+  },
+  canHandle: function(storeId) {
+    var me = Pages.RC.me();
+    if (me.role === '店长') return String(me.storeId) === String(storeId || '');
+    if (me.region) { var st = Pages.RC.storeById(storeId); return !!(st && st.region === me.region); }
+    return false;
+  },
+  /* ---- 时间 ---- */
+  nowText: function() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  },
+  atText: function(v) {
+    if (!v) return '';
+    var s = String(v).replace('T', ' ');
+    return s.length >= 16 ? s.slice(0, 16) : s;
+  },
+  /* ---- 写回（本地缓存 + 云端 upsert） ---- */
+  save: async function(kind, id, payload) {
+    var list = Pages.RC.srcOf(kind);
+    var target = null;
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i].id) === String(id)) { target = list[i]; break; }
+    }
+    if (!target) { App.toast('未找到该记录，请刷新后重试'); return false; }
+    var user = Pages.RC.me();
+    target.confirmStatus = payload.status;
+    target.confirmUserId = user.id || '';
+    target.confirmUserName = user.name || '';
+    target.confirmAt = new Date().toISOString();
+    target.confirmNote = payload.note || '';
+    if (payload.person) {
+      if (kind === 'complaint') target.responsible = payload.person;
+      else target.dutyPerson = payload.person;
+    }
+    try {
+      if (kind === 'complaint') await App.saveComplaints(list); else await App.savePenalties(list);
+      return true;
+    } catch (e) {
+      App.toast('提交失败：' + ((e && e.message) ? e.message : '未知错误'));
+      return false;
+    }
+  }
+};
+
+/* ---- 属性/内联参数转义 ---- */
+Pages._rcAt = function(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
+};
+
+/* ============ 界面①：店长端首页「待我确认(N)」待办卡 ============ */
+Pages._homeConfirmCard = function() {
+  var me = Pages.RC.me();
+  if (me.role !== '店长' || !me.storeId) return '';
+  var pend = Pages.RC.pendingOfStore(me.storeId);
+  var totalRec = Pages.RC.entriesOfStore(me.storeId).length;
+  var h = '';
+  h += '<div class="card rc-card">';
+  h += '<div class="card-title"><span>待我确认</span><span class="rc-count-badge" onclick="Pages.openConfirmPage()">' + pend.length + '</span></div>';
+  if (!pend.length) {
+    h += '<div class="rc-empty">本店暂无待确认记录' + (totalRec ? '（' + totalRec + ' 条记录均已完成确认）' : '') + '</div>';
+  } else {
+    h += '<div class="rc-item-sub" style="margin:0 0 2px;">' + pend.length + ' 条记录待确认责任人</div>';
+    pend.slice(0, 5).forEach(function(e) {
+      h += '<div class="rc-item">';
+      h += '<div class="rc-item-main">';
+      h += '<div class="rc-item-title"><span class="rc-kind ' + Pages.RC.kindClass(e.kind) + '">' + Pages.RC.kindLabel(e.kind) + '</span>' + Pages.esc(e.title) + '</div>';
+      h += '<div class="rc-item-sub">' + Pages.esc(e.meta || Pages.RC.kindLabel(e.kind)) + ' ｜ ' + Pages.esc(e.date) + '</div>';
+      h += '</div>';
+      h += '<div class="rc-go" onclick="event.stopPropagation();Pages.openConfirmPage(\'' + e.kind + '\',\'' + Pages._rcAt(e.id) + '\')">去确认</div>';
+      h += '</div>';
+    });
+    if (pend.length > 5) {
+      h += '<div class="rc-tip" onclick="Pages.openConfirmPage()">另有 ' + (pend.length - 5) + ' 条待确认记录，点击查看全部</div>';
+    }
+    h += '<div class="rc-tip">请在 24 小时内完成责任人确认；逾期未处理的记录将同步提醒区域经理。</div>';
+  }
+  h += '</div>';
+  return h;
+};
+
+/* ============ 界面③：区域经理端首页「本区域确认进度」总览卡 ============ */
+Pages._homeRegionConfirmCard = function() {
+  var me = Pages.RC.me();
+  if (!me.region) return '';
+  var sum = Pages.RC.regionSummary(me.region);
+  var h = '';
+  h += '<div class="card rc-card">';
+  h += '<div class="card-title"><span>本区域确认进度</span><span class="rc-badge-new">实时</span></div>';
+  h += '<div class="rc-rate-row"><span class="rc-rate">' + sum.rate + '%</span><span class="rc-rate-label">门店确认完成率（' + sum.doneStore + '/' + sum.needStores + '）</span></div>';
+  h += '<div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:' + sum.rate + '%;background:var(--status-done);"></div></div>';
+  h += '<div class="rc-grid">';
+  h += '<div class="rc-cell"><div class="rc-cell-num" style="color:var(--status-done);">' + sum.doneStore + '</div><div class="rc-cell-label">已确认门店</div></div>';
+  h += '<div class="rc-cell"><div class="rc-cell-num" style="color:var(--status-pending);">' + sum.pendStore + '</div><div class="rc-cell-label">待确认门店</div></div>';
+  h += '<div class="rc-cell"><div class="rc-cell-num">' + sum.totalStore + '</div><div class="rc-cell-label">区域门店</div></div>';
+  h += '</div>';
+  h += '<div class="rc-sort-tip"><span>门店确认状态</span><span>未完成置顶</span></div>';
+  if (!sum.rows.length) {
+    h += '<div class="rc-empty">本区域暂无门店数据</div>';
+  }
+  sum.rows.forEach(function(r) {
+    var st = r.stat;
+    var pill = st.total === 0 ? 'rc-pill-gray' : (st.pending === 0 ? 'rc-pill-green' : (st.done === 0 ? 'rc-pill-red' : 'rc-pill-amber'));
+    var label = st.total === 0 ? '暂无记录' : (st.pending === 0 ? '已确认' : '待确认 ' + st.pending);
+    h += '<div class="rc-store" onclick="Pages.openRegionStore(\'' + Pages._rcAt(r.id) + '\')">';
+    h += '<div class="rc-store-left">';
+    h += '<div class="rc-store-name">' + Pages.esc(r.name || '') + '</div>';
+    h += '<div class="rc-store-sub">' + (r.manager ? ('店长 ' + Pages.esc(r.manager)) : '无店长账号 · 区域兜底') + '</div>';
+    h += '</div>';
+    h += '<div class="rc-store-right"><span class="rc-pill ' + pill + '">' + label + '</span><span class="rc-num">' + st.done + '/' + st.total + '</span></div>';
+    h += '</div>';
+  });
+  h += '<div class="rc-tip">本区域共 ' + sum.totalRec + ' 条记录：已确认 ' + sum.doneRec + ' 条，待确认 ' + sum.pendRec + ' 条' + (sum.idle ? ('；' + sum.idle + ' 家门店暂无记录') : '') + '。无店长账号门店的确认待办由你兜底承接，补入店长账号后自动转由店长处理。统计口径：仅计入门店归属已匹配的记录。</div>';
+  h += '<div class="rc-go-ghost" onclick="location.hash=\'#regionConfirm\'">查看门店明细</div>';
+  h += '</div>';
+  return h;
+};
+
+/* ============ 页面跳转 ============ */
+Pages.openConfirmPage = function(kind, id) {
+  Pages._rcTarget = (kind && id) ? { kind: kind, id: id } : null;
+  Pages._rcPersonDraft = '';
+  Pages._rcRolePick = '';
+  if (location.hash === '#confirm') Pages.confirm();
+  else location.hash = '#confirm';
+};
+Pages.openRegionStore = function(storeId) {
+  Pages._rcStorePick = storeId;
+  if (location.hash === '#regionConfirm') Pages.regionConfirm();
+  else location.hash = '#regionConfirm';
+};
+
+/* ============ 界面②：店长端 / 区域经理端 责任人确认页 ============ */
+Pages.confirm = function() {
+  var el = document.getElementById('page-confirm');
+  if (!el) return;
+  var user = Pages.RC.me();
+  var t = Pages._rcTarget;
+  if (t) {
+    var rec = Pages.RC.find(t.kind, t.id);
+    if (!rec) { Pages._rcTarget = null; App.toast('记录不存在或已删除'); }
+    else if (!Pages.RC.canHandle(rec.storeId)) { Pages._rcTarget = null; App.toast('无权限处理该门店记录'); }
+    else { el.innerHTML = Pages._rcDetailHtml(t.kind, t.id); return; }
+  }
+  el.innerHTML = Pages._rcListHtml(user);
+};
+
+/* ---- 待办列表（未指定单条时） ---- */
+Pages._rcListHtml = function(user) {
+  user = user || Pages.RC.me();
+  var entries = [], scopeText = '';
+  if (user.role === '店长' && user.storeId) {
+    entries = Pages.RC.entriesOfStore(user.storeId);
+    scopeText = (user.store || '本店') + ' · 待确认 ' + entries.filter(function(e) { return e.status === 'pending'; }).length + ' 条';
+  } else if (user.region) {
+    var ids = {};
+    Pages.RC.storesOfRegion(user.region).forEach(function(s) { ids[s.id] = s.name; });
+    ['penalty', 'complaint'].forEach(function(kind) {
+      Pages.RC.srcOf(kind).forEach(function(r) {
+        if (!r || !ids[r.storeId]) return;
+        var e = Pages.RC.entry(kind, r);
+        e.store = e.store || ids[r.storeId];
+        entries.push(e);
+      });
+    });
+    Pages.RC.sortEntries(entries);
+    scopeText = user.region + ' · 待确认 ' + entries.filter(function(e) { return e.status === 'pending'; }).length + ' 条';
+  } else {
+    return '<div class="rc-empty">当前账号（' + Pages.esc(user.role || '未登录') + '）无责任人确认待办</div>';
+  }
+  var pend = entries.filter(function(e) { return e.status === 'pending'; });
+  var done = entries.filter(function(e) { return e.status !== 'pending'; });
+  var isRegion = !!user.region;
+  var h = '';
+  h += '<div class="alert-card">' + Pages.esc(scopeText) + '</div>';
+  h += '<div class="section-title">待确认（' + pend.length + '）</div>';
+  if (!pend.length) {
+    h += '<div class="card"><div class="rc-empty">暂无待确认记录</div></div>';
+  } else {
+    h += '<div class="card">';
+    pend.forEach(function(e) {
+      h += '<div class="rc-item" onclick="Pages.openConfirmPage(\'' + e.kind + '\',\'' + Pages._rcAt(e.id) + '\')">';
+      h += '<div class="rc-item-main">';
+      h += '<div class="rc-item-title"><span class="rc-kind ' + Pages.RC.kindClass(e.kind) + '">' + Pages.RC.kindLabel(e.kind) + '</span>' + Pages.esc(e.title) + '</div>';
+      h += '<div class="rc-item-sub">' + (isRegion ? (Pages.esc(e.store || '') + ' ｜ ') : '') + Pages.esc(e.meta || '') + ' ｜ ' + Pages.esc(e.date) + '</div>';
+      h += '</div>';
+      h += '<div class="rc-go">去确认</div>';
+      h += '</div>';
+    });
+    h += '</div>';
+  }
+  if (done.length) {
+    h += '<div class="section-title">已处理（' + done.length + '）</div>';
+    h += '<div class="card">';
+    done.slice(0, 10).forEach(function(e) {
+      h += '<div class="rc-item" onclick="Pages.openConfirmPage(\'' + e.kind + '\',\'' + Pages._rcAt(e.id) + '\')">';
+      h += '<div class="rc-item-main">';
+      h += '<div class="rc-item-title"><span class="rc-kind ' + Pages.RC.kindClass(e.kind) + '">' + Pages.RC.kindLabel(e.kind) + '</span>' + Pages.esc(e.title) + '</div>';
+      h += '<div class="rc-item-sub">' + (isRegion ? (Pages.esc(e.store || '') + ' ｜ ') : '') + '责任人 ' + Pages.esc(e.preset || '-') + ' ｜ ' + Pages.esc(Pages.RC.atText(e.confirmAt)) + '</div>';
+      h += '</div>';
+      h += '<span class="rc-pill ' + Pages.RC.statusPill(e.status) + '">' + Pages.RC.statusLabel(e.status) + '</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+  }
+  h += '<div class="rc-tip">' + (isRegion
+    ? '你以区域经理身份查看本区域确认进度；无店长账号门店的记录由你兜底确认。'
+    : '请在 24 小时内完成责任人确认；逾期未处理的记录将同步提醒区域经理。') + '</div>';
+  return h;
+};
+
+/* ---- 单条确认详情 ---- */
+Pages._rcDetailHtml = function(kind, id) {
+  var rec = Pages.RC.find(kind, id);
+  if (!rec) return '<div class="rc-empty">记录不存在</div>';
+  var e = Pages.RC.entry(kind, rec);
+  var store = Pages.RC.storeById(e.storeId);
+  var region = store ? (store.region || '') : '';
+  var h = '';
+  h += '<div class="alert-card">' + Pages.esc(e.store || '') + '（' + Pages.esc(e.storeId || '') + '）<span class="rc-pill ' + Pages.RC.statusPill(e.status) + '" style="margin-left:8px;">' + Pages.RC.statusLabel(e.status) + '</span></div>';
+  h += '<div class="section-title">记录详情</div>';
+  h += '<div class="card">';
+  h += '<div class="card-title">' + Pages.RC.kindLabel(kind) + '记录</div>';
+  h += '<div class="rc-detail-row"><span class="rc-detail-label">门店</span><span class="rc-detail-val">' + Pages.esc(e.store || '-') + '（' + Pages.esc(e.storeId || '-') + '）</span></div>';
+  h += '<div class="rc-detail-row"><span class="rc-detail-label">' + (kind === 'complaint' ? '内容' : '事件') + '</span><span class="rc-detail-val">' + Pages.esc(e.title) + '</span></div>';
+  if (kind === 'complaint') {
+    h += '<div class="rc-detail-row"><span class="rc-detail-label">来源</span><span class="rc-detail-val">' + Pages.esc(rec.platform || '-') + '</span></div>';
+  } else {
+    h += '<div class="rc-detail-row"><span class="rc-detail-label">分类</span><span class="rc-detail-val">' + Pages.esc(rec.category || '-') + '</span></div>';
+    h += '<div class="rc-detail-row"><span class="rc-detail-label">级别</span><span class="rc-detail-val">' + Pages.esc(rec.level || '-') + '</span></div>';
+  }
+  h += '<div class="rc-detail-row"><span class="rc-detail-label">发生日期</span><span class="rc-detail-val">' + Pages.esc(e.date || '-') + '</span></div>';
+  h += '<div class="rc-detail-row"><span class="rc-detail-label">录入人</span><span class="rc-detail-val">' + Pages.esc(e.recorder || '-') + '</span></div>';
+  h += '</div>';
+
+  h += '<div class="section-title">系统预设责任人</div>';
+  h += '<div class="card">';
+  if (e.preset) {
+    h += '<div class="rc-preset"><div class="rc-preset-name">' + Pages.esc(e.preset) + '</div>';
+    h += '<div class="rc-preset-note">' + (e.presetTitle ? Pages.esc(e.presetTitle) : (kind === 'complaint' ? '由差评责任判定带出' : '由门店在岗职级自动带出')) + '</div></div>';
+  } else {
+    h += '<div class="rc-preset" style="background:#FFFBEB;"><div class="rc-preset-name" style="color:var(--status-pending);">未预设</div>';
+    h += '<div class="rc-preset-note">系统未带出责任人，请门店填写实际责任人后确认。</div></div>';
+  }
+  h += '</div>';
+
+  if (e.status === 'pending') {
+    h += '<div class="section-title">如需修改，填写实际责任人</div>';
+    h += '<div class="card">';
+    h += '<input class="form-input" id="rc-person-input" placeholder="请输入实际责任人姓名" value="' + Pages._rcAt(Pages._rcPersonDraft || '') + '">';
+    h += '<div class="rc-role-chips">';
+    ['店长', '厨务主管', '服务员', '收银员'].forEach(function(role) {
+      h += '<span class="rc-role-chip' + (Pages._rcRolePick === role ? ' rc-role-chip-on' : '') + '" onclick="Pages.rcPickRole(\'' + role + '\')">' + role + '</span>';
+    });
+    h += '</div>';
+    h += '<div class="rc-sec-title">备注 / 异议理由</div>';
+    h += '<textarea class="form-textarea" id="rc-note-input" rows="2" placeholder="选填：说明修改原因；选择有异议并退回时必填"></textarea>';
+    h += '</div>';
+    h += '<div class="section-title">请选择处理方式</div>';
+    h += '<div class="rc-actions">';
+    h += '<div class="rc-action rc-action-main" onclick="Pages.submitRc(\'ok\')"><div class="rc-action-title">确认无误</div><div class="rc-action-desc">责任人即系统预设责任人，直接提交确认。</div></div>';
+    h += '<div class="rc-action" onclick="Pages.submitRc(\'edit\')"><div class="rc-action-title">修改后确认</div><div class="rc-action-desc">按上方填写／选择实际责任人后提交，系统记录修改前后差异。</div></div>';
+    h += '<div class="rc-action" onclick="Pages.submitRc(\'dispute\')"><div class="rc-action-title rc-danger">有异议，退回稽核</div><div class="rc-action-desc">责任人判定有误，退回后由录入稽核重新指派。</div></div>';
+    h += '</div>';
+    h += '<div class="rc-tip">确认结果实时同步至区域经理' + (region ? ('（' + Pages.esc(region) + '）') : '') + '。</div>';
+  } else {
+    h += '<div class="section-title">确认结果</div>';
+    h += '<div class="card">';
+    h += '<div class="rc-detail-row"><span class="rc-detail-label">处理方式</span><span class="rc-detail-val">' + Pages.RC.statusLabel(e.status) + '</span></div>';
+    h += '<div class="rc-detail-row"><span class="rc-detail-label">确认人</span><span class="rc-detail-val">' + Pages.esc(e.confirmUserName || '-') + '</span></div>';
+    h += '<div class="rc-detail-row"><span class="rc-detail-label">确认时间</span><span class="rc-detail-val">' + Pages.esc(Pages.RC.atText(e.confirmAt) || '-') + '</span></div>';
+    h += '<div class="rc-detail-row"><span class="rc-detail-label">备注</span><span class="rc-detail-val">' + Pages.esc(e.confirmNote || '-') + '</span></div>';
+    h += '</div>';
+  }
+  return h;
+};
+
+Pages.rcPickRole = function(role) {
+  Pages._rcRolePick = (Pages._rcRolePick === role) ? '' : role;
+  var box = document.getElementById('rc-person-input');
+  if (box) Pages._rcPersonDraft = box.value || '';
+  Pages.confirm();
+};
+
+/* ---- 三个操作提交 ---- */
+Pages.submitRc = async function(action) {
+  var t = Pages._rcTarget;
+  if (!t) return;
+  var rec = Pages.RC.find(t.kind, t.id);
+  if (!rec) { App.toast('记录不存在'); return; }
+  var e = Pages.RC.entry(t.kind, rec);
+  if (!Pages.RC.canHandle(e.storeId)) { App.toast('无权限处理该门店记录'); return; }
+  if (e.status !== 'pending') { App.toast('该记录已处理，无需重复提交'); return; }
+
+  var personEl = document.getElementById('rc-person-input');
+  var noteEl = document.getElementById('rc-note-input');
+  var person = personEl ? String(personEl.value || '').trim() : '';
+  var note = noteEl ? String(noteEl.value || '').trim() : '';
+  var role = Pages._rcRolePick || '';
+  var status = 'confirmed', writePerson = person, finalNote = '';
+  var extra = role ? ('岗位：' + role) : '';
+
+  if (action === 'ok') {
+    var keeper = e.preset || person;
+    if (!keeper) { App.toast('系统未预设责任人，请先填写实际责任人'); return; }
+    writePerson = keeper;
+    finalNote = ['确认无误', extra, note].filter(Boolean).join('｜');
+  } else if (action === 'edit') {
+    if (!person) { App.toast('请填写实际责任人'); return; }
+    writePerson = person;
+    finalNote = [e.preset ? ('预设：' + e.preset + ' → 实际：' + person) : ('填写实际责任人：' + person), extra, note].filter(Boolean).join('｜');
+  } else {
+    if (!note) { App.toast('请填写异议理由'); return; }
+    status = 'disputed';
+    writePerson = '';
+    finalNote = ['有异议退回稽核', extra, note].filter(Boolean).join('｜');
+  }
+
+  var ok = await Pages.RC.save(t.kind, t.id, { status: status, person: writePerson, note: finalNote });
+  if (!ok) return;
+  App.toast(action === 'dispute' ? '已退回稽核' : '责任人确认已提交');
+  Pages._rcTarget = null;
+  Pages._rcPersonDraft = '';
+  Pages._rcRolePick = '';
+  if (location.hash === '#confirm') Pages.confirm();
+};
+
+/* ============ 界面④：区域经理端门店明细 ============ */
+Pages.regionConfirm = function() {
+  var el = document.getElementById('page-regionConfirm');
+  if (!el) return;
+  var user = Pages.RC.me();
+  var regions = user.region ? [user.region] : Pages.RC.allRegions();
+  if (!regions.length) { el.innerHTML = '<div class="rc-empty">暂无区域数据</div>'; return; }
+  if (Pages._rcRegionPick && regions.indexOf(Pages._rcRegionPick) < 0) Pages._rcRegionPick = null;
+  var region = Pages._rcRegionPick || regions[0];
+  Pages._rcRegionPick = region;
+  var sum = Pages.RC.regionSummary(region);
+  var h = '';
+
+  h += '<div class="alert-card">' + Pages.esc(region) + ' · ' + sum.totalStore + ' 家门店（待确认 ' + sum.pendStore + ' 家）</div>';
+  h += '<div class="rc-filter">';
+  regions.forEach(function(r) {
+    h += '<span class="rc-filter-chip' + (r === region ? ' rc-filter-chip-on' : '') + '" onclick="Pages.rcPickRegion(\'' + Pages._rcAt(r) + '\')">' + Pages.esc(r) + '</span>';
+  });
+  h += '</div>';
+  if (Pages._rcStorePick) {
+    h += '<div class="rc-go-ghost" onclick="Pages.rcPickStore(\'\')">显示全部 ' + sum.totalStore + ' 家门店</div>';
+  }
+  h += '<div class="rc-tip" style="margin:0 0 12px;">排序：待确认门店置顶 ｜ 共 ' + sum.totalStore + ' 家门店，' + sum.pendStore + ' 家待确认</div>';
+
+  var rows = sum.rows.filter(function(r) { return !Pages._rcStorePick || String(r.id) === String(Pages._rcStorePick); });
+  if (!rows.length) h += '<div class="rc-empty">该区域暂无门店数据</div>';
+
+  rows.forEach(function(r) {
+    var st = r.stat;
+    var pill = st.total === 0 ? 'rc-pill-gray' : (st.pending === 0 ? 'rc-pill-green' : (st.done === 0 ? 'rc-pill-red' : 'rc-pill-amber'));
+    var label = st.total === 0 ? '暂无记录' : (st.pending === 0 ? '已完成' : '待确认 ' + st.pending);
+    var canFallback = !r.manager && Pages.RC.canHandle(r.id) && st.pending > 0;
+    h += '<div class="rc-store-box">';
+    h += '<div class="rc-store-head">';
+    h += '<div><span class="rc-store-head-name">' + Pages.esc(r.name || '') + '</span><span class="rc-store-id">' + Pages.esc(r.id || '') + '</span></div>';
+    h += '<span class="rc-pill ' + pill + '">' + label + '</span>';
+    h += '</div>';
+    h += '<div class="rc-store-sub">' + (r.manager ? ('店长 ' + Pages.esc(r.manager)) : '无店长账号') + ' ｜ 本店记录 ' + st.total + ' 条 · 已确认 ' + st.done + ' 条</div>';
+    var list = Pages.RC.entriesOfStore(r.id);
+    if (!list.length) {
+      h += '<div class="rc-empty" style="padding:12px 0;">本店暂无处罚 / 差评记录</div>';
+    }
+    list.forEach(function(e) {
+      var cls = e.status === 'pending' ? 'rc-rec-pending' : (e.status === 'disputed' ? 'rc-rec-disputed' : 'rc-rec-done');
+      h += '<div class="rc-rec ' + cls + '">';
+      h += '<div class="rc-rec-title"><span class="rc-kind ' + Pages.RC.kindClass(e.kind) + '">' + Pages.RC.kindLabel(e.kind) + '</span>' + Pages.esc(e.title) + '</div>';
+      h += '<div class="rc-rec-sub">' + Pages.esc(e.meta || '') + ' ｜ ' + Pages.esc(e.date) + '</div>';
+      h += '<div class="rc-rec-sub">' + (e.status === 'pending'
+        ? ('系统预设责任人：' + Pages.esc(e.preset || '未预设'))
+        : ('责任人 ' + Pages.esc(e.preset || '-') + '（' + Pages.esc(e.confirmUserName || '') + '）｜ ' + Pages.esc(Pages.RC.atText(e.confirmAt)))) + '</div>';
+      h += '<div class="rc-rec-act"><span class="rc-pill ' + Pages.RC.statusPill(e.status) + '">' + Pages.RC.statusLabel(e.status) + '</span>';
+      if (e.status === 'pending' && canFallback) {
+        h += ' <span class="rc-go" style="display:inline-block;" onclick="Pages.openConfirmPage(\'' + e.kind + '\',\'' + Pages._rcAt(e.id) + '\')">区域兜底确认</span>';
+      }
+      h += '</div></div>';
+    });
+    h += '</div>';
+  });
+  if (sum.idle) h += '<div class="rc-tip">另有 ' + sum.idle + ' 家门店暂无处罚 / 差评记录。</div>';
+  el.innerHTML = h;
+};
+
+Pages.rcPickRegion = function(region) {
+  Pages._rcRegionPick = region;
+  Pages._rcStorePick = '';
+  Pages.regionConfirm();
+};
+Pages.rcPickStore = function(storeId) {
+  Pages._rcStorePick = storeId || '';
+  Pages.regionConfirm();
 };

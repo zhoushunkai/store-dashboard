@@ -3361,3 +3361,73 @@ body {
 .psd-mi-date { font-size: 11px; color: #94a3b8; margin-left: auto; }
 .psd-mi-txt { font-size: 12px; color: #475569; margin-top: 4px; line-height: 1.5; word-break: break-word; }
 .psd-modal-foot { display: flex; justify-content: flex-end; padding-top: 12px; }
+
+
+/* ==================== v109 新增：责任人确认（处罚 / 差评） ==================== */
+.rc-card .card-title { display: flex; align-items: center; justify-content: space-between; }
+.rc-count-badge { background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; border-radius: 11px; min-width: 22px; height: 22px; line-height: 22px; text-align: center; padding: 0 7px; }
+.rc-badge-new { background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; border-radius: 10px; padding: 1px 7px; }
+.rc-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.rc-item:last-child { border-bottom: none; padding-bottom: 0; }
+.rc-item-main { flex: 1; min-width: 0; }
+.rc-kind { display: inline-block; font-size: 11px; line-height: 16px; padding: 0 6px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
+.rc-kind-penalty { background: var(--primary-light); color: var(--primary); }
+.rc-kind-complaint { background: #EFF6FF; color: #2563EB; }
+.rc-item-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.45; }
+.rc-item-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.rc-go { flex: none; align-self: center; background: var(--primary); color: #fff; font-size: 12px; border-radius: 14px; padding: 5px 13px; }
+.rc-go-ghost { background: #fff; color: var(--primary); border: 1px solid var(--primary); text-align: center; display: block; margin-top: 10px; padding: 8px 0; border-radius: 10px; font-size: 13px; }
+.rc-tip { margin-top: 10px; font-size: 12px; color: var(--text-muted); line-height: 1.55; background: #FAFAFA; border-radius: 8px; padding: 8px 10px; }
+.rc-rate-row { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+.rc-rate { font-size: 30px; font-weight: 700; color: var(--primary); line-height: 1.1; }
+.rc-rate-label { font-size: 12px; color: var(--text-secondary); }
+.rc-grid { display: flex; gap: 8px; margin-top: 12px; }
+.rc-cell { flex: 1; text-align: center; background: #F7F7F7; border-radius: 8px; padding: 9px 4px; }
+.rc-cell-num { font-size: 19px; font-weight: 700; }
+.rc-cell-label { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+.rc-sort-tip { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin: 14px 0 2px; }
+.rc-store { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 0; border-bottom: 1px dashed var(--border); }
+.rc-store:last-child { border-bottom: none; }
+.rc-store-left { min-width: 0; }
+.rc-store-name { font-size: 14px; color: var(--text); }
+.rc-store-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.rc-store-right { flex: none; display: flex; align-items: center; gap: 6px; }
+.rc-pill { font-size: 11px; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+.rc-pill-green { background: #ECFDF5; color: var(--status-done); }
+.rc-pill-amber { background: #FFFBEB; color: var(--status-pending); }
+.rc-pill-red { background: #FEF2F2; color: var(--status-overdue); }
+.rc-pill-gray { background: #F3F4F6; color: var(--text-muted); }
+.rc-num { font-size: 12px; color: var(--text-secondary); }
+.rc-store-box { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.rc-store-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rc-store-head-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.rc-store-id { font-size: 11px; color: var(--text-muted); margin-left: 6px; }
+.rc-rec { border-left: 3px solid var(--border); padding: 7px 0 7px 10px; margin-top: 10px; }
+.rc-rec-pending { border-left-color: var(--status-pending); }
+.rc-rec-done { border-left-color: var(--status-done); }
+.rc-rec-disputed { border-left-color: var(--status-overdue); }
+.rc-rec-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.45; }
+.rc-rec-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.rc-rec-act { margin-top: 8px; }
+.rc-detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.rc-detail-row:last-child { border-bottom: none; }
+.rc-detail-label { color: var(--text-secondary); flex: none; }
+.rc-detail-val { color: var(--text); text-align: right; }
+.rc-preset { background: var(--primary-light); border-radius: 10px; padding: 12px; margin-top: 10px; }
+.rc-preset-name { font-size: 20px; font-weight: 700; color: var(--primary); }
+.rc-preset-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.rc-role-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.rc-role-chip { font-size: 12px; border: 1px solid var(--border); background: #fff; border-radius: 14px; padding: 5px 12px; color: var(--text-secondary); }
+.rc-role-chip-on { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.rc-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.rc-action { border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; background: #fff; }
+.rc-action-main { background: var(--primary); border-color: var(--primary); }
+.rc-action-main .rc-action-title, .rc-action-main .rc-action-desc { color: #fff; }
+.rc-action-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.rc-action-desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.rc-danger { color: var(--status-overdue) !important; }
+.rc-filter { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 10px; }
+.rc-filter-chip { flex: none; font-size: 12px; border: 1px solid var(--border); background: #fff; color: var(--text-secondary); border-radius: 14px; padding: 5px 12px; }
+.rc-filter-chip-on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.rc-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 26px 0; }
+.rc-sec-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 16px 0 6px; }

@@ -4503,6 +4503,8 @@ const App = {
 
 
       'penalty': ['penalties', 'stores'],
+      'confirm': ['penalties', 'complaints', 'stores', 'users'],
+      'regionConfirm': ['penalties', 'complaints', 'stores', 'users'],
 
 
 
@@ -6783,7 +6785,7 @@ const App = {
 
 
       inspectionResults: '检查结果', inspectionIssues: '问题工单', inspectionDashboard: '稽核看板', inspectionWorkbench: '稽核工作台', supplyChain: '供应链问题', complaintBoard: '差评看板', penaltyBoard: '处罚看板', taskBoard: '任务看板', ssc: 'SSC',
-      correction: '本店整改', permissionConfig: '权限配置'
+      correction: '本店整改', permissionConfig: '权限配置', confirm: '责任人确认', regionConfirm: '门店确认明细'
 
 
 
