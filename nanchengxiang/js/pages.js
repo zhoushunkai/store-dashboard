@@ -48237,6 +48237,15 @@ Pages._sscMyDept = function() {
   return String(mapped || u.department || u.area || '').trim();
 };
 Pages._sscIsWait = function(s) { return s === '待接收' || s === '待受理'; };
+/* v105 口径：接收人只存在于 logs(action=接收申请)；历史单据接收人曾写入 handler（无办理记录时回退读取） */
+Pages._sscReceiver = function(t) {
+  var logs = (t && t.logs) || [];
+  var who = '';
+  logs.forEach(function(l) { if (l && l.action === '接收申请' && l.operator) who = l.operator; });
+  if (who) return who;
+  var handled = logs.some(function(l) { return l && (l.action === '处理记录' || l.action === '闭环申请'); });
+  return (!handled && t && t.handler) ? t.handler : '';
+};
 
 Pages._sscStatusColor = function(s) {
   if (s === '待接收' || s === '待受理') return { bg: '#fff3e0', fg: '#d97706' };
@@ -48400,10 +48409,10 @@ Pages._sscCardsHtml = function() {
     html += ' ｜ <span style="color:' + Pages._sscUrgencyColor(t.urgency) + '">' + Pages._esc(t.urgency || '普通') + '</span></div>';
     html += '<div style="font-size:12px;color:#888;margin-top:4px">承办部门：' + Pages._esc(t.department || (Pages._sscIsWait(t.status) ? '待稽核接收' : (t.status === '待分发' ? '待分发' : '-'))) + ' ｜ ' + Pages._esc(t.createdAt || '') + '</div>';
     if (cap.receive && Pages._sscIsWait(t.status)) {
-      html += '<div style="font-size:12px;color:#d97706;margin-top:4px">待接收受理</div>';
+      html += '<div style="font-size:12px;color:#d97706;margin-top:4px">待稽核接收</div>';
     } else if (cap.receive && t.status === '待分发') {
       html += '<div style="font-size:12px;color:#7c3aed;margin-top:4px">待分发职能部门</div>';
-    } else if (cap.handle && t.status === '处理中') {
+    } else if (cap.handle && t.status === '处理中' && (!t.department || !Pages._sscMyDept() || t.department === Pages._sscMyDept())) {
       html += '<div style="font-size:12px;color:#1d4ed8;margin-top:4px">待本部门办理</div>';
     }
     html += '</div>';
@@ -48533,7 +48542,7 @@ Pages._sscReceive = function(id) {
   var note = ((document.getElementById('ssc_recv_note') || {}).value || '').trim();
   var fromStatus = t.status;
   t.status = '待分发';
-  t.handler = user.name || '';
+  /* v105 口径：接收信息只落 logs(action=接收申请)，handler 保留给「办理人」 */
   t.updatedAt = Pages._nowStr();
   t.logs = (t.logs || []).concat([{ time: t.updatedAt, operator: user.name || '', action: '接收申请', from: fromStatus, to: '待分发', note: note || ('接收人：' + (user.name || '')) }]);
   App.saveSscTickets(list).then(function() {
@@ -48553,8 +48562,11 @@ Pages._sscDispatch = function(id) {
   var dept = ((document.getElementById('ssc_dispatch_dept') || {}).value || '').trim();
   var note = ((document.getElementById('ssc_dispatch_note') || {}).value || '').trim();
   if (!dept) { alert('请选择承办部门'); return; }
+  if (Pages._sscDepts.indexOf(dept) < 0) { alert('承办部门须为：' + Pages._sscDepts.join(' / ')); return; }
   var user = App.currentUser || {};
   t.department = dept;
+  /* v105 口径：分发到新承办部门后，办理人重置为空，由该部门办理时写入 handler */
+  t.handler = '';
   t.status = '处理中';
   t.updatedAt = Pages._nowStr();
   t.logs = (t.logs || []).concat([{ time: t.updatedAt, operator: user.name || '', action: '分发部门', from: '待分发', to: dept, note: note || ('承办部门：' + dept) }]);
@@ -48572,7 +48584,13 @@ Pages._sscAddLog = function(id) {
   if (!t) return;
   var note = ((document.getElementById('ssc_note') || {}).value || '').trim();
   if (!note) { alert('请先填写处理记录'); return; }
+  if (t.status !== '处理中' && t.status !== '已闭环') { alert('当前状态不可记录，请先完成接收与分发'); return; }
+  var cap = Pages._sscCap();
+  var myDept = Pages._sscMyDept();
+  if (!cap.receive && !(cap.handle && t.department && myDept && t.department === myDept)) { alert('当前账号无该申请的办理权限'); return; }
   var user = App.currentUser || {};
+  /* v105 口径：办理中的记录人即办理人，写入 handler */
+  if (t.status === '处理中') t.handler = user.name || '';
   t.updatedAt = Pages._nowStr();
   t.logs = (t.logs || []).concat([{ time: t.updatedAt, operator: user.name || '', action: '处理记录', from: '', to: '', note: note }]);
   App.saveSscTickets(list).then(function() {
@@ -48587,11 +48605,16 @@ Pages._sscClose = function(id) {
   list.forEach(function(x) { if (x.id === id) t = x; });
   if (!t) return;
   if (t.status !== '处理中') { alert('仅处理中的申请可闭环'); return; }
+  var _capClose = Pages._sscCap();
+  var _myDeptClose = Pages._sscMyDept();
+  if (!_capClose.receive && !(_capClose.handle && t.department && _myDeptClose && t.department === _myDeptClose)) { alert('当前账号无该申请的办理权限'); return; }
   var note = ((document.getElementById('ssc_note') || {}).value || '').trim();
   if (!note) { alert('闭环前请填写处理结论'); return; }
   var user = App.currentUser || {};
   t.updatedAt = Pages._nowStr();
   t.logs = (t.logs || []).concat([{ time: t.updatedAt, operator: user.name || '', action: '闭环申请', from: '处理中', to: '已闭环', note: note }]);
+  /* v105 口径：闭环人即最终办理人 */
+  t.handler = user.name || '';
   t.status = '已闭环';
   App.saveSscTickets(list).then(function() {
     Pages.ssc();
@@ -48623,7 +48646,8 @@ Pages._sscDetailHtml = function(id, user) {
   html += Pages._sscRow('申请类型', t.ticketType);
   html += Pages._sscRow('提报人', t.submitter + (t.submitterRole ? '（' + t.submitterRole + '）' : ''));
   html += Pages._sscRow('承办部门', t.department || (Pages._sscIsWait(t.status) ? '待稽核接收' : (t.status === '待分发' ? '待分发' : '-')));
-  html += Pages._sscRow('接收人', t.handler || '未接收');
+  html += Pages._sscRow('稽核接收人', Pages._sscReceiver(t) || (Pages._sscIsWait(t.status) ? '待接收' : (t.status === '待分发' ? '待分发' : '-')));
+  html += Pages._sscRow('办理人', t.handler || ((t.status === '处理中' || t.status === '已闭环') ? '未记录' : '-'));
   html += Pages._sscRow('紧急程度', '<span style="color:' + Pages._sscUrgencyColor(t.urgency) + '">' + Pages._esc(t.urgency || '普通') + '</span>');
   html += Pages._sscRow('期望完成时间', t.expectDate);
   html += Pages._sscRow('提报时间', t.createdAt);

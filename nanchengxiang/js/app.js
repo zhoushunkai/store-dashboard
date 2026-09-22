@@ -5494,7 +5494,7 @@ const App = {
         submitter: r.submitter || '',
         submitter_role: r.submitterRole || r.submitter_role || '',
         expect_date: r.expectDate || r.expect_date || '',
-        status: r.status || '待受理',
+        status: r.status || '待接收',
         handler: r.handler || '',
         logs: Array.isArray(r.logs) ? r.logs : [],
         created_at: r.createdAt || r.created_at || '',
