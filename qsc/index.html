@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>南城香 QSC 状况看板</title>
+<style>
+  :root{
+    --bg0:#04070f; --bg1:#081426; --bg2:#0d1d3a;
+    --cyan:#00e5ff; --purple:#b26bff; --pink:#ff6ac1; --yellow:#ffd166; --orange:#ff9f43;
+    --red:#ff5c5c; --green:#34d399; --blue:#4d9fff; --white:#eaf6ff; --dim:#8aa3c4;
+    --card:rgba(255,255,255,.055); --card-bd:rgba(0,229,255,.28); --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;
+    background:linear-gradient(135deg,#04070f 0%,#081426 45%,#0b1a38 100%);
+    color:var(--white); min-height:100vh; overflow-x:hidden;
+  }
+  /* 背景霓虹光晕 */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(600px 300px at 15% 0%, rgba(0,229,255,.12), transparent 70%),
+      radial-gradient(700px 350px at 85% 10%, rgba(178,107,255,.14), transparent 70%),
+      radial-gradient(500px 300px at 50% 100%, rgba(255,106,193,.08), transparent 70%);
+  }
+  .watermark{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    pointer-events:none; z-index:0; overflow:hidden;
+  }
+  .watermark span{
+    font-size:18vw; font-weight:900; letter-spacing:.12em; white-space:nowrap;
+    color:rgba(120,190,255,.045); transform:rotate(-18deg); user-select:none;
+  }
+  .wrap{position:relative; z-index:2; max-width:1560px; margin:0 auto; padding:18px 20px 40px;}
+
+  /* 顶栏 */
+  header{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;}
+  .brand{display:flex; align-items:center; gap:12px;}
+  .logo{
+    width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--cyan),var(--purple)); font-weight:900; font-size:20px; color:#04101f;
+    box-shadow:0 0 18px rgba(0,229,255,.5);
+  }
+  h1{font-size:26px; font-weight:900; letter-spacing:.05em; text-shadow:0 0 14px rgba(0,229,255,.55);}
+  .sub{font-size:12px; color:var(--dim); margin-top:2px; letter-spacing:.08em;}
+
+  .filters{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+  .filters label{font-size:13px; color:var(--dim);}
+  select, .btn{
+    background:rgba(8,20,38,.85); color:var(--white); border:1px solid rgba(0,229,255,.4);
+    border-radius:9px; padding:8px 12px; font-size:14px; font-weight:700; outline:none; cursor:pointer;
+    box-shadow:0 0 10px rgba(0,229,255,.12) inset;
+  }
+  select:hover{border-color:var(--cyan);}
+  select:disabled{opacity:.45; cursor:not-allowed;}
+  .btn{
+    background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(178,107,255,.18));
+    transition:all .2s;
+  }
+  .btn:hover{box-shadow:0 0 16px rgba(0,229,255,.45); transform:translateY(-1px);}
+  .btn.small{padding:6px 10px; font-size:13px;}
+  .btn.glow{background:linear-gradient(135deg,var(--cyan),var(--purple)); color:#04101f; border:none; font-weight:900;}
+
+  /* Tab */
+  nav.tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;}
+  .tab{
+    padding:10px 18px; border-radius:12px; cursor:pointer; font-size:15px; font-weight:800;
+    background:var(--card); border:1px solid rgba(0,229,255,.22); color:var(--dim);
+    transition:all .2s; backdrop-filter:blur(10px);
+  }
+  .tab:hover{color:var(--white); border-color:var(--cyan);}
+  .tab.active{
+    background:linear-gradient(135deg,rgba(0,229,255,.22),rgba(178,107,255,.22));
+    color:var(--white); border-color:var(--cyan); box-shadow:0 0 16px rgba(0,229,255,.35);
+  }
+  .tab .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px;}
+
+  /* 卡片 */
+  .cards{display:grid; gap:14px;}
+  .cards.cols4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));}
+  .cards.cols3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
+  .cards.cols2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr));}
+  .card{
+    background:var(--card); border:1px solid var(--card-bd); border-radius:var(--radius);
+    padding:16px; backdrop-filter:blur(12px); box-shadow:0 4px 24px rgba(0,0,0,.35);
+    position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:""; position:absolute; left:0; top:0; width:100%; height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent,var(--cyan)),transparent); opacity:.8;
+  }
+  .card h3{font-size:15px; font-weight:800; color:var(--dim); margin-bottom:12px; letter-spacing:.04em;}
+  .card h3 .mod{float:right; font-size:11px; color:var(--dim); font-weight:600;}
+  .big{font-size:34px; font-weight:900; text-shadow:0 0 16px var(--accent,var(--cyan)); line-height:1.15;}
+  .big.gold{color:var(--yellow); text-shadow:0 0 16px rgba(255,209,102,.7);}
+  .big.cyan{color:var(--cyan);}
+  .big.purple{color:var(--purple);}
+  .big.pink{color:var(--pink);}
+  .big.green{color:var(--green);}
+  .big.blue{color:var(--blue);}
+  .big.red{color:var(--red);}
+  .big.orange{color:var(--orange);}
+  .unit{font-size:13px; color:var(--dim); font-weight:600; margin-left:4px;}
+  .hint{font-size:12px; color:var(--dim); margin-top:6px;}
+  .row{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .row .title{font-size:18px; font-weight:900;}
+  .score-up{color:var(--blue); font-weight:900;}
+  .score-bad{color:var(--red); font-weight:900;}
+  .score-ok{color:var(--green); font-weight:900;}
+  .unmatched{color:var(--red); font-weight:900; font-size:12px; border:1px solid rgba(255,92,92,.6); border-radius:6px; padding:1px 6px; margin-left:6px;}
+  .empty{color:var(--dim); font-size:13px; padding:20px 0; text-align:center;}
+
+  /* 表格 */
+  .tbl-wrap{overflow:auto; max-height:560px; border-radius:10px; border:1px solid rgba(0,229,255,.15);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; white-space:nowrap;}
+  thead th{
+    position:sticky; top:0; z-index:5; background:rgba(9,22,46,.97);
+    padding:10px 10px; font-weight:800; color:var(--cyan); border-bottom:1px solid rgba(0,229,255,.3);
+    text-align:left; letter-spacing:.03em;
+  }
+  tbody td{padding:9px 10px; border-bottom:1px solid rgba(255,255,255,.06); color:var(--white);}
+  tbody tr{cursor:pointer; transition:background .15s;}
+  tbody tr:hover{background:rgba(0,229,255,.08);}
+  tbody tr.row-unmatched td{color:#ffb4b4;}
+  .num{font-variant-numeric:tabular-nums; font-weight:800;}
+  .badge{display:inline-block; min-width:30px; text-align:center; padding:3px 8px; border-radius:8px; font-weight:900; font-size:12.5px; color:#04101f;}
+  .badge.S{background:linear-gradient(135deg,#ffd700,#ffb347); box-shadow:0 0 10px rgba(255,215,0,.6);}
+  .badge.A{background:linear-gradient(135deg,#34d399,#22c55e); box-shadow:0 0 10px rgba(52,211,153,.6);}
+  .badge.B{background:linear-gradient(135deg,#4d9fff,#38bdf8); box-shadow:0 0 10px rgba(77,159,255,.6);}
+  .badge.C{background:linear-gradient(135deg,#ff9f43,#fb923c); box-shadow:0 0 10px rgba(255,159,67,.6);}
+  .badge.D{background:linear-gradient(135deg,#ff5c5c,#ef4444); box-shadow:0 0 10px rgba(255,92,92,.6);}
+  .badge.none{background:#3a4a63; color:#cfe0f5; box-shadow:none;}
+
+  /* 柱状 */
+  .bars{display:flex; align-items:flex-end; gap:8px; height:170px; padding-top:10px;}
+  .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0;}
+  .bar{
+    width:100%; max-width:56px; border-radius:7px 7px 3px 3px;
+    background:linear-gradient(180deg,var(--bar-c,var(--cyan)),rgba(0,229,255,.25));
+    box-shadow:0 0 12px var(--bar-c,var(--cyan)); transition:height .4s; position:relative; min-height:2px;
+  }
+  .bar-val{font-size:12px; font-weight:900; color:var(--white); text-shadow:0 0 8px var(--bar-c,var(--cyan));}
+  .bar-label{font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--dim);}
+  .legend i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px;}
+
+  /* 环形 */
+  .donut{width:170px; height:170px; border-radius:50%; margin:6px auto; position:relative;}
+  .donut .inner{
+    position:absolute; inset:22px; border-radius:50%; background:rgba(6,14,30,.92);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .donut .inner b{font-size:26px; font-weight:900; text-shadow:0 0 12px var(--cyan);}
+
+  /* SVG 折线 */
+  svg.trend{width:100%; height:210px; display:block;}
+  svg.trend text{fill:var(--dim); font-size:11px;}
+
+  /* 矩阵 */
+  .matrix-wrap{overflow:auto; max-height:620px; border-radius:10px; border:1px solid rgba(0,229,255,.15);}
+  .matrix-wrap table th.corner{position:sticky; left:0; z-index:6; background:rgba(9,22,46,.98);}
+  .matrix-wrap table td.sname{position:sticky; left:0; z-index:4; background:rgba(9,22,46,.95); font-weight:800; cursor:pointer;}
+  .matrix-wrap table td.sname:hover{color:var(--cyan);}
+  .cell-mgr{display:inline-block; padding:4px 8px; border-radius:7px; background:rgba(0,229,255,.12); color:var(--white); font-weight:700; font-size:12.5px; cursor:pointer; border:1px solid rgba(0,229,255,.25);}
+  .cell-mgr:hover{box-shadow:0 0 10px rgba(0,229,255,.5);}
+  .cell-empty{color:#4c617e; font-size:12px; padding:4px 6px; display:inline-block;}
+
+  /* Modal */
+  .mask{position:fixed; inset:0; z-index:50; background:rgba(2,6,16,.72); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; padding:20px;}
+  .mask.show{display:flex;}
+  .modal{
+    background:linear-gradient(160deg,#0a1830,#0c2038); border:1px solid rgba(0,229,255,.45); border-radius:16px;
+    width:min(960px,96vw); max-height:90vh; overflow:auto; padding:22px; box-shadow:0 0 40px rgba(0,229,255,.28);
+  }
+  .modal .mhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .modal .mhead h2{font-size:21px; font-weight:900; text-shadow:0 0 12px rgba(0,229,255,.5);}
+  .modal .close{cursor:pointer; font-size:24px; color:var(--dim);}
+  .modal .close:hover{color:var(--red);}
+
+  #toast{
+    position:fixed; left:50%; bottom:34px; transform:translateX(-50%); z-index:99;
+    background:rgba(8,20,38,.95); border:1px solid var(--cyan); color:var(--white);
+    padding:12px 22px; border-radius:10px; font-size:14px; font-weight:700; display:none;
+    box-shadow:0 0 20px rgba(0,229,255,.4);
+  }
+  #loading{
+    position:fixed; inset:0; z-index:100; background:rgba(4,7,15,.94); display:flex;
+    flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  }
+  .spinner{width:56px; height:56px; border-radius:50%; border:4px solid rgba(0,229,255,.15); border-top-color:var(--cyan); animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #loading .lt{font-size:15px; color:var(--dim); font-weight:700; letter-spacing:.1em;}
+  .section{display:none;}
+  .section.active{display:block; animation:fadeIn .3s;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  .tip{font-size:12px; color:var(--dim); margin-top:8px; line-height:1.6;}
+  footer{margin-top:28px; text-align:center; color:#54647c; font-size:12px; line-height:1.8;}
+  @media (max-width:820px){ h1{font-size:20px;} .big{font-size:27px;} }
+</style>
+</head>
+<body>
+<div class="watermark"><span>南城香 QSC</span></div>
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="lt">正在加载看板数据...</div>
+</div>
+<div id="toast"></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">香</div>
+      <div>
+        <h1>南城香 QSC 状况看板</h1>
+        <div class="sub">QUALITY · SERVICE · CLEANLINESS · 四级下钻 · 数据可导出导入</div>
+      </div>
+    </div>
+    <div class="filters" id="filters">
+      <label>年</label>
+      <select id="selYear"></select>
+      <label>月</label>
+      <select id="selMonth"></select>
+      <label>城市</label>
+      <select id="selCity"></select>
+      <label>区域</label>
+      <select id="selRegion"></select>
+      <label>门店</label>
+      <select id="selStore"></select>
+      <button class="btn small" id="btnReset">重置筛选</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <div class="tab active" data-tab="overview"><span class="dot" style="background:#00e5ff"></span>① 总览驾驶舱</div>
+    <div class="tab" data-tab="perf"><span class="dot" style="background:#4d9fff"></span>② 门店绩效</div>
+    <div class="tab" data-tab="reputation"><span class="dot" style="background:#ff6ac1"></span>③ 口碑质量</div>
+    <div class="tab" data-tab="inspection"><span class="dot" style="background:#34d399"></span>④ 检查与神秘顾客</div>
+    <div class="tab" data-tab="penalty"><span class="dot" style="background:#ff5c5c"></span>⑤ 内部处罚</div>
+    <div class="tab" data-tab="manager"><span class="dot" style="background:#ffd166"></span>⑥ 店长档案</div>
+  </nav>
+
+  <!-- ① 总览 -->
+  <section class="section active" id="sec-overview">
+    <div class="row">
+      <div class="title">全国 / 上海 / 北京 QSC 综合得分</div>
+      <button class="btn small" onclick="exportOverview()">导出当前视图 CSV</button>
+    </div>
+    <div class="cards cols3" id="ovRegionCards"></div>
+    <div class="cards cols4" id="ovModuleCards" style="margin-top:14px;"></div>
+    <div class="cards cols2" style="margin-top:14px;">
+      <div class="card" style="--accent:#00e5ff;"><h3>城市对比（当前月均值）</h3><div id="ovCityCompare"></div></div>
+      <div class="card" style="--accent:#ffd166;">
+        <h3>门店综合榜 TOP10 / 倒数10 <span class="mod" id="ovRankHint"></span></h3>
+        <div class="cards cols2" style="grid-template-columns:1fr 1fr;">
+          <div id="ovTop10"></div>
+          <div id="ovBottom10"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 门店绩效 -->
+  <section class="section" id="sec-perf">
+    <div class="row">
+      <div class="title">门店绩效得分排名（S / A / B / C / D 分级）</div>
+      <button class="btn small" onclick="exportPerf()">导出当前视图 CSV</button>
+    </div>
+    <div class="cards cols2" style="grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);">
+      <div class="card" style="--accent:#4d9fff;">
+        <h3>绩效排名表 <span class="mod" id="perfMeta"></span></h3>
+        <div class="tbl-wrap"><table id="perfTable"><thead><tr><th>#</th><th>门店</th><th>区域</th><th>绩效得分</th><th>外部得分</th><th>内部得分</th><th>评级</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card" style="--accent:#00e5ff;">
+        <h3>月度绩效趋势</h3>
+        <div id="perfTrend"></div>
+        <div class="tip">按当前筛选范围内门店的绩效得分月度均值绘制（月份为绩效表口径 1~12）。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 口碑质量 -->
+  <section class="section" id="sec-reputation">
+    <div class="row">
+      <div class="title">口碑质量：大众点评星级 · 点评差评 · 外卖差评（不含产品差评）</div>
+      <button class="btn small" onclick="exportReputation()">导出当前视图 CSV</button>
+    </div>
+    <div class="cards cols3" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
+      <div class="card" style="--accent:#ff6ac1;">
+        <h3>大众点评星级分布 <span class="mod" id="dpMeta"></span></h3>
+        <div id="dpDist"></div>
+      </div>
+      <div class="card" style="--accent:#ffd166;">
+        <h3>点评差评数趋势（近 9 月）</h3>
+        <div id="dpNegTrend"></div>
+      </div>
+      <div class="card" style="--accent:#b26bff;">
+        <h3>外卖差评对比（仅差评数与差评率）<span class="mod" id="wmMeta"></span></h3>
+        <div id="wmCompare"></div>
+        <div class="tip">按平台分组对比总单量 / 差评数 / 差评率；本页不展示绩效扣分与整改结果（产品差评不纳入）。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 检查与神秘顾客 -->
+  <section class="section" id="sec-inspection">
+    <div class="row">
+      <div class="title">巡店检查与神秘顾客</div>
+      <button class="btn small" onclick="exportInspection()">导出当前视图 CSV</button>
+      <label>巡店口径版本</label>
+      <select id="selVersion" style="width:140px;">
+        <option value="">全部版本</option>
+        <option value="2.0">2.0</option>
+        <option value="3.0">3.0</option>
+      </select>
+    </div>
+    <div class="cards cols2">
+      <div class="card" style="--accent:#34d399;">
+        <h3>巡店得分趋势（版本口径切换）</h3>
+        <div id="insTrend"></div>
+      </div>
+      <div class="card" style="--accent:#00e5ff;">
+        <h3>神秘顾客总得分排行（仅总得分）<span class="mod" id="mystMeta"></span></h3>
+        <div class="tbl-wrap"><table id="mystTable"><thead><tr><th>#</th><th>门店</th><th>区域</th><th>总得分</th></tr></thead><tbody></tbody></table></div>
+        <div class="tip">按总部要求仅展示总得分，分项分数（品质/服务/环境/安全）不展示。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ 内部处罚 -->
+  <section class="section" id="sec-penalty">
+    <div class="row">
+      <div class="title">内部处罚分析</div>
+      <button class="btn small" onclick="exportPenalty()">导出当前视图 CSV</button>
+    </div>
+    <div class="cards cols3">
+      <div class="card" style="--accent:#ff5c5c;">
+        <h3>处罚数量月度趋势</h3>
+        <div id="penTrend"></div>
+      </div>
+      <div class="card" style="--accent:#ff9f43;">
+        <h3>违纪类型分布</h3>
+        <div id="penType"></div>
+      </div>
+      <div class="card" style="--accent:#ffd166;">
+        <h3>经济处罚金额排行</h3>
+        <div class="tbl-wrap" style="max-height:380px;"><table id="penMoney"><thead><tr><th>#</th><th>门店</th><th>处罚次数</th><th>罚款金额</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑥ 店长档案 -->
+  <section class="section" id="sec-manager">
+    <div class="row">
+      <div class="title">门店 × 月份店长档案矩阵</div>
+      <button class="btn small" onclick="exportManager()">导出当前视图 CSV</button>
+    </div>
+    <div class="card" style="--accent:#ffd166;">
+      <h3>店长档案矩阵 <span class="mod" id="mgrMeta"></span></h3>
+      <div class="matrix-wrap"><table id="mgrMatrix"><thead></thead><tbody></tbody></table></div>
+      <div class="tip">单元格显示当月店长姓名；缺档灰显。点击单元格 / 门店名可联动查看该店 QSC 表现。直管店（汇融天地、迎春路、西宸里）店长标为“区域直管”。</div>
+    </div>
+  </section>
+
+  <footer>
+    南城香 QSC 状况看板 · 数据源：Supabase omkshuposrdmwgukpoxd（9 张 QSC 表）· 产品差评不纳入 · 门店绩效/大众点评/店长档案按月编号（1~12）按 2026 年度口径；外卖/检查/神秘/投诉/处罚按 YYYY-MM 口径
+    <br>未对齐门店（25 家）在榜单/表格中以红色“待核对”标注。
+  </footer>
+</div>
+
+<!-- 单店详情 Modal -->
+<div class="mask" id="storeMask">
+  <div class="modal">
+    <div class="mhead">
+      <h2 id="mdTitle">单店详情</h2>
+      <div class="close" onclick="closeStoreDetail()">✕</div>
+    </div>
+    <div id="mdBody"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ===================== 配置 ===================== */
+const SUPABASE_URL = "https://omkshuposrdmwgukpoxd.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3NodXBvc3JkbXdndWtwb3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NTM2NTcsImV4cCI6MjEwMTEyOTY1N30.WH7ta72Bm2cICuQhW--O26BftF1FJZtN3WNwOddfQO4";
+const MOD_COLORS = {perf:"#4d9fff", dianping:"#ff6ac1", complaint:"#ffd166", waimai:"#b26bff", inspection:"#34d399", mystery:"#00e5ff", penalty:"#ff5c5c", manager:"#ff9f43"};
+
+const state = { year: 2026, month: null, city: "", region: "", store: "", version: "" };
+const data = { stores:[], managerLog:[], perf:[], dianping:[], complaints:[], waimai:[], inspection:[], mystery:[], penalty:[] };
+let availableMonths = [];   // 该月有任一数据（数字月表按 2026 口径并入）
+let storeIndex = new Map(); // store_id -> store row
+let storeNameIndex = new Map(); // 归一化 store_name -> store row
+
+/* ===================== 工具函数 ===================== */
+const $ = id => document.getElementById(id);
+const pad2 = n => String(n).padStart(2,"0");
+const monthKey = (y,m) => y + "-" + pad2(m);
+const num = v => (v === null || v === undefined || v === "" || isNaN(Number(v))) ? null : Number(v);
+const ratePct = v => { const n = num(v); if(n === null) return "--"; return (n > 1 ? n : n * 100).toFixed(2) + "%"; };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const normName = s => String(s ?? "").replace(/[（）()\s·]/g, "").toLowerCase().replace(/店$/, "");
+const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+const sum = arr => arr.reduce((a,b)=>a+b,0);
+const toast = msg => { const t = $("toast"); t.textContent = msg; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display="none", 2600); };
+
+function groupBy(rows, keyFn){
+  const g = {};
+  rows.forEach(r => { const k = keyFn(r); (g[k] = g[k] || []).push(r); });
+  return g;
+}
+function downloadCSV(filename, headers, rows, getCell){
+  if(!rows.length){ toast("当前视图无数据可导出"); return; }
+  let csv = "\uFEFF" + headers.join(",") + "\n";
+  rows.forEach((r,i) => {
+    csv += headers.map((h,ci) => {
+      let v = getCell ? String(getCell(r, h, ci) ?? "") : String(r[h] ?? "");
+      v = v.replace(/"/g, '""');
+      return /[",\n]/.test(v) ? '"' + v + '"' : v;
+    }).join(",") + "\n";
+  });
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  a.download = filename + "_" + monthKey(state.year, state.month || 1) + ".csv";
+  a.click();
+}
+
+/* ===================== 门店范围（四级下钻） ===================== */
+function scopeStores(){
+  let arr = data.stores;
+  if(state.city) arr = arr.filter(s => s.city === state.city);
+  if(state.region) arr = arr.filter(s => s.region === state.region);
+  return arr; // 门店单选在 render 时单独处理
+}
+function inScope(row){
+  if(!row) return false;
+  const sid = row.store_id ?? row.storeid ?? null;
+  const sname = row.store_name ?? row.storename ?? null;
+  let st = null;
+  if(sid !== null && sid !== "" && storeIndex.has(String(sid))) st = storeIndex.get(String(sid));
+  else if(sname) st = findStoreByName(sname);
+  if(!st) return true; // 无主档记录的原始行，仅当未筛选门店时放行
+  if(state.store) return st.store_name === state.store || st.store_id === state.store;
+  if(state.region) return st.region === state.region;
+  if(state.city) return st.city === state.city;
+  return true;
+}
+function findStoreByName(name){
+  const k = normName(name);
+  return storeNameIndex.get(k) || null;
+}
+function storeOf(row){
+  const sid = row.store_id ?? row.storeid ?? null;
+  if(sid !== null && sid !== "" && storeIndex.has(String(sid))) return storeIndex.get(String(sid));
+  return findStoreByName(row.store_name ?? row.storename ?? "");
+}
+function storeDisplayName(row){
+  const st = storeOf(row);
+  if(st) return (st.store_name || "") + (st.store_id ? "" : '<span class="unmatched">待核对</span>');
+  return esc(row.store_name ?? "未知门店") + '<span class="unmatched">待核对</span>';
+}
+function storeDisplayNamePlain(row){
+  const st = storeOf(row);
+  return st ? st.store_name : (row.store_name ?? "");
+}
+
+/* ===================== 数据加载 ===================== */
+async function fetchSupabase(table){
+  const rows = [];
+  let from = 0, step = 1000;
+  while(true){
+    let res;
+    try{
+      res = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?select=*", {
+        headers: {
+          "apikey": ANON_KEY,
+          "Authorization": "Bearer " + ANON_KEY,
+          "Range-Unit": "items",
+          "Range": from + "-" + (from + step - 1),
+          "Prefer": "count=exact"
+        }
+      });
+    }catch(netErr){
+      throw new Error(table + ": 网络请求失败 " + netErr.message);
+    }
+    if(!res.ok) throw new Error(table + ": HTTP " + res.status + " " + res.statusText);
+    let page;
+    try{ page = await res.json(); }
+    catch(parseErr){ throw new Error(table + ": 响应解析失败"); }
+    rows.push(...page);
+    const cr = res.headers.get("content-range");
+    let total = null;
+    if(cr && cr.indexOf("/") >= 0) total = Number(cr.split("/")[1]);
+    if(total !== null && !isNaN(total)){ if(rows.length >= total) break; }
+    else if(!page || page.length < step) break;
+    from += step;
+  }
+  return rows;
+}
+async function fetchAll(table){ return fetchSupabase(table); }
+async function loadAll(){
+  const t = $("loading"); t.style.display = "flex";
+  try{
+    const [stores, managerLog, perf, dianping, complaints, waimai, inspection, mystery, penalty] = await Promise.all([
+      fetchAll("store_master"), fetchAll("store_manager_log"), fetchAll("perf_monthly"),
+      fetchAll("dianping_monthly"), fetchAll("complaint_log"), fetchAll("waimai_monthly"),
+      fetchAll("inspection_monthly"), fetchAll("mystery_monthly"), fetchAll("penalty_log")
+    ]);
+    Object.assign(data, { stores, managerLog, perf, dianping, complaints, waimai, inspection, mystery, penalty });
+
+    data.stores.forEach(s => { if(s.store_id) storeIndex.set(String(s.store_id), s); });
+    data.stores.forEach(s => { const k = normName(s.store_name); if(!storeNameIndex.has(k)) storeNameIndex.set(k, s); });
+    data.perf.forEach(p => { if(p.store_id) storeIndex.set(String(p.store_id), storeIndex.get(String(p.store_id)) || {store_id:p.store_id, store_name:p.store_name, city:"", region:""}); });
+
+    computeAvailableMonths();
+    setupFilters();
+    const cur = new Date().getMonth() + 1;
+    if(availableMonths.includes(cur)) state.month = cur;
+    else if(availableMonths.length){ state.month = Math.max(...availableMonths); toast("所选月份无数据，已自动切换到最近有数据月份 " + state.year + "-" + pad2(state.month)); }
+    syncFiltersUI();
+    renderAll();
+  }catch(e){
+    t.innerHTML = '<div style="text-align:center;color:#ff5c5c;font-size:15px;padding:20px;">数据加载失败：' + esc(e.message) + '<br><br>请确认 anon key 有效且 RLS 允许读取 public 表。</div>';
+    return;
+  }
+  t.style.display = "none";
+}
+function computeAvailableMonths(){
+  const set = new Set();
+  const monthsArr = ["managerLog","perf","dianping"].forEach(tb => data[tb].forEach(r => { const m = num(r.month); if(m && m>=1 && m<=12) set.add(m); }));
+  ["waimai","inspection","mystery"].forEach(tb => data[tb].forEach(r => { const m = /^\d{4}-(\d{2})$/.exec(r.month); if(m) set.add(Number(m[1])); }));
+  data.complaints.forEach(r => { const m = /^\d{4}-(\d{2})/.exec(r.date); if(m) set.add(Number(m[1])); });
+  data.penalty.forEach(r => { const m = /^\d{4}-(\d{2})/.exec(r.occur_date); if(m) set.add(Number(m[1])); });
+  availableMonths = [...set].sort((a,b)=>a-b);
+}
+
+/* ===================== 筛选器 ===================== */
+function setupFilters(){
+  const ys = new Set(["2025","2026"]);
+  ["waimai","inspection","mystery"].forEach(tb => data[tb].forEach(r => { const y = /^(\d{4})-/.exec(r.month); if(y) ys.add(y[1]); }));
+  data.complaints.forEach(r => { const y = /^(\d{4})-/.exec(r.date); if(y) ys.add(y[1]); });
+  data.penalty.forEach(r => { const y = /^(\d{4})-/.exec(r.occur_date); if(y) ys.add(y[1]); });
+  $("selYear").innerHTML = [...ys].sort().map(y => `<option value="${y}">${y} 年</option>`).join("");
+  $("selMonth").innerHTML = "";
+  for(let m=1; m<=12; m++){
+    const has = availableMonths.includes(m);
+    $("selMonth").insertAdjacentHTML("beforeend",
+      `<option value="${m}" ${has?"":"disabled"}>${m} 月${has?"":"（未采集/待导入）"}</option>`);
+  }
+  const cities = [...new Set(data.stores.map(s=>s.city).filter(Boolean))];
+  const order = ["总公司","上海","北京","全国"];
+  cities.sort((a,b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+  $("selCity").innerHTML = '<option value="">全部城市</option>' + cities.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  $("selRegion").innerHTML = '<option value="">全部区域</option>';
+  $("selStore").innerHTML = '<option value="">全部门店</option>';
+}
+function syncFiltersUI(){
+  $("selYear").value = String(state.year);
+  $("selMonth").innerHTML = "";
+  for(let m=1; m<=12; m++){
+    const has = availableMonths.includes(m);
+    $("selMonth").insertAdjacentHTML("beforeend",
+      `<option value="${m}" ${has?"":"disabled"}>${m} 月${has?"":"（未采集/待导入）"}</option>`);
+  }
+  $("selMonth").value = String(state.month || "");
+  $("selCity").value = state.city || "";
+  $("selRegion").value = state.region || "";
+  $("selStore").value = state.store || "";
+}
+function rebuildRegionAndStore(){
+  let arr = data.stores;
+  if(state.city) arr = arr.filter(s=>s.city===state.city);
+  const regions = [...new Set(arr.map(s=>s.region).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh"));
+  $("selRegion").innerHTML = '<option value="">全部区域</option>' + regions.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join("");
+  $("selRegion").value = state.region || "";
+  let arr2 = state.region ? arr.filter(s=>s.region===state.region) : arr;
+  $("selStore").innerHTML = '<option value="">全部门店</option>' + arr2.map(s=>`<option value="${esc(s.store_name)}">${esc(s.store_name)}</option>`).join("");
+  $("selStore").value = state.store || "";
+}
+function bindFilterEvents(){
+  $("selYear").addEventListener("change", e => { state.year = Number(e.target.value); state.month = null; renderAll(); syncFiltersUI(); });
+  $("selMonth").addEventListener("change", e => { state.month = Number(e.target.value); renderAll(); });
+  $("selCity").addEventListener("change", e => { state.city = e.target.value; state.region = ""; state.store = ""; rebuildRegionAndStore(); renderAll(); });
+  $("selRegion").addEventListener("change", e => { state.region = e.target.value; state.store = ""; rebuildRegionAndStore(); renderAll(); });
+  $("selStore").addEventListener("change", e => { state.store = e.target.value; renderAll(); });
+  $("selVersion").addEventListener("change", e => { state.version = e.target.value; renderInspection(); });
+  $("btnReset").addEventListener("click", () => {
+    Object.assign(state, { city:"", region:"", store:"", version:"" });
+    rebuildRegionAndStore(); syncFiltersUI(); renderAll();
+  });
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    $("sec-" + t.dataset.tab).classList.add("active");
+  }));
+}
+
+/* ===================== 当前月数据视图 ===================== */
+function filterByMonth(rows, monthField, isStr){
+  if(state.month === null) return [];
+  if(isStr) return rows.filter(r => (r[monthField]||"").indexOf(monthKey(state.year, state.month)) === 0);
+  return rows.filter(r => Number(r[monthField]) === state.month);
+}
+function monthRows(){
+  return {
+    perf: filterByMonth(data.perf, "month", false),
+    dianping: filterByMonth(data.dianping, "month", false),
+    mgr: filterByMonth(data.managerLog, "month", false),
+    waimai: filterByMonth(data.waimai, "month", true),
+    inspection: filterByMonth(data.inspection, "month", true),
+    mystery: filterByMonth(data.mystery, "month", true),
+    complaints: filterByMonth(data.complaints, "date", true),
+    penalty: filterByMonth(data.penalty, "occur_date", true)
+  };
+}
+function scoped(r){ return inScope(r); }
+
+/* 综合得分：绩效 total_score 为主，缺失则用检查/神秘均值归一 */
+function compositeScore(storeRows, perfRow){
+  const parts = [], weights = [0.5, 0.3, 0.2];
+  if(perfRow && num(perfRow.total_score) !== null) parts.push([num(perfRow.total_score), weights[0]]);
+  const ins = storeRows.inspection && num(storeRows.inspection.monthly_score) !== null ? num(storeRows.inspection.monthly_score) : null;
+  if(ins !== null) parts.push([ins, weights[1]]);
+  const mys = storeRows.mystery && num(storeRows.mystery.total_score) !== null ? num(storeRows.mystery.total_score) : null;
+  if(mys !== null) parts.push([mys, weights[2]]);
+  if(!parts.length) return null;
+  const w = sum(parts.map(p=>p[1]));
+  return sum(parts.map(p=>p[0]*p[1])) / w;
+}
+
+/* ===================== 图表基元 ===================== */
+function barChart(el, labels, values, color, fmt){
+  const max = Math.max(...values, 1);
+  el.innerHTML = '<div class="bars">' + labels.map((l,i) =>
+    `<div class="bar-col"><div class="bar-val">${fmt?fmt(values[i]):Math.round(values[i]*100)/100}</div>` +
+    `<div class="bar" style="height:${Math.max(2, Math.round(values[i]/max*140))}px;--bar-c:${color}"></div>` +
+    `<div class="bar-label" title="${esc(l)}">${esc(l)}</div></div>`
+  ).join("") + "</div>";
+}
+function donutChart(el, parts, centerLabel){
+  if(!parts.length){ el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  let acc = 0;
+  const segs = parts.map(p => { const s = `${p.c} ${acc}% ${acc+p.v}%`; acc += p.v; return s; }).join(", ");
+  el.innerHTML = `<div class="donut" style="background:conic-gradient(${segs})">
+    <div class="inner"><b>${esc(centerLabel)}</b><span style="font-size:12px;color:var(--dim);">${parts.length} 类</span></div></div>
+    <div class="legend">${parts.map(p=>`<span><i style="background:${p.c};box-shadow:0 0 8px ${p.c}"></i>${esc(p.label)} ${p.v}% (${p.n})</span>`).join("")}</div>`;
+}
+function lineChart(el, labels, seriesList){
+  if(!labels.length){ el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
+  const W = 760, H = 210, P = 30;
+  const all = seriesList.flatMap(s => s.values.map(v=>v===null?null:num(v))).filter(v=>v!==null);
+  let min = Math.min(...all), max = Math.max(...all);
+  if(min === max){ min -= 1; max += 1; }
+  const x = i => P + i * (W - P - 10) / Math.max(1, labels.length - 1);
+  const y = v => H - 20 - (num(v) - min) / (max - min) * (H - P - 20);
+  let svg = `<svg class="trend" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+  // 网格
+  for(let g=0; g<=4; g++){
+    const gy = P + g * (H - P - 20) / 4;
+    const gv = max - (max - min) * g / 4;
+    svg += `<line x1="${P}" y1="${gy}" x2="${W-10}" y2="${gy}" stroke="rgba(255,255,255,.07)" stroke-dasharray="4 4"/><text x="${P-6}" y="${gy+4}" text-anchor="end">${Math.round(gv*10)/10}</text>`;
+  }
+  labels.forEach((l,i) => svg += `<text x="${x(i)}" y="${H-6}" text-anchor="middle">${esc(l)}</text>`);
+  seriesList.forEach(s => {
+    let d = "";
+    s.values.forEach((v,i) => { if(v !== null && v !== undefined) d += (d?" L":"M") + x(i).toFixed(1) + " " + y(v).toFixed(1); });
+    if(d) svg += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${s.color})"/>`;
+    s.values.forEach((v,i) => { if(v !== null && v !== undefined) svg += `<circle cx="${x(i)}" cy="${y(v)}" r="3.6" fill="${s.color}"/>`; });
+  });
+  svg += '</svg>';
+  svg += '<div class="legend">' + seriesList.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("") + '</div>';
+  el.innerHTML = svg;
+}
+
+/* ===================== ① 总览驾驶舱 ===================== */
+function renderOverview(){
+  const mr = monthRows();
+  const scopePerf = mr.perf.filter(scoped);
+  const scopeDp = mr.dianping.filter(scoped);
+  const scopeWm = mr.waimai.filter(scoped);
+  const scopeIns = mr.inspection.filter(scoped);
+  const scopeMys = mr.mystery.filter(scoped);
+  const scopeCmp = mr.complaints.filter(scoped);
+  const scopePen = mr.penalty.filter(scoped);
+  const scopeMgr = mr.mgr.filter(scoped);
+
+  const cityLabel = state.city || "全国";
+  const regionLabel = state.region || "全部区域";
+  const storeLabel = state.store || "全部门店";
+  const hint = `${cityLabel} · ${regionLabel} · ${storeLabel} · ${state.year}-${pad2(state.month||1)}`;
+
+  // 区域卡：全国/上海/北京
+  const regionCards = [];
+  ["全国","上海","北京"].forEach(city => {
+    let perfRows, insRows, mysRows;
+    if(city === "全国"){ perfRows = mr.perf.filter(r => !state.city || inScope(r)); insRows = mr.inspection.filter(r => !state.city || inScope(r)); mysRows = mr.mystery.filter(r => !state.city || inScope(r)); }
+    else { perfRows = mr.perf.filter(r => inScope(r) && (storeOf(r)||{}).city === city); insRows = mr.inspection.filter(r => inScope(r) && (storeOf(r)||{}).city === city); mysRows = mr.mystery.filter(r => inScope(r) && (storeOf(r)||{}).city === city); }
+    const p = avg(perfRows.map(r=>num(r.total_score)).filter(v=>v!==null));
+    const i = avg(insRows.map(r=>num(r.monthly_score)).filter(v=>v!==null));
+    const m = avg(mysRows.map(r=>num(r.total_score)).filter(v=>v!==null));
+    const comps = [];
+    if(p!==null) comps.push([p, .5]); if(i!==null) comps.push([i, .3]); if(m!==null) comps.push([m, .2]);
+    const comp = comps.length ? sum(comps.map(c=>c[0]*c[1]))/sum(comps.map(c=>c[1])) : null;
+    const cnt = city==="全国" ? data.stores.length : data.stores.filter(s=>s.city===city).length;
+    regionCards.push(`<div class="card" style="--accent:#00e5ff;">
+      <h3>${city==="全国"?"全国":(city==="上海"?"上海":"北京")} QSC 综合得分 <span class="mod">${cnt} 家门店</span></h3>
+      <div class="big cyan">${comp===null?"--":comp.toFixed(1)}</div>
+      <div class="hint">绩效 ${p===null?"--":p.toFixed(1)} · 检查 ${i===null?"--":i.toFixed(1)} · 神秘 ${m===null?"--":m.toFixed(1)}</div>
+    </div>`);
+  });
+  $("ovRegionCards").innerHTML = regionCards.join("");
+
+  // 八大模块指标卡
+  const mods = [
+    {k:"perf", c:MOD_COLORS.perf, name:"门店绩效", main: avg(scopePerf.map(r=>num(r.total_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: scopePerf.length + " 家门店已计分", cls:"blue"},
+    {k:"dianping", c:MOD_COLORS.dianping, name:"大众星级", main: avg(scopeDp.map(r=>num(r.dianping_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(2), sub: scopeDp.length + " 家有评分", cls:"pink"},
+    {k:"complaint", c:MOD_COLORS.complaint, name:"点评投诉", main: scopeCmp.length, mainTxt: v=>v, sub: "当月投诉/差评记录数", cls:"orange"},
+    {k:"waimai", c:MOD_COLORS.waimai, name:"外卖差评", main: avg(scopeWm.map(r=>num(r.bad_rate)).filter(v=>v!==null)), mainTxt: v=>ratePct(v), sub: "总差评 " + sum(scopeWm.map(r=>num(r.bad_count)||0)) + " 条", cls:"purple"},
+    {k:"inspection", c:MOD_COLORS.inspection, name:"线下检查", main: avg(scopeIns.map(r=>num(r.monthly_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: scopeIns.length + " 条检查记录", cls:"green"},
+    {k:"mystery", c:MOD_COLORS.mystery, name:"神秘顾客", main: avg(scopeMys.map(r=>num(r.total_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: scopeMys.length + " 条测评", cls:"cyan"},
+    {k:"penalty", c:MOD_COLORS.penalty, name:"内部处罚", main: scopePen.length, mainTxt: v=>v, sub: "罚款合计 ¥" + sum(scopePen.map(r=>num(r.fine_amount)||0)).toFixed(0), cls:"red"},
+    {k:"manager", c:MOD_COLORS.manager, name:"店长档案", main: scopeMgr.length, mainTxt: v=>v, sub: "当月有店长记录门店", cls:"orange"}
+  ];
+  $("ovModuleCards").innerHTML = mods.map(md => `
+    <div class="card" style="--accent:${md.c};">
+      <h3>${md.name} <span class="mod">${esc(hint)}</span></h3>
+      <div class="big ${md.cls}">${md.mainTxt(md.main)}<span class="unit"></span></div>
+      <div class="hint">${esc(md.sub)}</div>
+    </div>`).join("");
+
+  // 城市对比
+  const cityCompareRows = ["全国","上海","北京"].map(city => {
+    const get = (rows) => {
+      const rs = city==="全国" ? rows.filter(r=>!state.city||inScope(r)) : rows.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city);
+      return avg(rs.map(r=>num(r.total_score)).filter(v=>v!==null));
+    };
+    return {city, perf: get(mr.perf), inspection: avg((city==="全国"?mr.inspection.filter(r=>!state.city||inScope(r)):mr.inspection.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city)).map(r=>num(r.monthly_score)).filter(v=>v!==null)), mystery: avg((city==="全国"?mr.mystery.filter(r=>!state.city||inScope(r)):mr.mystery.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city)).map(r=>num(r.total_score)).filter(v=>v!==null))};
+  });
+  const cc = [];
+  ["绩效得分","巡店得分","神秘得分"].forEach((k, ki) => {
+    const key = ["perf","inspection","mystery"][ki];
+    const vals = cityCompareRows.map(r => r[key] === null ? 0 : r[key]);
+    cc.push(`<div style="margin-bottom:8px;"><div style="font-size:12px;color:var(--dim);font-weight:700;">${k}</div>
+      <div class="legend">${cityCompareRows.map(r=>`<span><i style="background:${["#00e5ff","#ff6ac1","#34d399"][cityCompareRows.indexOf(r)]}"></i>${r.city}：<b style="color:var(--white)">${r[key]===null?"--":r[key].toFixed(1)}</b></span>`).join("")}</div></div>`);
+  });
+  $("ovCityCompare").innerHTML = cc.join("") || '<div class="empty">暂无数据</div>';
+
+  // TOP10 / 倒数10
+  const ranked = scopePerf.slice().sort((a,b)=>(num(b.total_score)||-999)-(num(a.total_score)||-999));
+  $("ovRankHint").textContent = hint;
+  $("ovTop10").innerHTML = rankTable(ranked.slice(0,10), "TOP 10");
+  $("ovBottom10").innerHTML = rankTable(ranked.slice(-10).reverse(), "倒数 10");
+}
+function rankTable(rows, title){
+  if(!rows.length) return '<div class="empty">暂无数据</div>';
+  return '<div class="tbl-wrap" style="max-height:420px;"><table><thead><tr><th>#</th><th>门店</th><th>得分</th><th>评级</th></tr></thead><tbody>' +
+    rows.map((r,i)=>`<tr onclick="openStoreDetail('${esc(storeDisplayNamePlain(r))}')"><td class="num">${i+1}</td><td>${storeDisplayName(r)}</td><td class="num ${num(r.total_score)>=90?"score-up":num(r.total_score)<80?"score-bad":"score-ok"}">${num(r.total_score)?.toFixed(1)??"--"}</td><td>${gradeBadge(r.grade)}</td></tr>`).join("") + '</tbody></table></div>';
+}
+function gradeBadge(g){
+  g = String(g||"").trim().toUpperCase();
+  if(["S","A","B","C","D"].includes(g)) return `<span class="badge ${g}">${g}</span>`;
+  return `<span class="badge none">${esc(g||"-")}</span>`;
+}
+
+/* ===================== ② 门店绩效 ===================== */
+function renderPerf(){
+  const mr = monthRows();
+  const rows = mr.perf.filter(scoped).sort((a,b)=>(num(b.total_score)||-999)-(num(a.total_score)||-999));
+  $("perfMeta").textContent = `${rows.length} 家门店 · ${state.year}-${pad2(state.month||1)}`;
+  $("perfTable").querySelector("tbody").innerHTML = rows.map((r,i)=>`
+    <tr class="${storeOf(r)&&!storeOf(r).store_id?"row-unmatched":""}" onclick="openStoreDetail('${esc(storeDisplayNamePlain(r))}')">
+      <td class="num">${i+1}</td><td>${storeDisplayName(r)}</td><td>${esc((storeOf(r)||{}).region||"-")}</td>
+      <td class="num ${num(r.total_score)>=90?"score-up":num(r.total_score)<80?"score-bad":"score-ok"}">${num(r.total_score)?.toFixed(1)??"--"}</td>
+      <td class="num">${num(r.external_score)?.toFixed(1)??"--"}</td>
+      <td class="num">${num(r.internal_score)?.toFixed(1)??"--"}</td>
+      <td>${gradeBadge(r.grade)}</td>
+    </tr>`).join("") || '<tr><td colspan="7" class="empty">当前月份暂无绩效数据（未采集/待导入）</td></tr>';
+
+  // 月度趋势
+  const months = availableMonths.slice();
+  const agg = {};
+  data.perf.filter(scoped).forEach(r => {
+    const m = num(r.month); if(m === null) return;
+    (agg[m] = agg[m] || []).push(num(r.total_score));
+  });
+  const labels = months.map(m=>m+"月");
+  const values = months.map(m => agg[m] ? avg(agg[m].filter(v=>v!==null)) : null);
+  lineChart($("perfTrend"), labels, [{name:"绩效得分", color:"#00e5ff", values}]);
+}
+
+/* ===================== ③ 口碑质量 ===================== */
+function renderReputation(){
+  const mr = monthRows();
+  const dpRows = mr.dianping.filter(scoped);
+  $("dpMeta").textContent = dpRows.length + " 家门店";
+  const dist = { "≥4.8":0, "4.5~4.8":0, "4.0~4.5":0, "<4.0":0, "未采集":0 };
+  dpRows.forEach(r => {
+    const v = num(r.dianping_score);
+    if(v === null) dist["未采集"]++;
+    else if(v >= 4.8) dist["≥4.8"]++;
+    else if(v >= 4.5) dist["4.5~4.8"]++;
+    else if(v >= 4.0) dist["4.0~4.5"]++;
+    else dist["<4.0"]++;
+  });
+  const total = dpRows.length || 1;
+  donutChart($("dpDist"), [
+    {label:"≥4.8 极佳", n:dist["≥4.8"], v:Math.round(dist["≥4.8"]/total*100), c:"#00e5ff"},
+    {label:"4.5~4.8 优秀", n:dist["4.5~4.8"], v:Math.round(dist["4.5~4.8"]/total*100), c:"#34d399"},
+    {label:"4.0~4.5 良好", n:dist["4.0~4.5"], v:Math.round(dist["4.0~4.5"]/total*100), c:"#ffd166"},
+    {label:"<4.0 需改善", n:dist["<4.0"], v:Math.round(dist["<4.0"]/total*100), c:"#ff5c5c"},
+    {label:"未采集", n:dist["未采集"], v:Math.round(dist["未采集"]/total*100), c:"#3a4a63"}
+  ].filter(p=>p.n>0), dpRows.length + " 家");
+
+  // 点评差评数趋势（近 9 月）
+  const neg = {};
+  data.dianping.filter(scoped).forEach(r => {
+    const m = num(r.month); if(m === null) return;
+    neg[m] = (neg[m]||0) + (num(r.dianping_neg_count)||0);
+  });
+  const labels = availableMonths.map(m=>m+"月");
+  const vals = availableMonths.map(m => neg[m]||0);
+  lineChart($("dpNegTrend"), labels, [{name:"点评差评数", color:"#ff6ac1", values:vals}]);
+
+  // 外卖差评对比（仅差评数与差评率，不含扣分/整改）
+  const wmRows = mr.waimai.filter(scoped);
+  $("wmMeta").textContent = state.year + "-" + pad2(state.month||1) + " · " + wmRows.length + " 条记录";
+  const byPlat = groupBy(wmRows, r => r.platform || "未知平台");
+  const plats = Object.keys(byPlat).sort();
+  if(!plats.length){
+    $("wmCompare").innerHTML = '<div class="empty">当前月份暂无外卖差评数据（未采集/待导入）</div>';
+  } else {
+    $("wmCompare").innerHTML = `
+      <div class="bars">${plats.map(p => {
+        const rs = byPlat[p];
+        const total = sum(rs.map(r=>num(r.total_count)||0));
+        const bad = sum(rs.map(r=>num(r.bad_count)||0));
+        const rate = total ? bad/total : null;
+        return `<div class="bar-col"><div class="bar-val">${bad}</div>
+          <div class="bar" style="height:${Math.max(3, Math.round(bad/Math.max(1,Math.max(...plats.map(pp=>sum(byPlat[pp].map(r=>num(r.bad_count)||0)))))*140))}px;--bar-c:#b26bff"></div>
+          <div class="bar-label">${esc(p)}<br>差评率 ${rate===null?"--":(rate*100).toFixed(2)+"%"}</div></div>`;
+      }).join("")}</div>
+      <div class="legend">柱高=当月差评数；标注=平台差评率。仅展示差评数与差评率，绩效扣分/整改结果不展示。</div>
+      <table style="margin-top:10px;"><thead><tr><th>平台</th><th>总单量</th><th>差评数</th><th>差评率</th></tr></thead><tbody>
+      ${plats.map(p => {
+        const rs = byPlat[p];
+        const total = sum(rs.map(r=>num(r.total_count)||0));
+        const bad = sum(rs.map(r=>num(r.bad_count)||0));
+        const rate = total ? bad/total : null;
+        return `<tr><td>${esc(p)}</td><td class="num">${total}</td><td class="num ${bad>0?"score-bad":"score-ok"}">${bad}</td><td class="num ${rate!==null&&rate>0.02?"score-bad":"score-ok"}">${ratePct(rate)}</td></tr>`;
+      }).join("")}</tbody></table>`;
+  }
+}
+
+/* ===================== ④ 检查与神秘顾客 ===================== */
+function renderInspection(){
+  const mr = monthRows();
+  const version = state.version;
+  let insRows = mr.inspection.filter(scoped);
+  if(version) insRows = insRows.filter(r => String(r.version||"").indexOf(version) === 0);
+  const agg = {};
+  insRows.forEach(r => {
+    const m = /^(\d{4})-(\d{2})/.exec(r.month);
+    if(!m) return;
+    const k = m[1] + "-" + m[2];
+    (agg[k] = agg[k] || []).push(num(r.monthly_score));
+  });
+  const labels = Object.keys(agg).sort();
+  const vals = labels.map(k => avg(agg[k].filter(v=>v!==null)));
+  const series = version ? [{name:"巡店得分(" + version + ")", color:"#34d399", values:vals}] : [
+    {name:"巡店得分(线上口径)", color:"#00e5ff", values: labels.map(k => avg(insRows.filter(r=>(r.month||"").indexOf(k)===0).map(r=>num(r.online_score)).filter(v=>v!==null)))},
+    {name:"巡店得分", color:"#34d399", values:vals}
+  ];
+  lineChart($("insTrend"), labels, series);
+
+  const mystRows = mr.mystery.filter(scoped).sort((a,b)=>(num(b.total_score)||-999)-(num(a.total_score)||-999));
+  $("mystMeta").textContent = mystRows.length + " 家门店";
+  $("mystTable").querySelector("tbody").innerHTML = mystRows.map((r,i)=>`
+    <tr class="${storeOf(r)&&!storeOf(r).store_id?"row-unmatched":""}" onclick="openStoreDetail('${esc(storeDisplayNamePlain(r))}')">
+      <td class="num">${i+1}</td><td>${storeDisplayName(r)}</td><td>${esc((storeOf(r)||{}).region||"-")}</td>
+      <td class="num ${num(r.total_score)>=90?"score-up":num(r.total_score)<80?"score-bad":"score-ok"}">${num(r.total_score)?.toFixed(1)??"--"}</td>
+    </tr>`).join("") || '<tr><td colspan="4" class="empty">当前月份暂无神秘顾客数据（未采集/待导入）</td></tr>';
+}
+
+/* ===================== ⑤ 内部处罚 ===================== */
+function renderPenalty(){
+  const mr = monthRows();
+  const penRows = mr.penalty.filter(scoped);
+  const allPen = data.penalty.filter(scoped);
+
+  // 月度趋势（近12个月）
+  const agg = {};
+  allPen.forEach(r => {
+    const m = /^(\d{4})-(\d{2})/.exec(r.occur_date);
+    if(m) agg[m[1]+"-"+m[2]] = (agg[m[1]+"-"+m[2]]||0) + 1;
+  });
+  const labels = Object.keys(agg).sort().slice(-12);
+  lineChart($("penTrend"), labels, [{name:"处罚数量", color:"#ff5c5c", values: labels.map(k=>agg[k])}]);
+
+  // 违纪类型分布（当前月）
+  const typeCount = {};
+  penRows.forEach(r => { const t = r.violation_type || "未分类"; typeCount[t] = (typeCount[t]||0)+1; });
+  const total = penRows.length || 1;
+  const colors = ["#ff5c5c","#ff9f43","#ffd166","#b26bff","#00e5ff","#34d399","#4d9fff","#ff6ac1","#8aa3c4"];
+  donutChart($("penType"), Object.keys(typeCount).sort((a,b)=>typeCount[b]-typeCount[a]).slice(0,8).map((t,i)=>({label:t, n:typeCount[t], v:Math.round(typeCount[t]/total*100), c:colors[i%colors.length]})), penRows.length + " 条");
+
+  // 金额排行
+  const money = {};
+  penRows.forEach(r => { const n = storeDisplayNamePlain(r); money[n] = money[n] || {name:n, cnt:0, amt:0}; money[n].cnt++; money[n].amt += num(r.fine_amount)||0; });
+  const sorted = Object.values(money).sort((a,b)=>b.amt-a.amt).slice(0,20);
+  $("penMoney").querySelector("tbody").innerHTML = sorted.map((r,i)=>`
+    <tr onclick="openStoreDetail('${esc(r.name)}')"><td class="num">${i+1}</td><td>${esc(r.name)}</td><td class="num">${r.cnt}</td><td class="num ${r.amt>0?"score-bad":""}">¥${r.amt.toFixed(0)}</td></tr>`
+  ).join("") || '<tr><td colspan="4" class="empty">当前月份暂无处罚数据（未采集/待导入）</td></tr>';
+}
+
+/* ===================== ⑥ 店长档案 ===================== */
+function renderManager(){
+  const months = availableMonths.slice();
+  const mgrRows = data.managerLog.filter(scoped);
+  const byStore = {};
+  mgrRows.forEach(r => {
+    const m = num(r.month); if(m === null) return;
+    const name = storeDisplayNamePlain(r) || "未知门店";
+    (byStore[name] = byStore[name] || {})[m] = r.manager_name || "";
+  });
+  const storeNames = Object.keys(byStore);
+  $("mgrMeta").textContent = `${storeNames.length} 家门店 × ${months.length} 个月`;
+  const thead = `<tr><th class="corner">门店 \\ 月份</th>${months.map(m=>`<th>${m}月</th>`).join("")}</tr>`;
+  const tbody = storeNames.map(name => {
+    const row = byStore[name];
+    return `<tr><td class="sname" onclick="openStoreDetail('${esc(name)}')">${esc(name)}</td>` +
+      months.map(m => {
+        const mg = row[m];
+        if(!mg) return `<td class="cell-empty">—</td>`;
+        return `<td><span class="cell-mgr" onclick="openStoreDetail('${esc(name)}')">${esc(mg)}</span></td>`;
+      }).join("") + "</tr>";
+  }).join("");
+  $("mgrMatrix").querySelector("thead").innerHTML = thead;
+  $("mgrMatrix").querySelector("tbody").innerHTML = tbody || '<tr><td class="empty">暂无店长档案</td></tr>';
+}
+
+/* ===================== 单店详情 ===================== */
+function openStoreDetail(storeName){
+  const st = findStoreByName(storeName) || data.stores.find(s=>s.store_name===storeName);
+  if(!st){ toast("未找到门店：" + storeName); return; }
+  const sid = st.store_id;
+  const mr = monthRows();
+  const curKey = monthKey(state.year, state.month||1);
+  const perfRow = sid ? data.perf.find(r => String(r.store_id)===String(sid) && Number(r.month)===state.month) : data.perf.find(r => normName(r.store_name)===normName(storeName) && Number(r.month)===state.month);
+  const dpRow = sid ? data.dianping.find(r => String(r.store_id)===String(sid) && Number(r.month)===state.month) : null;
+  const mgrRow = sid ? data.managerLog.find(r => String(r.store_id)===String(sid) && Number(r.month)===state.month) : data.managerLog.find(r => normName(findStoreNameByMgr(r.store_id))===normName(storeName) && Number(r.month)===state.month);
+  const cmpRows = data.complaints.filter(r => (r.store_name||"").indexOf(storeName)>=0 && (r.date||"").indexOf(curKey)===0);
+  const wmRows = data.waimai.filter(r => (sid?String(r.store_id)===String(sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
+  const insRow = data.inspection.find(r => (sid?String(r.store_id)===String(sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
+  const mysRow = data.mystery.find(r => (sid?String(r.store_id)===String(sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
+  const penRows = data.penalty.filter(r => (r.store_name||"").indexOf(storeName)>=0 && (r.occur_date||"").indexOf(curKey)===0);
+
+  const nm = sid ? "" : '<span class="unmatched">待核对</span>';
+  $("mdTitle").innerHTML = esc(storeName) + nm;
+  const html = `
+    <div class="cards cols4">
+      <div class="card" style="--accent:#4d9fff;"><h3>门店绩效</h3><div class="big blue">${num(perfRow?.total_score)?.toFixed(1)??"--"}</div><div class="hint">${gradeBadge(perfRow?.grade)} · 外部 ${num(perfRow?.external_score)?.toFixed(1)??"--"} · 内部 ${num(perfRow?.internal_score)?.toFixed(1)??"--"}</div></div>
+      <div class="card" style="--accent:#ff6ac1;"><h3>大众点评</h3><div class="big pink">${num(dpRow?.dianping_score)?.toFixed(2)??"--"}</div><div class="hint">差评 ${num(dpRow?.dianping_neg_count)??0} 条 · 满意度 ${num(dpRow?.cust_sat)?.toFixed(1)??"--"}</div></div>
+      <div class="card" style="--accent:#34d399;"><h3>巡店检查</h3><div class="big green">${num(insRow?.monthly_score)?.toFixed(1)??"--"}</div><div class="hint">版本 ${esc(insRow?.version||"-")} · 线上 ${num(insRow?.online_score)?.toFixed(1)??"--"}</div></div>
+      <div class="card" style="--accent:#00e5ff;"><h3>神秘顾客</h3><div class="big cyan">${num(mysRow?.total_score)?.toFixed(1)??"--"}</div><div class="hint">仅总得分口径</div></div>
+    </div>
+    <div class="cards cols4" style="margin-top:14px;">
+      <div class="card" style="--accent:#ffd166;"><h3>点评投诉</h3><div class="big orange">${cmpRows.length}</div><div class="hint">当月记录 ${cmpRows.length} 条</div></div>
+      <div class="card" style="--accent:#b26bff;"><h3>外卖差评</h3><div class="big purple">${sum(wmRows.map(r=>num(r.bad_count)||0))}</div><div class="hint">${wmRows.map(r=>`${esc(r.platform||"-")} ${ratePct(r.bad_rate)}`).join(" · ")||"当月暂无"}</div></div>
+      <div class="card" style="--accent:#ff5c5c;"><h3>内部处罚</h3><div class="big red">${penRows.length}</div><div class="hint">罚款 ¥${sum(penRows.map(r=>num(r.fine_amount)||0)).toFixed(0)}</div></div>
+      <div class="card" style="--accent:#ff9f43;"><h3>当月店长</h3><div class="big orange">${esc(mgrRow?.manager_name||"—")}</div><div class="hint">${esc(st.city||"")} · ${esc(st.region||"")}</div></div>
+    </div>
+    <div class="card" style="--accent:#00e5ff; margin-top:14px;"><h3>近 9 月绩效趋势</h3><div id="mdTrend"></div></div>
+    <div class="card" style="--accent:#ff6ac1; margin-top:14px;"><h3>当月点评投诉明细</h3>
+      <div class="tbl-wrap" style="max-height:260px;"><table><thead><tr><th>日期</th><th>餐次</th><th>平台</th><th>内容</th><th>责任人</th><th>职级</th></tr></thead><tbody>
+      ${cmpRows.slice(0,50).map(r=>`<tr><td class="num">${esc(r.date)}</td><td>${esc(r.meal||"-")}</td><td>${esc(r.platform||"-")}</td><td style="white-space:normal;max-width:320px;">${esc(r.content||"-")}</td><td>${esc(r.responsible||"-")}</td><td>${esc(r.job_level||"-")}</td></tr>`).join("")||'<tr><td colspan="6" class="empty">暂无明细</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+  $("mdBody").innerHTML = html;
+  const agg = {};
+  const srows = data.perf.filter(r => sid ? String(r.store_id)===String(sid) : normName(r.store_name)===normName(storeName));
+  srows.forEach(r => { const m = num(r.month); if(m!==null) agg[m] = num(r.total_score); });
+  lineChart($("mdTrend"), availableMonths.map(m=>m+"月"), [{name:"绩效得分", color:"#00e5ff", values:availableMonths.map(m=>agg[m]??null)}]);
+  $("storeMask").classList.add("show");
+}
+function findStoreNameByMgr(storeId){
+  const st = storeIndex.get(String(storeId));
+  return st ? st.store_name : "";
+}
+function closeStoreDetail(){ $("storeMask").classList.remove("show"); }
+
+/* ===================== 导出 ===================== */
+function exportOverview(){
+  const mr = monthRows();
+  const rows = mr.perf.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 区域: (storeOf(r)||{}).region||"", 绩效得分: r.total_score, 外部得分: r.external_score, 内部得分: r.internal_score, 评级: r.grade }));
+  downloadCSV("总览_绩效榜", ["门店","区域","绩效得分","外部得分","内部得分","评级"], rows);
+}
+function exportPerf(){
+  const mr = monthRows();
+  const rows = mr.perf.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 区域: (storeOf(r)||{}).region||"", 绩效得分: r.total_score, 外部得分: r.external_score, 内部得分: r.internal_score, 评级: r.grade }));
+  downloadCSV("门店绩效", ["门店","区域","绩效得分","外部得分","内部得分","评级"], rows);
+}
+function exportReputation(){
+  const mr = monthRows();
+  const dp = mr.dianping.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 大众点评分: r.dianping_score, 点评差评数: r.dianping_neg_count }));
+  const wm = mr.waimai.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 平台: r.platform, 总单量: r.total_count, 差评数: r.bad_count, 差评率: r.bad_rate }));
+  const rows = [];
+  dp.forEach(r => rows.push(r));
+  wm.forEach(r => rows.push(r));
+  downloadCSV("口碑质量", ["门店","平台","大众点评分","点评差评数","总单量","差评数","差评率"], rows);
+}
+function exportInspection(){
+  const mr = monthRows();
+  const ins = mr.inspection.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 巡店得分: r.monthly_score, 线上得分: r.online_score, 版本: r.version }));
+  const mys = mr.mystery.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 神秘总得分: r.total_score }));
+  const rows = [];
+  ins.forEach(r => rows.push(r));
+  mys.forEach(r => rows.push(r));
+  downloadCSV("检查与神秘顾客", ["门店","月份","巡店得分","线上得分","版本","神秘总得分"], rows);
+}
+function exportPenalty(){
+  const mr = monthRows();
+  const rows = mr.penalty.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 日期: r.occur_date, 类型: r.violation_type, 等级: r.penalty_level, 罚款金额: r.fine_amount, 描述: r.event_desc }));
+  downloadCSV("内部处罚", ["门店","日期","类型","等级","罚款金额","描述"], rows);
+}
+function exportManager(){
+  const rows = data.managerLog.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 店长: r.manager_name }));
+  downloadCSV("店长档案", ["门店","月份","店长"], rows);
+}
+
+/* ===================== 渲染总入口 ===================== */
+function renderAll(){
+  renderOverview();
+  renderPerf();
+  renderReputation();
+  renderInspection();
+  renderPenalty();
+  renderManager();
+}
+
+/* ===================== 启动 ===================== */
+bindFilterEvents();
+loadAll();
+</script>
+</body>
+</html>
