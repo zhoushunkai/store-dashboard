@@ -230,6 +230,30 @@
   .tip{font-size:12px; color:var(--dim); margin-top:8px; line-height:1.6;}
   footer{margin-top:28px; text-align:center; color:#54647c; font-size:12px; line-height:1.8;}
   @media (max-width:820px){ h1{font-size:20px;} .big{font-size:27px;} }
+
+/* ===== 本次改造新增样式：可点击标签 / 得分说明 / 处罚分组 / 粒度按钮 / 等级堆叠 ===== */
+.clickable{cursor:pointer; color:var(--cyan); font-weight:800; text-decoration:none; border-bottom:1px dashed rgba(0,229,255,.55); transition:filter .15s;}
+.clickable:hover{filter:brightness(1.4);}
+a.clickable{color:var(--cyan);}
+.clickable.pink{color:var(--pink); border-color:rgba(255,106,193,.55);}
+.score-help{background:rgba(8,20,38,.6); border:1px dashed rgba(0,229,255,.35); border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.8; color:var(--dim);}
+.score-help b{color:var(--white);}
+.score-help .f{font-family:Consolas,Menlo,monospace; color:var(--cyan); font-weight:800;}
+.score-help .row2{display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;}
+.score-help .row2 > div{flex:1 1 200px; background:rgba(255,255,255,.04); border-radius:8px; padding:8px 10px;}
+.pen-group{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; border-radius:8px; background:rgba(255,255,255,.05); margin:8px 0 4px; cursor:pointer; font-weight:800; font-size:13px; color:var(--white); border:1px solid rgba(255,255,255,.08);}
+.pen-group:hover{border-color:rgba(0,229,255,.5);}
+.pen-group .g-n{font-size:11px; color:var(--dim); font-weight:600;}
+.pen-g-body{display:block;}
+.pen-g-body.hide{display:none;}
+.gran-btn{background:rgba(8,20,38,.85); color:var(--dim); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:2px 9px; font-size:12px; cursor:pointer; margin-left:4px;}
+.gran-btn.on{color:#04101f; background:var(--cyan); border-color:var(--cyan); font-weight:800;}
+.gstack{display:flex; height:13px; border-radius:7px; overflow:hidden; min-width:96px; background:rgba(255,255,255,.06);}
+.gstack span{display:block; height:100%;}
+.glegend{display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 2px; font-size:11.5px; color:var(--dim);}
+.tag-pill.tag-on{outline:2px solid var(--cyan); outline-offset:2px;}
+.cat-10{background:linear-gradient(135deg,#f78fb3,#ffb8d0);}
+.cat-11{background:linear-gradient(135deg,#c56cf0,#e0aaff);}
 </style>
 </head>
 <body>
@@ -283,6 +307,14 @@
     </div>
     <div class="cards cols3" id="ovRegionCards"></div>
     <div class="cards cols4" id="ovModuleCards" style="margin-top:14px;"></div>
+    <div class="card" style="--accent:#00e5ff; margin-top:14px;">
+      <div class="row" style="margin-bottom:6px; cursor:pointer;" onclick="toggleScoreHelp()">
+        <h3 style="margin:0;">得分计算说明 <span id="scoreHelpArrow" style="font-size:11px; color:var(--dim); font-weight:600;">（点击展开）</span></h3>
+        <span style="color:var(--cyan); font-weight:800;">▾</span>
+      </div>
+      <div id="scoreHelp" style="display:none;"></div>
+    </div>
+
     <div class="cards cols2" style="margin-top:14px;">
       <div class="card" style="--accent:#00e5ff;"><h3>城市对比（当前月均值）</h3><div id="ovCityCompare"></div></div>
       <div class="card" style="--accent:#ffd166;">
@@ -350,6 +382,15 @@
         <h3>外卖差评对比（仅差评数与差评率）<span class="mod" id="wmMeta"></span></h3>
         <div id="wmCompare"></div>
         <div class="tip">按平台分组对比总单量 / 差评数 / 差评率；本页不展示绩效扣分与整改结果（产品差评不纳入）。</div>
+
+    <div class="card" style="--accent:#ffd166; margin-top:14px;">
+      <div class="row" style="margin-bottom:10px;">
+        <h3 style="margin:0;">门店差评排行 <span class="mod" id="cmpRankMeta"></span></h3>
+      </div>
+      <div class="tbl-wrap" style="max-height:420px;"><table id="cmpStoreRank"><thead><tr><th>#</th><th>门店</th><th>城市</th><th>区域</th><th>差评数</th><th>主要问题类型</th></tr></thead><tbody></tbody></table></div>
+      <div class="tip">按门店聚合当前筛选范围内的投诉/差评记录数排序（店次去重为门店）；点击门店查看该店全部差评明细。</div>
+    </div>
+
       </div>
     </div>
     <div class="card" style="--accent:#ff6ac1; margin-top:14px;">
@@ -407,7 +448,7 @@
     </div>
     <div class="cards cols3">
       <div class="card" style="--accent:#ff5c5c;">
-        <h3>处罚数量月度趋势</h3>
+        <h3>处罚数量趋势 <span style="float:right; font-weight:600;"><button class="gran-btn on" id="granMonth" onclick="setPenGran('month')">月</button><button class="gran-btn" id="granWeek" onclick="setPenGran('week')">周</button><button class="gran-btn" id="granDay" onclick="setPenGran('day')">日</button></span></h3>
         <div id="penTrend"></div>
       </div>
       <div class="card" style="--accent:#ff9f43;">
@@ -415,7 +456,7 @@
         <div id="penType"></div>
       </div>
       <div class="card" style="--accent:#ffd166;">
-        <h3>经济处罚金额排行</h3>
+        <h3>门店处罚个数排行</h3>
         <div class="tbl-wrap" style="max-height:380px;"><table id="penMoney"><thead><tr><th>#</th><th>门店</th><th>处罚次数</th><th>罚款金额</th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
@@ -520,10 +561,11 @@ const SUPABASE_URL = "https://omkshuposrdmwgukpoxd.supabase.co";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3NodXBvc3JkbXdndWtwb3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NTM2NTcsImV4cCI6MjEwMTEyOTY1N30.WH7ta72Bm2cICuQhW--O26BftF1FJZtN3WNwOddfQO4";
 const MOD_COLORS = {perf:"#4d9fff", dianping:"#ff6ac1", complaint:"#ffd166", waimai:"#b26bff", inspection:"#34d399", mystery:"#00e5ff", penalty:"#ff5c5c", manager:"#ff9f43"};
 
-const state = { year: 2026, month: null, city: "", region: "", store: "", version: "", perfRegion: "", cmpPlatform: "" };
+const state = { year: 2026, month: null, city: "", region: "", store: "", version: "", perfRegion: "", cmpPlatform: "", penGran: "month", penCat: "" };
 const data = { stores:[], managerLog:[], perf:[], dianping:[], complaints:[], waimai:[], inspection:[], mystery:[], penalty:[] };
 let availableMonths = [];   // 该月有任一数据（数字月表按 2026 口径并入）
 let storeIndex = new Map(); // store_id -> store row
+let storeIdPartMap = new Map(); // 组合 store_id 拆出的单店 id -> 主档（如 "01105,01245" -> 双榆树店）
 let storeNameIndex = new Map(); // 归一化 store_name -> store row
 
 /* ===================== 工具函数 ===================== */
@@ -591,13 +633,21 @@ function regionSort(a, b){
   if(ra !== rb) return ra - rb;
   return a.localeCompare(b, "zh");
 }
+const PEN_CAT_ORDER = ["任务未完成","考勤纪律","在岗纪律","安全巡检","食品安全卫生","服务规范","仪容仪表","设备设施","外卖运营","纪律处分","员工管理","其他"];
+const PEN_CAT_COLORS = ["#ff5c5c","#ff9f43","#ffd166","#b26bff","#00e5ff","#34d399","#4d9fff","#ff6ac1","#8aa3c4","#f78fb3","#c56cf0","#ffdd59"];
 function classifyPenalty(desc){
   const s = String(desc ?? "");
-  if(/万店掌|值班|打烊|点评任务/.test(s)) return "任务未完成";
-  if(/旷工|未打卡|迟到|早退/.test(s)) return "考勤纪律";
-  if(/玩手机|吸烟|睡觉|脱岗/.test(s)) return "在岗纪律";
-  if(/燃气|安全|消防/.test(s)) return "安全巡检";
-  if(/卫生|异物|食品/.test(s)) return "食品安全卫生";
+  if(/万店掌|值班|打烊|点评任务|日清|订货|任务|接龙|调研|提交|上传|会议|复盘|宣贯|缺席|检查人|检查结果|执行要求|菜品标准|保留菜品|售卖要求|未按流程|周清|出勤|五早五晚|未上|备货|少放/.test(s)) return "任务未完成";
+  if(/旷工|未打卡|迟到|早退|串岗|排班|班次|班表|工时/.test(s)) return "考勤纪律";
+  if(/玩手机|吸烟|睡觉|脱岗|离岗|宿舍|烟头|耳机|音乐|抖音|刷手机|打电话|娱乐|听歌|刷视频|视频|趴着|上交手机|在岗位吃/.test(s)) return "在岗纪律";
+  if(/燃气|消防|灭火器|安全巡查|电磁炉|火源/.test(s)) return "安全巡检";
+  if(/卫生|异物|食品|过期|变质|售卖期|强保|效期|报损|断档|出餐|标签|墩布池|台面|掉落|捡回|食材|鲈鱼|健康证|自采|废弃|边角料|剩余产品|打包盒|最佳售卖|牛奶|还在售卖|继续售卖|最佳食用|使用期|到期|复热|解冻|加热|水浴|蒸箱|煮面|焯|百洁布|钢丝球|餐具|下水道|烟灰|操作标准|非标|SOP|sop|制备|手法|辣椒炒肉|料汁|辣椒圈|料包|非标准操作|标准执行|葱油|煮制|蒸|直接热/.test(s)) return "食品安全卫生";
+  if(/服务|态度|投诉|差评|骚扰/.test(s)) return "服务规范";
+  if(/仪容|着装|工服|工作服|工牌|口罩|帽子/.test(s)) return "仪容仪表";
+  if(/设备|设施|机器|冰箱|空调|能源|壁纸刀/.test(s)) return "设备设施";
+  if(/外卖|平台|拼好饭|订单|营业|关店|售卖时间|调整/.test(s)) return "外卖运营";
+  if(/处分|警告|通报|罚款|批评|教育/.test(s)) return "纪律处分";
+  if(/培训|店长|员工|借调|夫妻|管理|上级|不满|安排的工作/.test(s)) return "员工管理";
   return "其他";
 }
 
@@ -636,7 +686,11 @@ function inScope(row){
   const sid = row.store_id ?? row.storeid ?? null;
   const sname = row.store_name ?? row.storename ?? null;
   let st = null;
-  if(sid !== null && sid !== "" && storeIndex.has(String(sid))) st = storeIndex.get(String(sid));
+  if(sid !== null && sid !== ""){
+    const k = String(sid);
+    if(storeIndex.has(k)) st = storeIndex.get(k);
+    else if(storeIdPartMap.has(k)) st = storeIdPartMap.get(k);
+  }
   else if(sname) st = findStoreByName(sname);
   if(!st) return true; // 无主档记录的原始行，仅当未筛选门店时放行
   if(state.store) return st.store_name === state.store || st.store_id === state.store;
@@ -650,7 +704,11 @@ function findStoreByName(name){
 }
 function storeOf(row){
   const sid = row.store_id ?? row.storeid ?? null;
-  if(sid !== null && sid !== "" && storeIndex.has(String(sid))) return storeIndex.get(String(sid));
+  if(sid !== null && sid !== ""){
+    const k = String(sid);
+    if(storeIndex.has(k)) return storeIndex.get(k);
+    if(storeIdPartMap.has(k)) return storeIdPartMap.get(k);
+  }
   return findStoreByName(row.store_name ?? row.storename ?? "");
 }
 function storeDisplayName(row){
@@ -707,9 +765,9 @@ async function loadAll(){
     ]);
     Object.assign(data, { stores, managerLog, perf, dianping, complaints, waimai, inspection, mystery, penalty });
 
-    data.stores.forEach(s => { if(s.store_id) storeIndex.set(String(s.store_id), s); });
+    data.stores.forEach(s => { if(s.store_id){ storeIndex.set(String(s.store_id), s); if(String(s.store_id).indexOf(",") >= 0) String(s.store_id).split(",").map(x=>x.trim()).filter(Boolean).forEach(pid => storeIdPartMap.set(pid, s)); } });
     data.stores.forEach(s => { const k = normName(s.store_name); if(!storeNameIndex.has(k)) storeNameIndex.set(k, s); });
-    data.perf.forEach(p => { if(p.store_id) storeIndex.set(String(p.store_id), storeIndex.get(String(p.store_id)) || {store_id:p.store_id, store_name:p.store_name, city:"", region:""}); });
+    data.perf.forEach(p => { if(p.store_id && !storeIndex.has(String(p.store_id)) && !storeIdPartMap.has(String(p.store_id))) storeIndex.set(String(p.store_id), {store_id:p.store_id, store_name:p.store_name, city:"", region:""}); });
 
     computeAvailableMonths();
     setupFilters();
@@ -891,17 +949,18 @@ function lineChart(el, labels, seriesList){
   if(!labels.length){ el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
   const W = 760, H = 210, P = 30;
   const all = seriesList.flatMap(s => s.values.map(v=>v===null?null:num(v))).filter(v=>v!==null);
+  if(!all.length){ el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
   let min = Math.min(...all), max = Math.max(...all);
   if(min === max){ min -= 1; max += 1; }
+  const ticks = niceTicks(min, max, 4);
+  const nMin = ticks[0], nMax = ticks[ticks.length - 1];
   const x = i => P + i * (W - P - 10) / Math.max(1, labels.length - 1);
-  const y = v => H - 20 - (num(v) - min) / (max - min) * (H - P - 20);
+  const y = v => H - 20 - (num(v) - nMin) / ((nMax - nMin) || 1) * (H - P - 20);
   let svg = `<svg class="trend" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
-  // 网格
-  for(let g=0; g<=4; g++){
-    const gy = P + g * (H - P - 20) / 4;
-    const gv = max - (max - min) * g / 4;
-    svg += `<line x1="${P}" y1="${gy}" x2="${W-10}" y2="${gy}" stroke="rgba(255,255,255,.07)" stroke-dasharray="4 4"/><text x="${P-6}" y="${gy+4}" text-anchor="end">${Math.round(gv*10)/10}</text>`;
-  }
+  ticks.forEach((gv,g) => {
+    const gy = P + g * (H - P - 20) / Math.max(1, ticks.length - 1);
+    svg += `<line x1="${P}" y1="${gy}" x2="${W-10}" y2="${gy}" stroke="rgba(255,255,255,.07)" stroke-dasharray="4 4"/><text x="${P-6}" y="${gy+4}" text-anchor="end">${gv}</text>`;
+  });
   labels.forEach((l,i) => svg += `<text x="${x(i)}" y="${H-6}" text-anchor="middle">${esc(l)}</text>`);
   seriesList.forEach(s => {
     let d = "";
@@ -955,8 +1014,8 @@ function renderOverview(){
   // 八大模块指标卡（全年视图：均值卡显示"年度平均"，计数卡显示"年度累计"）
   const Y = isAnnual();
   const mods = [
-    {k:"perf", c:MOD_COLORS.perf, name:"门店绩效", main: avg(scopePerf.map(r=>num(r.total_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: (Y?"年度平均":"当月平均") + " · " + scopePerf.length + " 家门店已计分", cls:"blue"},
-    {k:"dianping", c:MOD_COLORS.dianping, name:"大众星级", main: avg(scopeDp.map(r=>num(r.dianping_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(2), sub: (Y?"年度平均":"当月平均") + " · " + scopeDp.length + " 家有评分", cls:"pink"},
+    {k:"perf", c:MOD_COLORS.perf, name:"门店绩效", main: avg(scopePerf.map(r=>num(r.total_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: (Y?"年度平均":"当月平均") + " · 最新数据月 " + latestActiveStores(scopePerf).count + " 家营业门店", cls:"blue"},
+    {k:"dianping", c:MOD_COLORS.dianping, name:"大众星级", main: avg(scopeDp.map(r=>num(r.dianping_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(2), sub: (Y?"年度平均":"当月平均") + " · 最新数据月 " + latestActiveStores(scopeDp).count + " 家营业门店", cls:"pink"},
     {k:"complaint", c:MOD_COLORS.complaint, name:"点评投诉", main: scopeCmp.length, mainTxt: v=>v, sub: Y ? "年度投诉累计 " + scopeCmp.length + " 条" : "当月投诉/差评记录数", cls:"orange"},
     {k:"waimai", c:MOD_COLORS.waimai, name:"外卖差评", main: avg(scopeWm.map(r=>num(r.bad_rate)).filter(v=>v!==null)), mainTxt: v=>ratePct(v), sub: (Y?"年度平均差评率":"当月差评率") + " · 总差评 " + sum(scopeWm.map(r=>num(r.bad_count)||0)) + " 条", cls:"purple"},
     {k:"inspection", c:MOD_COLORS.inspection, name:"线下检查", main: avg(scopeIns.map(r=>num(r.monthly_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: (Y?"年度平均":"当月平均") + " · " + scopeIns.length + " 条检查记录", cls:"green"},
@@ -993,6 +1052,7 @@ function renderOverview(){
   $("ovRankHint").textContent = hint;
   $("ovTop10").innerHTML = rankTable(ranked.slice(0,10), "TOP 10");
   $("ovBottom10").innerHTML = rankTable(ranked.slice(-10).reverse(), "倒数 10");
+  if($("scoreHelp")) $("scoreHelp").innerHTML = scoreHelpHTML();
 }
 function rankTable(rows, title){
   if(!rows.length) return '<div class="empty">暂无数据</div>';
@@ -1039,7 +1099,8 @@ function renderPerf(){
 function renderReputation(){
   const mr = monthRows();
   const dpRows = mr.dianping.filter(scoped);
-  $("dpMeta").textContent = isAnnual() ? "全年累计 " + dpRows.length + " 条评分记录" : dpRows.length + " 家门店";
+  const actDp = latestActiveStores(dpRows);
+  $("dpMeta").textContent = (isAnnual() ? "全年累计 " + dpRows.length + " 条评分记录 · 最新数据月 " + actDp.count + " 家营业门店" : "最新数据月 " + actDp.count + " 家营业门店（当月）");
   const dist = { "≥4.8":0, "4.5~4.8":0, "4.0~4.5":0, "<4.0":0, "未采集":0 };
   dpRows.forEach(r => {
     const v = num(r.dianping_score);
@@ -1056,7 +1117,7 @@ function renderReputation(){
     {label:"4.0~4.5 良好", n:dist["4.0~4.5"], v:Math.round(dist["4.0~4.5"]/total*100), c:"#ffd166"},
     {label:"<4.0 需改善", n:dist["<4.0"], v:Math.round(dist["<4.0"]/total*100), c:"#ff5c5c"},
     {label:"未采集", n:dist["未采集"], v:Math.round(dist["未采集"]/total*100), c:"#3a4a63"}
-  ].filter(p=>p.n>0), dpRows.length + " 家");
+  ].filter(p=>p.n>0), isAnnual() ? dpRows.length + " 条记录" : actDp.count + " 家营业门店");
 
   // 点评差评数趋势（近 9 月）
   const neg = {};
@@ -1068,13 +1129,18 @@ function renderReputation(){
   const vals = availableMonths.map(m => neg[m]||0);
   lineChart($("dpNegTrend"), labels, [{name:"点评差评数", color:"#ff6ac1", values:vals}]);
 
-  // 外卖差评对比（仅差评数与差评率，不含扣分/整改）
+  // 外卖差评对比（仅差评数与差评率；无独立统计的平台不单列，并入整体口径）
   const wmRows = mr.waimai.filter(scoped);
   $("wmMeta").textContent = (isAnnual() ? state.year + "年全年" : state.year + "-" + pad2(state.month||1)) + " · " + wmRows.length + " 条记录";
-  const byPlat = groupBy(wmRows, r => r.platform || "未知平台");
+  const byPlatRaw = groupBy(wmRows, r => r.platform || "未知平台");
+  const byPlat = {};
+  Object.keys(byPlatRaw).forEach(p => {
+    const rs = byPlatRaw[p];
+    if(rs.some(r => (num(r.total_count)||0) > 0 || (num(r.bad_count)||0) > 0)) byPlat[p] = rs;
+  });
   const plats = Object.keys(byPlat).sort();
   if(!plats.length){
-    $("wmCompare").innerHTML = '<div class="empty">' + (isAnnual() ? "全年暂无外卖差评数据" : "当前月份暂无外卖差评数据（未采集/待导入）") + '</div>';
+    $("wmCompare").innerHTML = '<div class="empty">' + (isAnnual() ? "全年暂无外卖差评数据" : "当前月份暂无外卖差评数据（未采集/待导入）") + '<br><span style="font-size:12px;color:var(--dim);">拼好饭等无独立差评统计的平台已并入整体口径，不单独呈现。</span></div>';
   } else {
     $("wmCompare").innerHTML = `
       <div class="bars">${plats.map(p => {
@@ -1086,7 +1152,7 @@ function renderReputation(){
           <div class="bar" style="height:${Math.max(3, Math.round(bad/Math.max(1,Math.max(...plats.map(pp=>sum(byPlat[pp].map(r=>num(r.bad_count)||0)))))*140))}px;--bar-c:#b26bff"></div>
           <div class="bar-label">${esc(p)}<br>差评率 ${rate===null?"--":(rate*100).toFixed(2)+"%"}</div></div>`;
       }).join("")}</div>
-      <div class="legend">柱高=${isAnnual() ? "年度累计差评数" : "当月差评数"}；标注=平台差评率。仅展示差评数与差评率，绩效扣分/整改结果不展示。</div>
+      <div class="legend">柱高=${isAnnual() ? "年度累计差评数" : "当月差评数"}；标注=平台差评率。拼好饭等无独立差评统计的平台已并入整体口径，不单列；绩效扣分/整改结果不展示。</div>
       <table style="margin-top:10px;"><thead><tr><th>平台</th><th>总单量</th><th>差评数</th><th>差评率</th></tr></thead><tbody>
       ${plats.map(p => {
         const rs = byPlat[p];
@@ -1098,6 +1164,7 @@ function renderReputation(){
   }
 
   renderComplaintDetail();
+  renderCmpStoreRank();
 }
 
 /* ===================== ④ 检查与神秘顾客 ===================== */
@@ -1135,30 +1202,34 @@ function renderPenalty(){
   const mr = monthRows();
   const penRows = mr.penalty.filter(scoped);
   const allPen = data.penalty.filter(scoped);
+  ["month","week","day"].forEach(x => { const b = $("gran" + x.charAt(0).toUpperCase() + x.slice(1)); if(b) b.classList.toggle("on", x === state.penGran); });
 
-  // 月度趋势（月度视图近12个月；全年视图展示当年逐月）
+  // 处罚趋势：粒度 = 月（近12月/当年逐月）/ 周 / 日（当前月内）
   const agg = {};
-  allPen.forEach(r => {
-    const m = /^(\d{4})-(\d{2})/.exec(r.occur_date);
-    if(m) agg[m[1]+"-"+m[2]] = (agg[m[1]+"-"+m[2]]||0) + 1;
-  });
+  allPen.forEach(r => { const d = String(r.occur_date||""); if(!/^\d{4}-\d{2}/.test(d)) return; const k = penGranKey(r); agg[k] = (agg[k]||0) + 1; });
   let labels = Object.keys(agg).sort();
-  labels = isAnnual() ? labels.filter(k => k.indexOf(String(state.year) + "-") === 0) : labels.slice(-12);
-  lineChart($("penTrend"), labels, [{name:"处罚数量", color:"#ff5c5c", values: labels.map(k=>agg[k])}]);
+  if(isAnnual()) labels = labels.filter(k => k.indexOf(String(state.year) + "-") === 0);
+  else {
+    const curKey = monthKey(state.year, state.month||1);
+    const inCur = labels.filter(k => k.indexOf(curKey) === 0);
+    labels = state.penGran === "month" ? labels.slice(-12) : inCur;
+  }
+  lineChart($("penTrend"), labels.map(l=>granLabel(l)), [{name:"处罚数量", color:"#ff5c5c", values: labels.map(k=>agg[k])}]);
+  const granTip = state.penGran === "month" ? "月度趋势（近 12 个月；全年视图为当年逐月）" : (state.penGran === "week" ? "周粒度（月度视图为当前月内各周；全年视图为当年各周）" : "日粒度（月度视图为当前月内各日；全年视图为当年各日）");
 
-  // 违纪类型分布（当前月）
+  // 违纪类型分布（当前月，按扩充后的新分类规则）
   const typeCount = {};
-  penRows.forEach(r => { const t = r.violation_type || "未分类"; typeCount[t] = (typeCount[t]||0)+1; });
+  penRows.forEach(r => { const t = classifyPenalty(r.event_desc); typeCount[t] = (typeCount[t]||0)+1; });
   const total = penRows.length || 1;
-  const colors = ["#ff5c5c","#ff9f43","#ffd166","#b26bff","#00e5ff","#34d399","#4d9fff","#ff6ac1","#8aa3c4"];
-  donutChart($("penType"), Object.keys(typeCount).sort((a,b)=>typeCount[b]-typeCount[a]).slice(0,8).map((t,i)=>({label:t, n:typeCount[t], v:Math.round(typeCount[t]/total*100), c:colors[i%colors.length]})), penRows.length + " 条");
+  const cats = PEN_CAT_ORDER.filter(c => typeCount[c]);
+  donutChart($("penType"), cats.map(c=>({label:c, n:typeCount[c], v:Math.round(typeCount[c]/total*100), c:PEN_CAT_COLORS[PEN_CAT_ORDER.indexOf(c)]})), penRows.length + " 条");
 
-  // 金额排行
+  // 门店处罚个数排行（金额保留为辅助列）
   const money = {};
   penRows.forEach(r => { const n = storeDisplayNamePlain(r); money[n] = money[n] || {name:n, cnt:0, amt:0}; money[n].cnt++; money[n].amt += num(r.fine_amount)||0; });
-  const sorted = Object.values(money).sort((a,b)=>b.amt-a.amt).slice(0,20);
+  const sorted = Object.values(money).sort((a,b)=> b.cnt - a.cnt || b.amt - a.amt).slice(0,20);
   $("penMoney").querySelector("tbody").innerHTML = sorted.map((r,i)=>`
-    <tr onclick="openStoreDetail('${esc(r.name)}')"><td class="num">${i+1}</td><td>${esc(r.name)}</td><td class="num">${r.cnt}</td><td class="num ${r.amt>0?"score-bad":""}">¥${r.amt.toFixed(0)}</td></tr>`
+    <tr onclick="openStoreDetail('${esc(r.name)}')"><td class="num">${i+1}</td><td>${esc(r.name)}</td><td class="num ${r.cnt>0?"score-bad":""}">${r.cnt}</td><td class="num ${r.amt>0?"score-bad":""}">¥${r.amt.toFixed(0)}</td></tr>`
   ).join("") || '<tr><td colspan="4" class="empty">' + (isAnnual() ? "全年暂无处罚数据" : "当前月份暂无处罚数据（未采集/待导入）") + '</td></tr>';
 
   renderPenaltyDetail();
@@ -1167,7 +1238,7 @@ function renderPenalty(){
 /* ===================== 内容明细层：区域分区视图 ===================== */
 function perfRegionOf(row){
   const st = storeOf(row);
-  if(!st || !st.region) return "未知";
+  if(!st || !st.region) return "闭店/未匹配";
   return normalizeRegion(st.region);
 }
 function renderPerfRegion(){
@@ -1201,13 +1272,18 @@ function renderPerfRegion(){
       `<div class="bar" style="height:${Math.max(2, Math.round(v/barMax*140))}px;--bar-c:${barColors[i%barColors.length]}"></div>` +
       `<div class="bar-label" title="${esc(rn)}">${esc(rn)}<br>${stats[rn].count} 店</div></div>`;
   }).join("") + '</div>';
-  // SABCD 分级分布
-  $("perfRegionGrade").innerHTML = regionNames.map(rn => {
+  // SABCD 分级分布（各等级门店数占比，堆叠百分比条 + 数字）
+  const gColors = {S:"#00e5ff", A:"#34d399", B:"#ffd166", C:"#ff9f43", D:"#ff5c5c"};
+  const gLegend = `<div class="glegend">${["S","A","B","C","D"].map(k=>`<span><i class="legend-i" style="background:${gColors[k]}"></i>${k}级</span>`).join("")}<span style="color:var(--dim);">条长=各等级门店数占比</span></div>`;
+  $("perfRegionGrade").innerHTML = gLegend + regionNames.map(rn => {
     const g = stats[rn].grades;
+    const gtotal = stats[rn].count || 1;
+    const segs = ["S","A","B","C","D"].map(k => { const n = g[k]||0; return n ? `<span style="width:${(n/gtotal*100).toFixed(1)}%; background:${gColors[k]};" title="${k} 级 ${n} 家 · ${(n/gtotal*100).toFixed(1)}%"></span>` : ""; }).join("");
     return `<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-      <span style="width:64px; font-size:12px; font-weight:800; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${esc(rn)}">${esc(rn)}</span>` +
-      ["S","A","B","C","D"].map(k => g[k] ? `<span class="badge ${k}" title="${k} 级 ${g[k]} 家">${g[k]}</span>` : `<span class="badge none">0</span>`).join("") +
-      `</div>`;
+      <span style="width:64px; font-size:12px; font-weight:800; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${esc(rn)}">${esc(rn)}</span>
+      <div class="gstack" style="flex:1;">${segs}</div>` +
+      ["S","A","B","C","D"].map(k => g[k] ? `<span class="badge ${k}" title="${k} 级 ${g[k]} 家 · ${(g[k]/gtotal*100).toFixed(1)}%">${g[k]}</span>` : `<span class="badge none">0</span>`).join("") +
+      `<span class="num" style="font-size:11px; color:var(--dim);">共 ${stats[rn].count} 家</span></div>`;
   }).join("") || '<div class="empty">暂无数据</div>';
   // 区域榜单（点击联动下方绩效表）
   $("perfRegionTable").querySelector("tbody").innerHTML = regionNames.map((rn,i) => {
@@ -1268,12 +1344,13 @@ function renderCmpList(){
     const fold = full.length > 80 ? full.slice(0, 80) + "…" : "";
     const isExp = cmpExpanded.has(i);
     const op = String(r.opportunity || "未归类").trim();
+    const storeName = r.store_name || "未知门店";
     return `<div class="detail-item">
       <div class="d-meta">
-        <b style="font-size:13px;">${esc(r.store_name || "未知门店")}</b>
+        <b style="font-size:13px;" class="clickable pink" onclick="openCmpStore('${esc(storeName)}')">${esc(storeName)}</b>
         <span class="num" style="color:var(--dim); font-size:12px;">${esc(r.date || "")}</span>
         <span style="color:var(--dim); font-size:12px;">${esc(r.meal || "")}</span>
-        ${cmpPlatformBadge(r.platform)}
+        <span class="clickable" onclick="setCmpPlatform('${esc(String(r.platform||"其他").trim())}')">${cmpPlatformBadge(r.platform)}</span>
         <span class="cat-badge cat-${cmpCatIdx(op)}">${esc(op)}</span>
       </div>
       <div class="d-content">${isExp ? full : (fold || full)}${fold ? `<span class="more" onclick="toggleCmpDetail(${i})">${isExp ? "收起" : "展开全文"}</span>` : ""}</div>
@@ -1295,51 +1372,65 @@ function exportComplaintDetail(){
 }
 
 /* ===================== 内容明细层：处罚事件明细 ===================== */
-let penPage = 0, penExpanded = new Set(), penCacheRows = [];
+let penPage = 0, penExpanded = new Set(), penExpandedGroups = new Set(), penCacheRows = [];
 const PEN_PAGE = 50;
 function penCatIdx(cat){
-  const order = ["任务未完成","考勤纪律","在岗纪律","安全巡检","食品安全卫生","其他"];
-  const i = order.indexOf(cat);
-  return i >= 0 ? i : 8;
+  const i = PEN_CAT_ORDER.indexOf(cat);
+  return i >= 0 ? i : PEN_CAT_ORDER.length - 1;
 }
 function renderPenaltyDetail(){
   const mr = monthRows();
-  const rows = mr.penalty.filter(scoped);
+  let rows = mr.penalty.filter(scoped);
+  if(state.penCat) rows = rows.filter(r => classifyPenalty(r.event_desc) === state.penCat);
   penCacheRows = rows;
   penPage = 0;
   penExpanded = new Set();
+  penExpandedGroups = new Set();
   const byCat = {};
   rows.forEach(r => { const c = classifyPenalty(r.event_desc); byCat[c] = (byCat[c] || 0) + 1; });
   const total = rows.length;
-  const order = ["任务未完成","考勤纪律","在岗纪律","安全巡检","食品安全卫生","其他"].filter(c => byCat[c]);
-  const catColors = ["#ff5c5c","#ff9f43","#b26bff","#00e5ff","#34d399","#8aa3c4"];
-  $("penDetailSummary").innerHTML = `<div class="d-summary">当前范围共 ${total} 条处罚事件（${isAnnual() ? state.year + "年全年" : state.year + "-" + pad2(state.month||1)}） · 归类分布：</div>` +
-    '<div class="tag-cloud">' + order.map((c,i) => {
+  const order = PEN_CAT_ORDER.filter(c => byCat[c]);
+  $("penDetailSummary").innerHTML = `<div class="d-summary">当前范围共 ${total} 条处罚事件（${isAnnual() ? state.year + "年全年" : state.year + "-" + pad2(state.month||1)}） · 归类分布（点击标签筛选）：</div>` +
+    '<div class="tag-cloud">' + order.map(c => {
       const pct = total ? Math.round(byCat[c] / total * 100) : 0;
-      return `<span class="tag-pill" style="background:${catColors[i%catColors.length]};--tag-c:${catColors[i%catColors.length]};">${esc(c)} <span class="n">${byCat[c]}</span> · ${pct}%</span>`;
-    }).join("") + '</div>';
+      const on = state.penCat === c ? " tag-on" : "";
+      return `<span class="tag-pill${on}" style="background:${PEN_CAT_COLORS[PEN_CAT_ORDER.indexOf(c)]};--tag-c:${PEN_CAT_COLORS[PEN_CAT_ORDER.indexOf(c)]};" onclick="setPenCat('${esc(c)}')">${esc(c)} <span class="n">${byCat[c]}</span> · ${pct}%</span>`;
+    }).join("") + (state.penCat ? `<span class="tag-pill tag-on" style="background:var(--cyan);--tag-c:var(--cyan);" onclick="setPenCat('')">全部</span>` : "") + '</div>' +
+    `<div class="tip">明细按 ${state.penGran === "month" ? "月份" : state.penGran === "week" ? "周" : "日"} 分组展示（${granTipText()}），点击分组头展开/收起；点击门店名查看单店详情。</div>`;
   renderPenList();
   $("btnPenMore").style.display = penCacheRows.length > PEN_PAGE ? "" : "none";
 }
+function granTipText(){
+  return state.penGran === "month" ? "YYYY年MM月" : state.penGran === "week" ? "YYYY年第W周" : "YYYY年MM月DD日";
+}
 function renderPenList(){
   const slice = penCacheRows.slice(0, (penPage + 1) * PEN_PAGE);
-  $("penDetailList").innerHTML = slice.map((r,i) => {
-    const full = esc(r.event_desc || "");
-    const fold = full.length > 80 ? full.slice(0, 80) + "…" : "";
-    const isExp = penExpanded.has(i);
-    const cat = classifyPenalty(r.event_desc);
-    const fine = num(r.fine_amount);
-    return `<div class="detail-item">
+  const groups = groupBy(slice, r => penGranKey(r));
+  const gkeys = Object.keys(groups).sort().reverse();
+  $("penDetailList").innerHTML = gkeys.map(gk => {
+    const rows2 = groups[gk].slice().sort((a,b)=>String(b.occur_date||"").localeCompare(String(a.occur_date||"")));
+    const open = !penExpandedGroups.has(gk);
+    return `<div class="pen-group" onclick="togglePenGroup('${esc(gk)}')"><span>${esc(granLabel(gk))}</span><span class="g-n">${rows2.length} 条 ${open ? "▾" : "▸"}</span></div>` +
+      `<div class="pen-g-body${open ? "" : " hide"}">` + rows2.map(r => penItemHtml(r)).join("") + '</div>';
+  }).join("") || '<div class="empty">当前范围暂无处罚事件明细</div>';
+}
+function penItemHtml(r){
+  const gi = penCacheRows.indexOf(r);
+  const full = esc(r.event_desc || "");
+  const fold = full.length > 80 ? full.slice(0, 80) + "…" : "";
+  const isExp = penExpanded.has(gi);
+  const cat = classifyPenalty(r.event_desc);
+  const fine = num(r.fine_amount);
+  return `<div class="detail-item">
       <div class="d-meta">
-        <b style="font-size:13px;">${esc(r.store_name || "未知门店")}</b>
+        <b style="font-size:13px;" class="clickable" onclick="openStoreDetail('${esc(storeDisplayNamePlain(r) || r.store_name || "未知门店")}')">${esc(r.store_name || "未知门店")}</b>
         <span class="num" style="color:var(--dim); font-size:12px;">${esc(r.occur_date || "")}</span>
         <span style="color:var(--dim); font-size:12px;">店长：${esc(r.manager || "-")}</span>
         <span class="cat-badge cat-${penCatIdx(cat)}">${esc(cat)}</span>
         ${fine !== null ? `<span class="fine-red">罚款 ¥${fine.toFixed(0)}</span>` : ""}
       </div>
-      <div class="d-content">${isExp ? full : (fold || full)}${fold ? `<span class="more" onclick="togglePenDetail(${i})">${isExp ? "收起" : "展开全文"}</span>` : ""}</div>
+      <div class="d-content">${isExp ? full : (fold || full)}${fold ? `<span class="more" onclick="togglePenDetail(${gi})">${isExp ? "收起" : "展开全文"}</span>` : ""}</div>
     </div>`;
-  }).join("") || '<div class="empty">当前范围暂无处罚事件明细</div>';
 }
 function togglePenDetail(i){
   if(penExpanded.has(i)) penExpanded.delete(i); else penExpanded.add(i);
@@ -1351,8 +1442,8 @@ function loadMorePenalties(){
   $("btnPenMore").style.display = penCacheRows.length > (penPage + 1) * PEN_PAGE ? "" : "none";
 }
 function exportPenaltyDetail(){
-  const rows = penCacheRows.map(r => ({ 门店: r.store_name || "", 日期: r.occur_date || "", 店长: r.manager || "", 归类: classifyPenalty(r.event_desc), 内容原文: r.event_desc || "" }));
-  downloadCSV("处罚事件明细", ["门店","日期","店长","归类","内容原文"], rows);
+  const rows = penCacheRows.map(r => ({ 门店: r.store_name || "", 日期: r.occur_date || "", 店长: r.manager || "", 归类: classifyPenalty(r.event_desc), 时间分组: granLabel(penGranKey(r)), 内容原文: r.event_desc || "" }));
+  downloadCSV("处罚事件明细", ["门店","日期","店长","归类","时间分组","内容原文"], rows);
 }
 
 /* ===================== ⑥ 店长档案 ===================== */
@@ -1382,6 +1473,162 @@ function renderManager(){
 }
 
 /* ===================== 单店详情 ===================== */
+
+/* ===================== 本次改造新增函数 ===================== */
+function toggleScoreHelp(){
+  const el = $("scoreHelp"), ar = $("scoreHelpArrow");
+  if(!el) return;
+  const show = el.style.display === "none";
+  el.style.display = show ? "block" : "none";
+  if(ar) ar.innerHTML = show ? "（点击收起）▴" : "（点击展开）▾";
+}
+function latestActiveStores(rows){
+  if(!rows.length) return {count:0, month:null};
+  let lastM = -1;
+  rows.forEach(r => { const m = num(r.month); if(m !== null && m > lastM) lastM = m; });
+  const lastRows = rows.filter(r => num(r.month) === lastM);
+  const set = new Set();
+  lastRows.forEach(r => { const st = storeOf(r); set.add(st ? (st.store_id || normName(st.store_name)) : normName(r.store_name || "")); });
+  return {count: set.size, month: lastM};
+}
+function scoreHelpHTML(){
+  const mr = monthRows();
+  const scopeP = mr.perf.filter(r => !state.city || inScope(r));
+  const scopeI = mr.inspection.filter(r => !state.city || inScope(r));
+  const scopeM = mr.mystery.filter(r => !state.city || inScope(r));
+  const perfV = avg(scopeP.map(r=>num(r.total_score)).filter(v=>v!==null));
+  const insV = avg(scopeI.map(r=>num(r.monthly_score)).filter(v=>v!==null));
+  const mysV = avg(scopeM.map(r=>num(r.total_score)).filter(v=>v!==null));
+  const comps = [];
+  if(perfV !== null) comps.push([perfV, 0.5]);
+  if(insV !== null) comps.push([insV, 0.3]);
+  if(mysV !== null) comps.push([mysV, 0.2]);
+  const comp = comps.length ? sum(comps.map(c=>c[0]*c[1])) / sum(comps.map(c=>c[1])) : null;
+  const fmt = v => v === null ? "--" : v.toFixed(1);
+  const note = isAnnual()
+    ? "年度视图：综合得分 = 全年各月绩效/检查/神秘得分的月均值，再按下述权重加权（年度平均口径）。"
+    : "月度视图：综合得分 = 当月全国/所选市场范围的绩效/检查/神秘得分均值，再按下述权重加权。";
+  return `<div class="score-help">
+    <b>QSC 综合得分怎么算？</b> 综合得分 = <span class="f">绩效得分×50% + 检查得分×30% + 神秘得分×20%</span>（加权平均）。
+    其中 绩效得分 = 门店绩效综合得分（perf_monthly.total_score），检查得分 = 线下巡店检查得分（inspection_monthly.monthly_score），神秘得分 = 神秘顾客测评得分（mystery_monthly.total_score）。<br><br>
+    <b>看副行三个数字：</b> 副行"绩效 7.5 · 检查 89.4 · 神秘 93.5"就是三大分项均值，综合得分 = 7.5×0.5 + 89.4×0.3 + 93.5×0.2 = <span class="f">3.75 + 26.82 + 18.70 = 49.3</span>；若某分项缺失，则按剩余分项权重等比放大（例如只有绩效+检查：绩效×62.5% + 检查×37.5%）。<br><br>
+    ${note}<br>
+    <div class="row2">
+      <div><b>当前范围实时示例</b><br>绩效 ${fmt(perfV)} · 检查 ${fmt(insV)} · 神秘 ${fmt(mysV)} → 综合 <span class="f">${fmt(comp)}</span></div>
+      <div><b>数据来源</b><br>绩效=perf_monthly；检查=inspection_monthly；神秘=mystery_monthly。分市场/年度口径同公式，仅切换筛选范围。</div>
+    </div>
+  </div>`;
+}
+function storeIdMatches(rowSid, mainSid){
+  const a = String(rowSid || "").trim(), b = String(mainSid || "").trim();
+  if(!a || !b) return false;
+  if(a === b) return true;
+  if(a.indexOf(",") >= 0) return a.split(",").map(x=>x.trim()).filter(Boolean).includes(b);
+  if(b.indexOf(",") >= 0) return b.split(",").map(x=>x.trim()).filter(Boolean).includes(a);
+  return false;
+}
+function setCmpPlatform(p){
+  state.cmpPlatform = p || "";
+  const sel = $("selCmpPlatform"); if(sel) sel.value = p || "";
+  renderReputation();
+}
+function openCmpStore(storeName){
+  const mr = monthRows();
+  const rows = mr.complaints.filter(scoped).filter(r => normName(r.store_name || "") === normName(storeName));
+  if(!rows.length){ toast("该门店当前范围暂无投诉/差评记录"); return; }
+  const st = findStoreByName(storeName);
+  const total = rows.length;
+  const byPlat = groupBy(rows, r => String(r.platform || "其他").trim());
+  const topPlat = Object.keys(byPlat).sort((a,b)=>byPlat[b].length-byPlat[a].length)[0] || "其他";
+  $("mdTitle").innerHTML = esc(storeName) + (st && st.store_id ? "" : '<span class="unmatched">待核对</span>');
+  $("mdBody").innerHTML = `
+    <div class="cards cols3">
+      <div class="card" style="--accent:#ffd166;"><h3>差评/投诉</h3><div class="big orange">${total}</div><div class="hint">${isAnnual() ? state.year + "年全年" : state.year + "-" + pad2(state.month||1)} 记录</div></div>
+      <div class="card" style="--accent:#ff6ac1;"><h3>主要平台</h3><div class="big pink">${esc(topPlat)}</div><div class="hint">${byPlat[topPlat].length} 条</div></div>
+      <div class="card" style="--accent:#4d9fff;"><h3>城市 / 区域</h3><div class="big blue">${esc(st ? st.city : "-")}</div><div class="hint">${esc(st ? st.region : "-")}</div></div>
+    </div>
+    <div class="card" style="--accent:#ffd166; margin-top:14px;"><h3>全部差评/投诉明细</h3>
+      <div class="tbl-wrap" style="max-height:420px;"><table><thead><tr><th>日期</th><th>餐次</th><th>平台</th><th>问题归类</th><th>内容</th><th>责任人</th></tr></thead><tbody>
+      ${rows.slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).map(r=>`<tr><td class="num">${esc(r.date)}</td><td>${esc(r.meal||"-")}</td><td>${cmpPlatformBadge(r.platform)}</td><td><span class="cat-badge cat-${cmpCatIdx(String(r.opportunity||"未归类").trim())}">${esc(String(r.opportunity||"未归类").trim())}</span></td><td style="white-space:normal;max-width:340px;">${esc(r.content||"-")}</td><td>${esc(r.responsible||"-")}</td></tr>`).join("")}
+      </tbody></table></div>
+    </div>`;
+  $("storeMask").classList.add("show");
+}
+function renderCmpStoreRank(){
+  const mr = monthRows();
+  let rows = mr.complaints.filter(scoped);
+  if(state.cmpPlatform){
+    if(state.cmpPlatform === "其他") rows = rows.filter(r => !/点评|美团|公众号|电话/.test(String(r.platform || "")));
+    else rows = rows.filter(r => String(r.platform || "").indexOf(state.cmpPlatform) >= 0);
+  }
+  const byStore = {};
+  rows.forEach(r => {
+    const st = storeOf(r);
+    const name = st ? st.store_name : (r.store_name || "未知门店");
+    const key = st && st.store_id ? String(st.store_id) : ("n:" + normName(name));
+    byStore[key] = byStore[key] || {name, city: st ? st.city : "-", region: st ? st.region : "-", cnt: 0, ops: {}};
+    byStore[key].cnt++;
+    const op = String(r.opportunity || "未归类").trim();
+    byStore[key].ops[op] = (byStore[key].ops[op] || 0) + 1;
+  });
+  const arr = Object.values(byStore).sort((a,b)=>b.cnt-a.cnt).slice(0,30);
+  $("cmpRankMeta").textContent = "Top " + arr.length + " 门店 · " + rows.length + " 条记录";
+  $("cmpStoreRank").querySelector("tbody").innerHTML = arr.map((s,i)=>{
+    const topOp = Object.keys(s.ops).sort((a,b)=>s.ops[b]-s.ops[a])[0] || "未归类";
+    return `<tr onclick="openCmpStore('${esc(s.name)}')"><td class="num">${i+1}</td><td><span class="clickable pink">${esc(s.name)}</span></td><td>${esc(s.city)}</td><td>${esc(s.region)}</td><td class="num ${s.cnt>0?"score-bad":""}">${s.cnt}</td><td><span class="cat-badge cat-${cmpCatIdx(topOp)}">${esc(topOp)}</span></td></tr>`;
+  }).join("") || '<tr><td colspan="6" class="empty">当前范围暂无差评/投诉</td></tr>';
+}
+function setPenCat(cat){
+  state.penCat = (state.penCat === cat) ? "" : (cat || "");
+  renderPenaltyDetail();
+}
+function setPenGran(g){
+  state.penGran = g;
+  ["month","week","day"].forEach(x => { const b = $("gran" + x.charAt(0).toUpperCase() + x.slice(1)); if(b) b.classList.toggle("on", x === g); });
+  renderPenalty();
+}
+function penGranKey(r){
+  const d = String(r.occur_date || "");
+  if(state.penGran === "day") return d.slice(0,10);
+  if(state.penGran === "week"){
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+    if(!m) return d.slice(0,7);
+    const dt = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+    const dow = (dt.getDay()+6)%7;
+    const mon = new Date(dt); mon.setDate(dt.getDate()-dow);
+    const y2 = mon.getFullYear();
+    const w = Math.ceil((mon - new Date(y2,0,1)) / 604800000);
+    return y2 + "-W" + String(Math.max(1,w)).padStart(2,"0");
+  }
+  const mm = /^(\d{4})-(\d{2})/.exec(d);
+  return mm ? mm[1] + "-" + mm[2] : (d.slice(0,7) || "未知");
+}
+function granLabel(k){
+  if(/^\d{4}-\d{2}$/.test(k)) return k.replace("-", "年") + "月";
+  if(/^\d{4}-W\d{2}$/.test(k)) return k.replace("-W", "年第") + "周";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(k)) return k.replace(/-/g, "年").replace(/年(\d{2})$/, "年$1月") + "日";
+  return k;
+}
+function togglePenGroup(gk){
+  if(penExpandedGroups.has(gk)) penExpandedGroups.delete(gk); else penExpandedGroups.add(gk);
+  renderPenList();
+}
+function niceTicks(min, max, count){
+  count = count || 4;
+  if(!(max > min)){ min -= 1; max += 1; }
+  let span = max - min;
+  let step = span / count;
+  if(step < 1) step = 1;
+  else if(step < 2) step = 2;
+  else if(step < 5) step = 5;
+  else if(step < 10) step = 10;
+  else { const mag = Math.pow(10, Math.floor(Math.log10(step))); const norm = step / mag; step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag; }
+  const tmin = Math.floor(min / step) * step;
+  const tmax = Math.ceil(max / step) * step;
+  const ticks = [];
+  for(let v = tmin; v <= tmax + 1e-9; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
+  return ticks;
+}
 function openStoreDetail(storeName){
   const st = findStoreByName(storeName) || data.stores.find(s=>s.store_name===storeName);
   if(!st){ toast("未找到门店：" + storeName); return; }
@@ -1389,20 +1636,20 @@ function openStoreDetail(storeName){
   const mr = monthRows();
   const curKey = isAnnual() ? String(state.year) + "-" : monthKey(state.year, state.month||1);
   const perfRow = isAnnual()
-    ? (sid ? data.perf.filter(r => String(r.store_id)===String(sid)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0]
+    ? (sid ? data.perf.filter(r => storeIdMatches(r.store_id, sid)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0]
           : data.perf.filter(r => normName(r.store_name)===normName(storeName)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0])
-    : (sid ? data.perf.find(r => String(r.store_id)===String(sid) && Number(r.month)===state.month) : data.perf.find(r => normName(r.store_name)===normName(storeName) && Number(r.month)===state.month));
+    : (sid ? data.perf.find(r => storeIdMatches(r.store_id, sid) && Number(r.month)===state.month) : data.perf.find(r => normName(r.store_name)===normName(storeName) && Number(r.month)===state.month));
   const dpRow = isAnnual()
-    ? (sid ? data.dianping.filter(r => String(r.store_id)===String(sid)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0] : null)
-    : (sid ? data.dianping.find(r => String(r.store_id)===String(sid) && Number(r.month)===state.month) : null);
+    ? (sid ? data.dianping.filter(r => storeIdMatches(r.store_id, sid)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0] : null)
+    : (sid ? data.dianping.find(r => storeIdMatches(r.store_id, sid) && Number(r.month)===state.month) : null);
   const mgrRow = isAnnual()
-    ? (sid ? data.managerLog.filter(r => String(r.store_id)===String(sid)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0]
+    ? (sid ? data.managerLog.filter(r => storeIdMatches(r.store_id, sid)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0]
           : data.managerLog.filter(r => normName(findStoreNameByMgr(r.store_id))===normName(storeName)).sort((a,b)=>(num(b.month)||0)-(num(a.month)||0))[0])
-    : (sid ? data.managerLog.find(r => String(r.store_id)===String(sid) && Number(r.month)===state.month) : data.managerLog.find(r => normName(findStoreNameByMgr(r.store_id))===normName(storeName) && Number(r.month)===state.month));
+    : (sid ? data.managerLog.find(r => storeIdMatches(r.store_id, sid) && Number(r.month)===state.month) : data.managerLog.find(r => normName(findStoreNameByMgr(r.store_id))===normName(storeName) && Number(r.month)===state.month));
   const cmpRows = data.complaints.filter(r => (r.store_name||"").indexOf(storeName)>=0 && (r.date||"").indexOf(curKey)===0);
-  const wmRows = data.waimai.filter(r => (sid?String(r.store_id)===String(sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
-  const insRow = data.inspection.find(r => (sid?String(r.store_id)===String(sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
-  const mysRow = data.mystery.find(r => (sid?String(r.store_id)===String(sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
+  const wmRows = data.waimai.filter(r => (sid?storeIdMatches(r.store_id,sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
+  const insRow = data.inspection.find(r => (sid?storeIdMatches(r.store_id,sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
+  const mysRow = data.mystery.find(r => (sid?storeIdMatches(r.store_id,sid):normName(r.store_name)===normName(storeName)) && (r.month||"").indexOf(curKey)===0);
   const penRows = data.penalty.filter(r => (r.store_name||"").indexOf(storeName)>=0 && (r.occur_date||"").indexOf(curKey)===0);
 
   const nm = sid ? "" : '<span class="unmatched">待核对</span>';
@@ -1428,7 +1675,7 @@ function openStoreDetail(storeName){
     </div>`;
   $("mdBody").innerHTML = html;
   const agg = {};
-  const srows = data.perf.filter(r => sid ? String(r.store_id)===String(sid) : normName(r.store_name)===normName(storeName));
+  const srows = data.perf.filter(r => sid ? storeIdMatches(r.store_id, sid) : normName(r.store_name)===normName(storeName));
   srows.forEach(r => { const m = num(r.month); if(m!==null) agg[m] = num(r.total_score); });
   lineChart($("mdTrend"), availableMonths.map(m=>m+"月"), [{name:"绩效得分", color:"#00e5ff", values:availableMonths.map(m=>agg[m]??null)}]);
   $("storeMask").classList.add("show");
@@ -1470,8 +1717,8 @@ function exportInspection(){
 }
 function exportPenalty(){
   const mr = monthRows();
-  const rows = mr.penalty.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 日期: r.occur_date, 类型: r.violation_type, 等级: r.penalty_level, 罚款金额: r.fine_amount, 描述: r.event_desc }));
-  downloadCSV("内部处罚", ["门店","日期","类型","等级","罚款金额","描述"], rows);
+  const rows = mr.penalty.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 日期: r.occur_date, 类型: r.violation_type, 归类: classifyPenalty(r.event_desc), 等级: r.penalty_level, 罚款金额: r.fine_amount, 描述: r.event_desc }));
+  downloadCSV("内部处罚", ["门店","日期","类型","归类","等级","罚款金额","描述"], rows);
 }
 function exportManager(){
   const rows = data.managerLog.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 店长: r.manager_name }));
