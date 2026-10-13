@@ -564,7 +564,7 @@ function normalizeRegion(r){
   const s = String(r ?? "").trim();
   if(!s) return "其他";
   if(s.indexOf("上海") >= 0) return "上海";
-  const m = /(?:经营)?((?:一|二|三|四|五|六|七|八|九|十|[0-9]+(?:\.[0-9]+)?)区)/.exec(s);
+  const m = /(?:经营)?([一二三四五六七八九十]+区)/.exec(s);
   if(m) return m[1];
   if(s.indexOf("训练") >= 0) return "训练店";
   return "其他";
