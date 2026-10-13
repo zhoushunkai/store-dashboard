@@ -304,7 +304,7 @@
       <h3>区域分区视图 <span class="mod" id="perfRegionMeta"></span></h3>
       <div class="cards cols3" style="grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1.5fr);">
         <div>
-          <div style="font-size:13px; font-weight:800; color:var(--dim); margin-bottom:8px;">区域平均分对比（当前筛选当月）</div>
+          <div id="perfRegionTitle" style="font-size:13px; font-weight:800; color:var(--dim); margin-bottom:8px;">区域平均分对比（当前筛选当月）</div>
           <div id="perfRegionBars"></div>
         </div>
         <div>
@@ -867,9 +867,9 @@ function renderOverview(){
     const comp = comps.length ? sum(comps.map(c=>c[0]*c[1]))/sum(comps.map(c=>c[1])) : null;
     const cnt = city==="全国" ? data.stores.length : data.stores.filter(s=>s.city===city).length;
     regionCards.push(`<div class="card" style="--accent:#00e5ff;">
-      <h3>${city==="全国"?"全国":(city==="上海"?"上海":"北京")} QSC 综合得分 <span class="mod">${cnt} 家门店</span></h3>
+      <h3>${city==="全国"?"全国":(city==="上海"?"上海":"北京")} QSC 综合得分${isAnnual()?"（年度平均）":""} <span class="mod">${cnt} 家门店</span></h3>
       <div class="big cyan">${comp===null?"--":comp.toFixed(1)}</div>
-      <div class="hint">绩效 ${p===null?"--":p.toFixed(1)} · 检查 ${i===null?"--":i.toFixed(1)} · 神秘 ${m===null?"--":m.toFixed(1)}</div>
+      <div class="hint">绩效 ${p===null?"--":p.toFixed(1)} · 检查 ${i===null?"--":i.toFixed(1)} · 神秘 ${m===null?"--":m.toFixed(1)}${isAnnual()?" · 年度平均口径":""}</div>
     </div>`);
   });
   $("ovRegionCards").innerHTML = regionCards.join("");
