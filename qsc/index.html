@@ -272,6 +272,7 @@
     <div class="tab" data-tab="inspection"><span class="dot" style="background:#34d399"></span>④ 检查与神秘顾客</div>
     <div class="tab" data-tab="penalty"><span class="dot" style="background:#ff5c5c"></span>⑤ 内部处罚</div>
     <div class="tab" data-tab="manager"><span class="dot" style="background:#ffd166"></span>⑥ 店长档案</div>
+    <div class="tab" data-tab="need"><span class="dot" style="background:#b26bff"></span>⑦ 顾客需求分析</div>
   </nav>
 
   <!-- ① 总览 -->
@@ -442,6 +443,59 @@
     </div>
   </section>
 
+  <!-- ⑦ 顾客需求分析 -->
+  <section class="section" id="sec-need">
+    <div class="row">
+      <div class="title">顾客需求分析 <span class="mod" id="needMeta"></span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn small" onclick="exportNeedRank()">导出需求排行 CSV</button>
+        <button class="btn small" onclick="exportNeedAdvice()">导出决策建议 CSV</button>
+      </div>
+    </div>
+    <div class="filters" style="margin-bottom:14px;">
+      <label>时间维度</label>
+      <select id="selNDim">
+        <option value="month">月</option>
+        <option value="year">年</option>
+        <option value="day">日</option>
+      </select>
+      <label>年</label>
+      <select id="selNYear"></select>
+      <label>月</label>
+      <select id="selNMonth"></select>
+      <label>日</label>
+      <select id="selNDay"></select>
+      <label>市场</label>
+      <select id="selNMarket">
+        <option value="">全国</option>
+        <option value="北京">北京</option>
+        <option value="上海">上海</option>
+      </select>
+    </div>
+    <div class="cards cols3">
+      <div class="card" style="--accent:#b26bff;">
+        <h3>顾客需求排行（Top 需求）</h3>
+        <div id="needRank"></div>
+      </div>
+      <div class="card" style="--accent:#00e5ff;">
+        <h3>需求趋势（顾客需求总数）</h3>
+        <div id="needTrend"></div>
+      </div>
+      <div class="card" style="--accent:#ff6ac1;">
+        <h3 id="needCompareTitle">分市场对比（北京 vs 上海）</h3>
+        <div id="needCompare"></div>
+      </div>
+    </div>
+    <div class="card" style="--accent:#ffd166; margin-top:14px;">
+      <div class="row" style="margin-bottom:10px;">
+        <h3 style="margin:0;">自动整改决策建议</h3>
+        <span class="mod" id="needAdviceMeta"></span>
+      </div>
+      <div id="needAdvice"></div>
+      <div class="tip">建议由高频需求类型自动映射生成（类别 → 数据证据 → 建议动作 → 优先级 → 责任口），供运营/门店参考，具体整改以实际情况为准。</div>
+    </div>
+  </section>
+
   <footer>
     南城香 QSC 状况看板 · 数据源：Supabase omkshuposrdmwgukpoxd（9 张 QSC 表）· 产品差评不纳入 · 门店绩效/大众点评/店长档案按月编号（1~12）按 2026 年度口径；外卖/检查/神秘/投诉/处罚按 YYYY-MM 口径
     <br>未对齐门店（25 家）在榜单/表格中以红色“待核对”标注。
@@ -547,6 +601,29 @@ function classifyPenalty(desc){
   return "其他";
 }
 
+/* ===================== 顾客需求分析：需求分类 ===================== */
+const NEED_CATS = ["服务态度","上餐速度","食品质量/异物","环境卫生","价格分量","出品一致性","其他"];
+const NEED_CAT_COLORS = {"服务态度":"#ff6ac1","上餐速度":"#ffd166","食品质量/异物":"#ff5c5c","环境卫生":"#34d399","价格分量":"#ff9f43","出品一致性":"#b26bff","其他":"#8aa3c4"};
+const NEED_ADVICE_MAP = {
+  "服务态度":     { action:"门店开展服务礼仪/话术专项培训，店长每日晨会复盘差评案例，重点店驻店督导", prio:"高", dept:"培训" },
+  "上餐速度":     { action:"优化出餐动线与高峰备料，增设高峰期出餐位，落实超时免单承诺并监控断档补货", prio:"高", dept:"门店" },
+  "食品质量/异物": { action:"加强出品标准抽查与原材料验收，异物/食品安全类立即启动门店级整改并追溯供应商", prio:"高", dept:"品控" },
+  "环境卫生":     { action:"强化清洁频次与收桌巡台 SOP，环境类连续出现门店两周内复查并纳入周检", prio:"中", dept:"门店" },
+  "价格分量":     { action:"核查标准分量与定价一致性，分量类差评逐店称重抽查并回访", prio:"中", dept:"品控" },
+  "出品一致性":   { action:"统一配方与操作标准，定期对出品一致性盲测并公示结果", prio:"中", dept:"培训" },
+  "其他":        { action:"人工复核该类差评文本，按具体情况归口运营/门店处理", prio:"低", dept:"运营" }
+};
+function classifyNeed(text){
+  const s = String(text ?? "");
+  if(/上餐慢|出餐慢|上菜慢|等太久|催餐|催菜|超时|未免单|未执行超时|断档|售罄|缺货|供应不上|出餐时间|上餐时间/.test(s)) return "上餐速度";
+  if(/环境|卫生|餐具|收桌|桌面|地面|厕所|洗手间|室内热|温度|不舒适|空调|现场混乱|异味|脏乱/.test(s)) return "环境卫生";
+  if(/品质|食品|异物|安全|拉肚子|身体不适|不熟|没熟|夹生|糊|凉|稀|破皮|露馅|不新鲜|变质|虫|头发|馄饨|油条|米饭|粥|口感|味道|吃出|钢丝|塑料/.test(s)) return "食品质量/异物";
+  if(/服务|态度|不理会|不耐烦|爱答不理|区别对待|甩脸子|不搭理|恶劣|冷淡|不热情|凶|吼|骂|处理顾客问题|未妥善处理|推诿/.test(s)) return "服务态度";
+  if(/价格|贵|分量|量少|量小|性价比|收费|账单|加价|多收|不值/.test(s)) return "价格分量";
+  if(/出品|一致|标准|稳定|每次|不一样|差异/.test(s)) return "出品一致性";
+  return "其他";
+}
+
 /* ===================== 门店范围（四级下钻） ===================== */
 function scopeStores(){
   let arr = data.stores;
@@ -640,6 +717,7 @@ async function loadAll(){
     if(availableMonths.includes(cur)) state.month = cur;
     else if(availableMonths.length){ state.month = Math.max(...availableMonths); toast("所选月份无数据，已自动切换到最近有数据月份 " + state.year + "-" + pad2(state.month)); }
     syncFiltersUI();
+    initNeedFilters();
     renderAll();
   }catch(e){
     t.innerHTML = '<div style="text-align:center;color:#ff5c5c;font-size:15px;padding:20px;">数据加载失败：' + esc(e.message) + '<br><br>请确认 anon key 有效且 RLS 允许读取 public 表。</div>';
@@ -1400,6 +1478,248 @@ function exportManager(){
   downloadCSV("店长档案", ["门店","月份","店长"], rows);
 }
 
+/* ===================== ⑦ 顾客需求分析 ===================== */
+function needCityOf(r){
+  const c = r.city || (storeOf(r)||{}).city || "";
+  return String(c).trim();
+}
+function needMarketRows(){
+  const mkt = state.needMarket || "";
+  if(!mkt) return data.complaints;
+  return data.complaints.filter(r => needCityOf(r) === mkt);
+}
+function needRangeRows(rows, y, m, d){
+  const yy = String(y);
+  const mm = m ? pad2(m) : null;
+  const dd = d ? pad2(d) : null;
+  return rows.filter(r => {
+    const s = String(r.date || "");
+    if(dd) return s.indexOf(yy + "-" + mm + "-" + dd) === 0;
+    if(mm) return s.indexOf(yy + "-" + mm) === 0;
+    return s.indexOf(yy + "-") === 0;
+  });
+}
+function needCatCount(rows){
+  const c = {};
+  rows.forEach(r => { const k = classifyNeed(r.opportunity || ""); c[k] = (c[k]||0) + 1; });
+  return c;
+}
+function needDeltaText(cur, prev){
+  if(prev === 0) return cur === 0 ? "—" : "新增";
+  const d = cur - prev;
+  if(d === 0) return "持平";
+  const pct = Math.abs(Math.round(d / prev * 1000) / 10);
+  return (d > 0 ? "↑" : "↓") + pct + "%";
+}
+function needDimLabel(p){
+  if(p.dim === "year") return p.y + "年";
+  if(p.dim === "day") return p.y + "-" + pad2(p.m) + "-" + pad2(p.d);
+  return p.y + "-" + pad2(p.m);
+}
+function needScopeLabel(p){
+  const mkt = state.needMarket || "全国";
+  return mkt + " · " + needDimLabel(p);
+}
+function needPeriods(){
+  const rows = needMarketRows();
+  const dim = state.needDim || "month";
+  const y = state.needYear || state.year, m = state.needMonth || 1, d = state.needDay || null;
+  let cur, prev;
+  if(dim === "year"){
+    cur = needRangeRows(rows, y, null, null);
+    prev = needRangeRows(rows, y - 1, null, null);
+  } else if(dim === "day"){
+    cur = needRangeRows(rows, y, m, d);
+    const dt = new Date(y, m - 1, d); dt.setDate(dt.getDate() - 1);
+    prev = needRangeRows(rows, dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+  } else {
+    cur = needRangeRows(rows, y, m, null);
+    const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+    prev = needRangeRows(rows, py, pm, null);
+  }
+  return { cur, prev, dim, y, m, d };
+}
+function needRankBuild(cur, prev){
+  const total = cur.length;
+  const curC = needCatCount(cur), prevC = needCatCount(prev);
+  return {
+    total,
+    rank: NEED_CATS.map(k => ({
+      cat: k,
+      n: curC[k] || 0,
+      pct: total ? Math.round((curC[k] || 0) / total * 1000) / 10 : 0,
+      delta: needDeltaText(curC[k] || 0, prevC[k] || 0)
+    })).sort((a,b) => b.n - a.n)
+  };
+}
+function renderNeedRank(p, rb){
+  const mkt = state.needMarket || "全国";
+  const emptyMsg = rb.total ? "" : '<div class="empty">当前范围暂无投诉/差评记录</div>';
+  $("needRank").innerHTML = (rb.total ? `<div class="d-summary">当前范围共 ${rb.total} 条顾客反馈（opportunity 文本可用 ${rb.curOpText}）</div>` : "") + emptyMsg +
+    rb.rank.filter(x => x.n > 0).map((x,i) => {
+      const c = NEED_CAT_COLORS[x.cat] || "#8aa3c4";
+      const pctBar = Math.min(100, Math.round(x.pct * 3));
+      const deltaCls = x.delta.indexOf("↑") === 0 ? "score-bad" : (x.delta.indexOf("↓") === 0 ? "score-good" : "");
+      return `<div class="rank-line" style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+          <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};box-shadow:0 0 8px ${c};margin-right:6px;"></i>${esc(x.cat)}</span>
+          <span><b>${x.n}</b> <span style="color:var(--dim);">${x.pct}%</span> <span class="num ${deltaCls}" style="font-size:11px;">${x.delta}</span></span>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:5px;overflow:hidden;"><div style="width:${pctBar}%;height:100%;background:${c};box-shadow:0 0 8px ${c};"></div></div>
+      </div>`;
+    }).join("") || (rb.total ? '<div class="empty">暂无归类结果</div>' : "");
+  $("needMeta").textContent = needScopeLabel(p) + " · 机会点文本可用率 " + rb.curOpTextRate + "%";
+}
+function renderNeedTrend(p){
+  const rows = needMarketRows();
+  const dim = p.dim;
+  let labels = [], values = [];
+  if(dim === "year"){
+    const years = [...new Set(data.complaints.map(r => { const m = /^(\d{4})/.exec(r.date || ""); return m ? m[1] : null; }).filter(Boolean))].sort();
+    labels = years; values = years.map(y => needRangeRows(rows, Number(y), null, null).length);
+  } else if(dim === "day"){
+    const mm = pad2(p.m), yy = String(p.y);
+    const days = [...new Set(rows.filter(r => String(r.date||"").indexOf(yy + "-" + mm) === 0).map(r => Number(String(r.date).slice(8,10))).filter(Boolean))].sort((a,b)=>a-b);
+    labels = days.map(dd => pad2(dd) + "日"); values = days.map(dd => needRangeRows(rows, p.y, p.m, dd).length);
+  } else {
+    labels = [1,2,3,4,5,6,7,8,9,10,11,12].map(m => m + "月");
+    values = labels.map((_,i) => needRangeRows(rows, p.y, i + 1, null).length);
+  }
+  lineChart($("needTrend"), labels, [{ name: "需求总数", color: "#00e5ff", values }]);
+}
+function renderNeedCompare(p){
+  const dim = p.dim;
+  const selRows = needMarketRows();
+  let curByCity = null;
+  if(!state.needMarket){
+    const bj = needRangeRows(selRows.filter(r => needCityOf(r) === "北京"), p.y, dim === "year" ? null : p.m, dim === "day" ? p.d : null);
+    const sh = needRangeRows(selRows.filter(r => needCityOf(r) === "上海"), p.y, dim === "year" ? null : p.m, dim === "day" ? p.d : null);
+    const bjC = needCatCount(bj), shC = needCatCount(sh);
+    const bjT = bj.length || 1, shT = sh.length || 1;
+    curByCity = {
+      items: NEED_CATS.map(k => ({ label: k, v1: Math.round((bjC[k]||0) / bjT * 1000) / 10, v2: Math.round((shC[k]||0) / shT * 1000) / 10, n1: bjC[k]||0, n2: shC[k]||0 }))
+             .filter(x => x.n1 + x.n2 > 0),
+      bjT: bj.length, shT: sh.length
+    };
+    $("needCompareTitle").textContent = "分市场对比（北京 vs 上海 · 需求类型占比）";
+    if(!curByCity.items.length){ $("needCompare").innerHTML = '<div class="empty">当前范围两市均无投诉/差评记录</div>'; return; }
+    const maxV = Math.max(...curByCity.items.flatMap(i => [i.v1, i.v2]), 1);
+    $("needCompare").innerHTML = `<div class="d-summary" style="margin-bottom:8px;">北京 ${curByCity.bjT} 条 / 上海 ${curByCity.shT} 条</div>` +
+      '<div style="display:flex;flex-direction:column;gap:10px;">' + curByCity.items.map(i => {
+        const w1 = Math.round(i.v1 / maxV * 100), w2 = Math.round(i.v2 / maxV * 100);
+        return `<div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:4px;">
+            <span style="color:var(--white);">${esc(i.label)}</span><span>${i.v1.toFixed(1)}% (${i.n1}) / ${i.v2.toFixed(1)}% (${i.n2})</span>
+          </div>
+          <div style="display:flex;gap:2px;height:12px;">
+            <div style="width:${w1}%;background:#4d9fff;border-radius:3px 0 0 3px;box-shadow:0 0 8px #4d9fff;"></div>
+            <div style="width:${w2}%;background:#ff6ac1;border-radius:0 3px 3px 0;box-shadow:0 0 8px #ff6ac1;"></div>
+          </div>
+        </div>`;
+      }).join("") + '</div><div class="legend" style="margin-top:10px;"><span><i style="background:#4d9fff;box-shadow:0 0 8px #4d9fff"></i>北京</span><span><i style="background:#ff6ac1;box-shadow:0 0 8px #ff6ac1"></i>上海</span></div>';
+  } else {
+    const cur = needRangeRows(selRows, p.y, dim === "year" ? null : p.m, dim === "day" ? p.d : null);
+    const total = cur.length;
+    const curC = needCatCount(cur);
+    const parts = NEED_CATS.map(k => ({ label: k, n: curC[k] || 0, v: total ? Math.round((curC[k]||0) / total * 100) : 0, c: NEED_CAT_COLORS[k] || "#8aa3c4" })).filter(x => x.n > 0);
+    $("needCompareTitle").textContent = "分市场对比（" + (state.needMarket) + " · 需求类型占比）";
+    donutChart($("needCompare"), parts, total + " 条");
+  }
+}
+function renderNeedAdvice(p, rb){
+  const rows = rb.rank.filter(x => x.n > 0 && x.pct >= 5).slice(0, 6);
+  const prioColor = { "高":"#ff5c5c", "中":"#ff9f43", "低":"#8aa3c4" };
+  $("needAdviceMeta").textContent = "覆盖 " + rows.length + " 类 · 当前筛选：" + needScopeLabel(p);
+  $("needAdvice").innerHTML = rows.length ? rows.map(x => {
+    const adv = NEED_ADVICE_MAP[x.cat] || NEED_ADVICE_MAP["其他"];
+    const c = NEED_CAT_COLORS[x.cat] || "#8aa3c4";
+    return `<div class="detail-item" style="border-left:3px solid ${c};">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <b style="font-size:14px;color:${c};">${esc(x.cat)}</b>
+        <span><span class="badge" style="background:${prioColor[adv.prio]};">优先级：${adv.prio}</span> <span class="badge none">责任口：${adv.dept}</span></span>
+      </div>
+      <div class="d-meta" style="margin-top:4px;">数据证据：${x.n} 条 · 占 ${x.pct}% · 较上期 ${x.delta}</div>
+      <div style="font-size:13px;margin-top:6px;">建议动作：${esc(adv.action)}</div>
+    </div>`;
+  }).join("") : '<div class="empty">当前范围样本不足（各类型占比 &lt; 5%），暂不生成整改建议</div>';
+}
+function renderNeed(){
+  const p = needPeriods();
+  const rb = needRankBuild(p.cur, p.prev);
+  const opTotal = p.cur.length;
+  const opText = p.cur.filter(r => String(r.opportunity || "").trim()).length;
+  rb.curOpText = opText;
+  rb.curOpTextRate = opTotal ? Math.round(opText / opTotal * 1000) / 10 : 0;
+  renderNeedRank(p, rb);
+  renderNeedTrend(p);
+  renderNeedCompare(p);
+  renderNeedAdvice(p, rb);
+}
+function syncNeedFiltersUI(){
+  const dim = state.needDim || "month";
+  $("selNDim").value = dim;
+  $("selNYear").value = String(state.needYear || state.year);
+  $("selNMonth").value = String(state.needMonth || 1);
+  $("selNDay").value = String(state.needDay || "");
+  $("selNDay").style.display = dim === "day" ? "" : "none";
+  $("selNMonth").style.display = dim === "year" ? "none" : "";
+}
+function initNeedFilters(){
+  const years = [...new Set(data.complaints.map(r => { const m = /^(\d{4})/.exec(r.date || ""); return m ? m[1] : null; }).filter(Boolean))].sort();
+  $("selNYear").innerHTML = years.map(y => `<option value="${y}">${y} 年</option>`).join("") || '<option value="2026">2026 年</option>';
+  state.needDim = state.needDim || "month";
+  state.needYear = state.needYear || state.year;
+  state.needMonth = state.needMonth || state.month || (availableMonths.length ? Math.max(...availableMonths) : 1);
+  rebuildNeedMonthOptions();
+  $("selNDay").innerHTML = '';
+  const ym = String(state.needYear) + "-" + pad2(state.needMonth);
+  const days = [...new Set(data.complaints.filter(r => String(r.date||"").indexOf(ym) === 0).map(r => Number(String(r.date).slice(8,10))).filter(Boolean))].sort((a,b)=>a-b);
+  state.needDay = state.needDay || (days.length ? Math.max(...days) : 1);
+  $("selNDay").innerHTML = days.map(dd => `<option value="${dd}">${dd} 日</option>`).join("") || '<option value="1">1 日</option>';
+  $("selNMarket").value = state.needMarket || "";
+  syncNeedFiltersUI();
+  bindNeedFilterEvents();
+}
+function rebuildNeedMonthOptions(){
+  const y = state.needYear || state.year;
+  const months = [...new Set(data.complaints.filter(r => String(r.date||"").indexOf(String(y) + "-") === 0).map(r => { const m = /^\d{4}-(\d{2})/.exec(r.date || ""); return m ? Number(m[1]) : null; }).filter(Boolean))].sort((a,b)=>a-b);
+  $("selNMonth").innerHTML = (months.length ? months : [1,2,3,4,5,6,7,8,9,10,11,12]).map(m => `<option value="${m}">${m} 月</option>`).join("");
+  if(months.length && months.indexOf(state.needMonth) < 0) state.needMonth = Math.max(...months);
+}
+function rebuildNeedDayOptions(){
+  const ym = String(state.needYear || state.year) + "-" + pad2(state.needMonth || 1);
+  const days = [...new Set(data.complaints.filter(r => String(r.date||"").indexOf(ym) === 0).map(r => Number(String(r.date).slice(8,10))).filter(Boolean))].sort((a,b)=>a-b);
+  state.needDay = days.length ? Math.max(...days) : 1;
+  $("selNDay").innerHTML = days.map(dd => `<option value="${dd}">${dd} 日</option>`).join("") || '<option value="1">1 日</option>';
+  $("selNDay").value = String(state.needDay);
+}
+function bindNeedFilterEvents(){
+  if($("selNDim").dataset.bound) return;
+  $("selNDim").dataset.bound = "1";
+  $("selNDim").addEventListener("change", e => { state.needDim = e.target.value; syncNeedFiltersUI(); renderNeed(); });
+  $("selNYear").addEventListener("change", e => { state.needYear = Number(e.target.value); state.needMonth = null; rebuildNeedMonthOptions(); rebuildNeedDayOptions(); syncNeedFiltersUI(); renderNeed(); });
+  $("selNMonth").addEventListener("change", e => { state.needMonth = Number(e.target.value); rebuildNeedDayOptions(); syncNeedFiltersUI(); renderNeed(); });
+  $("selNDay").addEventListener("change", e => { state.needDay = Number(e.target.value); renderNeed(); });
+  $("selNMarket").addEventListener("change", e => { state.needMarket = e.target.value; renderNeed(); });
+}
+function exportNeedRank(){
+  const p = needPeriods();
+  const rb = needRankBuild(p.cur, p.prev);
+  const scope = needScopeLabel(p);
+  const rows = rb.rank.filter(x => x.n > 0).map(x => ({ 需求类型: x.cat, 数量: x.n, 占比: x.pct + "%", 较上期: x.delta, 筛选范围: scope }));
+  downloadCSV("顾客需求排行", ["需求类型","数量","占比","较上期","筛选范围"], rows);
+}
+function exportNeedAdvice(){
+  const p = needPeriods();
+  const rb = needRankBuild(p.cur, p.prev);
+  const scope = needScopeLabel(p);
+  const rows = rb.rank.filter(x => x.n > 0 && x.pct >= 5).slice(0, 6).map(x => {
+    const adv = NEED_ADVICE_MAP[x.cat] || NEED_ADVICE_MAP["其他"];
+    return { 问题类别: x.cat, 数量: x.n, 占比: x.pct + "%", 较上期: x.delta, 建议动作: adv.action, 优先级: adv.prio, 责任口: adv.dept, 筛选范围: scope };
+  });
+  downloadCSV("顾客需求决策建议", ["问题类别","数量","占比","较上期","建议动作","优先级","责任口","筛选范围"], rows);
+}
+
 /* ===================== 渲染总入口 ===================== */
 function renderAll(){
   updateAnnualTag();
@@ -1409,6 +1729,7 @@ function renderAll(){
   renderInspection();
   renderPenalty();
   renderManager();
+  renderNeed();
 }
 
 /* ===================== 启动 ===================== */
