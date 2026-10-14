@@ -144,6 +144,18 @@ const ACTIVE_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','
 
 let allData = [];
 let currentView = 'month';
+const QUARTER_MONTHS = { 'Q1':['1月','2月','3月'], 'Q2':['4月','5月','6月'], 'Q3':['7月','8月','9月'], 'Q4':['10月','11月','12月'] };
+function activeMonths() {
+  const el = document.getElementById('selQuarter');
+  const q = el ? el.value : '';
+  return q ? (QUARTER_MONTHS[q] || []) : ACTIVE_MONTHS;
+}
+function avgGradeRange(ratings, months) {
+  let sum=0,cnt=0; months.forEach(m=>{const s=gradeScore(ratings[m]);if(s){sum+=s;cnt++;}});
+  if(!cnt) return null;
+  const avg=sum/cnt;
+  if(avg>=4.5) return 'S'; if(avg>=3.5) return 'A'; if(avg>=2.5) return 'B'; if(avg>=1.5) return 'C'; return 'D';
+}
 
 function gradeScore(g) { const m = String(g||'').match(/^[SABCD]/); return m ? GRADE_ORDER[m[0]] : 0; }
 function avgGrade(ratings) {
@@ -170,6 +182,13 @@ function buildMonthControls() {
 
 function buildYearControls() {
   document.getElementById('controls').innerHTML = `
+    <select id="selQuarter" onchange="renderYear()">
+      <option value="">全年</option>
+      <option value="Q1">Q1（1-3月）</option>
+      <option value="Q2">Q2（4-6月）</option>
+      <option value="Q3">Q3（7-9月）</option>
+      <option value="Q4">Q4（10-12月）</option>
+    </select>
     <input type="text" id="searchYear" placeholder="搜索姓名 / 门店编号" oninput="renderYear()">
     <select id="sortYear" onchange="renderYear()">
       <option value="store">按门店编号</option>
@@ -226,6 +245,8 @@ function renderMonth() {
 }
 
 function renderYear() {
+  const q = document.getElementById('selQuarter') ? document.getElementById('selQuarter').value : '';
+  const months = q ? (QUARTER_MONTHS[q] || []) : ACTIVE_MONTHS;
   const search = (document.getElementById('searchYear')?.value || '').toLowerCase();
   const sortBy = document.getElementById('sortYear') ? document.getElementById('sortYear').value : 'store';
   const gFilter = document.getElementById('gFilterYear') ? document.getElementById('gFilterYear').value : 'all';
@@ -233,14 +254,14 @@ function renderYear() {
   let filtered = allData.slice();
 
   if (search) filtered = filtered.filter(r => r.person.toLowerCase().includes(search) || String(r.store_num).includes(search));
-  if (gFilter !== 'all') filtered = filtered.filter(r => ACTIVE_MONTHS.some(m => r.ratings[m] && r.ratings[m].startsWith(gFilter)));
+  if (gFilter !== 'all') filtered = filtered.filter(r => months.some(m => r.ratings[m] && r.ratings[m].startsWith(gFilter)));
   if (sortBy === 'name') filtered.sort((a,b) => a.person.localeCompare(b.person,'zh'));
   else filtered.sort((a,b) => (a.store_num||0)-(b.store_num||0));
 
   // Stats
   const counts = { S:0,A:0,B:0,C:0,D:0 };
-  filtered.forEach(r => { const g = avgGrade(r.ratings); if(g) counts[g]++; });
-  let statsHtml = `<span>共 <b>${filtered.length}</b> 人</span>`;
+  filtered.forEach(r => { const g = avgGradeRange(r.ratings, months); if(g) counts[g]++; });
+  let statsHtml = `<span>${q || '全年'} 共 <b>${filtered.length}</b> 人</span>`;
   'SABCD'.split('').forEach(g => { statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${counts[g]}</span>`; });
 
   document.getElementById('stats').innerHTML = statsHtml;
@@ -251,20 +272,20 @@ function renderYear() {
   }
 
   let html = '<div class="table-wrap"><table><thead><tr><th>门店</th><th>负责人</th>';
-  ACTIVE_MONTHS.forEach(m => html += `<th>${m}</th>`);
+  months.forEach(m => html += `<th>${m}</th>`);
   html += '<th>均评级</th><th>趋势</th></tr></thead><tbody>';
 
   filtered.forEach(row => {
     html += `<tr><td>${row.store_num}</td><td>${row.person}</td>`;
-    ACTIVE_MONTHS.forEach(m => {
+    months.forEach(m => {
       const g = row.ratings[m];
       const cls = g && g[0] ? g[0].toLowerCase() : 'empty';
       html += `<td><span class="grade ${cls}">${g||'-'}</span></td>`;
     });
-    const avg = avgGrade(row.ratings);
+    const avg = avgGradeRange(row.ratings, months);
     html += `<td><span class="grade ${avg?avg.toLowerCase():'empty'}">${avg||'-'}</span></td>`;
     html += '<td><div class="trend">';
-    ACTIVE_MONTHS.forEach(m => {
+    months.forEach(m => {
       const g = row.ratings[m];
       const cls = g && g[0] ? g[0].toLowerCase() : '';
       html += `<div class="trend-bar ${cls}"></div>`;

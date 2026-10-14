@@ -338,6 +338,9 @@ header h1 { font-size: 20px; font-weight: 600; }
 
   <div class="header-right">
 
+    <span style="font-size:13px;opacity:.8">考核季度</span>
+    <select id="quarterSelect" onchange="onQuarterChange()"><option value="">按月份</option><option value="Q1">Q1（1-3月）</option><option value="Q2">Q2（4-6月）</option><option value="Q3">Q3（7-9月）</option><option value="Q4">Q4（10-12月）</option></select>
+    <span style="margin:0 4px;opacity:.3">|</span>
     <span style="font-size:13px;opacity:.8">考核月份</span>
 
     <select id="monthSelect" onchange="onMonthChange()"><option value="2026-01">2026年1月</option><option value="2026-02">2026年2月</option><option value="2026-03">2026年3月</option><option value="2026-04">2026年4月</option><option value="2026-05">2026年5月</option><option value="2026-06">2026年6月</option><option value="2026-07">2026年7月</option><option value="2026-08">2026年8月</option><option value="2026-09">2026年9月</option><option value="2026-10">2026年10月</option><option value="2026-11">2026年11月</option><option value="2026-12">2026年12月</option></select>
@@ -373,6 +376,8 @@ header h1 { font-size: 20px; font-weight: 600; }
   <button class="tab-btn" data-tab="person">个人数据看板</button>
 
   <button class="tab-btn" data-tab="annual">年度汇总</button>
+
+  <button class="tab-btn" data-tab="quarter">季度汇总</button>
 
 </div>
 
@@ -464,13 +469,48 @@ var CATEGORIES = {
 
 var levelFilter = null;
 
+function quarterYear() {
+  var ks = Object.keys(ALL_DATA).filter(function(m){ return /^\d{4}-\d{2}$/.test(m); });
+  return ks.length ? ks[0].slice(0,4) : '2026';
+}
+var QUARTER_MONTHS = {
+  'Q1': [quarterYear()+'-01', quarterYear()+'-02', quarterYear()+'-03'],
+  'Q2': [quarterYear()+'-04', quarterYear()+'-05', quarterYear()+'-06'],
+  'Q3': [quarterYear()+'-07', quarterYear()+'-08', quarterYear()+'-09'],
+  'Q4': [quarterYear()+'-10', quarterYear()+'-11', quarterYear()+'-12']
+};
+function getCurrentQuarter() { var el = document.getElementById('quarterSelect'); return el ? el.value : ''; }
+function getQuarterSnapshot(q) {
+  var months = QUARTER_MONTHS[q] || [];
+  var map = {}, order = [];
+  months.forEach(function(m){
+    (ALL_DATA[m] || []).filter(function(d){ return d.total != null; }).forEach(function(d){
+      if (!map[d.store]) { map[d.store] = d; order.push(d.store); }
+      else { map[d.store] = d; }
+    });
+  });
+  var list = order.map(function(st){ var cp = {}; for (var k in map[st]) cp[k] = map[st][k]; return cp; });
+  list.forEach(function(d){ d.rank = 1 + list.filter(function(x){ return x.total > d.total; }).length; });
+  return list;
+}
+function currentRangeLabel() {
+  var q = getCurrentQuarter();
+  if (q) { return quarterYear() + '-' + q; }
+  return getCurrentMonth();
+}
 function getCurrentMonth() { return document.getElementById('monthSelect').value; }
 
 function getMonthData(month) { return (ALL_DATA[month] || []).filter(function(d){ return d.total != null; }); }
 
-function getValid() { return getMonthData(getCurrentMonth()); }
+function getValid() {
+  var q = getCurrentQuarter();
+  if (q) { return getQuarterSnapshot(q); }
+  return getMonthData(getCurrentMonth());
+}
 
-function onMonthChange() { levelFilter = null; renderStats(); switchTab(document.querySelector('.tab-btn.active').dataset.tab); }function renderStats() {
+function onMonthChange() { levelFilter = null; renderStats(); switchTab(document.querySelector('.tab-btn.active').dataset.tab); }
+function onQuarterChange() { levelFilter = null; renderStats(); switchTab(document.querySelector('.tab-btn.active').dataset.tab); }
+function renderStats() {
   var validAll = getValid();
   function isDirect(d){ return d.manager==='区域代管'||d.manager==='区域直管'; }
   var valid = validAll.filter(function(d){ return !isDirect(d); });
@@ -851,9 +891,9 @@ function exportData() {
 
   XLSX.utils.book_append_sheet(wb, ws, '门店使用');
 
-  var month = document.getElementById('monthSelect').value;
+  var month = currentRangeLabel();
 
-  XLSX.writeFile(wb, '管理组绩效_' + getCurrentMonth() + '.xlsx');
+  XLSX.writeFile(wb, '管理组绩效_' + currentRangeLabel() + '.xlsx');
 
   showToast('导出成功：' + data.length + ' 条记录（xlsx格式）');
 
@@ -1127,7 +1167,7 @@ function importData(e) {
 
 function saveData() {
 
-  var data = { month: document.getElementById('monthSelect').value, stores: ALL_DATA, savedAt: new Date().toISOString() };
+  var data = { month: currentRangeLabel(), stores: ALL_DATA, savedAt: new Date().toISOString() };
 
   var json = JSON.stringify(data, null, 2);
 
@@ -1159,7 +1199,7 @@ function shareData() {
 
   var url = window.location.href;
 
-  var text = '门店管理组绩效公示平台 - ' + (document.getElementById('monthSelect').value);
+  var text = '门店管理组绩效公示平台 - ' + currentRangeLabel();
 
   if (navigator.share) {
 
@@ -1191,11 +1231,11 @@ function shareData() {
 
 
 
-function renderAnnual() {
+function renderAnnual(optMonths) {
 
-  var allMonths = [];
+  var allMonths = optMonths || [];
 
-  for (var m=1; m<=12; m++) { allMonths.push('2026-' + (m<10?'0':'') + m); }
+  if (!allMonths.length) { for (var m=1; m<=12; m++) { allMonths.push('2026-' + (m<10?'0':'') + m); } }
 
   
 
@@ -1357,7 +1397,7 @@ function renderAnnual() {
 
     html += '<td><span class="cell-best">'+m.bestScore.toFixed(1)+'<br><span style="font-size:10px;color:#999">'+(m.bestMonth||'').replace('2026-','')+'月</span></span></td>';
 
-    html += '<td>'+m.totalMonths+'/12</td></tr>';
+    html += '<td>'+m.totalMonths+'/'+allMonths.length+'</td></tr>';
 
   });
 
@@ -1368,6 +1408,16 @@ function renderAnnual() {
 }
 
 
+
+function renderQuarter() {
+  var q = getCurrentQuarter();
+  if (!q) { return renderAnnual(); }
+  var months = QUARTER_MONTHS[q] || [];
+  var y = quarterYear();
+  var label = q + '（' + months[0].replace(y+'-','') + '-' + months[months.length-1].replace(y+'-','') + '月）';
+  var head = '<div class="section-title" style="margin:12px 0 8px;font-size:15px">' + label + ' 季度负责人汇总（前端只读聚合）</div>';
+  return head + renderAnnual(months);
+}
 
 function filterAnnual() {
 
@@ -1421,6 +1471,8 @@ function switchTab(tab) {
 
   else if (tab==='annual') c.innerHTML = renderAnnual();
 
+  else if (tab==='quarter') c.innerHTML = renderQuarter();
+
 }
 
 
@@ -1428,6 +1480,7 @@ function switchTab(tab) {
 document.addEventListener('DOMContentLoaded', function(){
 
   // 默认打开最新有数据的月份（ALL_DATA 月份键升序，取最后有 total 记录的月份）
+  var qsEl = document.getElementById('quarterSelect'); if (qsEl) { qsEl.value = ''; }
   var months = Object.keys(ALL_DATA).filter(function(m){ return /^\d{4}-\d{2}$/.test(m); }).sort();
   for (var mi = months.length - 1; mi >= 0; mi--) {
     if ((ALL_DATA[months[mi]] || []).some(function(d){ return d.total != null; })) {
