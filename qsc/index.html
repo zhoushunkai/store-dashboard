@@ -279,8 +279,8 @@ a.clickable{color:var(--cyan);}
       <label>月</label>
       <select id="selMonth"></select>
       <span id="annualTag" style="display:none; font-size:12px; color:#04101f; background:linear-gradient(135deg,#ffd700,#ffb347); padding:4px 10px; border-radius:8px; font-weight:900; box-shadow:0 0 12px rgba(255,215,0,.5);">年度累计视图</span>
-      <label>城市</label>
-      <select id="selCity"></select>
+      <label>市场</label>
+      <select id="selMarket"></select>
       <label>区域</label>
       <select id="selRegion"></select>
       <label>门店</label>
@@ -561,7 +561,7 @@ const SUPABASE_URL = "https://omkshuposrdmwgukpoxd.supabase.co";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3NodXBvc3JkbXdndWtwb3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NTM2NTcsImV4cCI6MjEwMTEyOTY1N30.WH7ta72Bm2cICuQhW--O26BftF1FJZtN3WNwOddfQO4";
 const MOD_COLORS = {perf:"#4d9fff", dianping:"#ff6ac1", complaint:"#ffd166", waimai:"#b26bff", inspection:"#34d399", mystery:"#00e5ff", penalty:"#ff5c5c", manager:"#ff9f43"};
 
-const state = { year: 2026, month: null, city: "", region: "", store: "", version: "", perfRegion: "", cmpPlatform: "", cmpCat: "", penGran: "month", penCat: "" };
+const state = { year: 2026, month: null, market: "", region: "", store: "", version: "", perfRegion: "", cmpPlatform: "", cmpCat: "", penGran: "month", penCat: "" };
 const data = { stores:[], managerLog:[], perf:[], dianping:[], complaints:[], waimai:[], inspection:[], mystery:[], penalty:[] };
 let availableMonths = [];   // 该月有任一数据（数字月表按 2026 口径并入）
 let storeIndex = new Map(); // store_id -> store row
@@ -680,8 +680,8 @@ function classifyNeed(text){
 /* ===================== 门店范围（四级下钻） ===================== */
 function scopeStores(){
   let arr = data.stores;
-  if(state.city) arr = arr.filter(s => s.city === state.city);
-  if(state.region) arr = arr.filter(s => s.region === state.region);
+  if(state.market) arr = arr.filter(s => s.city === state.market);
+  if(state.region) arr = arr.filter(s => normalizeRegion(s.region) === state.region);
   return arr; // 门店单选在 render 时单独处理
 }
 function inScope(row){
@@ -697,8 +697,8 @@ function inScope(row){
   else if(sname) st = findStoreByName(sname);
   if(!st) return true; // 无主档记录的原始行，仅当未筛选门店时放行
   if(state.store) return st.store_name === state.store || st.store_id === state.store;
-  if(state.region) return st.region === state.region;
-  if(state.city) return st.city === state.city;
+  if(state.region) return normalizeRegion(st.region) === state.region;
+  if(state.market) return st.city === state.market;
   return true;
 }
 function findStoreByName(name){
@@ -853,7 +853,9 @@ function setupFilters(){
     const ia = order.indexOf(a), ib = order.indexOf(b);
     return (ia<0?99:ia)-(ib<0?99:ib);
   });
-  $("selCity").innerHTML = '<option value="">全部城市</option>' + cities.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  const markets = cities.filter(c => c === "上海" || c === "北京");
+  const opts = markets.length ? markets : cities;
+  $("selMarket").innerHTML = '<option value="">全部市场</option>' + opts.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
   $("selRegion").innerHTML = '<option value="">全部区域</option>';
   $("selStore").innerHTML = '<option value="">全部门店</option>';
 }
@@ -866,30 +868,30 @@ function syncFiltersUI(){
       `<option value="${m}" ${has?"":"disabled"}>${m} 月${has?"":"（未采集/待导入）"}</option>`);
   }
   $("selMonth").value = state.month === "all" ? "all" : String(state.month || "");
-  $("selCity").value = state.city || "";
+  $("selMarket").value = state.market || "";
   $("selRegion").value = state.region || "";
   $("selStore").value = state.store || "";
 }
 function rebuildRegionAndStore(){
   let arr = data.stores;
-  if(state.city) arr = arr.filter(s=>s.city===state.city);
-  const regions = [...new Set(arr.map(s=>s.region).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh"));
+  if(state.market) arr = arr.filter(s=>s.city===state.market);
+  const regions = [...new Set(arr.map(s=>normalizeRegion(s.region)))].sort(regionSort);
   $("selRegion").innerHTML = '<option value="">全部区域</option>' + regions.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join("");
   $("selRegion").value = state.region || "";
-  let arr2 = state.region ? arr.filter(s=>s.region===state.region) : arr;
+  let arr2 = state.region ? arr.filter(s=>normalizeRegion(s.region)===state.region) : arr;
   $("selStore").innerHTML = '<option value="">全部门店</option>' + arr2.map(s=>`<option value="${esc(s.store_name)}">${esc(s.store_name)}</option>`).join("");
   $("selStore").value = state.store || "";
 }
 function bindFilterEvents(){
   $("selYear").addEventListener("change", e => { state.year = Number(e.target.value); state.month = "all"; renderAll(); syncFiltersUI(); });
   $("selMonth").addEventListener("change", e => { const v = e.target.value; state.month = (v === "all") ? "all" : Number(v); renderAll(); });
-  $("selCity").addEventListener("change", e => { state.city = e.target.value; state.region = ""; state.store = ""; rebuildRegionAndStore(); renderAll(); });
+  $("selMarket").addEventListener("change", e => { state.market = e.target.value; state.region = ""; state.store = ""; rebuildRegionAndStore(); renderAll(); });
   $("selRegion").addEventListener("change", e => { state.region = e.target.value; state.store = ""; rebuildRegionAndStore(); renderAll(); });
   $("selStore").addEventListener("change", e => { state.store = e.target.value; renderAll(); });
   $("selVersion").addEventListener("change", e => { state.version = e.target.value; renderInspection(); });
   $("selCmpPlatform").addEventListener("change", e => { state.cmpPlatform = e.target.value; renderReputation(); });
   $("btnReset").addEventListener("click", () => {
-    Object.assign(state, { city:"", region:"", store:"", version:"" });
+    Object.assign(state, { market:"", region:"", store:"", version:"" });
     rebuildRegionAndStore(); syncFiltersUI(); renderAll();
   });
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
@@ -1027,7 +1029,7 @@ function renderOverview(){
   const scopePen = mr.penalty.filter(scoped);
   const scopeMgr = mr.mgr.filter(scoped);
 
-  const cityLabel = state.city || "全国";
+  const cityLabel = state.market || "全国";
   const regionLabel = state.region || "全部区域";
   const storeLabel = state.store || "全部门店";
   const hint = `${cityLabel} · ${regionLabel} · ${storeLabel} · ${rangeLabel()}`;
@@ -1036,7 +1038,7 @@ function renderOverview(){
   const regionCards = [];
   ["全国","上海","北京"].forEach(city => {
     let perfRows, insRows, mysRows;
-    if(city === "全国"){ perfRows = mr.perf.filter(r => !state.city || inScope(r)); insRows = mr.inspection.filter(r => !state.city || inScope(r)); mysRows = mr.mystery.filter(r => !state.city || inScope(r)); }
+    if(city === "全国"){ perfRows = mr.perf.filter(r => !state.market || inScope(r)); insRows = mr.inspection.filter(r => !state.market || inScope(r)); mysRows = mr.mystery.filter(r => !state.market || inScope(r)); }
     else { perfRows = mr.perf.filter(r => inScope(r) && (storeOf(r)||{}).city === city); insRows = mr.inspection.filter(r => inScope(r) && (storeOf(r)||{}).city === city); mysRows = mr.mystery.filter(r => inScope(r) && (storeOf(r)||{}).city === city); }
     const p = avg(perfRows.map(r=>num(r.total_score)).filter(v=>v!==null));
     const i = avg(insRows.map(r=>num(r.monthly_score)).filter(v=>v!==null));
@@ -1075,10 +1077,10 @@ function renderOverview(){
   // 城市对比
   const cityCompareRows = ["全国","上海","北京"].map(city => {
     const get = (rows) => {
-      const rs = city==="全国" ? rows.filter(r=>!state.city||inScope(r)) : rows.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city);
+      const rs = city==="全国" ? rows.filter(r=>!state.market||inScope(r)) : rows.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city);
       return avg(rs.map(r=>num(r.total_score)).filter(v=>v!==null));
     };
-    return {city, perf: get(mr.perf), inspection: avg((city==="全国"?mr.inspection.filter(r=>!state.city||inScope(r)):mr.inspection.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city)).map(r=>num(r.monthly_score)).filter(v=>v!==null)), mystery: avg((city==="全国"?mr.mystery.filter(r=>!state.city||inScope(r)):mr.mystery.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city)).map(r=>num(r.total_score)).filter(v=>v!==null))};
+    return {city, perf: get(mr.perf), inspection: avg((city==="全国"?mr.inspection.filter(r=>!state.market||inScope(r)):mr.inspection.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city)).map(r=>num(r.monthly_score)).filter(v=>v!==null)), mystery: avg((city==="全国"?mr.mystery.filter(r=>!state.market||inScope(r)):mr.mystery.filter(r=>inScope(r)&&(storeOf(r)||{}).city===city)).map(r=>num(r.total_score)).filter(v=>v!==null))};
   });
   const cc = [];
   ["绩效得分","巡店得分","神秘得分"].forEach((k, ki) => {
@@ -1540,9 +1542,9 @@ function latestActiveStores(rows){
 }
 function scoreHelpHTML(){
   const mr = monthRows();
-  const scopeP = mr.perf.filter(r => !state.city || inScope(r));
-  const scopeI = mr.inspection.filter(r => !state.city || inScope(r));
-  const scopeM = mr.mystery.filter(r => !state.city || inScope(r));
+  const scopeP = mr.perf.filter(r => !state.market || inScope(r));
+  const scopeI = mr.inspection.filter(r => !state.market || inScope(r));
+  const scopeM = mr.mystery.filter(r => !state.market || inScope(r));
   const perfV = avg(scopeP.map(r=>num(r.total_score)).filter(v=>v!==null));
   const insV = avg(scopeI.map(r=>num(r.monthly_score)).filter(v=>v!==null));
   const mysV = avg(scopeM.map(r=>num(r.total_score)).filter(v=>v!==null));
@@ -1784,8 +1786,8 @@ function needCityOf(r){
 }
 function needMarketRows(){
   const mkt = state.needMarket || "";
-  if(!mkt) return data.complaints;
-  return data.complaints.filter(r => needCityOf(r) === mkt);
+  const rows = mkt ? data.complaints.filter(r => needCityOf(r) === mkt) : data.complaints;
+  return rows.filter(scoped); // 叠加顶部市场/区域/门店全局筛选（state.market / state.region / state.store）
 }
 function needRangeRows(rows, y, m, d){
   const yy = String(y);
@@ -1816,7 +1818,7 @@ function needDimLabel(p){
   return p.y + "-" + pad2(p.m);
 }
 function needScopeLabel(p){
-  const mkt = state.needMarket || "全国";
+  const mkt = state.needMarket || state.market || "全国";
   return mkt + " · " + needDimLabel(p);
 }
 function needPeriods(){
@@ -1852,7 +1854,7 @@ function needRankBuild(cur, prev){
   };
 }
 function renderNeedRank(p, rb){
-  const mkt = state.needMarket || "全国";
+  const mkt = state.needMarket || state.market || "全国";
   const emptyMsg = rb.total ? "" : '<div class="empty">当前范围暂无投诉/差评记录</div>';
   $("needRank").innerHTML = (rb.total ? `<div class="d-summary">当前范围共 ${rb.total} 条顾客反馈（文本可用 ${rb.curOpText}）</div>` : "") + emptyMsg +
     rb.rank.filter(x => x.n > 0).map((x,i) => {
@@ -1890,7 +1892,7 @@ function renderNeedCompare(p){
   const dim = p.dim;
   const selRows = needMarketRows();
   let curByCity = null;
-  if(!state.needMarket){
+  if(!state.needMarket && !state.market){
     const bj = needRangeRows(selRows.filter(r => needCityOf(r) === "北京"), p.y, dim === "year" ? null : p.m, dim === "day" ? p.d : null);
     const sh = needRangeRows(selRows.filter(r => needCityOf(r) === "上海"), p.y, dim === "year" ? null : p.m, dim === "day" ? p.d : null);
     const bjC = needCatCount(bj), shC = needCatCount(sh);
@@ -1921,7 +1923,7 @@ function renderNeedCompare(p){
     const total = cur.length;
     const curC = needCatCount(cur);
     const parts = NEED_CATS.map(k => ({ label: k, n: curC[k] || 0, v: total ? Math.round((curC[k]||0) / total * 100) : 0, c: NEED_CAT_COLORS[k] || "#8aa3c4" })).filter(x => x.n > 0);
-    $("needCompareTitle").textContent = "分市场对比（" + (state.needMarket) + " · 需求类型占比）";
+    $("needCompareTitle").textContent = "分市场对比（" + (state.needMarket || state.market) + " · 需求类型占比）";
     donutChart($("needCompare"), parts, total + " 条");
   }
 }
