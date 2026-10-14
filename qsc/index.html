@@ -652,25 +652,28 @@ function classifyPenalty(desc){
 }
 
 /* ===================== 顾客需求分析：需求分类 ===================== */
-const NEED_CATS = ["服务态度","上餐速度","食品质量/异物","环境卫生","价格分量","出品一致性","其他"];
-const NEED_CAT_COLORS = {"服务态度":"#ff6ac1","上餐速度":"#ffd166","食品质量/异物":"#ff5c5c","环境卫生":"#34d399","价格分量":"#ff9f43","出品一致性":"#b26bff","其他":"#8aa3c4"};
+const NEED_CATS = ["服务态度","出品/口味","环境/卫生","出餐/配送","其他"];
+const NEED_CAT_COLORS = {"服务态度":"#ff6ac1","出品/口味":"#ffd166","环境/卫生":"#34d399","出餐/配送":"#ff9f43","其他":"#8aa3c4"};
 const NEED_ADVICE_MAP = {
   "服务态度":     { action:"门店开展服务礼仪/话术专项培训，店长每日晨会复盘差评案例，重点店驻店督导", prio:"高", dept:"培训" },
-  "上餐速度":     { action:"优化出餐动线与高峰备料，增设高峰期出餐位，落实超时免单承诺并监控断档补货", prio:"高", dept:"门店" },
-  "食品质量/异物": { action:"加强出品标准抽查与原材料验收，异物/食品安全类立即启动门店级整改并追溯供应商", prio:"高", dept:"品控" },
-  "环境卫生":     { action:"强化清洁频次与收桌巡台 SOP，环境类连续出现门店两周内复查并纳入周检", prio:"中", dept:"门店" },
-  "价格分量":     { action:"核查标准分量与定价一致性，分量类差评逐店称重抽查并回访", prio:"中", dept:"品控" },
-  "出品一致性":   { action:"统一配方与操作标准，定期对出品一致性盲测并公示结果", prio:"中", dept:"培训" },
+  "出品/口味":    { action:"加强出品标准抽查与原材料验收，口味/出品类问题立即启动门店级整改并追溯供应商", prio:"高", dept:"品控" },
+  "环境/卫生":    { action:"强化清洁频次与收桌巡台 SOP，环境类连续出现门店两周内复查并纳入周检", prio:"中", dept:"门店" },
+  "出餐/配送":    { action:"优化出餐动线与高峰备料，增设高峰期出餐位，配送类差评核对平台履约与打包规范", prio:"高", dept:"门店" },
   "其他":        { action:"人工复核该类差评文本，按具体情况归口运营/门店处理", prio:"低", dept:"运营" }
 };
 function classifyNeed(text){
   const s = String(text ?? "");
-  if(/上餐慢|出餐慢|上菜慢|等太久|催餐|催菜|超时|未免单|未执行超时|断档|售罄|缺货|供应不上|出餐时间|上餐时间/.test(s)) return "上餐速度";
-  if(/环境|卫生|餐具|收桌|桌面|地面|厕所|洗手间|室内热|温度|不舒适|空调|现场混乱|异味|脏乱/.test(s)) return "环境卫生";
-  if(/品质|食品|异物|安全|拉肚子|身体不适|不熟|没熟|夹生|糊|凉|稀|破皮|露馅|不新鲜|变质|虫|头发|馄饨|油条|米饭|粥|口感|味道|吃出|钢丝|塑料/.test(s)) return "食品质量/异物";
-  if(/服务|态度|不理会|不耐烦|爱答不理|区别对待|甩脸子|不搭理|恶劣|冷淡|不热情|凶|吼|骂|处理顾客问题|未妥善处理|推诿/.test(s)) return "服务态度";
-  if(/价格|贵|分量|量少|量小|性价比|收费|账单|加价|多收|不值/.test(s)) return "价格分量";
-  if(/出品|一致|标准|稳定|每次|不一样|差异/.test(s)) return "出品一致性";
+  const rules = [
+    ["服务态度", ["服务","态度","店员","员工","不理","冷漠","回应","语气"]],
+    ["出品/口味", ["咸","淡","味道","口味","好吃","难吃","菜","饭","汤","食材","变质","异味","口感","量少","不熟"]],
+    ["环境/卫生", ["卫生","干净","脏","油渍","餐具","桌面","地面","苍蝇","虫","头发"]],
+    ["出餐/配送", ["等","慢","上菜","外卖","漏送","打包","配送","迟到"]]
+  ];
+  for(let i = 0; i < rules.length; i++){
+    for(let j = 0; j < rules[i][1].length; j++){
+      if(s.indexOf(rules[i][1][j]) >= 0) return rules[i][0];
+    }
+  }
   return "其他";
 }
 
@@ -1841,7 +1844,7 @@ function needRankBuild(cur, prev){
 function renderNeedRank(p, rb){
   const mkt = state.needMarket || "全国";
   const emptyMsg = rb.total ? "" : '<div class="empty">当前范围暂无投诉/差评记录</div>';
-  $("needRank").innerHTML = (rb.total ? `<div class="d-summary">当前范围共 ${rb.total} 条顾客反馈（opportunity 文本可用 ${rb.curOpText}）</div>` : "") + emptyMsg +
+  $("needRank").innerHTML = (rb.total ? `<div class="d-summary">当前范围共 ${rb.total} 条顾客反馈（文本可用 ${rb.curOpText}）</div>` : "") + emptyMsg +
     rb.rank.filter(x => x.n > 0).map((x,i) => {
       const c = NEED_CAT_COLORS[x.cat] || "#8aa3c4";
       const pctBar = Math.min(100, Math.round(x.pct * 3));
