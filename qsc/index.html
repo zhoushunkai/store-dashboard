@@ -733,12 +733,15 @@ const TABLE_FIELDS = {
   penalty_log: "store_id,store_name,manager,occur_date,event_desc,violation_type,penalty_level,fine_amount",
   store_manager_log: "store_id,month,manager_name"
 };
-const FETCH_TTL = 10 * 60 * 1000;
-const fetchCache = new Map();
+const CACHE_TTL = 10 * 60 * 1000;
+const inFlightMap = new Map(); // table -> 进行中 Promise（并发共享，只发一次请求）
+const dataMap = new Map();     // table -> { rows, ts }（已完成数据，TTL 10 分钟）
 async function fetchSupabase(table, fields){
   const key = table;
-  const hit = fetchCache.get(key);
-  if(hit && Date.now() - hit.ts < FETCH_TTL) return hit.promise;
+  const cached = dataMap.get(key);
+  if(cached && Date.now() - cached.ts < CACHE_TTL) return cached.rows.slice(); // 二次命中：0 请求
+  const inflight = inFlightMap.get(key);
+  if(inflight) return inflight; // 进行中共享：同一 Promise，只发一次请求
   const p = (async () => {
   const rows = [];
   let from = 0, step = 1000;
@@ -772,8 +775,13 @@ async function fetchSupabase(table, fields){
   }
   return rows;
   })();
-  fetchCache.set(key, { promise: p, ts: Date.now() });
-  p.catch(err => { if(fetchCache.get(key) && fetchCache.get(key).promise === p) fetchCache.delete(key); });
+  inFlightMap.set(key, p);
+  p.then(rows => {
+    dataMap.set(key, { rows, ts: Date.now() });
+    if(inFlightMap.get(key) === p) inFlightMap.delete(key);
+  }).catch(err => {
+    if(inFlightMap.get(key) === p) inFlightMap.delete(key);
+  });
   return p;
 }
 async function fetchAll(table){ return fetchSupabase(table, TABLE_FIELDS[table] || "*"); }
