@@ -1398,7 +1398,7 @@ function renderCmpList(){
         <span class="num" style="color:var(--dim); font-size:12px;">${esc(r.date || "")}</span>
         <span style="color:var(--dim); font-size:12px;">${esc(r.meal || "")}</span>
         <span class="clickable" onclick="setCmpPlatform('${esc(String(r.platform||"其他").trim())}')">${cmpPlatformBadge(r.platform)}</span>
-        <span class="cat-badge cat-${cmpCatIdx(op)}">${esc(op)}</span>
+        <span class="cat-badge cmp-tag cat-${cmpCatIdx(op)}" onclick="setCmpCat('${esc(op)}')">${esc(op)}</span>
       </div>
       <div class="d-content">${isExp ? full : (fold || full)}${fold ? `<span class="more" onclick="toggleCmpDetail(${i})">${isExp ? "收起" : "展开全文"}</span>` : ""}</div>
     </div>`;
@@ -1600,7 +1600,7 @@ function openCmpStore(storeName){
     </div>
     <div class="card" style="--accent:#ffd166; margin-top:14px;"><h3>全部差评/投诉明细</h3>
       <div class="tbl-wrap" style="max-height:420px;"><table><thead><tr><th>日期</th><th>餐次</th><th>平台</th><th>问题归类</th><th>内容</th><th>责任人</th></tr></thead><tbody>
-      ${rows.slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).map(r=>`<tr><td class="num">${esc(r.date)}</td><td>${esc(r.meal||"-")}</td><td>${cmpPlatformBadge(r.platform)}</td><td><span class="cat-badge cat-${cmpCatIdx(String(r.opportunity||"未归类").trim())}">${esc(String(r.opportunity||"未归类").trim())}</span></td><td style="white-space:normal;max-width:340px;">${esc(r.content||"-")}</td><td>${esc(r.responsible||"-")}</td></tr>`).join("")}
+      ${rows.slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))).map(r=>`<tr><td class="num">${esc(r.date)}</td><td>${esc(r.meal||"-")}</td><td>${cmpPlatformBadge(r.platform)}</td><td><span class="cat-badge cmp-tag cat-${cmpCatIdx(String(r.opportunity||"未归类").trim())}" onclick="closeStoreDetail(); setCmpCat('${esc(String(r.opportunity||"未归类").trim())}')">${esc(String(r.opportunity||"未归类").trim())}</span></td><td style="white-space:normal;max-width:340px;">${esc(r.content||"-")}</td><td>${esc(r.responsible||"-")}</td></tr>`).join("")}
       </tbody></table></div>
     </div>`;
   $("storeMask").classList.add("show");
