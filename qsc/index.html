@@ -722,13 +722,31 @@ function storeDisplayNamePlain(row){
 }
 
 /* ===================== 数据加载 ===================== */
-async function fetchSupabase(table){
+const TABLE_FIELDS = {
+  store_master: "store_id,store_name,city,region",
+  perf_monthly: "store_id,store_name,month,total_score,external_score,internal_score,grade",
+  dianping_monthly: "store_id,month,dianping_score,dianping_neg_count,cust_sat",
+  complaint_log: "store_id,store_name,city,region,date,meal,platform,content,opportunity,responsible,job_level",
+  waimai_monthly: "store_id,store_name,month,platform,total_count,bad_count,bad_rate",
+  inspection_monthly: "store_id,store_name,month,monthly_score,online_score,version",
+  mystery_monthly: "store_id,store_name,month,total_score,opportunity",
+  penalty_log: "store_id,store_name,manager,occur_date,event_desc,violation_type,penalty_level,fine_amount",
+  store_manager_log: "store_id,month,manager_name"
+};
+const FETCH_TTL = 10 * 60 * 1000;
+const fetchCache = new Map();
+async function fetchSupabase(table, fields){
+  const key = table;
+  const hit = fetchCache.get(key);
+  if(hit && Date.now() - hit.ts < FETCH_TTL) return hit.promise;
+  const p = (async () => {
   const rows = [];
   let from = 0, step = 1000;
+  const sel = fields ? "select=" + fields : "select=*";
   while(true){
     let res;
     try{
-      res = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?select=*", {
+      res = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + sel, {
         headers: {
           "apikey": ANON_KEY,
           "Authorization": "Bearer " + ANON_KEY,
@@ -753,20 +771,32 @@ async function fetchSupabase(table){
     from += step;
   }
   return rows;
+  })();
+  fetchCache.set(key, { promise: p, ts: Date.now() });
+  p.catch(err => { if(fetchCache.get(key) && fetchCache.get(key).promise === p) fetchCache.delete(key); });
+  return p;
 }
-async function fetchAll(table){ return fetchSupabase(table); }
+async function fetchAll(table){ return fetchSupabase(table, TABLE_FIELDS[table] || "*"); }
 async function loadAll(){
   const t = $("loading"); t.style.display = "flex";
+  const lt = t.querySelector(".lt");
   try{
-    const [stores, managerLog, perf, dianping, complaints, waimai, inspection, mystery, penalty] = await Promise.all([
-      fetchAll("store_master"), fetchAll("store_manager_log"), fetchAll("perf_monthly"),
-      fetchAll("dianping_monthly"), fetchAll("complaint_log"), fetchAll("waimai_monthly"),
-      fetchAll("inspection_monthly"), fetchAll("mystery_monthly"), fetchAll("penalty_log")
-    ]);
-    Object.assign(data, { stores, managerLog, perf, dianping, complaints, waimai, inspection, mystery, penalty });
-
+    // 阶段1：store_master 先行，构建门店索引，减少整页等待感
+    const stores = await fetchAll("store_master");
+    Object.assign(data, { stores });
     data.stores.forEach(s => { if(s.store_id){ storeIndex.set(String(s.store_id), s); if(String(s.store_id).indexOf(",") >= 0) String(s.store_id).split(",").map(x=>x.trim()).filter(Boolean).forEach(pid => storeIdPartMap.set(pid, s)); } });
     data.stores.forEach(s => { const k = normName(s.store_name); if(!storeNameIndex.has(k)) storeNameIndex.set(k, s); });
+    if(lt) lt.textContent = "门店主档已就绪，正在加载明细数据...";
+    // 阶段2：其余 8 表并行，逐表到达即更新进度（任一失败不影响其余）
+    const KEYS = ["managerLog","perf","dianping","complaints","waimai","inspection","mystery","penalty"];
+    const TBS = ["store_manager_log","perf_monthly","dianping_monthly","complaint_log","waimai_monthly","inspection_monthly","mystery_monthly","penalty_log"];
+    let done = 0; const fail = [];
+    const proms = TBS.map(fetchAll);
+    const jobs = proms.map((pr, i) => pr.then(v => {
+      data[KEYS[i]] = v;
+      if(++done < TBS.length && lt) lt.textContent = "正在加载看板数据... 已完成 " + done + "/8";
+    }, e => { fail.push(TBS[i]); if(++done < TBS.length && lt) lt.textContent = "正在加载看板数据... 已完成 " + done + "/8"; }));
+    await Promise.all(jobs);
     data.perf.forEach(p => { if(p.store_id && !storeIndex.has(String(p.store_id)) && !storeIdPartMap.has(String(p.store_id))) storeIndex.set(String(p.store_id), {store_id:p.store_id, store_name:p.store_name, city:"", region:""}); });
 
     computeAvailableMonths();
@@ -777,6 +807,7 @@ async function loadAll(){
     syncFiltersUI();
     initNeedFilters();
     renderAll();
+    if(fail.length) toast("部分数据加载失败：" + fail.join(", ") + "，相关模块可能显示为空，稍后可刷新重试");
   }catch(e){
     t.innerHTML = '<div style="text-align:center;color:#ff5c5c;font-size:15px;padding:20px;">数据加载失败：' + esc(e.message) + '<br><br>请确认 anon key 有效且 RLS 允许读取 public 表。</div>';
     return;
