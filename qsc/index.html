@@ -258,6 +258,9 @@ a.clickable{color:var(--cyan);}
 .rc-block span.rc-good{color:var(--blue)!important; font-weight:700!important;}
 .rc-block span.rc-bad{color:var(--red)!important; font-weight:700!important;}
 .rc-block span.rc-dim{color:var(--dim)!important; font-weight:600!important;}
+.rc-mode{display:flex; gap:6px; align-items:center;}
+.rc-mode-btn{border:1px solid var(--line,#334); background:var(--card,#12161f); color:var(--dim,#8a93a6); padding:2px 12px; border-radius:6px; cursor:pointer; font-size:12px;}
+.rc-mode-btn.on{background:var(--blue,#4d9fff); color:#fff; border-color:var(--blue,#4d9fff); font-weight:600;}
 </style>
 </head>
 <body>
@@ -306,7 +309,7 @@ a.clickable{color:var(--cyan);}
   <!-- ① 总览 -->
   <section class="section active" id="sec-overview">
     <div class="row">
-      <div class="title">全国 / 上海 / 北京 QSC 综合得分</div>
+      <div class="title">全国 / 上海 / 北京 QSC 分项得分总览（不合成综合得分）</div>
       <button class="btn small" onclick="exportOverview()">导出当前视图 CSV</button>
     </div>
     <div class="cards cols3" id="ovRegionCards"></div>
@@ -330,11 +333,12 @@ a.clickable{color:var(--cyan);}
       </div>
     </div>
     <div class="rc-block" id="rc-block-overview">
-      <div class="rc-head" onclick="toggleRC('overview')">区域对比：综合绩效 / 点评星级 / 检查得分 <span class="rc-head-tag">月度 + 季度，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
+      <div class="rc-head" onclick="toggleRC('overview')">区域对比：绩效得分 / 点评星级 / 检查得分 / 线上检查 <span class="rc-head-tag">月度 / 季度可切换，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
       <div class="rc-body" id="rc-body-overview">
         <div class="rc-toolbar">
           <label>对比区域</label>
           <select id="rcSel-overview" onchange="rcSetRegion('overview', this.value)"></select>
+          <div id="rcMode-overview" class="rc-mode"></div>
           <span class="rc-note">区域归属按 store_master 最新主档固定，与顶部市场/区域筛选联动；选"全部区域"横向对比各区域</span>
         </div>
         <div id="rc-content-overview"></div>
@@ -377,11 +381,12 @@ a.clickable{color:var(--cyan);}
       </div>
     </div>
     <div class="rc-block" id="rc-block-perf">
-      <div class="rc-head" onclick="toggleRC('perf')">区域对比：综合绩效得分 <span class="rc-head-tag">月度 + 季度，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
+      <div class="rc-head" onclick="toggleRC('perf')">区域对比：绩效得分 <span class="rc-head-tag">月度 / 季度可切换，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
       <div class="rc-body" id="rc-body-perf">
         <div class="rc-toolbar">
           <label>对比区域</label>
           <select id="rcSel-perf" onchange="rcSetRegion('perf', this.value)"></select>
+          <div id="rcMode-perf" class="rc-mode"></div>
           <span class="rc-note">区域归属按 store_master 最新主档固定，与顶部市场/区域筛选联动；选"全部区域"横向对比各区域</span>
         </div>
         <div id="rc-content-perf"></div>
@@ -440,11 +445,12 @@ a.clickable{color:var(--cyan);}
       <div style="text-align:center; margin-top:10px;"><button class="btn small" id="btnCmpMore" style="display:none;">加载更多</button></div>
     </div>
     <div class="rc-block" id="rc-block-reputation">
-      <div class="rc-head" onclick="toggleRC('reputation')">区域对比：点评投诉量 / 外卖差评量 <span class="rc-head-tag">月度 + 季度，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
+      <div class="rc-head" onclick="toggleRC('reputation')">区域对比：点评投诉量 / 外卖差评量 <span class="rc-head-tag">月度 / 季度可切换，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
       <div class="rc-body" id="rc-body-reputation">
         <div class="rc-toolbar">
           <label>对比区域</label>
           <select id="rcSel-reputation" onchange="rcSetRegion('reputation', this.value)"></select>
+          <div id="rcMode-reputation" class="rc-mode"></div>
           <span class="rc-note">区域归属按 store_master 最新主档固定，与顶部市场/区域筛选联动；选"全部区域"横向对比各区域</span>
         </div>
         <div id="rc-content-reputation"></div>
@@ -457,16 +463,28 @@ a.clickable{color:var(--cyan);}
     <div class="row">
       <div class="title">巡店检查与神秘顾客</div>
       <button class="btn small" onclick="exportInspection()">导出当前视图 CSV</button>
-      <label>巡店口径版本</label>
+      <label>检查口径版本</label>
       <select id="selVersion" style="width:140px;">
         <option value="">全部版本</option>
-        <option value="2.0">2.0</option>
-        <option value="3.0">3.0</option>
+        <option value="2.0线上">2.0线上</option>
+        <option value="其他线上">其他线上</option>
       </select>
+    </div>
+    <div class="cards cols2" style="margin-bottom:14px;">
+      <div class="card" style="--accent:#34d399;">
+        <h3>线下巡店检查 <span class="mod" id="insMetaOffline"></span></h3>
+        <div class="big green" id="insValOffline">--</div>
+        <div class="hint" id="insHintOffline"></div>
+      </div>
+      <div class="card" style="--accent:#00e5ff;">
+        <h3>线上检查 <span class="mod" id="insMetaOnline"></span></h3>
+        <div class="big cyan" id="insValOnline">--</div>
+        <div class="hint" id="insHintOnline"></div>
+      </div>
     </div>
     <div class="cards cols2">
       <div class="card" style="--accent:#34d399;">
-        <h3>巡店得分趋势（版本口径切换）</h3>
+        <h3>巡店检查趋势（线下 vs 线上，版本口径切换）</h3>
         <div id="insTrend"></div>
       </div>
       <div class="card" style="--accent:#00e5ff;">
@@ -476,11 +494,12 @@ a.clickable{color:var(--cyan);}
       </div>
     </div>
     <div class="rc-block" id="rc-block-inspection">
-      <div class="rc-head" onclick="toggleRC('inspection')">区域对比：检查得分 / 神秘得分 <span class="rc-head-tag">月度 + 季度，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
+      <div class="rc-head" onclick="toggleRC('inspection')">区域对比：线下检查 / 线上检查 / 神秘得分 <span class="rc-head-tag">月度 / 季度可切换，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
       <div class="rc-body" id="rc-body-inspection">
         <div class="rc-toolbar">
           <label>对比区域</label>
           <select id="rcSel-inspection" onchange="rcSetRegion('inspection', this.value)"></select>
+          <div id="rcMode-inspection" class="rc-mode"></div>
           <span class="rc-note">区域归属按 store_master 最新主档固定，与顶部市场/区域筛选联动；选"全部区域"横向对比各区域</span>
         </div>
         <div id="rc-content-inspection"></div>
@@ -518,11 +537,12 @@ a.clickable{color:var(--cyan);}
       <div style="text-align:center; margin-top:10px;"><button class="btn small" id="btnPenMore" style="display:none;">加载更多</button></div>
     </div>
     <div class="rc-block" id="rc-block-penalty">
-      <div class="rc-head" onclick="toggleRC('penalty')">区域对比：处罚条数 / 罚款金额 <span class="rc-head-tag">月度 + 季度，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
+      <div class="rc-head" onclick="toggleRC('penalty')">区域对比：处罚条数 / 罚款金额 <span class="rc-head-tag">月度 / 季度可切换，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
       <div class="rc-body" id="rc-body-penalty">
         <div class="rc-toolbar">
           <label>对比区域</label>
           <select id="rcSel-penalty" onchange="rcSetRegion('penalty', this.value)"></select>
+          <div id="rcMode-penalty" class="rc-mode"></div>
           <span class="rc-note">区域归属按 store_master 最新主档固定，与顶部市场/区域筛选联动；选"全部区域"横向对比各区域</span>
         </div>
         <div id="rc-content-penalty"></div>
@@ -533,20 +553,25 @@ a.clickable{color:var(--cyan);}
   <!-- ⑥ 店长档案 -->
   <section class="section" id="sec-manager">
     <div class="row">
-      <div class="title">门店 × 月份店长档案矩阵</div>
+      <div class="title">店长管理视角（按店长聚合）</div>
       <button class="btn small" onclick="exportManager()">导出当前视图 CSV</button>
     </div>
+    <div class="filters" style="margin-bottom:14px;">
+      <label>搜索店长</label>
+      <input id="mgrSearch" type="text" placeholder="输入店长姓名过滤…" style="width:180px;">
+    </div>
     <div class="card" style="--accent:#ffd166;">
-      <h3>店长档案矩阵 <span class="mod" id="mgrMeta"></span></h3>
-      <div class="matrix-wrap"><table id="mgrMatrix"><thead></thead><tbody></tbody></table></div>
-      <div class="tip">单元格显示当月店长姓名；缺档灰显。点击单元格 / 门店名可联动查看该店 QSC 表现。直管店（汇融天地、迎春路、西宸里）店长标为“区域直管”。</div>
+      <h3>店长管理总览 <span class="mod" id="mgrMeta"></span></h3>
+      <div class="tbl-wrap" style="max-height:480px;"><table id="mgrMatrix"><thead></thead><tbody></tbody></table></div>
+      <div class="tip">按店长维度聚合其在岗门店表现：点击行展开该店长管理门店明细。数据源：store_manager_log（任职记录）+ perf/inspection/mystery（任职期间均值）+ penalty_log（处罚）；暂无奖励数据表，仅展示处罚记录。直管店（汇融天地、迎春路、西宸里）店长标为“区域直管”。</div>
     </div>
     <div class="rc-block" id="rc-block-manager">
-      <div class="rc-head" onclick="toggleRC('manager')">区域对比：店长在岗门店达标率 <span class="rc-head-tag">月度 + 季度，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
+      <div class="rc-head" onclick="toggleRC('manager')">区域对比：店长在岗门店达标率 <span class="rc-head-tag">月度 / 季度可切换，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
       <div class="rc-body" id="rc-body-manager">
         <div class="rc-toolbar">
           <label>对比区域</label>
           <select id="rcSel-manager" onchange="rcSetRegion('manager', this.value)"></select>
+          <div id="rcMode-manager" class="rc-mode"></div>
           <span class="rc-note">区域归属按 store_master 最新主档固定，与顶部市场/区域筛选联动；选"全部区域"横向对比各区域</span>
         </div>
         <div id="rc-content-manager"></div>
@@ -606,11 +631,12 @@ a.clickable{color:var(--cyan);}
       <div class="tip">建议由高频需求类型自动映射生成（类别 → 数据证据 → 建议动作 → 优先级 → 责任口），供运营/门店参考，具体整改以实际情况为准。</div>
     </div>
     <div class="rc-block" id="rc-block-need">
-      <div class="rc-head" onclick="toggleRC('need')">区域对比：顾客需求条数 <span class="rc-head-tag">月度 + 季度，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
+      <div class="rc-head" onclick="toggleRC('need')">区域对比：顾客需求条数 <span class="rc-head-tag">月度 / 季度可切换，衡量区域表现是否变好</span><span class="rc-caret">▾</span></div>
       <div class="rc-body" id="rc-body-need">
         <div class="rc-toolbar">
           <label>对比区域</label>
           <select id="rcSel-need" onchange="rcSetRegion('need', this.value)"></select>
+          <div id="rcMode-need" class="rc-mode"></div>
           <span class="rc-note">区域归属按 store_master 最新主档固定，与顶部市场/区域筛选联动；选"全部区域"横向对比各区域</span>
         </div>
         <div id="rc-content-need"></div>
@@ -970,6 +996,7 @@ function bindFilterEvents(){
   $("selRegion").addEventListener("change", e => { state.region = e.target.value; state.store = ""; rebuildRegionAndStore(); renderAll(); });
   $("selStore").addEventListener("change", e => { state.store = e.target.value; renderAll(); });
   $("selVersion").addEventListener("change", e => { state.version = e.target.value; renderInspection(); });
+  $("mgrSearch").addEventListener("input", () => renderManager());
   $("selCmpPlatform").addEventListener("change", e => { state.cmpPlatform = e.target.value; renderReputation(); });
   $("btnReset").addEventListener("click", () => {
     Object.assign(state, { market:"", region:"", store:"", version:"" });
@@ -1039,19 +1066,6 @@ function monthRows(){
   };
 }
 function scoped(r){ return inScope(r); }
-
-/* 综合得分：绩效 total_score 为主，缺失则用检查/神秘均值归一 */
-function compositeScore(storeRows, perfRow){
-  const parts = [], weights = [0.5, 0.3, 0.2];
-  if(perfRow && num(perfRow.total_score) !== null) parts.push([num(perfRow.total_score), weights[0]]);
-  const ins = storeRows.inspection && num(storeRows.inspection.monthly_score) !== null ? num(storeRows.inspection.monthly_score) : null;
-  if(ins !== null) parts.push([ins, weights[1]]);
-  const mys = storeRows.mystery && num(storeRows.mystery.total_score) !== null ? num(storeRows.mystery.total_score) : null;
-  if(mys !== null) parts.push([mys, weights[2]]);
-  if(!parts.length) return null;
-  const w = sum(parts.map(p=>p[1]));
-  return sum(parts.map(p=>p[0]*p[1])) / w;
-}
 
 /* ===================== 图表基元 ===================== */
 function barChart(el, labels, values, color, fmt){
@@ -1124,14 +1138,11 @@ function renderOverview(){
     const p = avg(perfRows.map(r=>num(r.total_score)).filter(v=>v!==null));
     const i = avg(insRows.map(r=>num(r.monthly_score)).filter(v=>v!==null));
     const m = avg(mysRows.map(r=>num(r.total_score)).filter(v=>v!==null));
-    const comps = [];
-    if(p!==null) comps.push([p, .5]); if(i!==null) comps.push([i, .3]); if(m!==null) comps.push([m, .2]);
-    const comp = comps.length ? sum(comps.map(c=>c[0]*c[1]))/sum(comps.map(c=>c[1])) : null;
     const cnt = city==="全国" ? data.stores.length : data.stores.filter(s=>s.city===city).length;
     regionCards.push(`<div class="card" style="--accent:#00e5ff;">
-      <h3>${city==="全国"?"全国":(city==="上海"?"上海":"北京")} QSC 综合得分${isAnnual()?"（年度平均）":""} <span class="mod">${cnt} 家门店</span></h3>
-      <div class="big cyan">${comp===null?"--":comp.toFixed(1)}</div>
-      <div class="hint">绩效 ${p===null?"--":p.toFixed(1)} · 检查 ${i===null?"--":i.toFixed(1)} · 神秘 ${m===null?"--":m.toFixed(1)}${isAnnual()?" · 年度平均口径":""}</div>
+      <h3>${city==="全国"?"全国":(city==="上海"?"上海":"北京")} QSC 绩效得分${isAnnual()?"（年度平均）":""} <span class="mod">${cnt} 家门店</span></h3>
+      <div class="big cyan">${p===null?"--":p.toFixed(1)}</div>
+      <div class="hint">检查 ${i===null?"--":i.toFixed(1)} · 神秘 ${m===null?"--":m.toFixed(1)}${isAnnual()?" · 年度平均口径":""}</div>
     </div>`);
   });
   $("ovRegionCards").innerHTML = regionCards.join("");
@@ -1144,6 +1155,7 @@ function renderOverview(){
     {k:"complaint", c:MOD_COLORS.complaint, name:"点评投诉", main: scopeCmp.length, mainTxt: v=>v, sub: Y ? "年度投诉累计 " + scopeCmp.length + " 条" : "当月投诉/差评记录数", cls:"orange"},
     {k:"waimai", c:MOD_COLORS.waimai, name:"外卖差评", main: avg(scopeWm.map(r=>num(r.bad_rate)).filter(v=>v!==null)), mainTxt: v=>ratePct(v), sub: (Y?"年度平均差评率":"当月差评率") + " · 总差评 " + sum(scopeWm.map(r=>num(r.bad_count)||0)) + " 条", cls:"purple"},
     {k:"inspection", c:MOD_COLORS.inspection, name:"线下检查", main: avg(scopeIns.map(r=>num(r.monthly_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: (Y?"年度平均":"当月平均") + " · " + scopeIns.length + " 条检查记录", cls:"green"},
+    {k:"online", c:"#00e5ff", name:"线上检查", main: avg(scopeIns.map(r=>num(r.online_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: (Y?"年度平均":"当月平均") + " · " + scopeIns.filter(r=>num(r.online_score)!==null).length + " 条线上检查记录", cls:"cyan"},
     {k:"mystery", c:MOD_COLORS.mystery, name:"神秘顾客", main: avg(scopeMys.map(r=>num(r.total_score)).filter(v=>v!==null)), mainTxt: v=>v===null?"--":v.toFixed(1), sub: (Y?"年度平均":"当月平均") + " · " + scopeMys.length + " 条测评", cls:"cyan"},
     {k:"penalty", c:MOD_COLORS.penalty, name:"内部处罚", main: scopePen.length, mainTxt: v=>v, sub: Y ? "年度累计罚款 ¥" + sum(scopePen.map(r=>num(r.fine_amount)||0)).toFixed(0) : "罚款合计 ¥" + sum(scopePen.map(r=>num(r.fine_amount)||0)).toFixed(0), cls:"red"},
     {k:"manager", c:MOD_COLORS.manager, name:"店长档案", main: scopeMgr.length, mainTxt: v=>v, sub: Y ? "年度累计有店长记录门店" : "当月有店长记录门店", cls:"orange"}
@@ -1297,21 +1309,36 @@ function renderInspection(){
   const mr = monthRows();
   const version = state.version;
   let insRows = mr.inspection.filter(scoped);
-  if(version) insRows = insRows.filter(r => String(r.version||"").indexOf(version) === 0);
+  if(version) insRows = insRows.filter(r => String(r.version||"").indexOf(version) >= 0);
   const agg = {};
+  const aggOn = {};
   insRows.forEach(r => {
     const m = /^(\d{4})-(\d{2})/.exec(r.month);
     if(!m) return;
     const k = m[1] + "-" + m[2];
     (agg[k] = agg[k] || []).push(num(r.monthly_score));
+    (aggOn[k] = aggOn[k] || []).push(num(r.online_score));
   });
   const labels = Object.keys(agg).sort();
   const vals = labels.map(k => avg(agg[k].filter(v=>v!==null)));
-  const series = version ? [{name:"巡店得分(" + version + ")", color:"#34d399", values:vals}] : [
-    {name:"巡店得分(线上口径)", color:"#00e5ff", values: labels.map(k => avg(insRows.filter(r=>(r.month||"").indexOf(k)===0).map(r=>num(r.online_score)).filter(v=>v!==null)))},
-    {name:"巡店得分", color:"#34d399", values:vals}
+  const valsOn = labels.map(k => avg(aggOn[k].filter(v=>v!==null)));
+  const series = version ? [{name:"检查得分(" + version + ")", color:"#34d399", values:vals}] : [
+    {name:"线上检查(online_score)", color:"#00e5ff", values:valsOn},
+    {name:"线下检查(monthly_score)", color:"#34d399", values:vals}
   ];
   lineChart($("insTrend"), labels, series);
+
+  const offlineV = avg(insRows.map(r=>num(r.monthly_score)).filter(v=>v!==null));
+  const offlineN = insRows.filter(r=>num(r.monthly_score)!==null).length;
+  const onlineV = avg(insRows.map(r=>num(r.online_score)).filter(v=>v!==null));
+  const onlineN = insRows.filter(r=>num(r.online_score)!==null).length;
+  const scopeLabel = isAnnual() ? "年度" : "当月";
+  $("insMetaOffline").textContent = `${scopeLabel} · ${offlineN} 条`;
+  $("insValOffline").textContent = offlineV === null ? "暂无数据" : offlineV.toFixed(1);
+  $("insHintOffline").textContent = offlineV === null ? "所选范围无线下检查记录（未采集/待导入）" : `线下检查均值（inspection_monthly.monthly_score，${scopeLabel}口径）`;
+  $("insMetaOnline").textContent = `${scopeLabel} · ${onlineN} 条`;
+  $("insValOnline").textContent = onlineV === null ? "暂无线上检查数据" : onlineV.toFixed(1);
+  $("insHintOnline").textContent = onlineV === null ? "当前范围线上检查记录为空，预留指标位待数据补充" : `线上检查均值（inspection_monthly.online_score，${scopeLabel}口径）`;
 
   const mystRows = mr.mystery.filter(scoped).sort((a,b)=>(num(b.total_score)||-999)-(num(a.total_score)||-999));
   $("mystMeta").textContent = isAnnual() ? "全年累计 " + mystRows.length + " 条测评" : mystRows.length + " 家门店";
@@ -1576,30 +1603,105 @@ function exportPenaltyDetail(){
   downloadCSV("处罚事件明细", ["门店","日期","店长","归类","时间分组","内容原文"], rows);
 }
 
-/* ===================== ⑥ 店长档案 ===================== */
+/* ===================== ⑥ 店长管理视角 ===================== */
+const mgrDetailKeys = new Set();
+function mgrNormName(s){ return String(s||"").trim().replace(/[店]/g,"").toLowerCase(); }
+function mgrMatchRows(rows, sid, nm){
+  let hit = rows.filter(r => String(r.store_id||"").trim() === String(sid||"").trim());
+  if(!hit.length && nm){
+    const nn = mgrNormName(nm);
+    hit = rows.filter(r => {
+      const a = mgrNormName(r.store_name||""), b = mgrNormName(storeDisplayNamePlain(r));
+      return (a && a === nn) || (b && b === nn);
+    });
+  }
+  return hit;
+}
 function renderManager(){
-  const months = availableMonths.slice();
+  const q = ($("mgrSearch") ? $("mgrSearch").value.trim() : "");
   const mgrRows = data.managerLog.filter(scoped);
-  const byStore = {};
+  const byMgr = {};
   mgrRows.forEach(r => {
-    const m = num(r.month); if(m === null) return;
-    const name = storeDisplayNamePlain(r) || "未知门店";
-    (byStore[name] = byStore[name] || {})[m] = r.manager_name || "";
+    const key = String(r.manager_name || "").trim();
+    if(!key) return;
+    const sid = String(r.store_id || "").trim();
+    const mn = num(r.month);
+    const nm = storeDisplayNamePlain(r) || sid || "未知门店";
+    const rec = byMgr[key] = byMgr[key] || {name:key, stores:{}, months:[]};
+    rec.stores[sid] = nm;
+    if(mn !== null) rec.months.push(mn);
   });
-  const storeNames = Object.keys(byStore);
-  $("mgrMeta").textContent = `${storeNames.length} 家门店 × ${months.length} 个月`;
-  const thead = `<tr><th class="corner">门店 \\ 月份</th>${months.map(m=>`<th>${m}月</th>`).join("")}</tr>`;
-  const tbody = storeNames.map(name => {
-    const row = byStore[name];
-    return `<tr><td class="sname" onclick="openStoreDetail('${esc(name)}')">${esc(name)}</td>` +
-      months.map(m => {
-        const mg = row[m];
-        if(!mg) return `<td class="cell-empty">—</td>`;
-        return `<td><span class="cell-mgr" onclick="openStoreDetail('${esc(name)}')">${esc(mg)}</span></td>`;
-      }).join("") + "</tr>";
+  // 年份推导：inspection/mystery 的 month 为 YYYY-MM，managerLog/perf 为月编号
+  let mgrYear = "2026";
+  const yrs = {};
+  data.inspection.forEach(r => { const m = /^(\d{4})/.exec(r.month||""); if(m) yrs[m[1]] = 1; });
+  const yk = Object.keys(yrs);
+  if(yk.length === 1) mgrYear = yk[0];
+  const ymOf = mn => mgrYear + "-" + String(mn).padStart(2,"0");
+
+  const list = Object.keys(byMgr).map(k => byMgr[k]);
+  list.forEach(rec => {
+    rec.monthList = [...new Set(rec.months)].sort((a,b)=>a-b);
+    let cont = 0;
+    for(let i=0;i<rec.monthList.length;i++){
+      if(i===0 || rec.monthList[i] === rec.monthList[i-1] + 1) cont++;
+      else break;
+    }
+    rec.contMonths = cont;
+    rec.storeIds = Object.keys(rec.stores);
+    rec.storeCount = rec.storeIds.length;
+    const pV=[], iV=[], oV=[], mV=[];
+    const penRows = data.penalty.filter(r => String(r.manager||"").trim() === rec.name);
+    rec.detail = [];
+    rec.storeIds.forEach(sid => {
+      const nm = rec.stores[sid];
+      const months = rec.monthList;
+      const pRows = mgrMatchRows(data.perf, sid, nm);
+      const iRows = mgrMatchRows(data.inspection, sid, nm);
+      const mRows = mgrMatchRows(data.mystery, sid, nm);
+      const pv = avg(pRows.filter(r=>months.includes(num(r.month))).map(r=>num(r.total_score)).filter(v=>v!==null));
+      const iv = avg(iRows.filter(r=>months.includes(num(/^(\d{4})-(\d{2})$/.exec(r.month||"") ? /^(\d{4})-(\d{2})$/.exec(r.month)[2] : -1))).map(r=>num(r.monthly_score)).filter(v=>v!==null));
+      const ov = avg(iRows.filter(r=>months.includes(num(/^(\d{4})-(\d{2})$/.exec(r.month||"") ? /^(\d{4})-(\d{2})$/.exec(r.month)[2] : -1))).map(r=>num(r.online_score)).filter(v=>v!==null));
+      const mv = avg(mRows.filter(r=>months.includes(num(/^(\d{4})-(\d{2})$/.exec(r.month||"") ? /^(\d{4})-(\d{2})$/.exec(r.month)[2] : -1))).map(r=>num(r.total_score)).filter(v=>v!==null));
+      const lastGrade = (pRows.slice().sort((a,b)=>String(a.month).localeCompare(String(b.month))).reverse()[0]||{}).grade || null;
+      if(pv!==null) pV.push(pv); if(iv!==null) iV.push(iv); if(ov!==null) oV.push(ov); if(mv!==null) mV.push(mv);
+      rec.detail.push({sid, nm, months: rec.monthList, p: pv, i: iv, o: ov, m: mv, grade: lastGrade});
+    });
+    rec.pAvg = avg(pV); rec.iAvg = avg(iV); rec.oAvg = avg(oV); rec.mAvg = avg(mV);
+    rec.penRows = penRows;
+    rec.penCount = penRows.length;
+  });
+  const filtered = q ? list.filter(r => r.name.indexOf(q) >= 0) : list;
+  filtered.sort((a,b)=>(b.storeCount-a.storeCount) || b.monthList.length-a.monthList.length);
+  $("mgrMeta").textContent = `${filtered.length} 位店长 / ${list.length} 位（共管理 ${new Set(mgrRows.map(r=>String(r.store_id).trim())).size} 家门店）`;
+  const fmt = v => v===null ? "--" : v.toFixed(1);
+  const thead = `<tr><th>店长</th><th>在岗门店数</th><th>在岗门店</th><th>在岗时长</th><th>绩效均值</th><th>线下检查</th><th>线上检查</th><th>神秘均值</th><th>处罚记录</th><th>最新评级</th><th></th></tr>`;
+  const tbody = filtered.map(rec => {
+    const key = rec.name;
+    const detailRows = mgrDetailKeys.has(key) ? `<tr class="mgr-detail"><td colspan="11">
+      <div class="tip" style="margin-bottom:8px;">${esc(rec.name)} 管理门店明细（${rec.detail.length} 家）</div>
+      <table class="mgr-sub"><thead><tr><th>门店</th><th>任职月份</th><th>绩效均值</th><th>线下检查</th><th>线上检查</th><th>神秘均值</th><th>最新评级</th></tr></thead><tbody>
+      ${rec.detail.map(d=>`<tr><td>${esc(d.nm)}</td><td>${d.months.map(m=>m+"月").join("、")}</td><td>${fmt(d.p)}</td><td>${fmt(d.i)}</td><td>${fmt(d.o)}</td><td>${fmt(d.m)}</td><td>${esc(d.grade||"-")}</td></tr>`).join("")}
+      </tbody></table>
+      ${rec.penCount ? `<div class="tip" style="margin:8px 0;">处罚记录（${rec.penCount} 条）</div><table class="mgr-sub"><thead><tr><th>日期</th><th>门店</th><th>描述</th><th>罚款</th></tr></thead><tbody>
+        ${rec.penRows.slice(0,10).map(p=>`<tr><td>${esc(p.occur_date||"")}</td><td>${esc(p.store_name||"")}</td><td>${esc(p.event_desc||"")}</td><td>${p.fine_amount!=null?("¥"+p.fine_amount):"-"}</td></tr>`).join("")}
+        ${rec.penCount>10?`<tr><td colspan="4" class="empty">仅显示最近 10 条，共 ${rec.penCount} 条</td></tr>`:""}
+        </tbody></table>` : `<div class="tip" style="margin-top:8px;">该店长暂无处罚记录</div>`}
+      ${rec.name==="区域直管"||rec.name==="区域代管"?'<div class="tip" style="margin-top:6px;">注：该名称表示区域直管/代管门店的归属标识，非具体店长姓名。</div>':""}
+    </td></tr>` : "";
+    return `<tr class="mgr-main" onclick="toggleMgrDetail('${esc(key).replace(/'/g,"\\'")}')">
+      <td>${esc(rec.name)}</td><td class="num">${rec.storeCount}</td><td class="sname">${rec.storeIds.map(sid=>esc(rec.stores[sid])).join("、")}</td>
+      <td>${rec.contMonths} 个月（${rec.monthList[0]}~${rec.monthList[rec.monthList.length-1]}月）</td>
+      <td class="num">${fmt(rec.pAvg)}</td><td class="num">${fmt(rec.iAvg)}</td><td class="num">${fmt(rec.oAvg)}</td><td class="num">${fmt(rec.mAvg)}</td>
+      <td class="num">${rec.penCount}</td><td>${rec.detail.map(d=>d.grade).filter(Boolean).length?rec.detail.filter(d=>d.grade).map(d=>esc(d.grade)).join("、"):"-"}</td>
+      <td>${mgrDetailKeys.has(key)?"▲":"▼"}</td></tr>` + detailRows;
   }).join("");
   $("mgrMatrix").querySelector("thead").innerHTML = thead;
-  $("mgrMatrix").querySelector("tbody").innerHTML = tbody || '<tr><td class="empty">暂无店长档案</td></tr>';
+  $("mgrMatrix").querySelector("tbody").innerHTML = tbody || '<tr><td class="empty" colspan="11">暂无店长档案</td></tr>';
+}
+function toggleMgrDetail(key){
+  if(mgrDetailKeys.has(key)) mgrDetailKeys.delete(key); else mgrDetailKeys.add(key);
+  renderManager();
 }
 
 /* ===================== 单店详情 ===================== */
@@ -1628,24 +1730,19 @@ function scoreHelpHTML(){
   const scopeM = mr.mystery.filter(r => !state.market || inScope(r));
   const perfV = avg(scopeP.map(r=>num(r.total_score)).filter(v=>v!==null));
   const insV = avg(scopeI.map(r=>num(r.monthly_score)).filter(v=>v!==null));
+  const onlV = avg(scopeI.map(r=>num(r.online_score)).filter(v=>v!==null));
   const mysV = avg(scopeM.map(r=>num(r.total_score)).filter(v=>v!==null));
-  const comps = [];
-  if(perfV !== null) comps.push([perfV, 0.5]);
-  if(insV !== null) comps.push([insV, 0.3]);
-  if(mysV !== null) comps.push([mysV, 0.2]);
-  const comp = comps.length ? sum(comps.map(c=>c[0]*c[1])) / sum(comps.map(c=>c[1])) : null;
   const fmt = v => v === null ? "--" : v.toFixed(1);
   const note = isAnnual()
-    ? "年度视图：综合得分 = 全年各月绩效/检查/神秘得分的月均值，再按下述权重加权（年度平均口径）。"
-    : "月度视图：综合得分 = 当月全国/所选市场范围的绩效/检查/神秘得分均值，再按下述权重加权。";
+    ? "年度视图：绩效/检查/神秘为全年各月的月均值（年度平均口径）。"
+    : "月度视图：绩效/检查/神秘为当月全国/所选市场范围的得分均值。";
   return `<div class="score-help">
-    <b>QSC 综合得分怎么算？</b> 综合得分 = <span class="f">绩效得分×50% + 检查得分×30% + 神秘得分×20%</span>（加权平均）。
-    其中 绩效得分 = 门店绩效综合得分（perf_monthly.total_score），检查得分 = 线下巡店检查得分（inspection_monthly.monthly_score），神秘得分 = 神秘顾客测评得分（mystery_monthly.total_score）。<br><br>
-    <b>看副行三个数字：</b> 副行"绩效 7.5 · 检查 89.4 · 神秘 93.5"就是三大分项均值，综合得分 = 7.5×0.5 + 89.4×0.3 + 93.5×0.2 = <span class="f">3.75 + 26.82 + 18.70 = 49.3</span>；若某分项缺失，则按剩余分项权重等比放大（例如只有绩效+检查：绩效×62.5% + 检查×37.5%）。<br><br>
+    <b>QSC 分项得分说明</b> 看板不合成综合得分，各模块口径与门店端/李个远系统保持同频，请直接查看分项：<span class="f">绩效得分 = 门店绩效综合得分（perf_monthly.total_score）</span>、<span class="f">线下检查 = inspection_monthly.monthly_score</span>、<span class="f">线上检查 = inspection_monthly.online_score</span>、<span class="f">神秘得分 = mystery_monthly.total_score</span>。<br><br>
+    <b>看副行三个数字：</b> 副行"绩效 7.5 · 检查 89.4 · 神秘 93.5"就是三大分项均值，各自独立展示、互不加权。<br><br>
     ${note}<br>
     <div class="row2">
-      <div><b>当前范围实时示例</b><br>绩效 ${fmt(perfV)} · 检查 ${fmt(insV)} · 神秘 ${fmt(mysV)} → 综合 <span class="f">${fmt(comp)}</span></div>
-      <div><b>数据来源</b><br>绩效=perf_monthly；检查=inspection_monthly；神秘=mystery_monthly。分市场/年度口径同公式，仅切换筛选范围。</div>
+      <div><b>当前范围实时示例</b><br>绩效 ${fmt(perfV)} · 线下检查 ${fmt(insV)} · 线上检查 ${fmt(onlV)} · 神秘 ${fmt(mysV)}</div>
+      <div><b>数据来源</b><br>绩效=perf_monthly；检查（线下/线上）=inspection_monthly；神秘=mystery_monthly。分市场/年度口径同源，仅切换筛选范围。</div>
     </div>
   </div>`;
 }
@@ -1843,12 +1940,12 @@ function exportReputation(){
 }
 function exportInspection(){
   const mr = monthRows();
-  const ins = mr.inspection.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 巡店得分: r.monthly_score, 线上得分: r.online_score, 版本: r.version }));
+  const ins = mr.inspection.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 线下检查得分: r.monthly_score, 线上检查得分: r.online_score, 版本: r.version }));
   const mys = mr.mystery.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 神秘总得分: r.total_score }));
   const rows = [];
   ins.forEach(r => rows.push(r));
   mys.forEach(r => rows.push(r));
-  downloadCSV("检查与神秘顾客", ["门店","月份","巡店得分","线上得分","版本","神秘总得分"], rows);
+  downloadCSV("检查与神秘顾客", ["门店","月份","线下检查得分","线上检查得分","版本","神秘总得分"], rows);
 }
 function exportPenalty(){
   const mr = monthRows();
@@ -1856,8 +1953,8 @@ function exportPenalty(){
   downloadCSV("内部处罚", ["门店","日期","类型","归类","等级","罚款金额","描述"], rows);
 }
 function exportManager(){
-  const rows = data.managerLog.filter(scoped).map(r => ({ 门店: storeDisplayNamePlain(r), 月份: r.month, 店长: r.manager_name }));
-  downloadCSV("店长档案", ["门店","月份","店长"], rows);
+  const rows = data.managerLog.filter(scoped).map(r => ({ 店长: r.manager_name, 门店ID: r.store_id, 门店: storeDisplayNamePlain(r), 月份: r.month }));
+  downloadCSV("店长管理视角", ["店长","门店ID","门店","月份"], rows);
 }
 
 /* ===================== ⑦ 顾客需求分析 ===================== */
@@ -2103,7 +2200,7 @@ function exportNeedAdvice(){
 }
 
 /* ===================== 区域月度/季度对比（固定归属：store_master 最新主档） ===================== */
-const RC_STATE = { region: {} }; // RC_STATE.region[tab]：用户手动选择（undefined=跟随顶部全局区域）
+const RC_STATE = { region: {}, mode: "month" }; // RC_STATE.region[tab]：用户手动选择（undefined=跟随顶部全局区域）；mode: month|quarter
 function rcRegionOf(row){ const st = storeOf(row); return st ? (normalizeRegion(st.region) || "其他") : "其他"; }
 function rcYm(y, m){ return String(y) + "-" + pad2(m); }
 function rcYmStr(ym){ const s = String(ym || ""); return s.length >= 7 ? s.slice(0, 7) : ""; }
@@ -2159,21 +2256,6 @@ function rcQuarterValue(metric, region, q){
   const vals = yms.map(ym => rcMetricValue(metric, region, ym)).filter(v => v !== null);
   return vals.length ? avg(vals) : null;
 }
-/* 综合绩效得分（复用总览加权口径：绩效 .5 / 检查 .3 / 神秘 .2） */
-function rcComposite(region, ym){
-  const p = avg(data.perf.filter(r => rcRegionOf(r) === region && rcYm(state.year, num(r.month)) === ym).map(r => rcNum(r.total_score)).filter(v => v !== null));
-  const i = avg(data.inspection.filter(r => rcRegionOf(r) === region && rcYmStr(r.month) === ym).map(r => rcNum(r.monthly_score)).filter(v => v !== null));
-  const m = avg(data.mystery.filter(r => rcRegionOf(r) === region && rcYmStr(r.month) === ym).map(r => rcNum(r.total_score)).filter(v => v !== null));
-  const comps = [];
-  if(p !== null) comps.push([p, .5]); if(i !== null) comps.push([i, .3]); if(m !== null) comps.push([m, .2]);
-  return comps.length ? sum(comps.map(c => c[0] * c[1])) / sum(comps.map(c => c[1])) : null;
-}
-function rcCompositeLastYm(region){
-  const ys = new Set();
-  data.perf.forEach(r => { if(rcRegionOf(r) === region){ const mm = num(r.month); if(mm !== null) ys.add(rcYm(state.year, mm)); } });
-  ["inspection", "mystery"].forEach(tb => data[tb].forEach(r => { if(rcRegionOf(r) === region){ const s = rcYmStr(r.month); if(s) ys.add(s); } }));
-  return ys.size ? [...ys].sort().pop() : null;
-}
 /* 店长在岗门店达标率：区域门店中当月/当季出现过店长档案记录的去重门店占比 */
 function rcManagerRate(region, ymsOrYm){
   const stores = data.stores.filter(s => (!state.market || s.city === state.market) && normalizeRegion(s.region) === region);
@@ -2197,19 +2279,21 @@ function rcManagerLastYm(region){
 }
 const RC_CONFIG = [
   { tab: "overview", metrics: [
-      { key: "composite", name: "综合绩效得分", fn: rcComposite, lastYmFn: rcCompositeLastYm, countLike: false },
+      { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => data.perf, monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
       { key: "dp", name: "点评星级", agg: "avg", field: "dianping_score", rows: () => data.dianping, monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
-      { key: "ins", name: "检查得分", agg: "avg", field: "monthly_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false }
+      { key: "ins", name: "线下检查得分", agg: "avg", field: "monthly_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false },
+      { key: "online", name: "线上检查得分", agg: "avg", field: "online_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false }
   ]},
   { tab: "perf", metrics: [
-      { key: "perf", name: "综合绩效得分", agg: "avg", field: "total_score", rows: () => data.perf, monthOf: r => rcYm(state.year, num(r.month)), countLike: false }
+      { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => data.perf, monthOf: r => rcYm(state.year, num(r.month)), countLike: false }
   ]},
   { tab: "reputation", metrics: [
       { key: "cmp", name: "点评投诉量", agg: "count", rows: () => data.complaints, monthOf: r => rcYmStr(r.date), countLike: true, decimals: 0 },
       { key: "wmbad", name: "外卖差评量", agg: "sum", field: "bad_count", rows: () => data.waimai, monthOf: r => rcYmStr(r.month), countLike: true, decimals: 0 }
   ]},
   { tab: "inspection", metrics: [
-      { key: "ins", name: "检查得分", agg: "avg", field: "monthly_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false },
+      { key: "ins", name: "线下检查得分", agg: "avg", field: "monthly_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false },
+      { key: "online", name: "线上检查得分", agg: "avg", field: "online_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false },
       { key: "mys", name: "神秘得分", agg: "avg", field: "total_score", rows: () => data.mystery, monthOf: r => rcYmStr(r.month), countLike: false }
   ]},
   { tab: "penalty", metrics: [
@@ -2228,8 +2312,27 @@ function rcRegionOptions(){
   if(state.market) arr = arr.filter(s => s.city === state.market);
   return [...new Set(arr.map(s => normalizeRegion(s.region)))].sort(regionSort);
 }
-function rcRenderAllRegions(metrics, el){
+function rcRenderAllRegions(metrics, el, mode){
   const regions = rcRegionOptions();
+  if(mode === "quarter"){
+    el.innerHTML = '<div class="rc-section-title">各区域横向对比（本季 vs 上季 vs 去年同期，区域归属按 store_master 最新主档固定）</div>';
+    metrics.forEach(metric => {
+      const qs = regions.map(r => { const l = rcLastYmOf(metric, r); return l ? rcQuarterOf(l) : null; }).filter(v => v).sort();
+      const lastQ = qs.length ? qs[qs.length - 1] : null;
+      let html = '<div class="rc-table-wrap" style="margin-bottom:12px;"><table class="rc-table"><thead><tr><th>区域</th><th>' + esc(metric.name) + '（' + (lastQ ? rcQLabel(lastQ) : "--") + '）</th><th>上季（' + (lastQ ? rcQLabel(rcQuarterPrev(lastQ)) : "--") + '）</th><th>环比</th><th>去年同期（' + (lastQ ? rcQLabel(rcQuarterLast(lastQ)) : "--") + '）</th><th>同比</th></tr></thead><tbody>';
+      regions.forEach(r => {
+        if(!lastQ){ html += '<tr><td>' + esc(r) + '</td><td colspan="5" class="rc-dim">暂无数据</td></tr>'; return; }
+        const v = rcQuarterValue(metric, r, lastQ);
+        const p = rcQuarterValue(metric, r, rcQuarterPrev(lastQ));
+        const l = rcQuarterValue(metric, r, rcQuarterLast(lastQ));
+        html += '<tr><td>' + esc(r) + '</td><td>' + rcFmt(metric, v) + '</td><td>' + rcFmt(metric, p) + '</td><td>' + rcTrendMark(v, p, metric.countLike) + '</td><td>' + rcFmt(metric, l) + '</td><td>' + rcTrendMark(v, l, metric.countLike) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      el.innerHTML += html;
+    });
+    el.innerHTML += '<div class="rc-note">选择具体区域可查看该区域近 2 年季度趋势明细。</div>';
+    return;
+  }
   el.innerHTML = '<div class="rc-section-title">各区域横向对比（本月 vs 上月，区域归属按 store_master 最新主档固定）</div>';
   metrics.forEach(metric => {
     const ys = regions.map(r => rcLastYmOf(metric, r)).filter(v => v).sort();
@@ -2246,48 +2349,56 @@ function rcRenderAllRegions(metrics, el){
   });
   el.innerHTML += '<div class="rc-note">选择具体区域可查看该区域近 12 个月月度趋势与近 2 年季度趋势。</div>';
 }
-function rcRenderOneRegion(metrics, region, el){
+function rcRenderOneRegion(metrics, region, el, mode){
   el.innerHTML = '<div class="rc-note" style="margin-bottom:8px;">当前区域：<b>' + esc(region) + '</b> · 所有月份/季度均按 store_master 最新主档固定归属（不随各月数据浮动）</div><div class="rc-grid2">';
   metrics.forEach(metric => {
     const lastYm = rcLastYmOf(metric, region);
     if(!lastYm){ el.innerHTML += '<div class="card" style="--accent:#00e5ff;"><h3>' + esc(metric.name) + '</h3><div class="empty">该区域暂无数据</div></div>'; return; }
-    const months = []; let cur = lastYm;
-    for(let i = 0; i < 12; i++){ months.unshift(cur); cur = rcYmPrev(cur); }
-    let mHtml = '<div class="card" style="--accent:#00e5ff;"><h3>' + esc(metric.name) + ' · 月度趋势（近 12 个月）</h3><div class="rc-table-wrap"><table class="rc-table"><thead><tr><th>月份</th><th>' + esc(metric.name) + '</th><th>环比上月</th></tr></thead><tbody>';
-    months.forEach(ym => {
-      const v = rcMetricValue(metric, region, ym);
-      if(v === null) return;
-      const p = rcMetricValue(metric, region, rcYmPrev(ym));
-      mHtml += '<tr><td>' + ym.slice(0, 7) + '</td><td>' + rcFmt(metric, v) + '</td><td>' + rcTrendMark(v, p, metric.countLike) + '</td></tr>';
-    });
-    mHtml += '</tbody></table></div><div id="rcChartM-' + metric.key + '"></div></div>';
-    const lastYear = Number(rcQuarterOf(lastYm).split("-Q")[0]);
-    const qs = [];
-    for(let y = lastYear - 1; y <= lastYear; y++) for(let qn = 1; qn <= 4; qn++) qs.push(String(y) + "-Q" + qn);
-    let qHtml = '<div class="card" style="--accent:#ff6ac1;"><h3>' + esc(metric.name) + ' · 季度趋势（近 2 年）</h3><div class="rc-table-wrap"><table class="rc-table"><thead><tr><th>季度</th><th>' + esc(metric.name) + '</th><th>环比上季</th><th>同比去年同期</th></tr></thead><tbody>';
-    qs.forEach(q => {
-      const v = rcQuarterValue(metric, region, q);
-      if(v === null) return;
-      const prev = rcQuarterValue(metric, region, rcQuarterPrev(q));
-      const last = rcQuarterValue(metric, region, rcQuarterLast(q));
-      qHtml += '<tr><td>' + rcQLabel(q) + '</td><td>' + rcFmt(metric, v) + '</td><td>' + rcTrendMark(v, prev, metric.countLike) + '</td><td>' + rcTrendMark(v, last, metric.countLike) + '</td></tr>';
-    });
-    qHtml += '</tbody></table></div><div id="rcChartQ-' + metric.key + '"></div></div>';
-    el.innerHTML += mHtml + qHtml;
+    if(mode === "quarter"){
+      const lastYear = Number(rcQuarterOf(lastYm).split("-Q")[0]);
+      const qs = [];
+      for(let y = lastYear - 1; y <= lastYear; y++) for(let qn = 1; qn <= 4; qn++) qs.push(String(y) + "-Q" + qn);
+      let qHtml = '<div class="card" style="--accent:#ff6ac1;"><h3>' + esc(metric.name) + ' · 季度趋势（近 2 年）</h3><div class="rc-table-wrap"><table class="rc-table"><thead><tr><th>季度</th><th>' + esc(metric.name) + '</th><th>环比上季</th><th>同比去年同期</th></tr></thead><tbody>';
+      qs.forEach(q => {
+        const v = rcQuarterValue(metric, region, q);
+        if(v === null) return;
+        const prev = rcQuarterValue(metric, region, rcQuarterPrev(q));
+        const last = rcQuarterValue(metric, region, rcQuarterLast(q));
+        qHtml += '<tr><td>' + rcQLabel(q) + '</td><td>' + rcFmt(metric, v) + '</td><td>' + rcTrendMark(v, prev, metric.countLike) + '</td><td>' + rcTrendMark(v, last, metric.countLike) + '</td></tr>';
+      });
+      qHtml += '</tbody></table></div><div id="rcChartQ-' + metric.key + '"></div></div>';
+      el.innerHTML += qHtml;
+    } else {
+      const months = []; let cur = lastYm;
+      for(let i = 0; i < 12; i++){ months.unshift(cur); cur = rcYmPrev(cur); }
+      let mHtml = '<div class="card" style="--accent:#00e5ff;"><h3>' + esc(metric.name) + ' · 月度趋势（近 12 个月）</h3><div class="rc-table-wrap"><table class="rc-table"><thead><tr><th>月份</th><th>' + esc(metric.name) + '</th><th>环比上月</th></tr></thead><tbody>';
+      months.forEach(ym => {
+        const v = rcMetricValue(metric, region, ym);
+        if(v === null) return;
+        const p = rcMetricValue(metric, region, rcYmPrev(ym));
+        mHtml += '<tr><td>' + ym.slice(0, 7) + '</td><td>' + rcFmt(metric, v) + '</td><td>' + rcTrendMark(v, p, metric.countLike) + '</td></tr>';
+      });
+      mHtml += '</tbody></table></div><div id="rcChartM-' + metric.key + '"></div></div>';
+      el.innerHTML += mHtml;
+    }
   });
   el.innerHTML += '</div><div class="rc-note" style="margin-top:10px;">标注口径：得分类指标上升 / 计数类指标下降 = 变好（蓝色 ↑），反之变差（红色 ↓）。</div>';
   metrics.forEach(metric => {
     const lastYm = rcLastYmOf(metric, region);
     if(!lastYm) return;
-    const months = []; let cur = lastYm;
-    for(let i = 0; i < 12; i++){ months.unshift(cur); cur = rcYmPrev(cur); }
-    lineChart($("rcChartM-" + metric.key), months.map(m => m.slice(2)), [{ name: metric.name, color: "#00e5ff", values: months.map(ym => rcMetricValue(metric, region, ym)) }]);
-    const lastYear = Number(rcQuarterOf(lastYm).split("-Q")[0]);
-    const qs = [];
-    for(let y = lastYear - 1; y <= lastYear; y++) for(let qn = 1; qn <= 4; qn++) qs.push(String(y) + "-Q" + qn);
-    lineChart($("rcChartQ-" + metric.key), qs.map(rcQLabel), [{ name: metric.name, color: "#ff6ac1", values: qs.map(q => rcQuarterValue(metric, region, q)) }]);
+    if(mode === "quarter"){
+      const lastYear = Number(rcQuarterOf(lastYm).split("-Q")[0]);
+      const qs = [];
+      for(let y = lastYear - 1; y <= lastYear; y++) for(let qn = 1; qn <= 4; qn++) qs.push(String(y) + "-Q" + qn);
+      lineChart($("rcChartQ-" + metric.key), qs.map(rcQLabel), [{ name: metric.name, color: "#ff6ac1", values: qs.map(q => rcQuarterValue(metric, region, q)) }]);
+    } else {
+      const months = []; let cur = lastYm;
+      for(let i = 0; i < 12; i++){ months.unshift(cur); cur = rcYmPrev(cur); }
+      lineChart($("rcChartM-" + metric.key), months.map(m => m.slice(2)), [{ name: metric.name, color: "#00e5ff", values: months.map(ym => rcMetricValue(metric, region, ym)) }]);
+    }
   });
 }
+function rcSetMode(mode){ RC_STATE.mode = mode; renderRegionCompare(); }
 function renderRegionCompare(){
   RC_CONFIG.forEach(cfg => {
     const sel = $("rcSel-" + cfg.tab);
@@ -2297,10 +2408,15 @@ function renderRegionCompare(){
     let cur = RC_STATE.region[cfg.tab];
     if(cur === undefined) cur = state.region || "";
     sel.value = cur;
+    const mode = RC_STATE.mode;
+    const modeEl = $("rcMode-" + cfg.tab);
+    if(modeEl){
+      modeEl.innerHTML = '<button type="button" class="rc-mode-btn' + (mode === "month" ? " on" : "") + '" onclick="rcSetMode(\'month\')">月度</button><button type="button" class="rc-mode-btn' + (mode === "quarter" ? " on" : "") + '" onclick="rcSetMode(\'quarter\')">季度</button>';
+    }
     const content = $("rc-content-" + cfg.tab);
     content.innerHTML = "";
-    if(cur === "") rcRenderAllRegions(cfg.metrics, content);
-    else rcRenderOneRegion(cfg.metrics, cur, content);
+    if(cur === "") rcRenderAllRegions(cfg.metrics, content, mode);
+    else rcRenderOneRegion(cfg.metrics, cur, content, mode);
   });
 }
 function rcSetRegion(tab, val){ RC_STATE.region[tab] = val; renderRegionCompare(); }
