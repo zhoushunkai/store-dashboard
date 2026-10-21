@@ -302,7 +302,7 @@ a.clickable{color:var(--cyan);}
     <div class="tab" data-tab="reputation"><span class="dot" style="background:#ff6ac1"></span>③ 口碑质量</div>
     <div class="tab" data-tab="inspection"><span class="dot" style="background:#34d399"></span>④ 检查与神秘顾客</div>
     <div class="tab" data-tab="penalty"><span class="dot" style="background:#ff5c5c"></span>⑤ 内部处罚</div>
-    <div class="tab" data-tab="manager"><span class="dot" style="background:#ffd166"></span>⑥ 店长档案</div>
+    <div class="tab" data-tab="manager"><span class="dot" style="background:#ffd166"></span>⑥ 门店明细一页纸</div>
     <div class="tab" data-tab="need"><span class="dot" style="background:#b26bff"></span>⑦ 顾客需求分析</div>
   </nav>
 
@@ -558,7 +558,7 @@ a.clickable{color:var(--cyan);}
     </div>
     <div class="filters" style="margin-bottom:14px;flex-wrap:wrap;gap:10px;">
       <label>选择门店</label>
-      <select id="spStoreSel" style="min-width:220px;" onchange="renderStorePage()"></select>
+      <select id="spStoreSel" style="min-width:220px;" onchange="state.spStore=this.value; renderStorePage()"></select>
       <span class="tip" id="spStoreMeta" style="align-self:center;"></span>
     </div>
     <div id="spPage"></div>
@@ -935,6 +935,7 @@ async function loadAll(){
     else if(availableMonths.length){ state.month = Math.max(...availableMonths); toast("所选月份无数据，已自动切换到最近有数据月份 " + state.year + "-" + pad2(state.month)); }
     syncFiltersUI();
     initNeedFilters();
+    rebuildStorePicker();
     renderAll();
     if(fail.length) toast("部分数据加载失败：" + fail.join(", ") + "，相关模块可能显示为空，稍后可刷新重试");
   }catch(e){
@@ -1018,6 +1019,7 @@ function bindFilterEvents(){
     document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
     t.classList.add("active");
     $("sec-" + t.dataset.tab).classList.add("active");
+    if(t.dataset.tab === "manager") rebuildStorePicker();
   }));
 }
 
