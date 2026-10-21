@@ -1097,7 +1097,8 @@ function donutChart(el, parts, centerLabel){
     <div class="inner"><b>${esc(centerLabel)}</b><span style="font-size:12px;color:var(--dim);">${parts.length} 类</span></div></div>
     <div class="legend">${parts.map(p=>`<span><i style="background:${p.c};box-shadow:0 0 8px ${p.c}"></i>${esc(p.label)} ${p.v}% (${p.n})</span>`).join("")}</div>`;
 }
-function lineChart(el, labels, seriesList){
+function lineChart(el, labels, seriesList, opts){
+  opts = opts || {};
   if(!labels.length){ el.innerHTML = '<div class="empty">暂无数据</div>'; return; }
   const W = 760, H = 210, P = 30;
   const all = seriesList.flatMap(s => s.values.map(v=>v===null?null:num(v))).filter(v=>v!==null);
@@ -1110,7 +1111,7 @@ function lineChart(el, labels, seriesList){
   const y = v => H - 20 - (num(v) - nMin) / ((nMax - nMin) || 1) * (H - P - 20);
   let svg = `<svg class="trend" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
   ticks.forEach((gv,g) => {
-    const gy = P + g * (H - P - 20) / Math.max(1, ticks.length - 1);
+    const gy = H - 20 - g * (H - P - 20) / Math.max(1, ticks.length - 1);
     svg += `<line x1="${P}" y1="${gy}" x2="${W-10}" y2="${gy}" stroke="rgba(255,255,255,.07)" stroke-dasharray="4 4"/><text x="${P-6}" y="${gy+4}" text-anchor="end">${gv}</text>`;
   });
   labels.forEach((l,i) => svg += `<text x="${x(i)}" y="${H-6}" text-anchor="middle">${esc(l)}</text>`);
@@ -1118,7 +1119,7 @@ function lineChart(el, labels, seriesList){
     let d = "";
     s.values.forEach((v,i) => { if(v !== null && v !== undefined) d += (d?" L":"M") + x(i).toFixed(1) + " " + y(v).toFixed(1); });
     if(d) svg += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${s.color})"/>`;
-    s.values.forEach((v,i) => { if(v !== null && v !== undefined) svg += `<circle cx="${x(i)}" cy="${y(v)}" r="3.6" fill="${s.color}"/>`; });
+    s.values.forEach((v,i) => { if(v !== null && v !== undefined) svg += `<circle cx="${x(i)}" cy="${y(v)}" r="3.6" fill="${s.color}"/>` + (opts.showValues ? `<text x="${x(i)}" y="${y(v)-8}" text-anchor="middle" style="font-size:10px;fill:${s.color};" >${Number(v).toFixed(opts.digits ?? 0)}</text>` : ""); });
   });
   svg += '</svg>';
   svg += '<div class="legend">' + seriesList.map(s=>`<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join("") + '</div>';
@@ -2643,7 +2644,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td>${esc(perf[m].grade||"--")}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-perf", labels:months, series:[{name:"绩效得分", color:MOD_COLORS.perf, values}]});
+    charts.push({id:"spChart-perf", labels:months, series:[{name:"绩效得分", color:MOD_COLORS.perf, values}], opts:{showValues:true,digits:1}});
     html.push(spCard("perf", "绩效得分", MOD_COLORS.perf,
       `<tr><th>月份</th><th>得分</th><th>评级</th><th>环比</th></tr>`, rows.join(""),
       "口径：perf_monthly.total_score（门店绩效综合得分），评级取当月 grade；-- 表示当月无分（装修停业/未采集），不计入趋势连线。"));
@@ -2656,7 +2657,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt2(s)}</td><td>差评 ${dp[m].neg} 条 · 满意度 ${fmt1(dp[m].sat)}</td><td class="num">${spDelta(s, prev, 2)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-dp", labels:months, series:[{name:"大众点评星级/评分", color:MOD_COLORS.dianping, values}]});
+    charts.push({id:"spChart-dp", labels:months, series:[{name:"大众点评星级/评分", color:MOD_COLORS.dianping, values}], opts:{showValues:true,digits:1}});
     html.push(spCard("dp", "每月星级（大众点评）", MOD_COLORS.dianping,
       `<tr><th>月份</th><th>星级/评分</th><th>差评数/满意度</th><th>环比</th></tr>`, rows.join(""),
       "口径：dianping_monthly.dianping_score（大众点评星级/评分），差评数=dianping_neg_count，满意度=cust_sat。"));
@@ -2669,7 +2670,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt0(s)}</td><td>全渠道投诉 ${cmp[m].all} 条</td><td class="num">${spDelta(s, prev, 0)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-cmp", labels:months, series:[{name:"点评渠道投诉数", color:MOD_COLORS.complaint, values}]});
+    charts.push({id:"spChart-cmp", labels:months, series:[{name:"点评渠道投诉数", color:MOD_COLORS.complaint, values}], opts:{showValues:true,digits:0}});
     html.push(spCard("cmp", "堂食差评（以点评投诉替代）", MOD_COLORS.complaint,
       `<tr><th>月份</th><th>点评投诉</th><th>全渠道投诉</th><th>环比</th></tr>`, rows.join(""),
       "口径说明：当前数据无独立「堂食差评」表，以 complaint_log 中 platform 含「点评」的投诉记录（点评/点评·美团/点评·公众号）逐月条数替代，并同时列出全渠道投诉条数供对照。"));
@@ -2683,7 +2684,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt0(s)}</td><td>差评率 ${rate}</td><td class="num">${spDelta(s, prev, 0)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-wm", labels:months, series:[{name:"外卖差评数", color:MOD_COLORS.waimai, values}]});
+    charts.push({id:"spChart-wm", labels:months, series:[{name:"外卖差评数", color:MOD_COLORS.waimai, values}], opts:{showValues:true,digits:0}});
     html.push(spCard("wm", "外卖差评", MOD_COLORS.waimai,
       `<tr><th>月份</th><th>差评条数</th><th>差评率</th><th>环比</th></tr>`, rows.join(""),
       "口径：waimai_monthly 按月汇总 bad_count（多平台合并），差评率为当月各平台 bad_rate 均值。"));
@@ -2696,7 +2697,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt0(s)}</td><td>罚款 ¥${fmt0(pen[m].fine)}</td><td class="num">${spDelta(s, prev, 0)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-pen", labels:months, series:[{name:"处罚条数", color:MOD_COLORS.penalty, values}]});
+    charts.push({id:"spChart-pen", labels:months, series:[{name:"处罚条数", color:MOD_COLORS.penalty, values}], opts:{showValues:true,digits:0}});
     html.push(spCard("pen", "处罚记录", MOD_COLORS.penalty,
       `<tr><th>月份</th><th>条数</th><th>罚款金额</th><th>环比</th></tr>`, rows.join(""),
       "口径：penalty_log 按 occur_date 逐月统计条数与 fine_amount 合计；当月无记录则条数为 0（显示无处罚）。"));
@@ -2709,7 +2710,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td>${s===null?"--":"分"}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-mys", labels:months, series:[{name:"神秘顾客得分", color:MOD_COLORS.mystery, values}]});
+    charts.push({id:"spChart-mys", labels:months, series:[{name:"神秘顾客得分", color:MOD_COLORS.mystery, values}], opts:{showValues:true,digits:1}});
     html.push(spCard("mys", "神秘顾客得分", MOD_COLORS.mystery,
       `<tr><th>月份</th><th>得分</th><th>说明</th><th>环比</th></tr>`, rows.join(""),
       "口径：mystery_monthly.total_score；-- 表示当月无测评。"));
@@ -2722,7 +2723,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td>${esc(ins[m].versions.join("/")||"--")}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-on", labels:months, series:[{name:"线上检查得分", color:"#00e5ff", values}]});
+    charts.push({id:"spChart-on", labels:months, series:[{name:"线上检查得分", color:"#00e5ff", values}], opts:{showValues:true,digits:1}});
     html.push(spCard("on", "线上得分（线上检查）", "#00e5ff",
       `<tr><th>月份</th><th>得分</th><th>版本</th><th>环比</th></tr>`, rows.join(""),
       "口径：inspection_monthly.online_score 当月均值，版本列展示当月出现的 version（2.0线上/其他线上）；-- 表示当月无线上检查。"));
@@ -2735,7 +2736,7 @@ function renderStorePage(){
       rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td>${esc(ins[m].versions.join("/")||"--")}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
       if(s !== null) prev = s;
     }
-    charts.push({id:"spChart-off", labels:months, series:[{name:"线下检查得分", color:MOD_COLORS.inspection, values}]});
+    charts.push({id:"spChart-off", labels:months, series:[{name:"线下检查得分", color:MOD_COLORS.inspection, values}], opts:{showValues:true,digits:1}});
     html.push(spCard("off", "线下得分（线下检查）", MOD_COLORS.inspection,
       `<tr><th>月份</th><th>得分</th><th>版本</th><th>环比</th></tr>`, rows.join(""),
       "口径：inspection_monthly.monthly_score 当月均值；-- 表示当月无线下检查。"));
@@ -2760,7 +2761,7 @@ function renderStorePage(){
   }
 
   el.innerHTML = html.join("");
-  charts.forEach(j => { const c = $(j.id); if(c) lineChart(c, j.labels, j.series); });
+  charts.forEach(j => { const c = $(j.id); if(c) lineChart(c, j.labels, j.series, j.opts); });
 }
 function exportStorePage(){
   const st = spStore();
