@@ -261,6 +261,14 @@ a.clickable{color:var(--cyan);}
 .rc-mode{display:flex; gap:6px; align-items:center;}
 .rc-mode-btn{border:1px solid var(--line,#334); background:var(--card,#12161f); color:var(--dim,#8a93a6); padding:2px 12px; border-radius:6px; cursor:pointer; font-size:12px;}
 .rc-mode-btn.on{background:var(--blue,#4d9fff); color:#fff; border-color:var(--blue,#4d9fff); font-weight:600;}
+.sp-picker{position:relative; display:inline-block;}
+.sp-picker input#spStoreSel{min-width:220px; padding:8px 12px; font-size:14px; font-weight:700; color:var(--white); background:rgba(8,20,38,.85); border:1px solid rgba(0,229,255,.4); border-radius:9px; outline:none; box-shadow:0 0 10px rgba(0,229,255,.12) inset;}
+.sp-picker input#spStoreSel:focus{border-color:var(--cyan);}
+.sp-picker input#spStoreSel::placeholder{color:var(--dim); font-weight:400; opacity:.8;}
+.sp-list{position:absolute; top:calc(100% + 4px); left:0; min-width:100%; max-width:320px; max-height:240px; overflow:auto; z-index:99; background:rgba(10,16,28,.98); border:1px solid rgba(0,229,255,.35); border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.5); backdrop-filter:blur(8px);}
+.sp-list .sp-opt{display:block; width:100%; text-align:left; padding:8px 12px; background:transparent; border:0; color:var(--white); font-size:13px; cursor:pointer;}
+.sp-list .sp-opt:hover{background:rgba(0,229,255,.16);}
+.sp-list .sp-empty{padding:9px 12px; color:var(--dim); font-size:13px;}
 </style>
 </head>
 <body>
@@ -558,7 +566,10 @@ a.clickable{color:var(--cyan);}
     </div>
     <div class="filters" style="margin-bottom:14px;flex-wrap:wrap;gap:10px;">
       <label>选择门店</label>
-      <select id="spStoreSel" style="min-width:220px;" onchange="state.spStore=this.value; renderStorePage()"></select>
+      <div class="sp-picker">
+        <input id="spStoreSel" type="text" placeholder="输入门店名搜索…" autocomplete="off" />
+        <div class="sp-list" id="spStoreList" style="display:none;"></div>
+      </div>
       <span class="tip" id="spStoreMeta" style="align-self:center;"></span>
     </div>
     <div id="spPage"></div>
@@ -1002,6 +1013,7 @@ function rebuildRegionAndStore(){
   $("selStore").value = state.store || "";
 }
 function bindFilterEvents(){
+  bindStorePickerEvents();
   $("selYear").addEventListener("change", e => { state.year = Number(e.target.value); state.month = "all"; renderAll(); syncFiltersUI(); });
   $("selMonth").addEventListener("change", e => { const v = e.target.value; state.month = (v === "all") ? "all" : Number(v); renderAll(); });
   $("selMarket").addEventListener("change", e => { state.market = e.target.value; state.region = ""; state.store = ""; rebuildRegionAndStore(); rebuildStorePicker(); renderAll(); });
@@ -2442,13 +2454,71 @@ function rebuildStorePicker(){
   if(!el) return;
   const arr = scopeStores().slice();
   arr.sort((a,b)=>String(a.store_name||"").localeCompare(String(b.store_name||""),"zh"));
+  spCandidates = arr;
   const cur = String(state.spStore || "");
   let val = arr.some(s=>String(s.store_id)===cur) ? cur : "";
   if(!val && arr.length) val = String(arr[0].store_id);
   state.spStore = val;
-  el.innerHTML = arr.map(s=>`<option value="${esc(String(s.store_id))}">${esc(s.store_name||String(s.store_id))}</option>`).join("");
-  el.value = val;
+  const st = spStore();
+  el.value = st ? st.store_name : "";
+  renderStoreSuggest(true);
   renderStorePage();
+}
+function renderStoreSuggest(open){
+  const box = $("spStoreList");
+  if(!box) return;
+  const q = String($("spStoreSel").value || "").trim();
+  const nq = normName(q);
+  let list = spCandidates;
+  if(nq) list = list.filter(s => {
+    const nm = normName(s.store_name||"");
+    return nm.indexOf(nq) >= 0 || String(s.store_name||"").toLowerCase().indexOf(q.toLowerCase()) >= 0;
+  });
+  if(!list.length){
+    box.innerHTML = '<div class="sp-empty">无匹配门店</div>';
+  } else {
+    box.innerHTML = list.slice(0, 50).map(s=>`<button type="button" class="sp-opt" data-sid="${esc(String(s.store_id))}" data-name="${esc(s.store_name||String(s.store_id))}">${esc(s.store_name||String(s.store_id))}</button>`).join("") + (list.length > 50 ? `<div class="sp-empty">共 ${list.length} 家，请输入关键字过滤</div>` : "");
+  }
+  if(open) box.style.display = "block";
+}
+function selectStore(sid, name){
+  state.spStore = String(sid);
+  const el = $("spStoreSel");
+  if(el) el.value = name;
+  hideStoreSuggest();
+  renderStorePage();
+}
+function hideStoreSuggest(){
+  const box = $("spStoreList");
+  if(box) box.style.display = "none";
+}
+function bindStorePickerEvents(){
+  const el = $("spStoreSel");
+  if(!el) return;
+  el.addEventListener("focus", () => renderStoreSuggest(true));
+  el.addEventListener("input", () => renderStoreSuggest(true));
+  el.addEventListener("keydown", e => {
+    if(e.key === "Escape"){ hideStoreSuggest(); return; }
+    if(e.key === "Enter"){
+      e.preventDefault();
+      const box = $("spStoreList");
+      const first = box ? box.querySelector(".sp-opt") : null;
+      if(first) first.click();
+      return;
+    }
+    if(e.key === "ArrowDown" || e.key === "ArrowUp"){
+      e.preventDefault();
+      renderStoreSuggest(true);
+    }
+  });
+  const box = $("spStoreList");
+  if(box) box.addEventListener("click", e => {
+    const opt = e.target.closest(".sp-opt");
+    if(opt) selectStore(opt.dataset.sid, opt.dataset.name);
+  });
+  document.addEventListener("click", e => {
+    if(!e.target.closest(".sp-picker")) hideStoreSuggest();
+  });
 }
 function spStore(){
   const sid = String(state.spStore || "");
