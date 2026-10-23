@@ -269,6 +269,9 @@ a.clickable{color:var(--cyan);}
 .sp-list .sp-opt{display:block; width:100%; text-align:left; padding:8px 12px; background:transparent; border:0; color:var(--white); font-size:13px; cursor:pointer;}
 .sp-list .sp-opt:hover{background:rgba(0,229,255,.16);}
 .sp-list .sp-empty{padding:9px 12px; color:var(--dim); font-size:13px;}
+.clickable-row{cursor:pointer;}
+.clickable-row:hover{background:rgba(0,229,255,.12);}
+.clickable-row td:first-child{color:var(--cyan); font-weight:800;}
 </style>
 </head>
 <body>
@@ -562,14 +565,20 @@ a.clickable{color:var(--cyan);}
   <section class="section" id="sec-manager">
     <div class="row">
       <div class="title">门店明细一页纸</div>
-      <button class="btn small" onclick="exportStorePage()">导出当前门店 CSV</button>
+      <button class="btn small" id="spExportBtn" onclick="exportStorePage()">导出当前门店 CSV</button>
     </div>
     <div class="filters" style="margin-bottom:14px;flex-wrap:wrap;gap:10px;">
-      <label>选择门店</label>
-      <div class="sp-picker">
+      <label>查看模式</label>
+      <div class="rc-mode" id="spModeToggle">
+        <button type="button" class="rc-mode-btn on" data-mode="store" onclick="setSpMode('store')">单店</button>
+        <button type="button" class="rc-mode-btn" data-mode="region" onclick="setSpMode('region')">区域</button>
+      </div>
+      <label id="spPickLabel">选择门店</label>
+      <div class="sp-picker" id="spStorePickerWrap">
         <input id="spStoreSel" type="text" placeholder="输入门店名搜索…" autocomplete="off" />
         <div class="sp-list" id="spStoreList" style="display:none;"></div>
       </div>
+      <select id="spRegionSel" style="display:none;min-width:220px;padding:8px 12px;font-size:14px;font-weight:700;color:var(--white);background:rgba(8,20,38,.85);border:1px solid rgba(0,229,255,.4);border-radius:9px;outline:none;"></select>
       <span class="tip" id="spStoreMeta" style="align-self:center;"></span>
     </div>
     <div id="spPage"></div>
@@ -691,7 +700,7 @@ const SUPABASE_URL = "https://omkshuposrdmwgukpoxd.supabase.co";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ta3NodXBvc3JkbXdndWtwb3hkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NTM2NTcsImV4cCI6MjEwMTEyOTY1N30.WH7ta72Bm2cICuQhW--O26BftF1FJZtN3WNwOddfQO4";
 const MOD_COLORS = {perf:"#4d9fff", dianping:"#ff6ac1", complaint:"#ffd166", waimai:"#b26bff", inspection:"#34d399", mystery:"#00e5ff", penalty:"#ff5c5c", manager:"#ff9f43"};
 
-const state = { year: 2026, month: null, market: "", region: "", store: "", version: "", perfRegion: "", cmpPlatform: "", cmpCat: "", penGran: "month", penCat: "", spStore: "" };
+const state = { year: 2026, month: null, market: "", region: "", store: "", version: "", perfRegion: "", cmpPlatform: "", cmpCat: "", penGran: "month", penCat: "", spStore: "", spMode: "store", spRegion: "" };
 const data = { stores:[], managerLog:[], perf:[], dianping:[], complaints:[], waimai:[], inspection:[], mystery:[], penalty:[] };
 let availableMonths = [];   // 该月有任一数据（数字月表按 2026 口径并入）
 let storeIndex = new Map(); // store_id -> store row
@@ -2463,6 +2472,7 @@ function rebuildStorePicker(){
   const st = spStore();
   el.value = st ? st.store_name : "";
   renderStoreSuggest(true);
+  rebuildSpRegionSel();
   renderStorePage();
 }
 function renderStoreSuggest(open){
@@ -2519,6 +2529,11 @@ function bindStorePickerEvents(){
   });
   document.addEventListener("click", e => {
     if(!e.target.closest(".sp-picker")) hideStoreSuggest();
+  });
+  const regSel = $("spRegionSel");
+  if(regSel) regSel.addEventListener("change", () => {
+    state.spRegion = regSel.value || "";
+    renderStorePage();
   });
 }
 function spStore(){
@@ -2678,8 +2693,325 @@ function spCard(key, title, accent, tblHead, tblRows, tip){
     <div class="tip">${tip}</div>
   </div>`;
 }
+
+/* ===================== ⑥ 门店明细一页纸 · 区域模式（单店/区域切换） ===================== */
+function setSpMode(mode){
+  state.spMode = mode;
+  const toggle = $("spModeToggle");
+  if(toggle) toggle.querySelectorAll(".rc-mode-btn").forEach(b => b.classList.toggle("on", b.dataset.mode === mode));
+  const isRegion = mode === "region";
+  const pickWrap = $("spStorePickerWrap"), regSel = $("spRegionSel"), lbl = $("spPickLabel");
+  if(pickWrap) pickWrap.style.display = isRegion ? "none" : "";
+  if(regSel) regSel.style.display = isRegion ? "" : "none";
+  if(lbl) lbl.textContent = isRegion ? "选择区域" : "选择门店";
+  if(isRegion && regSel && !regSel.options.length) rebuildSpRegionSel();
+  syncSpExportBtn();
+  renderStorePage();
+}
+function rebuildSpRegionSel(){
+  const sel = $("spRegionSel");
+  if(!sel) return;
+  const opts = rcRegionOptions();
+  sel.innerHTML = '<option value="">请选择区域</option>' + opts.map(r => '<option value="' + esc(r) + '">' + esc(r) + '</option>').join("");
+  if(opts.indexOf(state.spRegion) >= 0) sel.value = state.spRegion;
+  else { state.spRegion = ""; sel.value = ""; }
+}
+function syncSpExportBtn(){
+  const btn = $("spExportBtn");
+  if(!btn) return;
+  if(state.spMode === "region"){
+    btn.textContent = "导出区域明细 CSV";
+    btn.setAttribute("onclick", "exportRegionPage()");
+  } else {
+    btn.textContent = "导出当前门店 CSV";
+    btn.setAttribute("onclick", "exportStorePage()");
+  }
+}
+function spRegionStores(region){
+  return data.stores.filter(s => (!state.market || s.city === state.market) && normalizeRegion(s.region) === region);
+}
+/* 区域逐月聚合：得分类=区域内所有有分门店月度均值；条数/金额类=区域合计 */
+function spRegionByMonth(region){
+  const stores = spRegionStores(region);
+  const agg = { perf:{}, dp:{}, cmp:{}, wm:{}, ins:{}, mys:{}, pen:{} };
+  for(let m=1;m<=12;m++){
+    agg.perf[m]={scores:[], grades:[]};
+    agg.dp[m]={scores:[], neg:0, sats:[]};
+    agg.cmp[m]={dp:0, all:0};
+    agg.wm[m]={bad:0, total:0, rates:[]};
+    agg.ins[m]={offs:[], ons:[], versions:[]};
+    agg.mys[m]={scores:[]};
+    agg.pen[m]={cnt:0, fine:0};
+  }
+  stores.forEach(st => {
+    const sid = String(st.store_id || ""), sname = st.store_name || "";
+    const perf = spPerfByMonth(sid, sname), dp = spDpByMonth(sid, sname);
+    const cmp = spComplaintByMonth(sid, sname), wm = spWaimaiByMonth(sid, sname);
+    const ins = spInspectionByMonth(sid, sname), mys = spMysteryByMonth(sid, sname), pen = spPenaltyByMonth(sid, sname);
+    for(let m=1;m<=12;m++){
+      const ps = perf[m].score; if(ps !== null){ agg.perf[m].scores.push(ps); if(perf[m].grade) agg.perf[m].grades.push(perf[m].grade); }
+      const ds = dp[m].score; if(ds !== null) agg.dp[m].scores.push(ds);
+      agg.dp[m].neg += dp[m].neg; if(dp[m].sat !== null) agg.dp[m].sats.push(dp[m].sat);
+      agg.cmp[m].dp += cmp[m].dp; agg.cmp[m].all += cmp[m].all;
+      agg.wm[m].bad += wm[m].bad; agg.wm[m].total += wm[m].total; wm[m].rates.forEach(r => agg.wm[m].rates.push(r));
+      const off = ins[m].off; if(off !== null) agg.ins[m].offs.push(off);
+      const on = ins[m].on; if(on !== null) agg.ins[m].ons.push(on);
+      ins[m].versions.forEach(v => { if(agg.ins[m].versions.indexOf(v) < 0) agg.ins[m].versions.push(v); });
+      const ms = mys[m].score; if(ms !== null) agg.mys[m].scores.push(ms);
+      agg.pen[m].cnt += pen[m].cnt; agg.pen[m].fine += pen[m].fine;
+    }
+  });
+  for(let m=1;m<=12;m++){
+    agg.perf[m].score = agg.perf[m].scores.length ? avg(agg.perf[m].scores) : null;
+    agg.dp[m].score = agg.dp[m].scores.length ? avg(agg.dp[m].scores) : null;
+    agg.dp[m].sat = agg.dp[m].sats.length ? avg(agg.dp[m].sats) : null;
+    agg.wm[m].rate = agg.wm[m].rates.length ? avg(agg.wm[m].rates) : null;
+    agg.ins[m].off = agg.ins[m].offs.length ? avg(agg.ins[m].offs) : null;
+    agg.ins[m].on = agg.ins[m].ons.length ? avg(agg.ins[m].ons) : null;
+    agg.mys[m].score = agg.mys[m].scores.length ? avg(agg.mys[m].scores) : null;
+  }
+  return agg;
+}
+/* 区域概览：门店数 / 有分门店数 / 平均绩效（各店最近有分月均值）/ 星级分布 */
+function spRegionSummary(region){
+  const stores = spRegionStores(region);
+  let scored = 0, lastScoreSum = 0, lastScoreN = 0, dpLastSum = 0, dpLastN = 0;
+  const dpBuckets = {a:0, b:0, c:0, d:0};
+  stores.forEach(st => {
+    const sid = String(st.store_id || ""), sname = st.store_name || "";
+    const perf = spPerfByMonth(sid, sname);
+    let m0 = null, lastScore = null;
+    for(let m=12;m>=1;m--){ if(perf[m].score !== null){ m0 = m; lastScore = perf[m].score; break; } }
+    if(m0 !== null){
+      scored++; lastScoreSum += lastScore; lastScoreN++;
+      const dp = spDpByMonth(sid, sname);
+      const ds = dp[m0].score;
+      if(ds !== null){
+        dpLastSum += ds; dpLastN++;
+        dpBuckets[ds >= 4.5 ? "a" : ds >= 4.0 ? "b" : ds >= 3.5 ? "c" : "d"]++;
+      }
+    }
+  });
+  return {
+    total: stores.length, scored,
+    avgPerf: lastScoreN ? lastScoreSum / lastScoreN : null,
+    avgDp: dpLastN ? dpLastSum / dpLastN : null,
+    dpBuckets, dpN: dpLastN
+  };
+}
+/* 区域门店明细表行：以各店最近有分月为基准展示各维度现状 */
+function spRegionTableRows(region){
+  const rows = [];
+  spRegionStores(region).forEach(st => {
+    const sid = String(st.store_id || ""), sname = st.store_name || "";
+    const perf = spPerfByMonth(sid, sname);
+    let m0 = null, lastScore = null;
+    for(let m=12;m>=1;m--){ if(perf[m].score !== null){ m0 = m; lastScore = perf[m].score; break; } }
+    if(m0 === null){ rows.push({st, sid, sname, m0:null, perf:null}); return; }
+    const dp = spDpByMonth(sid, sname), cmp = spComplaintByMonth(sid, sname), wm = spWaimaiByMonth(sid, sname);
+    const ins = spInspectionByMonth(sid, sname), mys = spMysteryByMonth(sid, sname), pen = spPenaltyByMonth(sid, sname);
+    rows.push({
+      st, sid, sname, m0, perf: lastScore,
+      dp: dp[m0].score, dpNeg: dp[m0].neg,
+      cmpDp: cmp[m0].dp, cmpAll: cmp[m0].all,
+      wmBad: wm[m0].bad, wmRate: wm[m0].rates.length ? avg(wm[m0].rates) : null,
+      penCnt: pen[m0].cnt, penFine: pen[m0].fine,
+      mys: mys[m0].score, on: ins[m0].on, off: ins[m0].off
+    });
+  });
+  rows.sort((a,b) => {
+    if(a.m0 === null && b.m0 === null) return a.sname.localeCompare(b.sname, "zh");
+    if(a.m0 === null) return 1;
+    if(b.m0 === null) return -1;
+    return (b.perf - a.perf) || a.sname.localeCompare(b.sname, "zh");
+  });
+  return rows;
+}
+function drillToStore(sid, name){
+  setSpMode("store");
+  selectStore(sid, name);
+}
+function renderRegionPage(){
+  const el = $("spPage");
+  const region = state.spRegion || "";
+  if(!region){ el.innerHTML = '<div class="empty">请选择区域后查看区域聚合现状，选中后可点击门店明细行下钻回单店。</div>'; return; }
+  const agg = spRegionByMonth(region);
+  const sum = spRegionSummary(region);
+  const metaEl = $("spStoreMeta");
+  if(metaEl) metaEl.textContent = "区域模式 · " + region + " · 共 " + sum.total + " 家门店";
+  const months = []; for(let m=1;m<=12;m++) months.push(pad2(m) + "月");
+  const fmt1 = x => x === null ? "--" : Number(x).toFixed(1);
+  const fmt2 = x => x === null ? "--" : Number(x).toFixed(2);
+  const fmt0 = x => x === null ? "--" : Number(x).toFixed(0);
+  const charts = [];
+  const html = [];
+  const bucketTxt = [];
+  if(sum.dpN){ const labels = {a:"≥4.5", b:"4.0~4.5", c:"3.5~4.0", d:"<3.5"}; ["a","b","c","d"].forEach(k => { if(sum.dpBuckets[k]) bucketTxt.push(labels[k] + " " + sum.dpBuckets[k] + " 家"); }); }
+  html.push(`<div class="cards cols4" style="margin-bottom:14px;">
+    <div class="card" style="--accent:#4d9fff;"><h3>区域门店数</h3><div class="big blue">${sum.total}</div><div class="hint">${esc(region)} · 按 store_master 最新主档口径</div></div>
+    <div class="card" style="--accent:#00e5ff;"><h3>有分门店数</h3><div class="big cyan">${sum.scored}</div><div class="hint">${sum.total - sum.scored} 家暂无绩效分</div></div>
+    <div class="card" style="--accent:#ffd166;"><h3>区域平均绩效</h3><div class="big orange">${fmt1(sum.avgPerf)}</div><div class="hint">各店最近有分月绩效均值</div></div>
+    <div class="card" style="--accent:#ff6ac1;"><h3>星级分布（最近有分月）</h3><div class="big pink">${fmt2(sum.avgDp)}</div><div class="hint">平均星级 · ${bucketTxt.join(" · ") || "暂无点评数据"}</div></div>
+  </div>`);
+  { // 1 绩效得分（区域均值）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.perf[m].score, n = agg.perf[m].scores.length;
+      values.push(s);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td class="num">${n ? n + " 家有分" : "--"}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-perf", labels:months, series:[{name:"区域绩效均值", color:MOD_COLORS.perf, values}], opts:{showValues:true,digits:1}});
+    html.push(spCard("perf", "绩效得分（区域月度均值）", MOD_COLORS.perf,
+      `<tr><th>月份</th><th>区域均值</th><th>有分门店</th><th>环比</th></tr>`, rows.join(""),
+      "口径：区域内各门店 perf_monthly.total_score 逐月取有分门店均值；-- 表示该月区域内无门店有分（装修停业/未采集），不计入趋势连线。"));
+  }
+  { // 2 每月星级（区域均值）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.dp[m].score;
+      values.push(s);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt2(s)}</td><td>差评 ${agg.dp[m].neg} 条 · 满意度 ${fmt1(agg.dp[m].sat)}</td><td class="num">${spDelta(s, prev, 2)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-dp", labels:months, series:[{name:"区域大众点评星级均值", color:MOD_COLORS.dianping, values}], opts:{showValues:true,digits:1}});
+    html.push(spCard("dp", "每月星级（区域均值/合计）", MOD_COLORS.dianping,
+      `<tr><th>月份</th><th>区域星级均值</th><th>差评合计/满意度均值</th><th>环比</th></tr>`, rows.join(""),
+      "口径：dianping_monthly.dianping_score 逐月取有分门店均值，差评数为区域合计，满意度为区域均值。"));
+  }
+  { // 3 堂食差评（点评投诉替代，区域合计）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.cmp[m].dp;
+      values.push(s);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt0(s)}</td><td>全渠道投诉 ${agg.cmp[m].all} 条</td><td class="num">${spDelta(s, prev, 0)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-cmp", labels:months, series:[{name:"区域点评渠道投诉合计", color:MOD_COLORS.complaint, values}], opts:{showValues:true,digits:0}});
+    html.push(spCard("cmp", "堂食差评（以点评投诉替代，区域合计）", MOD_COLORS.complaint,
+      `<tr><th>月份</th><th>点评投诉合计</th><th>全渠道投诉合计</th><th>环比</th></tr>`, rows.join(""),
+      "口径说明：以 complaint_log 中 platform 含「点评」的投诉记录（点评/点评·美团/点评·公众号）逐月区域合计条数替代，并同时列出全渠道投诉条数供对照。"));
+  }
+  { // 4 外卖差评（区域合计）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.wm[m].bad;
+      values.push(s);
+      const rate = agg.wm[m].rate === null ? "--" : ratePct(agg.wm[m].rate);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt0(s)}</td><td>差评率 ${rate}</td><td class="num">${spDelta(s, prev, 0)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-wm", labels:months, series:[{name:"区域外卖差评合计", color:MOD_COLORS.waimai, values}], opts:{showValues:true,digits:0}});
+    html.push(spCard("wm", "外卖差评（区域合计）", MOD_COLORS.waimai,
+      `<tr><th>月份</th><th>差评条数合计</th><th>差评率均值</th><th>环比</th></tr>`, rows.join(""),
+      "口径：waimai_monthly 逐月区域 bad_count 合计（多平台合并），差评率为当月各平台 bad_rate 区域均值。"));
+  }
+  { // 5 处罚记录（区域合计）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.pen[m].cnt;
+      values.push(s);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt0(s)}</td><td>罚款 ¥${fmt0(agg.pen[m].fine)}</td><td class="num">${spDelta(s, prev, 0)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-pen", labels:months, series:[{name:"区域处罚条数合计", color:MOD_COLORS.penalty, values}], opts:{showValues:true,digits:0}});
+    html.push(spCard("pen", "处罚记录（区域合计）", MOD_COLORS.penalty,
+      `<tr><th>月份</th><th>条数合计</th><th>罚款金额合计</th><th>环比</th></tr>`, rows.join(""),
+      "口径：penalty_log 按 occur_date 逐月统计区域条数与 fine_amount 合计；当月无记录则条数为 0（显示无处罚）。"));
+  }
+  { // 6 神秘顾客（区域均值）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.mys[m].score;
+      values.push(s);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td>${s===null?"--":agg.mys[m].scores.length + " 家有测评"}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-mys", labels:months, series:[{name:"区域神秘顾客得分均值", color:MOD_COLORS.mystery, values}], opts:{showValues:true,digits:1}});
+    html.push(spCard("mys", "神秘顾客得分（区域均值）", MOD_COLORS.mystery,
+      `<tr><th>月份</th><th>区域均值</th><th>有测评门店</th><th>环比</th></tr>`, rows.join(""),
+      "口径：mystery_monthly.total_score 逐月取有测评门店均值；-- 表示当月区域内无测评。"));
+  }
+  { // 7 线上得分（区域均值）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.ins[m].on;
+      values.push(s);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td>${esc(agg.ins[m].versions.join("/")||"--")}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-on", labels:months, series:[{name:"区域线上检查得分均值", color:"#00e5ff", values}], opts:{showValues:true,digits:1}});
+    html.push(spCard("on", "线上得分（区域均值）", "#00e5ff",
+      `<tr><th>月份</th><th>区域均值</th><th>版本</th><th>环比</th></tr>`, rows.join(""),
+      "口径：inspection_monthly.online_score 当月区域均值，版本列展示当月出现的 version（2.0线上/其他线上）；-- 表示当月区域内无线上检查。"));
+  }
+  { // 8 线下得分（区域均值）
+    const values = []; let prev = null; const rows = [];
+    for(let m=1;m<=12;m++){
+      const s = agg.ins[m].off;
+      values.push(s);
+      rows.push(`<tr><td>${pad2(m)}月</td><td class="num">${fmt1(s)}</td><td>${esc(agg.ins[m].versions.join("/")||"--")}</td><td class="num">${spDelta(s, prev, 1)}</td></tr>`);
+      if(s !== null) prev = s;
+    }
+    charts.push({id:"spChart-off", labels:months, series:[{name:"区域线下检查得分均值", color:MOD_COLORS.inspection, values}], opts:{showValues:true,digits:1}});
+    html.push(spCard("off", "线下得分（区域均值）", MOD_COLORS.inspection,
+      `<tr><th>月份</th><th>区域均值</th><th>版本</th><th>环比</th></tr>`, rows.join(""),
+      "口径：inspection_monthly.monthly_score 当月区域均值；-- 表示当月区域内无线下检查。"));
+  }
+  { // 9 未来3个月绩效预期（区域均值外推）
+    const fc = spForecast(agg.perf);
+    if(fc){
+      const labels = fc.out.map(o => pad2(o.m) + "月（预估）");
+      const rows = fc.out.map(o =>
+        `<tr><td>${pad2(o.m)}月</td><td class="num">${fmt1(o.est)}</td><td class="num">${fmt1(o.lo)} ~ ${fmt1(o.hi)}</td><td class="num">${spDelta(o.est, fc.lastV, 1)}</td></tr>`).join("");
+      charts.push({id:"spChart-fc", labels, series:[
+        {name:"预估区域绩效均值", color:MOD_COLORS.perf, values: fc.out.map(o=>o.est)},
+        {name:"区间下沿", color:"rgba(255,255,255,.35)", values: fc.out.map(o=>o.lo)},
+        {name:"区间上沿", color:"rgba(255,255,255,.35)", values: fc.out.map(o=>o.hi)}
+      ]});
+      html.push(spCard("fc", "未来 3 个月绩效预期预估（区域均值外推）", "#8aa3c4",
+        `<tr><th>月份</th><th>预估得分</th><th>预估区间</th><th>较最近实际月变化</th></tr>`, rows,
+        `基于 ${fc.lastM} 月前最近 ${fc.n} 个有分月（跳过装修无分月）的区域绩效均值做线性回归外推 ${fc.out.length} 个月，区间为预估±${fc.band.toFixed(1)} 分。基于历史趋势预估，仅供参考。`));
+    } else {
+      html.push(`<div class="card" style="--accent:#8aa3c4;"><h3>未来 3 个月绩效预期预估（区域均值外推） <span class="mod">${state.year} 全年 · 外推</span></h3><div class="empty">该区域 ${state.year} 年有分月份不足 3 个月（装修/未采集月份已跳过），无法进行趋势外推。</div><div class="tip">基于历史趋势预估，仅供参考。</div></div>`);
+    }
+  }
+  { // 10 区域门店明细表（可下钻单店）
+    const trows = spRegionTableRows(region);
+    const cell = (v, d) => v === null || v === undefined ? "--" : (d === 2 ? Number(v).toFixed(2) : d === 0 ? Number(v).toFixed(0) : Number(v).toFixed(1));
+    const tbody = trows.map(r => r.m0 === null
+      ? `<tr><td>${esc(r.sname)}</td><td colspan="9" class="empty">${state.year} 年暂无绩效分</td></tr>`
+      : `<tr class="clickable-row" onclick="drillToStore('${esc(String(r.sid))}','${esc(r.sname)}')"><td>${esc(r.sname)}</td><td class="num">${pad2(r.m0)}月 · ${cell(r.perf,1)}</td><td class="num ${r.dp===null?"":(r.dp>=4.5?"score-up":r.dp<3.5?"score-bad":"score-ok")}">${cell(r.dp,2)}</td><td class="num">${cell(r.cmpDp,0)}</td><td class="num">${cell(r.wmBad,0)}</td><td class="num ${r.penCnt>0?"score-bad":""}">${cell(r.penCnt,0)}</td><td class="num">${cell(r.mys,1)}</td><td class="num">${cell(r.on,1)}</td><td class="num">${cell(r.off,1)}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">该区域暂无门店</td></tr>';
+    html.push(`<div class="card" style="--accent:#ffd166;">
+      <h3>区域门店明细 <span class="mod">${esc(region)} · ${trows.length} 家 · 点击行下钻单店</span></h3>
+      <div class="tbl-wrap" style="max-height:360px;"><table class="rc-table"><thead><tr><th>门店</th><th>最近有分月绩效</th><th>星级</th><th>堂食差评</th><th>外卖差评</th><th>处罚数</th><th>神秘得分</th><th>线上得分</th><th>线下得分</th></tr></thead><tbody>${tbody}</tbody></table></div>
+      <div class="tip">各列以该店最近有分月为基准月展示现状；堂食差评=点评渠道投诉条数替代；点击任意行切回单店模式并打开该店一页纸。</div>
+    </div>`);
+  }
+  el.innerHTML = html.join("");
+  charts.forEach(j => { const c = $(j.id); if(c) lineChart(c, j.labels, j.series, j.opts); });
+}
+function exportRegionPage(){
+  const region = state.spRegion || "";
+  if(!region){ toast("请先选择区域"); return; }
+  const rows = spRegionTableRows(region).map(r => ({
+    门店: r.sname, 区域: region,
+    最近有分月: r.m0 === null ? "" : pad2(r.m0) + "月",
+    最近有分月绩效: r.perf === null ? "" : Number(r.perf).toFixed(1),
+    星级: r.dp === null ? "" : Number(r.dp).toFixed(2),
+    堂食差评点评投诉: r.cmpDp === null ? "" : r.cmpDp,
+    外卖差评: r.wmBad === null ? "" : r.wmBad,
+    处罚条数: r.penCnt === null ? "" : r.penCnt,
+    神秘得分: r.mys === null ? "" : Number(r.mys).toFixed(1),
+    线上得分: r.on === null ? "" : Number(r.on).toFixed(1),
+    线下得分: r.off === null ? "" : Number(r.off).toFixed(1)
+  }));
+  downloadCSV("门店明细一页纸_区域_" + region, ["门店","区域","最近有分月","最近有分月绩效","星级","堂食差评点评投诉","外卖差评","处罚条数","神秘得分","线上得分","线下得分"], rows);
+}
+
 function renderStorePage(){
   const el = $("spPage");
+  if(state.spMode === "region"){ renderRegionPage(); return; }
   const st = spStore();
   if(!st){
     el.innerHTML = '<div class="empty">请先通过顶部「市场/区域」筛选缩小范围，再在「选择门店」下拉中选择门店。</div>';
