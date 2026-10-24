@@ -1024,7 +1024,7 @@ function rebuildRegionAndStore(){
 }
 function bindFilterEvents(){
   bindStorePickerEvents();
-  $("selYear").addEventListener("change", e => { state.year = Number(e.target.value); state.month = "all"; renderAll(); syncFiltersUI(); });
+  $("selYear").addEventListener("change", e => { state.year = Number(e.target.value); state.month = "all"; state.needYear = state.year; rebuildNeedMonthOptions(); rebuildNeedDayOptions(); syncNeedFiltersUI(); renderAll(); syncFiltersUI(); });
   $("selMonth").addEventListener("change", e => { const v = e.target.value; state.month = (v === "all") ? "all" : Number(v); renderAll(); });
   $("selMarket").addEventListener("change", e => { state.market = e.target.value; state.region = ""; state.store = ""; rebuildRegionAndStore(); rebuildStorePicker(); renderAll(); });
   $("selRegion").addEventListener("change", e => { state.region = e.target.value; state.store = ""; rebuildRegionAndStore(); rebuildStorePicker(); renderAll(); });
@@ -2238,6 +2238,11 @@ function exportNeedAdvice(){
 /* ===================== 区域月度/季度对比（固定归属：store_master 最新主档） ===================== */
 const RC_STATE = { region: {}, mode: "month" }; // RC_STATE.region[tab]：用户手动选择（undefined=跟随顶部全局区域）；mode: month|quarter
 function rcRegionOf(row){ const st = storeOf(row); return st ? (normalizeRegion(st.region) || "其他") : "其他"; }
+/* 区域对比：字符串月表（YYYY-MM 口径）按顶部年份过滤，避免 2025 年下混入 2026 数据 */
+function rcYearRows(rows, field){
+  const p = String(state.year) + "-";
+  return rows.filter(r => String(r[field]||"").indexOf(p) === 0);
+}
 function rcYm(y, m){ return String(y) + "-" + pad2(m); }
 function rcYmStr(ym){ const s = String(ym || ""); return s.length >= 7 ? s.slice(0, 7) : ""; }
 function rcYmPrev(ym){ const p = ym.split("-"); const y = Number(p[0]), m = Number(p[1]); return m === 1 ? (String(y - 1) + "-12") : (String(y) + "-" + pad2(m - 1)); }
@@ -2317,30 +2322,30 @@ const RC_CONFIG = [
   { tab: "overview", metrics: [
       { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => data.perf, monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
       { key: "dp", name: "点评星级", agg: "avg", field: "dianping_score", rows: () => data.dianping, monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
-      { key: "ins", name: "线下检查得分", agg: "avg", field: "monthly_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false },
-      { key: "online", name: "线上检查得分", agg: "avg", field: "online_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false }
+      { key: "ins", name: "线下检查得分", agg: "avg", field: "monthly_score", rows: () => rcYearRows(data.inspection, "month"), monthOf: r => rcYmStr(r.month), countLike: false },
+      { key: "online", name: "线上检查得分", agg: "avg", field: "online_score", rows: () => rcYearRows(data.inspection, "month"), monthOf: r => rcYmStr(r.month), countLike: false }
   ]},
   { tab: "perf", metrics: [
       { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => data.perf, monthOf: r => rcYm(state.year, num(r.month)), countLike: false }
   ]},
   { tab: "reputation", metrics: [
-      { key: "cmp", name: "点评投诉量", agg: "count", rows: () => data.complaints, monthOf: r => rcYmStr(r.date), countLike: true, decimals: 0 },
-      { key: "wmbad", name: "外卖差评量", agg: "sum", field: "bad_count", rows: () => data.waimai, monthOf: r => rcYmStr(r.month), countLike: true, decimals: 0 }
+      { key: "cmp", name: "点评投诉量", agg: "count", rows: () => rcYearRows(data.complaints, "date"), monthOf: r => rcYmStr(r.date), countLike: true, decimals: 0 },
+      { key: "wmbad", name: "外卖差评量", agg: "sum", field: "bad_count", rows: () => rcYearRows(data.waimai, "month"), monthOf: r => rcYmStr(r.month), countLike: true, decimals: 0 }
   ]},
   { tab: "inspection", metrics: [
-      { key: "ins", name: "线下检查得分", agg: "avg", field: "monthly_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false },
-      { key: "online", name: "线上检查得分", agg: "avg", field: "online_score", rows: () => data.inspection, monthOf: r => rcYmStr(r.month), countLike: false },
-      { key: "mys", name: "神秘得分", agg: "avg", field: "total_score", rows: () => data.mystery, monthOf: r => rcYmStr(r.month), countLike: false }
+      { key: "ins", name: "线下检查得分", agg: "avg", field: "monthly_score", rows: () => rcYearRows(data.inspection, "month"), monthOf: r => rcYmStr(r.month), countLike: false },
+      { key: "online", name: "线上检查得分", agg: "avg", field: "online_score", rows: () => rcYearRows(data.inspection, "month"), monthOf: r => rcYmStr(r.month), countLike: false },
+      { key: "mys", name: "神秘得分", agg: "avg", field: "total_score", rows: () => rcYearRows(data.mystery, "month"), monthOf: r => rcYmStr(r.month), countLike: false }
   ]},
   { tab: "penalty", metrics: [
-      { key: "pen", name: "处罚条数", agg: "count", rows: () => data.penalty, monthOf: r => rcYmStr(r.occur_date), countLike: true, decimals: 0 },
-      { key: "fine", name: "罚款金额", agg: "sum", field: "fine_amount", rows: () => data.penalty, monthOf: r => rcYmStr(r.occur_date), countLike: true, decimals: 0 }
+      { key: "pen", name: "处罚条数", agg: "count", rows: () => rcYearRows(data.penalty, "occur_date"), monthOf: r => rcYmStr(r.occur_date), countLike: true, decimals: 0 },
+      { key: "fine", name: "罚款金额", agg: "sum", field: "fine_amount", rows: () => rcYearRows(data.penalty, "occur_date"), monthOf: r => rcYmStr(r.occur_date), countLike: true, decimals: 0 }
   ]},
   { tab: "manager", metrics: [
       { key: "mgr", name: "店长在岗门店达标率", fn: rcManagerRate, qfn: (region, yms) => rcManagerRate(region, yms), lastYmFn: rcManagerLastYm, countLike: false, decimals: 0, suffix: "%" }
   ]},
   { tab: "need", metrics: [
-      { key: "need", name: "顾客需求条数", agg: "count", rows: () => data.complaints, monthOf: r => rcYmStr(r.date), countLike: true, decimals: 0 }
+      { key: "need", name: "顾客需求条数", agg: "count", rows: () => rcYearRows(data.complaints, "date"), monthOf: r => rcYmStr(r.date), countLike: true, decimals: 0 }
   ]}
 ];
 function rcRegionOptions(){
@@ -2558,6 +2563,11 @@ function spMonthNum(m, isStr){
   if(isStr){ const mm = /^\d{4}-(\d{2})/.exec(m||""); return mm ? Number(mm[1]) : null; }
   const n = num(m); return (n !== null && n >= 1 && n <= 12) ? n : null;
 }
+/* 单店/区域一页纸：字符串月表（YYYY-MM 口径）按顶部年份过滤，避免 2025 年下混入 2026 数据；数字月表为年度口径不区分年份 */
+function spRowsByYear(rows, field){
+  const p = String(state.year) + "-";
+  return rows.filter(r => String(r[field]||"").indexOf(p) === 0);
+}
 function spDelta(cur, prev, digits){
   if(cur === null || cur === undefined || prev === null || prev === undefined) return "--";
   const d = cur - prev;
@@ -2595,7 +2605,7 @@ function spDpByMonth(sid, sname){
   return by;
 }
 function spComplaintByMonth(sid, sname){
-  const rows = spRows(data.complaints, sid, sname);
+  const rows = spRowsByYear(spRows(data.complaints, sid, sname), "date");
   const by = {};
   for(let m=1;m<=12;m++){ by[m] = {dp:0, all:0}; }
   rows.forEach(r => {
@@ -2607,7 +2617,7 @@ function spComplaintByMonth(sid, sname){
   return by;
 }
 function spWaimaiByMonth(sid, sname){
-  const rows = spRows(data.waimai, sid, sname);
+  const rows = spRowsByYear(spRows(data.waimai, sid, sname), "month");
   const by = {};
   for(let m=1;m<=12;m++){ by[m] = {bad:0, total:0, rates:[]}; }
   rows.forEach(r => {
@@ -2620,7 +2630,7 @@ function spWaimaiByMonth(sid, sname){
   return by;
 }
 function spInspectionByMonth(sid, sname){
-  const rows = spRows(data.inspection, sid, sname);
+  const rows = spRowsByYear(spRows(data.inspection, sid, sname), "month");
   const by = {};
   for(let m=1;m<=12;m++){ by[m] = {off:null, on:null, versions:[]}; }
   rows.forEach(r => {
@@ -2635,7 +2645,7 @@ function spInspectionByMonth(sid, sname){
   return by;
 }
 function spMysteryByMonth(sid, sname){
-  const rows = spRows(data.mystery, sid, sname);
+  const rows = spRowsByYear(spRows(data.mystery, sid, sname), "month");
   const by = {};
   for(let m=1;m<=12;m++){ by[m] = {score:null}; }
   rows.forEach(r => {
@@ -2647,7 +2657,7 @@ function spMysteryByMonth(sid, sname){
   return by;
 }
 function spPenaltyByMonth(sid, sname){
-  const rows = spRows(data.penalty, sid, sname);
+  const rows = spRowsByYear(spRows(data.penalty, sid, sname), "occur_date");
   const by = {};
   for(let m=1;m<=12;m++){ by[m] = {cnt:0, fine:0}; }
   rows.forEach(r => {
