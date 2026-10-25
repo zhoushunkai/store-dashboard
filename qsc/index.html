@@ -876,50 +876,104 @@ const TABLE_FIELDS = {
   store_manager_log: "store_id,month,manager_name"
 };
 const CACHE_TTL = 10 * 60 * 1000;
+const LS_VER = "qsc2025_v1";   // 缓存版本号：与数据版本绑定，数据表结构/内容变化时递增以强制失效
+const LS_TTL = 15 * 60 * 1000; // localStorage 缓存 15 分钟
+const LS_PREFIX = "qsc_ls_" + LS_VER + "_";
+const MAX_BATCH = 8;           // 全局并发上限：同批在飞请求不超过 8 个，避免网络过载
 const inFlightMap = new Map(); // table -> 进行中 Promise（并发共享，只发一次请求）
-const dataMap = new Map();     // table -> { rows, ts }（已完成数据，TTL 10 分钟）
+const dataMap = new Map();     // table -> { rows, ts }（内存缓存，TTL 10 分钟）
+/* 全局请求并发池：所有表的首页/分页请求统一排队，同时最多 MAX_BATCH 个在飞 */
+const requestPool = (() => {
+  let active = 0;
+  const waiters = [];
+  async function run(fn){
+    if(active >= MAX_BATCH) await new Promise(res => waiters.push(res));
+    active++;
+    try{ return await fn(); }
+    finally{ active--; if(waiters.length) waiters.shift()(); }
+  }
+  return { run };
+})();
+function lsRead(table){
+  try{
+    const raw = localStorage.getItem(LS_PREFIX + table);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    if(d && d.ts && Array.isArray(d.rows) && Date.now() - d.ts < LS_TTL) return d.rows;
+  }catch(e){ /* localStorage 不可用/数据损坏则忽略，走网络 */ }
+  return null;
+}
+function lsWrite(table, rows){
+  try{
+    const payload = JSON.stringify({ ts: Date.now(), rows });
+    if(payload.length > 4 * 1024 * 1024) return; // 单表超 4MB 不缓存
+    localStorage.setItem(LS_PREFIX + table, payload);
+  }catch(e){ /* 超配额/隐私模式则跳过 */ }
+}
+async function fetchPage(table, sel, from, step){
+  let res;
+  try{
+    res = await requestPool.run(() => fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + sel, {
+      headers: {
+        "apikey": ANON_KEY,
+        "Authorization": "Bearer " + ANON_KEY,
+        "Range-Unit": "items",
+        "Range": from + "-" + (from + step - 1),
+        "Prefer": "count=exact"
+      }
+    }));
+  }catch(netErr){
+    throw new Error(table + ": 网络请求失败 " + netErr.message);
+  }
+  if(!res.ok) throw new Error(table + ": HTTP " + res.status + " " + res.statusText);
+  let page;
+  try{ page = await res.json(); }
+  catch(parseErr){ throw new Error(table + ": 响应解析失败"); }
+  return { rows: page, cr: res.headers.get("content-range") };
+}
 async function fetchSupabase(table, fields){
   const key = table;
   const cached = dataMap.get(key);
-  if(cached && Date.now() - cached.ts < CACHE_TTL) return cached.rows.slice(); // 二次命中：0 请求
+  if(cached && Date.now() - cached.ts < CACHE_TTL) return cached.rows.slice(); // 内存命中：0 请求
+  const lsRows = lsRead(key);
+  if(lsRows){ dataMap.set(key, { rows: lsRows, ts: Date.now() }); return lsRows.slice(); } // localStorage 命中：0 请求
   const inflight = inFlightMap.get(key);
   if(inflight) return inflight; // 进行中共享：同一 Promise，只发一次请求
   const p = (async () => {
-  const rows = [];
-  let from = 0, step = 1000;
-  const sel = fields ? "select=" + fields : "select=*";
-  while(true){
-    let res;
-    try{
-      res = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + sel, {
-        headers: {
-          "apikey": ANON_KEY,
-          "Authorization": "Bearer " + ANON_KEY,
-          "Range-Unit": "items",
-          "Range": from + "-" + (from + step - 1),
-          "Prefer": "count=exact"
-        }
-      });
-    }catch(netErr){
-      throw new Error(table + ": 网络请求失败 " + netErr.message);
-    }
-    if(!res.ok) throw new Error(table + ": HTTP " + res.status + " " + res.statusText);
-    let page;
-    try{ page = await res.json(); }
-    catch(parseErr){ throw new Error(table + ": 响应解析失败"); }
-    rows.push(...page);
-    const cr = res.headers.get("content-range");
+    const rows = [];
+    const step = 1000;
+    const sel = fields ? "select=" + fields : "select=*";
+    // 第 1 页：先拿 content-range 总行数，决定剩余页
+    const first = await fetchPage(table, sel, 0, step);
+    rows.push(...first.rows);
+    const cr = first.cr;
     let total = null;
     if(cr && cr.indexOf("/") >= 0) total = Number(cr.split("/")[1]);
-    if(total !== null && !isNaN(total)){ if(rows.length >= total) break; }
-    else if(!page || page.length < step) break;
-    from += step;
-  }
-  return rows;
+    if(total !== null && !isNaN(total) && rows.length < total){
+      // 剩余页：按 total 分批并行，每批 MAX_BATCH 个（与全局并发池共同约束）
+      const froms = [];
+      for(let from = step; from < total; from += step) froms.push(from);
+      for(let i = 0; i < froms.length; i += MAX_BATCH){
+        const batch = froms.slice(i, i + MAX_BATCH);
+        const parts = await Promise.all(batch.map(from => fetchPage(table, sel, from, step)));
+        parts.forEach(part => rows.push(...part.rows));
+      }
+    } else if(first && first.rows.length >= step){
+      // total 未知的兜底：串行翻页直到取完
+      let from = step;
+      while(true){
+        const part = await fetchPage(table, sel, from, step);
+        rows.push(...part.rows);
+        if(!part || !part.rows || part.rows.length < step) break;
+        from += step;
+      }
+    }
+    return rows;
   })();
   inFlightMap.set(key, p);
   p.then(rows => {
     dataMap.set(key, { rows, ts: Date.now() });
+    lsWrite(key, rows);
     if(inFlightMap.get(key) === p) inFlightMap.delete(key);
   }).catch(err => {
     if(inFlightMap.get(key) === p) inFlightMap.delete(key);
@@ -930,6 +984,34 @@ async function fetchAll(table){ return fetchSupabase(table, TABLE_FIELDS[table] 
 async function loadAll(){
   const t = $("loading"); t.style.display = "flex";
   const lt = t.querySelector(".lt");
+  // 核心表：总览/绩效/口碑/店长模块依赖（首屏先行）
+  const CORE = [["managerLog","store_manager_log"],["perf","perf_monthly"],["dianping","dianping_monthly"]];
+  // 扩展表：其余模块数据（后台渐进加载，每批 2 表）
+  const REST = [["complaints","complaint_log"],["inspection","inspection_monthly"],["mystery","mystery_monthly"],["penalty","penalty_log"],["waimai","waimai_monthly"]];
+  const ALL = CORE.concat(REST);
+  let done = 0; const fail = [];
+  function bumpLoaded(){
+    if(lt) lt.textContent = "正在加载看板数据... 已完成 " + done + "/" + ALL.length;
+  }
+  async function loadOne(key, tb){
+    try{ data[key] = await fetchAll(tb); }
+    catch(e){ fail.push(tb); }
+    done++;
+    bumpLoaded();
+  }
+  function finalizeRender(skipMonth){
+    computeAvailableMonths();
+    setupFilters();
+    if(!skipMonth){
+      const cur = new Date().getMonth() + 1;
+      if(availableMonths.includes(cur)) state.month = cur;
+      else if(availableMonths.length){ state.month = Math.max(...availableMonths); toast("所选月份无数据，已自动切换到最近有数据月份 " + state.year + "-" + pad2(state.month)); }
+    }
+    syncFiltersUI();
+    initNeedFilters();
+    rebuildStorePicker();
+    renderAll();
+  }
   try{
     // 阶段1：store_master 先行，构建门店索引，减少整页等待感
     const stores = await fetchAll("store_master");
@@ -937,27 +1019,18 @@ async function loadAll(){
     data.stores.forEach(s => { if(s.store_id){ storeIndex.set(String(s.store_id), s); if(String(s.store_id).indexOf(",") >= 0) String(s.store_id).split(",").map(x=>x.trim()).filter(Boolean).forEach(pid => storeIdPartMap.set(pid, s)); } });
     data.stores.forEach(s => { const k = normName(s.store_name); if(!storeNameIndex.has(k)) storeNameIndex.set(k, s); });
     if(lt) lt.textContent = "门店主档已就绪，正在加载明细数据...";
-    // 阶段2：其余 8 表并行，逐表到达即更新进度（任一失败不影响其余）
-    const KEYS = ["managerLog","perf","dianping","complaints","waimai","inspection","mystery","penalty"];
-    const TBS = ["store_manager_log","perf_monthly","dianping_monthly","complaint_log","waimai_monthly","inspection_monthly","mystery_monthly","penalty_log"];
-    let done = 0; const fail = [];
-    const proms = TBS.map(fetchAll);
-    const jobs = proms.map((pr, i) => pr.then(v => {
-      data[KEYS[i]] = v;
-      if(++done < TBS.length && lt) lt.textContent = "正在加载看板数据... 已完成 " + done + "/8";
-    }, e => { fail.push(TBS[i]); if(++done < TBS.length && lt) lt.textContent = "正在加载看板数据... 已完成 " + done + "/8"; }));
-    await Promise.all(jobs);
+    // 阶段2：核心 3 表并发，到齐后先渲染首屏（其余模块空表占位，后台继续加载）
+    await Promise.all(CORE.map(([k, tb]) => loadOne(k, tb)));
     data.perf.forEach(p => { if(p.store_id && !storeIndex.has(String(p.store_id)) && !storeIdPartMap.has(String(p.store_id))) storeIndex.set(String(p.store_id), {store_id:p.store_id, store_name:p.store_name, city:"", region:""}); });
-
-    computeAvailableMonths();
-    setupFilters();
-    const cur = new Date().getMonth() + 1;
-    if(availableMonths.includes(cur)) state.month = cur;
-    else if(availableMonths.length){ state.month = Math.max(...availableMonths); toast("所选月份无数据，已自动切换到最近有数据月份 " + state.year + "-" + pad2(state.month)); }
-    syncFiltersUI();
-    initNeedFilters();
-    rebuildStorePicker();
-    renderAll();
+    try{ finalizeRender(true); }
+    catch(earlyErr){ /* 空表渲染失败时忽略，待全量到齐后再渲染 */ }
+    t.style.display = "none"; // 首屏已可交互，隐藏加载遮罩
+    // 阶段3：其余 5 表后台渐进加载，每批 2 表，全部到齐后刷新渲染
+    for(let i = 0; i < REST.length; i += 2){
+      const batch = REST.slice(i, i + 2);
+      await Promise.all(batch.map(([k, tb]) => loadOne(k, tb)));
+    }
+    finalizeRender(false);
     if(fail.length) toast("部分数据加载失败：" + fail.join(", ") + "，相关模块可能显示为空，稍后可刷新重试");
   }catch(e){
     t.innerHTML = '<div style="text-align:center;color:#ff5c5c;font-size:15px;padding:20px;">数据加载失败：' + esc(e.message) + '<br><br>请确认 anon key 有效且 RLS 允许读取 public 表。</div>';
