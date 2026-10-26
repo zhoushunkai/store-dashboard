@@ -866,8 +866,8 @@ function storeDisplayNamePlain(row){
 /* ===================== 数据加载 ===================== */
 const TABLE_FIELDS = {
   store_master: "store_id,store_name,city,region",
-  perf_monthly: "store_id,store_name,month,total_score,external_score,internal_score,grade",
-  dianping_monthly: "store_id,month,dianping_score,dianping_neg_count,cust_sat",
+  perf_monthly: "store_id,store_name,month,year,total_score,external_score,internal_score,grade",
+  dianping_monthly: "store_id,month,year,dianping_score,dianping_neg_count,cust_sat",
   complaint_log: "store_id,store_name,city,region,date,meal,platform,content,opportunity,responsible,job_level",
   waimai_monthly: "store_id,store_name,month,platform,total_count,bad_count,bad_rate",
   inspection_monthly: "store_id,store_name,month,monthly_score,online_score,version",
@@ -876,7 +876,7 @@ const TABLE_FIELDS = {
   store_manager_log: "store_id,month,manager_name"
 };
 const CACHE_TTL = 10 * 60 * 1000;
-const LS_VER = "qsc2025_v1";   // 缓存版本号：与数据版本绑定，数据表结构/内容变化时递增以强制失效
+const LS_VER = "qsc2025_v2";   // 缓存版本号：与数据版本绑定，数据表结构/内容变化时递增以强制失效
 const LS_TTL = 15 * 60 * 1000; // localStorage 缓存 15 分钟
 const LS_PREFIX = "qsc_ls_" + LS_VER + "_";
 const MAX_BATCH = 8;           // 全局并发上限：同批在飞请求不超过 8 个，避免网络过载
