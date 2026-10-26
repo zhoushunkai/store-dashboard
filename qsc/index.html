@@ -2393,13 +2393,13 @@ function rcManagerLastYm(region){
 }
 const RC_CONFIG = [
   { tab: "overview", metrics: [
-      { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => data.perf, monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
-      { key: "dp", name: "点评星级", agg: "avg", field: "dianping_score", rows: () => data.dianping, monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
+      { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => spRowsByYearCol(data.perf), monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
+      { key: "dp", name: "点评星级", agg: "avg", field: "dianping_score", rows: () => spRowsByYearCol(data.dianping), monthOf: r => rcYm(state.year, num(r.month)), countLike: false },
       { key: "ins", name: "线下检查得分", agg: "avg", field: "monthly_score", rows: () => rcYearRows(data.inspection, "month"), monthOf: r => rcYmStr(r.month), countLike: false },
       { key: "online", name: "线上检查得分", agg: "avg", field: "online_score", rows: () => rcYearRows(data.inspection, "month"), monthOf: r => rcYmStr(r.month), countLike: false }
   ]},
   { tab: "perf", metrics: [
-      { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => data.perf, monthOf: r => rcYm(state.year, num(r.month)), countLike: false }
+      { key: "perf", name: "绩效得分", agg: "avg", field: "total_score", rows: () => spRowsByYearCol(data.perf), monthOf: r => rcYm(state.year, num(r.month)), countLike: false }
   ]},
   { tab: "reputation", metrics: [
       { key: "cmp", name: "点评投诉量", agg: "count", rows: () => rcYearRows(data.complaints, "date"), monthOf: r => rcYmStr(r.date), countLike: true, decimals: 0 },
@@ -2636,10 +2636,14 @@ function spMonthNum(m, isStr){
   if(isStr){ const mm = /^\d{4}-(\d{2})/.exec(m||""); return mm ? Number(mm[1]) : null; }
   const n = num(m); return (n !== null && n >= 1 && n <= 12) ? n : null;
 }
-/* 单店/区域一页纸：字符串月表（YYYY-MM 口径）按顶部年份过滤，避免 2025 年下混入 2026 数据；数字月表为年度口径不区分年份 */
+/* 单店/区域一页纸：字符串月表（YYYY-MM 口径）按顶部年份过滤，避免 2025 年下混入 2026 数据 */
 function spRowsByYear(rows, field){
   const p = String(state.year) + "-";
   return rows.filter(r => String(r[field]||"").indexOf(p) === 0);
+}
+/* 数字月表（perf/dianping）2025 补齐后表内跨年混存，按 year 字段过滤，避免锁死/混叠 */
+function spRowsByYearCol(rows){
+  return rows.filter(r => String(r.year||"") === String(state.year));
 }
 function spDelta(cur, prev, digits){
   if(cur === null || cur === undefined || prev === null || prev === undefined) return "--";
@@ -2649,7 +2653,7 @@ function spDelta(cur, prev, digits){
   return mark + " " + Math.abs(d).toFixed(digits === 0 ? 0 : (digits || 1));
 }
 function spPerfByMonth(sid, sname){
-  const rows = spRows(data.perf, sid, sname);
+  const rows = spRowsByYearCol(spRows(data.perf, sid, sname));
   const by = {};
   for(let m=1;m<=12;m++){ by[m] = {score:null, ext:null, int:null, grade:null}; }
   rows.forEach(r => {
@@ -2664,7 +2668,7 @@ function spPerfByMonth(sid, sname){
   return by;
 }
 function spDpByMonth(sid, sname){
-  const rows = spRows(data.dianping, sid, sname);
+  const rows = spRowsByYearCol(spRows(data.dianping, sid, sname));
   const by = {};
   for(let m=1;m<=12;m++){ by[m] = {score:null, neg:0, sat:null}; }
   rows.forEach(r => {
