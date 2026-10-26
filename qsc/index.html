@@ -702,6 +702,8 @@ const MOD_COLORS = {perf:"#4d9fff", dianping:"#ff6ac1", complaint:"#ffd166", wai
 
 const state = { year: 2026, month: null, market: "", region: "", store: "", version: "", perfRegion: "", cmpPlatform: "", cmpCat: "", penGran: "month", penCat: "", spStore: "", spMode: "store", spRegion: "" };
 const data = { stores:[], managerLog:[], perf:[], dianping:[], complaints:[], waimai:[], inspection:[], mystery:[], penalty:[] };
+/* 一页纸扩展表（投诉/检查/神秘/处罚/外卖）加载状态：加载中/失败时明细区不得静默渲染 0，需横幅提示并可重试 */
+let spExtState = { loading: false, failed: [] };
 let availableMonths = [];   // 该月有任一数据（数字月表按 2026 口径并入）
 let storeIndex = new Map(); // store_id -> store row
 let storeIdPartMap = new Map(); // 组合 store_id 拆出的单店 id -> 主档（如 "01105,01245" -> 双榆树店）
@@ -911,25 +913,32 @@ function lsWrite(table, rows){
   }catch(e){ /* 超配额/隐私模式则跳过 */ }
 }
 async function fetchPage(table, sel, from, step){
-  let res;
-  try{
-    res = await requestPool.run(() => fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + sel, {
-      headers: {
-        "apikey": ANON_KEY,
-        "Authorization": "Bearer " + ANON_KEY,
-        "Range-Unit": "items",
-        "Range": from + "-" + (from + step - 1),
-        "Prefer": "count=exact"
-      }
-    }));
-  }catch(netErr){
-    throw new Error(table + ": 网络请求失败 " + netErr.message);
+  // 网络抖动（TLS reset 等）或瞬时 5xx 时自动重试，最多 3 次，避免大表分页因单页失败整表报废
+  let lastErr = null;
+  for(let attempt = 0; attempt < 3; attempt++){
+    if(attempt > 0) await new Promise(r => setTimeout(r, 500 * attempt));
+    let res;
+    try{
+      res = await requestPool.run(() => fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + sel, {
+        headers: {
+          "apikey": ANON_KEY,
+          "Authorization": "Bearer " + ANON_KEY,
+          "Range-Unit": "items",
+          "Range": from + "-" + (from + step - 1),
+          "Prefer": "count=exact"
+        }
+      }));
+    }catch(netErr){
+      lastErr = new Error(table + ": 网络请求失败 " + netErr.message);
+      continue;
+    }
+    if(!res.ok){ lastErr = new Error(table + ": HTTP " + res.status + " " + res.statusText); continue; }
+    let page;
+    try{ page = await res.json(); }
+    catch(parseErr){ lastErr = new Error(table + ": 响应解析失败"); continue; }
+    return { rows: page, cr: res.headers.get("content-range") };
   }
-  if(!res.ok) throw new Error(table + ": HTTP " + res.status + " " + res.statusText);
-  let page;
-  try{ page = await res.json(); }
-  catch(parseErr){ throw new Error(table + ": 响应解析失败"); }
-  return { rows: page, cr: res.headers.get("content-range") };
+  throw lastErr || new Error(table + ": 请求失败");
 }
 async function fetchSupabase(table, fields){
   const key = table;
@@ -995,7 +1004,11 @@ async function loadAll(){
   }
   async function loadOne(key, tb){
     try{ data[key] = await fetchAll(tb); }
-    catch(e){ fail.push(tb); }
+    catch(e){
+      // 首次失败自动重试一次（网络抖动/瞬时错误多发生于首拉）
+      try{ data[key] = await fetchAll(tb); }
+      catch(e2){ if(fail.indexOf(tb) < 0) fail.push(tb); }
+    }
     done++;
     bumpLoaded();
   }
@@ -1026,17 +1039,52 @@ async function loadAll(){
     catch(earlyErr){ /* 空表渲染失败时忽略，待全量到齐后再渲染 */ }
     t.style.display = "none"; // 首屏已可交互，隐藏加载遮罩
     // 阶段3：其余 5 表后台渐进加载，每批 2 表，全部到齐后刷新渲染
+    spExtState.loading = true;
     for(let i = 0; i < REST.length; i += 2){
       const batch = REST.slice(i, i + 2);
       await Promise.all(batch.map(([k, tb]) => loadOne(k, tb)));
     }
+    spExtState.loading = false;
+    spExtState.failed = fail.filter((v, idx) => fail.indexOf(v) === idx);
     finalizeRender(false);
-    if(fail.length) toast("部分数据加载失败：" + fail.join(", ") + "，相关模块可能显示为空，稍后可刷新重试");
+    if(fail.length) toast("部分数据加载失败：" + fail.join(", ") + "，相关模块可能显示为空，可点击明细区横幅重试");
   }catch(e){
     t.innerHTML = '<div style="text-align:center;color:#ff5c5c;font-size:15px;padding:20px;">数据加载失败：' + esc(e.message) + '<br><br>请确认 anon key 有效且 RLS 允许读取 public 表。</div>';
     return;
   }
   t.style.display = "none";
+}
+/* 一页纸扩展表失败时手动重试：只补拉失败的表，成功后自动重渲染 */
+async function retryExtTables(){
+  const REST = [["complaints","complaint_log"],["inspection","inspection_monthly"],["mystery","mystery_monthly"],["penalty","penalty_log"],["waimai","waimai_monthly"]];
+  const todo = REST.filter(([k, tb]) => spExtState.failed.indexOf(tb) >= 0);
+  if(!todo.length){ toast("暂无失败数据"); return; }
+  spExtState.loading = true;
+  renderStorePage(); // 先刷新横幅为加载中
+  const ok = [], still = [];
+  for(const [k, tb] of todo){
+    try{ data[k] = await fetchAll(tb); ok.push(tb); }
+    catch(e){ still.push(tb); }
+  }
+  spExtState.failed = still;
+  spExtState.loading = false;
+  computeAvailableMonths();
+  renderAll();
+  if(ok.length) toast("重试成功：" + ok.join(", "));
+  if(still.length) toast("仍加载失败：" + still.join(", "));
+}
+/* 一页纸扩展表加载状态横幅：加载中或失败时提示，避免把 0 误读为真实数据 */
+function spExtBanner(){
+  if(!spExtState.loading && !spExtState.failed.length) return "";
+  const names = { complaint_log:"堂食差评(投诉)", inspection_monthly:"线上/线下检查", mystery_monthly:"神秘顾客", penalty_log:"处罚", waimai_monthly:"外卖差评" };
+  const parts = spExtState.failed.map(tb => names[tb] || tb);
+  const msg = spExtState.loading
+    ? "扩展明细数据（外卖差评/检查/神秘顾客/投诉/处罚）正在加载，下方相关明细暂显示为 0，加载完成后自动刷新。"
+    : ("以下扩展数据加载失败，相关明细暂显示为 0/空：<b>" + parts.join("、") + "</b>");
+  const btn = (spExtState.failed.length && !spExtState.loading)
+    ? '<button style="margin-left:10px;padding:2px 12px;border:1px solid currentColor;border-radius:12px;background:transparent;color:#ffb547;cursor:pointer;" onclick="retryExtTables()">点击重试</button>'
+    : "";
+  return '<div style="margin-bottom:12px;padding:8px 12px;border:1px solid #ffb54733;border-radius:8px;background:#ffb54714;color:#ffb547;font-size:13px;line-height:1.6;">' + msg + btn + '</div>';
 }
 function computeAvailableMonths(){
   const set = new Set();
@@ -3075,7 +3123,7 @@ function renderRegionPage(){
       <div class="tip">各列以该店最近有分月为基准月展示现状；堂食差评=点评渠道投诉条数替代；点击任意行切回单店模式并打开该店一页纸。</div>
     </div>`);
   }
-  el.innerHTML = html.join("");
+  el.innerHTML = spExtBanner() + html.join("");
   charts.forEach(j => { const c = $(j.id); if(c) lineChart(c, j.labels, j.series, j.opts); });
 }
 function exportRegionPage(){
@@ -3250,7 +3298,7 @@ function renderStorePage(){
     }
   }
 
-  el.innerHTML = html.join("");
+  el.innerHTML = spExtBanner() + html.join("");
   charts.forEach(j => { const c = $(j.id); if(c) lineChart(c, j.labels, j.series, j.opts); });
 }
 function exportStorePage(){
