@@ -1015,6 +1015,7 @@ async function loadAll(){
   function finalizeRender(skipMonth){
     computeAvailableMonths();
     setupFilters();
+    rebuildRegionAndStore(); // 修复：store_master 就绪后立即填充区域下拉（含十区），否则初始仅"全部区域"
     if(!skipMonth){
       const cur = new Date().getMonth() + 1;
       // 默认月份优先取绩效有数据的月份：绩效是 TOP/尾部榜单与核心指标的数据源，
@@ -1348,9 +1349,10 @@ function renderOverview(){
 
   // TOP10 / 倒数10（全年视图按门店年度平均聚合）
   const ranked = (isAnnual() ? perfAggRows(scopePerf) : scopePerf.slice()).sort((a,b)=>(num(b.total_score)||-999)-(num(a.total_score)||-999));
+  const scorable = ranked.filter(r => num(r.total_score) !== null); // 修复：无得分门店不参与倒数榜
   $("ovRankHint").textContent = hint;
   $("ovTop10").innerHTML = rankTable(ranked.slice(0,10), "TOP 10");
-  $("ovBottom10").innerHTML = rankTable(ranked.slice(-10).reverse(), "倒数 10");
+  $("ovBottom10").innerHTML = rankTable(scorable.slice(-10).reverse(), "倒数 10");
   if($("scoreHelp")) $("scoreHelp").innerHTML = scoreHelpHTML();
 }
 function rankTable(rows, title){
