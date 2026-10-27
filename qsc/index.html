@@ -1017,7 +1017,12 @@ async function loadAll(){
     setupFilters();
     if(!skipMonth){
       const cur = new Date().getMonth() + 1;
-      if(availableMonths.includes(cur)) state.month = cur;
+      // 默认月份优先取绩效有数据的月份：绩效是 TOP/尾部榜单与核心指标的数据源，
+      // 避免默认落在仅有检查/点评等扩展表数据、但绩效无数据的月份（榜单会空/异常）。
+      const perfMonths = [...new Set(data.perf.map(r => Number(r.month)).filter(m => m >= 1 && m <= 12))];
+      if(perfMonths.includes(cur)) state.month = cur;
+      else if(perfMonths.length){ state.month = Math.max(...perfMonths); if(availableMonths.includes(cur)) toast("本月暂无绩效数据，已自动切换到最近有绩效月份 " + state.year + "-" + pad2(state.month)); }
+      else if(availableMonths.includes(cur)) state.month = cur;
       else if(availableMonths.length){ state.month = Math.max(...availableMonths); toast("所选月份无数据，已自动切换到最近有数据月份 " + state.year + "-" + pad2(state.month)); }
     }
     syncFiltersUI();
