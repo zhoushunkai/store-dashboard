@@ -113,6 +113,16 @@ tr:hover td { background: #f9fafb; }
 .badge.up { background: #ecfdf5; color: #10b981; }
 .badge.down { background: #fef2f2; color: #ef4444; }
 .badge.same { background: #f3f4f6; color: #6b7280; }
+.rank-badge { display:inline-block; min-width:26px; height:20px; line-height:20px; border-radius:10px; font-size:11px; font-weight:700; text-align:center; padding:0 6px; background:#f3f4f6; color:#6b7280; margin-right:4px; }
+.rank-badge.rank-1 { background:#f59e0b; color:#fff; }
+.rank-badge.rank-2 { background:#94a3b8; color:#fff; }
+.rank-badge.rank-3 { background:#d97706; color:#fff; }
+.region-tag { display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; background:#eff6ff; color:#3b82f6; margin-left:6px; }
+.rank-col { width:64px; }
+.person-table { width:100%; border-collapse:collapse; font-size:13px; }
+.person-table th, .person-table td { padding:6px 8px; border-bottom:1px solid #eef0f3; text-align:left; white-space:nowrap; }
+.person-table thead th { position:sticky; top:0; background:#fff; z-index:2; font-size:12px; color:#6b7280; font-weight:600; }
+.person-table tr:hover td { background:#f8fafc; }
 </style>
 </head>
 <body>
@@ -132,7 +142,20 @@ tr:hover td { background: #f9fafb; }
 
 <div class="controls" id="controls" style="display:none;"></div>
 <div class="controls" id="personBar" style="display:none;">
-  <input type="text" id="searchPerson" placeholder="输入姓名搜索..." oninput="renderPerson()">
+  <select id="selRegionPerson" onchange="renderPerson()">
+    <option value="all">全部区域</option>
+    <option>经营一区</option><option>经营二区</option><option>经营三区</option><option>经营四区</option><option>经营五区</option><option>经营六区</option><option>经营七区</option><option>经营八区</option><option>经营九区</option><option>经营十区</option>
+    <option>上海</option><option>训练店</option><option>2.5区</option><option>3.0区</option><option>未分区</option>
+  </select>
+  <select id="selGradePerson" onchange="renderPerson()">
+    <option value="all">全部评级</option>
+    <option value="S">S 级</option>
+    <option value="A">A 级</option>
+    <option value="B">B 级</option>
+    <option value="C">C 级</option>
+    <option value="D">D 级</option>
+  </select>
+  <input type="text" id="searchPerson" placeholder="输入姓名/门店搜索..." oninput="renderPerson()">
 </div>
 <div class="stats" id="stats" style="display:none;"></div>
 <div id="content"></div>
@@ -141,6 +164,38 @@ tr:hover td { background: #f9fafb; }
 const GRADE_ORDER = { 'S':5, 'A':4, 'B':3, 'C':2, 'D':1 };
 const GRADE_LABEL = { 'S':'S 卓越', 'A':'A 优秀', 'B':'B 良好', 'C':'C 一般', 'D':'D 待改进' };
 const ACTIVE_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月'];
+
+/* ===== 区域映射（mgmt 优先、perf 兜底；#N/A/未命中 -> 未分区） ===== */
+const REGION_MAP = {"李颖":"经营六区","李俊辉":"经营五区","晋清源":"经营九区","鲁临双":"训练店","王丽娜":"经营一区","王彩雪":"训练店","胡敬花":"训练店","何宝金":"经营四区","周孟君":"经营一区","苏丽莉":"训练店","方城":"经营六区","桂齐涛":"经营六区","李佳豪":"经营七区","黄华静":"经营六区","樊元聪":"经营三区","刘震":"经营四区","王俊丽":"经营一区","金瑞":"经营四区","王子龙":"经营四区","刘加刚":"经营四区","张青玲":"经营八区","赵棋":"经营六区","李宝颖":"经营五区","王芬":"经营二区","赵涛":"经营一区","赵美玲":"经营七区","徐洪亮":"经营四区","陈明振":"经营三区","沈美玲":"经营七区","于涛":"经营二区","刘跃":"经营五区","刘明花":"经营一区","王丹丹":"经营八区","于静":"经营一区","秦少霞":"经营八区","沈静婷":"经营九区","段琳阁":"上海","李承东":"经营十区","丁卜军":"经营四区","李彩英":"经营二区","刘艳鹏":"经营九区","张红光":"经营三区","惠霞":"经营六区","吴文霞":"经营三区","胡瑞霞":"经营六区","陈冬冬":"经营九区","徐树臣":"经营八区","韩影":"经营八区","刘东":"经营三区","张然":"经营一区","何洋":"经营九区","杨磊":"经营七区","陈书芳":"经营二区","王海洋":"经营二区","吴亚超":"经营四区","古佳玉":"经营七区","周璐":"经营三区","裴丙文":"经营七区","赵状状":"经营二区","于黎明":"经营二区","崔彦国":"经营三区","关姗姗":"经营四区","吴建":"经营十区","杨晓亮":"经营九区","韦世海":"经营八区","杜小玲":"经营二区","况孝武":"经营五区","金艳鸽":"经营七区","彭晓雪":"经营二区","王琴":"经营六区","李海波":"经营一区","马雨欣":"训练店","杨海川":"经营九区","陈素芳":"经营六区","尚雯璐":"经营六区","段小元":"经营六区","柏成":"经营二区","董伦":"经营五区","尤磊":"经营三区","任立志":"经营一区","周肖":"经营二区","郝帅杰":"经营八区","王贵龙":"经营六区","李承兵":"经营十区","汪霞":"经营九区","王伟":"经营七区","吝付旺":"经营七区","汪开天":"经营八区","辛粉粉":"经营五区","唐勇":"经营七区","王慧芳":"经营五区","屈凡伟":"经营六区","宋胜雷":"经营三区","孙正宇":"经营二区","徐常青":"上海","刘微":"经营四区","常红燕":"经营七区","朱澳洋":"训练店","刘喜梅":"经营一区","张开琴":"经营一区","束佩佩":"经营六区","王新龙":"经营四区","吴少艳":"经营四区","王玉杰":"经营八区","郭杏娟":"经营九区","刘佳豪":"经营七区","周峰":"经营十区","闫良莹":"经营四区","肖本健":"经营九区","李顺":"经营二区","刘丽":"经营一区","张硕":"经营三区","栾祖全":"经营九区","董莹莹":"经营八区","郭杏辉":"经营五区","张涛":"经营五区","季必成":"经营三区","琚璐瑶":"经营四区","邱军军":"经营三区","杜茂冉":"经营七区","邹喜尧":"经营一区","刘琦":"经营四区","张抗抗":"经营二区","闵丹丹":"经营五区","周磊":"经营三区","尚敏敏":"经营一区","王会":"经营五区","董晶晶":"经营六区","朱翠翠":"经营一区","吕晓华":"经营六区","王燕敏":"经营九区","关永鑫":"经营九区","陈高峰":"上海","王爱民":"经营八区","霍志鹏":"经营七区","姚晓楠":"经营五区","朱紫平":"经营三区","陈玉飞":"经营二区","樊雪晴":"经营五区","余世煜":"经营三区","谢莉莉":"经营八区","张志龙":"经营八区","刘中骞":"上海","刘少增":"经营九区","贾建伟":"经营五区","郭丰瑜":"经营十区","陆飞飞":"经营三区","林周强":"经营三区","梁书平":"经营一区","樊志雄":"经营四区","阙丽娜":"经营七区","高云青":"经营五区","刘强":"经营五区","李慧斌":"经营七区","冯佩佩":"经营四区","叶子瑞":"经营七区","赵玉杰":"经营五区","郭宏巍":"经营八区","王嘉烨":"经营八区","岳玉婷":"经营九区","金灿":"经营九区","张帅帅":"经营二区","梁烁":"经营二区","姜雨含":"经营九区","李伟":"经营七区","贾士坤":"经营九区","齐立平":"经营三区","潘永帅":"经营五区","田凯迪":"经营八区","吴冠旺":"上海","刘彩月":"经营九区","金晶":"经营八区","靖梓昱":"经营十区","刘世杰":"经营九区","裴国强":"经营八区","范峻捷":"经营七区","刘云龙":"经营十区","白志强":"经营七区","赵斌":"经营八区","范兆雪":"经营九区","郭钰":"上海","徐晨晨":"经营一区","李俊江":"经营四区","郑孟秋":"经营五区","朱明华":"经营五区","赵芳":"2.5区","李涛":"2.5区","李孝英":"经营三区","董昊天":"经营六区","李永平":"经营五区","赵芳芳":"经营三区","付海龙":"经营三区","胡柯翊":"经营二区","郭娅":"经营一区","吕永振":"经营三区","汪先平":"经营四区","胡宇航":"训练店","冯幻":"经营七区","葛林娜":"经营一区","周肄鹏":"经营六区","张文玉":"经营二区","蒋超":"经营三区","周泽云":"经营一区","王喜成":"经营二区","陈飞":"经营二区","郭迎迎":"经营二区","王志江":"经营四区","孟乾乾":"经营五区","国娜娜":"经营二区","张一鸣":"经营一区","王立芹":"3.0区","逄娟娟":"3.0区","温波洋":"3.0区","高春艳":"经营一区","董相宏代":"经营四区","陶畅代":"经营九区","高瑶":"经营六区","吴伟娜":"经营八区","高珧":"经营六区","王利波":"经营八区","樊月合":"经营四区","江新月":"经营二区","胡玉亮":"经营五区","张峰":"经营六区","董喆":"经营九区","韩天驰":"经营九区","胡志辉":"经营八区","王慧阳":"经营九区","汤志飞":"经营九区","王晶晶":"经营八区","李义斌":"经营八区","陆小玲":"经营八区","史艳阳":"经营九区","钱哲哲":"经营八区","贾梦影":"经营九区"};
+const REGION_ORDER = ['经营一区','经营二区','经营三区','经营四区','经营五区','经营六区','经营七区','经营八区','经营九区','经营十区','上海','训练店','2.5区','3.0区','未分区'];
+function regionOf(row) {
+  // 姓名碰撞特判：person 数据中 7 号店吴冠旺在 mgmt/perf 无有效归属，归未分区
+  if (row.person === '吴冠旺') return '未分区';
+  return REGION_MAP[row.person] || '未分区';
+}
+function scoreOf(row, month) { return gradeScore(row.ratings[month] || ''); }
+function latestScore(row) {
+  for (let i = ACTIVE_MONTHS.length - 1; i >= 0; i--) { const s = scoreOf(row, ACTIVE_MONTHS[i]); if (s) return s; }
+  return 0;
+}
+function latestGrade(row) {
+  for (let i = ACTIVE_MONTHS.length - 1; i >= 0; i--) { const g = row.ratings[ACTIVE_MONTHS[i]]; if (g) return {m: ACTIVE_MONTHS[i], g: g}; }
+  return null;
+}
+function rankBadge(rank) {
+  if (!rank) return '';
+  const cls = rank === 1 ? ' rank-1' : rank === 2 ? ' rank-2' : rank === 3 ? ' rank-3' : '';
+  return '<span class="rank-badge'+cls+'">#'+rank+'</span>';
+}
+function regionTag(r) { return '<span class="region-tag">'+r+'</span>'; }
+function letterOf(row, month) { const g = row.ratings[month]; return (g && GRADE_ORDER[g[0]]) ? g[0] : '-'; }
+function trendBars(row) {
+  return ACTIVE_MONTHS.map(m => {
+    const s = gradeScore(row.ratings[m]);
+    const c = s >= 5 ? '#f59e0b' : s >= 4 ? '#10b981' : s >= 3 ? '#3b82f6' : s >= 2 ? '#f97316' : s >= 1 ? '#ef4444' : '#e5e7eb';
+    return '<span style="display:inline-block;width:8px;height:'+(s?Math.max(6, s*5):3)+'px;background:'+c+';margin:0 1px;border-radius:1px;vertical-align:bottom;" title="'+m+' '+(row.ratings[m]||'-')+'"></span>';
+  }).join('');
+}
 
 let allData = [];
 let currentView = 'month';
@@ -168,6 +223,10 @@ function avgGrade(ratings) {
 function buildMonthControls() {
   document.getElementById('controls').innerHTML = `
     <select id="selMonth" onchange="renderMonth()">${ACTIVE_MONTHS.map(m=>`<option value="${m}">${m}</option>`).join('')}</select>
+    <select id="selRegion" onchange="renderMonth()">
+      <option value="all">全部区域</option>
+      ${REGION_ORDER.map(r=>`<option value="${r}">${r}</option>`).join('')}
+    </select>
     <select id="selGrade" onchange="renderMonth()">
       <option value="all">全部评级</option>
       <option value="S">S 级</option>
@@ -189,8 +248,13 @@ function buildYearControls() {
       <option value="Q3">Q3（7-9月）</option>
       <option value="Q4">Q4（10-12月）</option>
     </select>
+    <select id="selRegionYear" onchange="renderYear()">
+      <option value="all">全部区域</option>
+      ${REGION_ORDER.map(r=>`<option value="${r}">${r}</option>`).join('')}
+    </select>
     <input type="text" id="searchYear" placeholder="搜索姓名 / 门店编号" oninput="renderYear()">
     <select id="sortYear" onchange="renderYear()">
+      <option value="score">按得分排序</option>
       <option value="store">按门店编号</option>
       <option value="name">按姓名</option>
     </select>
@@ -203,6 +267,7 @@ function buildYearControls() {
       <option value="D">D 级</option>
     </select>
   `;
+  document.getElementById('sortYear').value = 'score';
 }
 
 // --- VIEW RENDERERS ---
@@ -211,36 +276,43 @@ function renderMonth() {
   const sel = document.getElementById('selMonth');
   const month = sel ? sel.value : '7月';
   const gFilter = document.getElementById('selGrade') ? document.getElementById('selGrade').value : 'all';
+  const rFilter = document.getElementById('selRegion') ? document.getElementById('selRegion').value : 'all';
 
-  let groups = { S:[], A:[], B:[], C:[], D:[], '-':[] };
-  allData.forEach(row => {
-    const g = row.ratings[month];
-    const letter = (g && g[0] && GRADE_ORDER[g[0]]) ? g[0] : '-';
-    if (gFilter !== 'all' && letter !== gFilter) return;
-    groups[letter].push(row);
+  // 区域 + 评级 AND 筛选
+  let rows = allData.filter(row => {
+    if (rFilter !== 'all' && regionOf(row) !== rFilter) return false;
+    const letter = letterOf(row, month);
+    if (gFilter !== 'all' && letter !== gFilter) return false;
+    return true;
   });
 
-  // Stats
-  let total = 0;
-  Object.keys(groups).forEach(k => total += groups[k].length);
-  let statsHtml = `<span>${month} 共 <b>${total}</b> 人</span>`;
+  // 排名：按所选月份得分降序，同分按 store_num 稳定排序
+  rows.sort((a,b) => (scoreOf(b, month) - scoreOf(a, month)) || ((a.store_num||0)-(b.store_num||0)));
+
+  // Stats（区域店长数 + 评级分布）
+  let statsHtml = `<span>${month} 共 <b>${rows.length}</b> 人</span>`;
+  if (rFilter !== 'all') statsHtml += `<span>区域：<b>${rFilter}</b> ${rows.length} 人</span>`;
+  const counts = { S:0,A:0,B:0,C:0,D:0 };
+  rows.forEach(r => { const l = letterOf(r, month); if (l !== '-') counts[l]++; });
   ['S','A','B','C','D'].forEach(g => {
-    statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${groups[g].length}</span>`;
+    statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${counts[g]}</span>`;
   });
   document.getElementById('stats').style.display = '';
   document.getElementById('stats').innerHTML = statsHtml;
 
-  // Grid
-  let html = '<div class="month-grid">';
-  ['S','A','B','C','D'].forEach(g => {
-    if (groups[g].length === 0) return;
-    html += `<div class="grade-group"><div class="grade-group-header ${g.toLowerCase()}">${GRADE_LABEL[g]} (${groups[g].length}人)</div><div class="grade-group-body">`;
-    groups[g].sort((a,b)=> (a.store_num||0)-(b.store_num||0)).forEach(r => {
-      html += `<div class="row"><span>#${r.store_num} ${r.person}</span><span class="grade ${g.toLowerCase()}">${r.ratings[month]}</span></div>`;
-    });
-    html += '</div></div>';
+  if (rows.length === 0) {
+    document.getElementById('content').innerHTML = '<div class="no-data">无匹配数据</div>';
+    return;
+  }
+
+  // 表格：排名 + 姓名/门店 + 区域 + 评级
+  let html = '<div class="table-wrap"><table class="person-table"><thead><tr><th class="rank-col">排名</th><th>姓名</th><th>门店</th><th>区域</th><th>评级</th></tr></thead><tbody>';
+  rows.forEach((row, idx) => {
+    const g = row.ratings[month];
+    const cls = g && g[0] ? g[0].toLowerCase() : 'empty';
+    html += `<tr><td>${rankBadge(idx+1)}</td><td>${row.person}</td><td>#${row.store_num}</td><td>${regionTag(regionOf(row))}</td><td><span class="grade ${cls}">${g||'-'}</span></td></tr>`;
   });
-  html += '</div>';
+  html += '</tbody></table></div>';
   document.getElementById('content').innerHTML = html;
 }
 
@@ -248,20 +320,31 @@ function renderYear() {
   const q = document.getElementById('selQuarter') ? document.getElementById('selQuarter').value : '';
   const months = q ? (QUARTER_MONTHS[q] || []) : ACTIVE_MONTHS;
   const search = (document.getElementById('searchYear')?.value || '').toLowerCase();
-  const sortBy = document.getElementById('sortYear') ? document.getElementById('sortYear').value : 'store';
+  const sortBy = document.getElementById('sortYear') ? document.getElementById('sortYear').value : 'score';
   const gFilter = document.getElementById('gFilterYear') ? document.getElementById('gFilterYear').value : 'all';
+  const rFilter = document.getElementById('selRegionYear') ? document.getElementById('selRegionYear').value : 'all';
 
   let filtered = allData.slice();
 
   if (search) filtered = filtered.filter(r => r.person.toLowerCase().includes(search) || String(r.store_num).includes(search));
+  if (rFilter !== 'all') filtered = filtered.filter(r => regionOf(r) === rFilter);
   if (gFilter !== 'all') filtered = filtered.filter(r => months.some(m => r.ratings[m] && r.ratings[m].startsWith(gFilter)));
-  if (sortBy === 'name') filtered.sort((a,b) => a.person.localeCompare(b.person,'zh'));
+
+  // 排名得分：所选区间内所有有效月评分均值（无评分记为 0 排最后）
+  filtered.forEach(r => {
+    let sum=0,cnt=0;
+    months.forEach(m => { const s = gradeScore(r.ratings[m]); if(s){sum+=s;cnt++;} });
+    r._score = cnt ? sum/cnt : 0;
+  });
+  if (sortBy === 'score') filtered.sort((a,b) => (b._score - a._score) || ((a.store_num||0)-(b.store_num||0)));
+  else if (sortBy === 'name') filtered.sort((a,b) => a.person.localeCompare(b.person,'zh'));
   else filtered.sort((a,b) => (a.store_num||0)-(b.store_num||0));
 
   // Stats
   const counts = { S:0,A:0,B:0,C:0,D:0 };
   filtered.forEach(r => { const g = avgGradeRange(r.ratings, months); if(g) counts[g]++; });
   let statsHtml = `<span>${q || '全年'} 共 <b>${filtered.length}</b> 人</span>`;
+  if (rFilter !== 'all') statsHtml += `<span>区域：<b>${rFilter}</b> ${filtered.length} 人</span>`;
   'SABCD'.split('').forEach(g => { statsHtml += `<span class="stat-item"><span class="stat-dot ${g.toLowerCase()}"></span>${g}: ${counts[g]}</span>`; });
 
   document.getElementById('stats').innerHTML = statsHtml;
@@ -271,12 +354,12 @@ function renderYear() {
     return;
   }
 
-  let html = '<div class="table-wrap"><table><thead><tr><th>门店</th><th>负责人</th>';
+  let html = '<div class="table-wrap"><table class="person-table"><thead><tr><th class="rank-col">排名</th><th>门店</th><th>负责人</th><th>区域</th>';
   months.forEach(m => html += `<th>${m}</th>`);
   html += '<th>均评级</th><th>趋势</th></tr></thead><tbody>';
 
-  filtered.forEach(row => {
-    html += `<tr><td>${row.store_num}</td><td>${row.person}</td>`;
+  filtered.forEach((row, idx) => {
+    html += `<tr><td>${rankBadge(idx+1)}</td><td>${row.store_num}</td><td>${row.person}</td><td>${regionTag(regionOf(row))}</td>`;
     months.forEach(m => {
       const g = row.ratings[m];
       const cls = g && g[0] ? g[0].toLowerCase() : 'empty';
@@ -298,34 +381,44 @@ function renderYear() {
 
 function renderPerson() {
   const search = (document.getElementById('searchPerson')?.value || '').toLowerCase().trim();
+  const rFilter = document.getElementById('selRegionPerson') ? document.getElementById('selRegionPerson').value : 'all';
+  const gFilter = document.getElementById('selGradePerson') ? document.getElementById('selGradePerson').value : 'all';
 
-  let html = '';
-  document.getElementById('stats').style.display = 'none';
-  if (!search || search.length < 1) {
-    // Show quick access: top people by latest month grade
-    const latest = ACTIVE_MONTHS[ACTIVE_MONTHS.length-1];
-    const top = allData.filter(r => r.ratings[latest] && r.ratings[latest].startsWith('S')).slice(0,6);
-    const worst = allData.filter(r => r.ratings[latest] && r.ratings[latest].startsWith('D')).sort((a,b)=>(a.store_num||0)-(b.store_num||0)).slice(0,6);
-    html += '<div style="padding:16px 24px;font-size:13px;color:#9ca3af;">请输入姓名搜索，或点击常用标签：</div>';
-    html += '<div style="padding:0 24px 16px;" class="chips">';
-    if (top.length) html += `<span style="font-size:12px;color:#10b981;margin-right:4px;">S级:</span>` + top.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
-    if (worst.length) html += `<span style="font-size:12px;color:#ef4444;margin-left:12px;margin-right:4px;">D级:</span>` + worst.map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
-    html += '</div>';
-    document.getElementById('content').innerHTML = html;
-    return;
-  }
+  document.getElementById('stats').style.display = '';
 
-  const matched = allData.filter(r => r.person.toLowerCase().includes(search) || String(r.store_num).includes(search));
+  // 默认视图：按最新月得分排名（无搜索时展示全员排名）
+  let matched = allData.slice();
+  if (rFilter !== 'all') matched = matched.filter(r => regionOf(r) === rFilter);
+  if (search) matched = matched.filter(r => r.person.toLowerCase().includes(search) || String(r.store_num).includes(search));
+  if (gFilter !== 'all') matched = matched.filter(r => { const lg = latestGrade(r); return lg && String(lg.g).startsWith(gFilter); });
+
+  // 排名：最新月得分降序，同分按 store_num 稳定排序；无评分排最后
+  matched.sort((a,b) => (latestScore(b) - latestScore(a)) || ((a.store_num||0)-(b.store_num||0)));
+
+  // Stats
+  const regs = {};
+  matched.forEach(r => { const rg = regionOf(r); regs[rg] = (regs[rg]||0)+1; });
+  let statsHtml = `<span>共 <b>${matched.length}</b> 人</span>`;
+  if (rFilter !== 'all') statsHtml += `<span>区域：<b>${rFilter}</b> ${(regs[rFilter]||0)} 人</span>`;
+  document.getElementById('stats').innerHTML = statsHtml;
+
   if (matched.length === 0) {
-    document.getElementById('content').innerHTML = '<div class="no-data">未找到匹配"'+search+'"的人员</div>';
+    document.getElementById('content').innerHTML = '<div class="no-data">未找到匹配"'+(search||'条件')+'"的人员</div>';
     return;
   }
 
-  // Show each matched person as a card
-  matched.forEach(row => {
+  // 名次徽标 + 卡片列表
+  let html = '<div style="padding:16px 24px;font-size:12px;color:#9ca3af;">按最新月份评级得分排名（S=5/A=4/B=3/C=2/D=1），同分按门店号稳定排序</div>';
+  html += '<div style="padding:0 24px 16px;" class="chips">';
+  html += '<span style="font-size:12px;color:#10b981;margin-right:4px;">S级:</span>' + matched.filter(r=>latestGrade(r)&&String(latestGrade(r).g).startsWith('S')).slice(0,6).map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
+  html += '<span style="font-size:12px;color:#ef4444;margin-left:12px;margin-right:4px;">D级:</span>' + matched.filter(r=>latestGrade(r)&&String(latestGrade(r).g).startsWith('D')).slice(0,6).map(r => `<span class="chip" onclick="document.getElementById('searchPerson').value='${r.person}';renderPerson()">${r.person}</span>`).join('');
+  html += '</div>';
+
+  matched.forEach((row, idx) => {
     const avg = avgGrade(row.ratings);
     const scores = ACTIVE_MONTHS.map(m => gradeScore(row.ratings[m]));
-    
+    const rg = regionOf(row);
+
     // Determine trend
     let trendBadge = '';
     if (scores.filter(s=>s).length >= 2) {
@@ -341,7 +434,7 @@ function renderPerson() {
 
     html += `<div class="person-card">
       <div class="person-card-head">
-        <div><span class="name">${row.person}</span>${trendBadge}</div>
+        <div>${rankBadge(idx+1)}<span class="name">${row.person}</span>${trendBadge}${regionTag(rg)}</div>
         <div class="store">门店 #${row.store_num}　均评级 <span class="grade ${avg?avg.toLowerCase():'empty'}">${avg||'-'}</span></div>
       </div>
       <div class="person-card-body">
@@ -371,7 +464,7 @@ function switchView(view) {
 
   if (view === 'month') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; buildMonthControls(); renderMonth(); }
   else if (view === 'year') { document.getElementById('controls').style.display=''; document.getElementById('personBar').style.display='none'; document.getElementById('stats').style.display=''; buildYearControls(); renderYear(); }
-  else if (view === 'person') { document.getElementById('controls').style.display='none'; document.getElementById('personBar').style.display=''; document.getElementById('stats').style.display='none'; renderPerson(); }
+  else if (view === 'person') { document.getElementById('controls').style.display='none'; document.getElementById('personBar').style.display=''; document.getElementById('stats').style.display=''; renderPerson(); }
 }
 
 // --- Init ---
