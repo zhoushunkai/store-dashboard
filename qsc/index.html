@@ -2446,6 +2446,11 @@ function renderNeedOverview(p, rb){
   else if(dim === "day") t += m + "月" + d + "日";
   const mkt = state.needMarket || state.market || "全国";
   const tTail = rb.totalTail;
+  // 年度累计与同比（口径与 needPeriods 一致：needMarketRows + needRangeRows，含市场/全局筛选）
+  const rows = needMarketRows();
+  const yearTotal = needRangeRows(rows, y, null, null).length;
+  const lastYearTotal = needRangeRows(rows, y - 1, null, null).length;
+  const yoyTxt = lastYearTotal > 0 ? "较 " + (y - 1) + " 年 " + (yearTotal >= lastYearTotal ? "+" : "") + (Math.round((yearTotal - lastYearTotal) / lastYearTotal * 1000) / 10).toFixed(1) + "%" : "";
   let txt = "";
   if(!total){
     txt = t + " " + mkt + " 暂无顾客反馈记录";
@@ -2454,7 +2459,12 @@ function renderNeedOverview(p, rb){
     const stores = tTail.stores.length ? tTail.stores.map(x => x.name + "(" + x.n + ")").join("、") : "—";
     const prio = rank.filter(x => x.pareto).map(x => x.cat).slice(0, 2);
     const prioTxt = prio.length ? prio.join("与") + "类问题" : (rank[0] ? rank[0].cat + "类问题" : "相关类问题");
-    txt = t + "共收到" + total + "条顾客反馈，集中在" + focus + "，尾部门店：" + stores + "，建议优先整改：" + prioTxt + "。";
+    const yearSuffix = yoyTxt ? "（" + y + "年全年累计 " + yearTotal + " 条，" + yoyTxt + "）" : "（" + y + "年全年累计 " + yearTotal + " 条）";
+    if(dim === "year"){
+      txt = t + "全年累计共收到 " + total + " 条顾客反馈" + (yoyTxt ? "，" + yoyTxt : "") + "，集中在" + focus + "，尾部门店：" + stores + "，建议优先整改：" + prioTxt + "。";
+    }else{
+      txt = t + "共收到" + total + "条顾客反馈，集中在" + focus + "，尾部门店：" + stores + "，建议优先整改：" + prioTxt + "。" + yearSuffix;
+    }
   }
   $("needOverview").textContent = txt;
 }
