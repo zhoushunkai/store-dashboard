@@ -619,6 +619,7 @@ a.clickable{color:var(--cyan);}
         <button class="btn small" onclick="exportNeedAdvice()">导出决策建议 CSV</button>
       </div>
     </div>
+    <div id="needOverview" style="margin-bottom:14px;padding:12px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(178,107,255,.22),rgba(255,92,92,.18));border:1px solid rgba(255,255,255,.16);font-weight:bold;font-size:14px;line-height:1.7;color:#ffe9d6;"></div>
     <div class="filters" style="margin-bottom:14px;">
       <label>时间维度</label>
       <select id="selNDim">
@@ -2263,7 +2264,11 @@ function renderNeedRank(p, rb){
   const mkt = state.needMarket || state.market || "全国";
   const emptyMsg = rb.total ? "" : '<div class="empty">当前范围暂无投诉/差评记录</div>';
   const tTail = rb.totalTail;
-  const tailLine = rb.total ? `<div class="tip" style="margin-top:8px;">总数尾部（拖后腿 TOP）：区域 ${tTail.regions.length ? tTail.regions.map(x=>x.name+"("+x.n+")").join("、") : "—"} ｜ 门店 ${tTail.stores.length ? tTail.stores.map(x=>x.name+"("+x.n+")").join("、") : "—"}</div>` : "";
+  const tailTotal = rb.total ? `<div class="tip" style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,92,92,.16);border:1px solid rgba(255,92,92,.55);font-size:12.5px;line-height:1.8;">
+    <b style="color:#ff5c5c;font-size:13px;">🔻 总数尾部（拖后腿 TOP）</b><br>
+    区域：${tTail.regions.length ? tTail.regions.map(x=>'<b style="color:#ffd0d0;">'+x.name+'</b>('+x.n+')').join("、") : "—"}<br>
+    门店：${tTail.stores.length ? tTail.stores.map(x=>'<b style="color:#ffd0d0;">'+x.name+'</b>('+x.n+')').join("、") : "—"}
+  </div>` : "";
   $("needRank").innerHTML = (rb.total ? `<div class="d-summary">当前范围共 ${rb.total} 条顾客反馈（文本可用 ${rb.curOpText}）· 七类分类 · 帕累托 80/20 排定</div>` : "") + emptyMsg +
     rb.rank.filter(x => x.n > 0).map((x,i) => {
       const c = NEED_CAT_COLORS[x.cat] || "#8aa3c4";
@@ -2272,6 +2277,12 @@ function renderNeedRank(p, rb){
       const sevTop = Object.keys(x.sev).sort((a,b)=>x.sev[b]-x.sev[a])[0];
       const sev = NEED_SEVERITY.find(s=>s.key===sevTop);
       const paretoBadge = x.pareto ? '<span class="badge" style="background:#ff2e4d;">帕累托重点</span>' : "";
+      const tailBlock = (x.tail.regions.length || x.tail.stores.length) ? `<div style="margin-top:5px;padding:6px 9px;border-radius:8px;background:rgba(255,92,92,.12);border-left:3px solid #ff5c5c;font-size:12px;line-height:1.7;">
+        <b style="color:#ff9d9d;">尾部</b>：
+        ${x.tail.regions.length ? '区域 ' + x.tail.regions.map(r=>'<b style="color:#ffd0d0;">'+r.name+'</b>('+r.n+')').join("、") : ""}
+        ${x.tail.regions.length && x.tail.stores.length ? ' ｜ ' : ''}
+        ${x.tail.stores.length ? '门店 ' + x.tail.stores.map(s=>'<b style="color:#ffd0d0;">'+s.name+'</b>('+s.n+')').join("、") : ""}
+      </div>` : "";
       return `<div class="rank-line" style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
           <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};box-shadow:0 0 8px ${c};margin-right:6px;"></i>${esc(x.cat)} ${paretoBadge} <span class="num" style="font-size:11px;color:var(--dim);">累计 ${x.cumPct}%</span></span>
@@ -2279,12 +2290,11 @@ function renderNeedRank(p, rb){
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-top:3px;font-size:11px;flex-wrap:wrap;">
           <span class="badge" style="background:${sev.color};">${sev.key} ${sev.name}为主（S1 ${x.sev.S1} / S2 ${x.sev.S2} / S3 ${x.sev.S3} / S4 ${x.sev.S4}）</span>
-          ${x.tail.regions.length ? `<span style="color:var(--dim);">尾部区域：${x.tail.regions.map(r=>r.name+"("+r.n+")").join("、")}</span>` : ""}
-          ${x.tail.stores.length ? `<span style="color:var(--dim);">尾部门店：${x.tail.stores.map(s=>s.name+"("+s.n+")").join("、")}</span>` : ""}
         </div>
+        ${tailBlock}
         <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:5px;overflow:hidden;"><div style="width:${pctBar}%;height:100%;background:${c};box-shadow:0 0 8px ${c};"></div></div>
       </div>`;
-    }).join("") + (rb.total ? tailLine : "") || (rb.total ? '<div class="empty">暂无归类结果</div>' : "");
+    }).join("") + (rb.total ? tailTotal : "") || (rb.total ? '<div class="empty">暂无归类结果</div>' : "");
   $("needMeta").textContent = needScopeLabel(p) + " · 机会点文本可用率 " + rb.curOpTextRate + "% · 帕累托 80/20 排定";
 }
 function renderNeedTrend(p){
@@ -2358,7 +2368,7 @@ function renderNeedAdvice(p, rb){
         <span><span class="badge" style="background:${prioColor[adv.prio]};">优先级：${adv.prio}</span> <span class="badge none">责任口：${esc(adv.dept)}</span> <span class="badge" style="background:${sev.color};">${sev.key} ${sev.name}</span></span>
       </div>
       <div class="d-meta" style="margin-top:4px;">数据证据：${x.n} 条 · 占 ${x.pct}% · 累计 ${x.cumPct}% · 较上期 ${x.delta} · 严重度分布 S1 ${x.sev.S1} / S2 ${x.sev.S2} / S3 ${x.sev.S3} / S4 ${x.sev.S4}</div>
-      <div style="font-size:13px;margin-top:4px;color:var(--dim);">尾部（拖后腿）：${x.tail.regions.length?x.tail.regions.map(r=>r.name+"("+r.n+")").join("、"):"—"} 区域 / ${x.tail.stores.length?x.tail.stores.map(s=>s.name+"("+s.n+")").join("、"):"—"} 门店</div>
+      <div style="font-size:13px;margin-top:6px;padding:5px 8px;border-radius:6px;background:rgba(255,92,92,.12);border-left:3px solid #ff5c5c;color:#ffc9c9;">尾部（拖后腿）：<b style="color:#ffd0d0;">${x.tail.regions.length?x.tail.regions.map(r=>r.name+"("+r.n+")").join("、"):"—"}</b> 区域 / <b style="color:#ffd0d0;">${x.tail.stores.length?x.tail.stores.map(s=>s.name+"("+s.n+")").join("、"):"—"}</b> 门店</div>
       <div style="font-size:13px;margin-top:6px;">建议动作：${esc(adv.action)}</div>
     </div>`;
   }).join("") : '<div class="empty">当前范围样本不足（各类型占比 &lt; 3%），暂不生成整改建议</div>';
@@ -2425,6 +2435,29 @@ function renderNeedCatGuide(p, rb){
     </div>`;
   }).join("") + '</div>';
 }
+function renderNeedOverview(p, rb){
+  const total = rb.total;
+  const rank = rb.rank.filter(x => x.n > 0);
+  const top = rank.slice(0, 2);
+  const dim = p.dim;
+  const y = p.y, m = p.m, d = p.d;
+  let t = y + "年";
+  if(dim === "month") t += m + "月";
+  else if(dim === "day") t += m + "月" + d + "日";
+  const mkt = state.needMarket || state.market || "全国";
+  const tTail = rb.totalTail;
+  let txt = "";
+  if(!total){
+    txt = t + " " + mkt + " 暂无顾客反馈记录";
+  }else{
+    const focus = top.map((x,i) => x.cat + "(" + x.n + "条/" + x.pct + "%)").join("、");
+    const stores = tTail.stores.length ? tTail.stores.map(x => x.name + "(" + x.n + ")").join("、") : "—";
+    const prio = rank.filter(x => x.pareto).map(x => x.cat).slice(0, 2);
+    const prioTxt = prio.length ? prio.join("与") + "类问题" : (rank[0] ? rank[0].cat + "类问题" : "相关类问题");
+    txt = t + "共收到" + total + "条顾客反馈，集中在" + focus + "，尾部门店：" + stores + "，建议优先整改：" + prioTxt + "。";
+  }
+  $("needOverview").textContent = txt;
+}
 function renderNeed(){
   const p = needPeriods();
   const rb = needRankBuild(p.cur, p.prev);
@@ -2432,6 +2465,7 @@ function renderNeed(){
   const opText = p.cur.filter(r => String(r.opportunity || "").trim()).length;
   rb.curOpText = opText;
   rb.curOpTextRate = opTotal ? Math.round(opText / opTotal * 1000) / 10 : 0;
+  renderNeedOverview(p, rb);
   renderNeedRank(p, rb);
   renderNeedTrend(p);
   renderNeedCompare(p);
