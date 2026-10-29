@@ -641,8 +641,9 @@ a.clickable{color:var(--cyan);}
     </div>
     <div class="cards cols3">
       <div class="card" style="--accent:#b26bff;">
-        <h3>顾客需求排行（Top 需求）</h3>
+        <h3>顾客需求排行（七类 · 帕累托 80/20 · 严重度）</h3>
         <div id="needRank"></div>
+        <div class="tip">每类标注严重度主导（S1 危机 / S2 重度 / S3 常规 / S4 轻微）、累计占比与尾部区域/门店；数量占比按 80/20 判定帕累托重点。</div>
       </div>
       <div class="card" style="--accent:#00e5ff;">
         <h3>需求趋势（顾客需求总数）</h3>
@@ -652,6 +653,21 @@ a.clickable{color:var(--cyan);}
         <h3 id="needCompareTitle">分市场对比（北京 vs 上海）</h3>
         <div id="needCompare"></div>
       </div>
+    </div>
+    <div class="card" style="--accent:#00e5ff; margin-top:14px;">
+      <div class="row" style="margin-bottom:10px;">
+        <h3 style="margin:0;">行业关键指标（千单投诉率 / 重复投诉率 / 环比 / 未处理清单）</h3>
+        <span class="mod" id="needIndMeta"></span>
+      </div>
+      <div id="needIndustry"></div>
+    </div>
+    <div class="card" style="--accent:#4d9fff; margin-top:14px;">
+      <div class="row" style="margin-bottom:10px;">
+        <h3 style="margin:0;">七类分类口径说明</h3>
+        <span class="mod" id="needCatGuideMeta"></span>
+      </div>
+      <div id="needCatGuide"></div>
+      <div class="tip">分类基于 complaint_log.opportunity 关键词自动归类；每类给出含义、匹配口径与当月典型话术样例。</div>
     </div>
     <div class="card" style="--accent:#ffd166; margin-top:14px;">
       <div class="row" style="margin-bottom:10px;">
@@ -792,23 +808,49 @@ function classifyPenalty(desc){
   return "其他";
 }
 
-/* ===================== 顾客需求分析：需求分类 ===================== */
-const NEED_CATS = ["服务态度","出品/口味","环境/卫生","出餐/配送","其他"];
-const NEED_CAT_COLORS = {"服务态度":"#ff6ac1","出品/口味":"#ffd166","环境/卫生":"#34d399","出餐/配送":"#ff9f43","其他":"#8aa3c4"};
+/* ===================== 顾客需求分析：七类需求分类 + 严重度 ===================== */
+const NEED_CATS = ["服务态度","上餐速度","食品质量异物","环境卫生","价格分量","出品一致性","其他"];
+const NEED_CAT_COLORS = {"服务态度":"#ff6ac1","上餐速度":"#ff9f43","食品质量异物":"#ff5c5c","环境卫生":"#34d399","价格分量":"#b26bff","出品一致性":"#00e5ff","其他":"#8aa3c4"};
+const NEED_CAT_META = {
+  "服务态度":     { mean:"员工言行、服务响应与接待态度引发的不满（不理不睬、怼客、不耐烦、态度恶劣等）", scope:"opportunity 含「服务态度/态度/不理/爱答不理/不耐烦/怼/甩脸子/冷漠/恶劣」", dept:"门店+培训" },
+  "上餐速度":     { mean:"出餐/上餐及时性及供餐断档（上餐慢、出餐慢、无人上餐、餐品断档缺货、配送迟到等）", scope:"opportunity 含「上餐/出餐/上菜/慢/等/断档/无人上餐/配送/迟到/漏送/打包」", dept:"门店+供应链" },
+  "食品质量异物": { mean:"餐品质量与安全（口味异常、温度不达标、稀/硬/不熟、变质异味、异物、交叉污染、餐具脏等）", scope:"opportunity 含「品质/食品安全/异物/交叉污染/餐具脏/不熟/凉/稀/硬/异味/变质/口味/难吃」", dept:"品控+门店" },
+  "环境卫生":     { mean:"就餐环境与清洁（卫生差、桌面地面脏、未及时收桌、温度不舒适、虫鼠等）", scope:"opportunity 含「卫生/脏/油渍/收桌/环境/温度不舒适/苍蝇/虫/头发/地面/桌面」", dept:"门店" },
+  "价格分量":     { mean:"价格、性价比与分量（贵、分量少、收错钱、多收钱等）", scope:"opportunity 含「价格/贵/分量/量少/量小/不值/性价比/涨价/收钱/多收/算错」", dept:"运营+财务" },
+  "出品一致性":   { mean:"出品与订单/标准一致性（错餐、少餐、漏单、下错、未按标准出品等）", scope:"opportunity 含「错餐/少餐/漏单/下错/上错/未按/标准/一致」", dept:"门店+品控" },
+  "其他":        { mean:"管理/现场/顾客整体体验等综合问题，或未明确归类的反馈", scope:"opportunity 未命中上述六类关键词，或为「顾客体验差/管理混乱/现场混乱/影响顾客就餐」等综合描述", dept:"运营" }
+};
+const NEED_SEVERITY = [
+  { key:"S1", name:"危机", color:"#ff2e4d", desc:"食品安全/身体不适类：异物、交叉污染、腹泻呕吐等大面积差评", words:["异物","交叉污染","食品安全","腹泻","呕吐","拉肚子","中毒","塑料袋","玻璃","钢丝","蟑螂","老鼠","虫","身体不适"] },
+  { key:"S2", name:"重度", color:"#ff5c5c", desc:"服务质量明显缺陷：态度恶劣/怼客、错收钱、长时间等餐、卫生脏乱差", words:["态度恶劣","怼","甩脸子","爱答不理","不理会","恶劣","错收钱","多收","20分钟","半个","小时","脏","油渍","未及时收桌","骂"] },
+  { key:"S3", name:"常规", color:"#ff9f43", desc:"一般性出品/流程偏差：慢、凉、稀、硬、不熟、错餐少餐、断档、管理混乱", words:["慢","凉","稀","硬","不熟","少餐","错餐","断档","管理混乱","现场混乱","漏送","迟到","上餐慢"] },
+  { key:"S4", name:"轻微", color:"#8aa3c4", desc:"个人偏好/偶发/建议类，记录供趋势参考", words:[] }
+];
+function severityOf(r){
+  const s = String((r.opportunity || "") + " " + (r.content || ""));
+  if(NEED_SEVERITY[0].words.some(w => s.indexOf(w) >= 0)) return NEED_SEVERITY[0];
+  if(NEED_SEVERITY[1].words.some(w => s.indexOf(w) >= 0)) return NEED_SEVERITY[1];
+  if(NEED_SEVERITY[2].words.some(w => s.indexOf(w) >= 0)) return NEED_SEVERITY[2];
+  return NEED_SEVERITY[3];
+}
 const NEED_ADVICE_MAP = {
-  "服务态度":     { action:"门店开展服务礼仪/话术专项培训，店长每日晨会复盘差评案例，重点店驻店督导", prio:"高", dept:"培训" },
-  "出品/口味":    { action:"加强出品标准抽查与原材料验收，口味/出品类问题立即启动门店级整改并追溯供应商", prio:"高", dept:"品控" },
-  "环境/卫生":    { action:"强化清洁频次与收桌巡台 SOP，环境类连续出现门店两周内复查并纳入周检", prio:"中", dept:"门店" },
-  "出餐/配送":    { action:"优化出餐动线与高峰备料，增设高峰期出餐位，配送类差评核对平台履约与打包规范", prio:"高", dept:"门店" },
-  "其他":        { action:"人工复核该类差评文本，按具体情况归口运营/门店处理", prio:"低", dept:"运营" }
+  "服务态度":     { action:"门店开展服务礼仪/话术专项培训，店长每日晨会复盘差评案例，S1/S2 服务事件 30 分钟内介入并回访，重点店驻店督导", prio:"高", dept:"门店+培训" },
+  "上餐速度":     { action:"优化出餐动线与高峰备料，增设高峰期出餐位；断档门店当日核对备货与订货量，联动供应链补货", prio:"高", dept:"门店+供应链" },
+  "食品质量异物": { action:"S1 立即启动食品安全应急预案并追溯批次，S2/S3 加强出品标准抽查与原材料验收，异物类同步排查供应商", prio:"高", dept:"品控+门店" },
+  "环境卫生":     { action:"强化清洁频次与收桌巡台 SOP，环境类连续出现门店两周内复查并纳入周检", prio:"中", dept:"门店" },
+  "价格分量":     { action:"核对标价/称重/结账链路，错收钱当日退还并复盘收银规范，分量类反馈对照出品标准称重抽检", prio:"中", dept:"运营+财务" },
+  "出品一致性":   { action:"复核下单-制作-出餐核对机制，错餐/少餐类纳入前厅后厨 SOP 复盘，高频店一周内复查", prio:"中", dept:"门店+品控" },
+  "其他":        { action:"人工复核该类反馈文本，管理/现场混乱门店安排值班督导整改，按具体情况归口运营/门店处理", prio:"低", dept:"运营" }
 };
 function classifyNeed(text){
   const s = String(text ?? "");
   const rules = [
-    ["服务态度", ["服务","态度","店员","员工","不理","冷漠","回应","语气"]],
-    ["出品/口味", ["咸","淡","味道","口味","好吃","难吃","菜","饭","汤","食材","变质","异味","口感","量少","不熟"]],
-    ["环境/卫生", ["卫生","干净","脏","油渍","餐具","桌面","地面","苍蝇","虫","头发"]],
-    ["出餐/配送", ["等","慢","上菜","外卖","漏送","打包","配送","迟到"]]
+    ["服务态度", ["服务态度","态度","不理","爱答不理","不耐烦","怼","甩脸子","冷漠","恶劣","语气","不理会"]],
+    ["食品质量异物", ["品质","食品安全","异物","交叉污染","餐具脏","不熟","凉","稀","硬","异味","变质","未放","口味","难吃","好吃","咸","淡","糊","腥","苦","酸","虫","头发"]],
+    ["环境卫生", ["卫生","脏","油渍","收桌","环境","温度不舒适","苍蝇","地面","桌面"]],
+    ["上餐速度", ["上餐","出餐","上菜","慢","等","断档","无人上餐","配送","迟到","漏送","打包"]],
+    ["价格分量", ["价格","贵","分量","量少","量小","不值","性价比","涨价","收钱","多收","算错"]],
+    ["出品一致性", ["错餐","少餐","漏单","下错","上错","未按","标准","一致"]]
   ];
   for(let i = 0; i < rules.length; i++){
     for(let j = 0; j < rules[i][1].length; j++){
@@ -2182,36 +2224,68 @@ function needPeriods(){
   }
   return { cur, prev, dim, y, m, d };
 }
+function needTail(rows, cat){
+  const byStore = {}, byRegion = {};
+  rows.forEach(r => {
+    const c = classifyNeed(r.opportunity || "");
+    if(cat && c !== cat) return;
+    const st = storeOf(r);
+    const name = st ? st.store_name : (r.store_name || "未知门店");
+    const reg = st ? normalizeRegion(st.region) : normalizeRegion(r.region);
+    if(name) byStore[name] = (byStore[name] || 0) + 1;
+    if(reg && reg !== "其他") byRegion[reg] = (byRegion[reg] || 0) + 1;
+  });
+  const stores = Object.keys(byStore).sort((a,b)=>byStore[b]-byStore[a]).slice(0,3).map(k => ({ name:k, n:byStore[k] }));
+  const regions = Object.keys(byRegion).sort((a,b)=>byRegion[b]-byRegion[a]).slice(0,3).map(k => ({ name:k, n:byRegion[k] }));
+  return { stores, regions };
+}
 function needRankBuild(cur, prev){
   const total = cur.length;
   const curC = needCatCount(cur), prevC = needCatCount(prev);
-  return {
-    total,
-    rank: NEED_CATS.map(k => ({
+  const rank = NEED_CATS.map(k => {
+    const rows = cur.filter(r => classifyNeed(r.opportunity || "") === k);
+    const sev = { S1:0, S2:0, S3:0, S4:0 };
+    rows.forEach(r => sev[severityOf(r).key]++);
+    return {
       cat: k,
       n: curC[k] || 0,
       pct: total ? Math.round((curC[k] || 0) / total * 1000) / 10 : 0,
-      delta: needDeltaText(curC[k] || 0, prevC[k] || 0)
-    })).sort((a,b) => b.n - a.n)
-  };
+      delta: needDeltaText(curC[k] || 0, prevC[k] || 0),
+      sev,
+      tail: needTail(cur, k)
+    };
+  }).sort((a,b) => b.n - a.n);
+  let acc = 0;
+  rank.forEach(x => { acc += x.n; x.cum = acc; x.cumPct = total ? Math.round(acc / total * 1000) / 10 : 0; x.pareto = x.n > 0 && (total ? (acc - x.n) / total * 100 < 80 : false); });
+  return { total, rank, totalTail: needTail(cur, null) };
 }
 function renderNeedRank(p, rb){
   const mkt = state.needMarket || state.market || "全国";
   const emptyMsg = rb.total ? "" : '<div class="empty">当前范围暂无投诉/差评记录</div>';
-  $("needRank").innerHTML = (rb.total ? `<div class="d-summary">当前范围共 ${rb.total} 条顾客反馈（文本可用 ${rb.curOpText}）</div>` : "") + emptyMsg +
+  const tTail = rb.totalTail;
+  const tailLine = rb.total ? `<div class="tip" style="margin-top:8px;">总数尾部（拖后腿 TOP）：区域 ${tTail.regions.length ? tTail.regions.map(x=>x.name+"("+x.n+")").join("、") : "—"} ｜ 门店 ${tTail.stores.length ? tTail.stores.map(x=>x.name+"("+x.n+")").join("、") : "—"}</div>` : "";
+  $("needRank").innerHTML = (rb.total ? `<div class="d-summary">当前范围共 ${rb.total} 条顾客反馈（文本可用 ${rb.curOpText}）· 七类分类 · 帕累托 80/20 排定</div>` : "") + emptyMsg +
     rb.rank.filter(x => x.n > 0).map((x,i) => {
       const c = NEED_CAT_COLORS[x.cat] || "#8aa3c4";
       const pctBar = Math.min(100, Math.round(x.pct * 3));
       const deltaCls = x.delta.indexOf("↑") === 0 ? "score-bad" : (x.delta.indexOf("↓") === 0 ? "score-good" : "");
-      return `<div class="rank-line" style="margin-bottom:8px;">
+      const sevTop = Object.keys(x.sev).sort((a,b)=>x.sev[b]-x.sev[a])[0];
+      const sev = NEED_SEVERITY.find(s=>s.key===sevTop);
+      const paretoBadge = x.pareto ? '<span class="badge" style="background:#ff2e4d;">帕累托重点</span>' : "";
+      return `<div class="rank-line" style="margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
-          <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};box-shadow:0 0 8px ${c};margin-right:6px;"></i>${esc(x.cat)}</span>
+          <span><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};box-shadow:0 0 8px ${c};margin-right:6px;"></i>${esc(x.cat)} ${paretoBadge} <span class="num" style="font-size:11px;color:var(--dim);">累计 ${x.cumPct}%</span></span>
           <span><b>${x.n}</b> <span style="color:var(--dim);">${x.pct}%</span> <span class="num ${deltaCls}" style="font-size:11px;">${x.delta}</span></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:3px;font-size:11px;flex-wrap:wrap;">
+          <span class="badge" style="background:${sev.color};">${sev.key} ${sev.name}为主（S1 ${x.sev.S1} / S2 ${x.sev.S2} / S3 ${x.sev.S3} / S4 ${x.sev.S4}）</span>
+          ${x.tail.regions.length ? `<span style="color:var(--dim);">尾部区域：${x.tail.regions.map(r=>r.name+"("+r.n+")").join("、")}</span>` : ""}
+          ${x.tail.stores.length ? `<span style="color:var(--dim);">尾部门店：${x.tail.stores.map(s=>s.name+"("+s.n+")").join("、")}</span>` : ""}
         </div>
         <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;margin-top:5px;overflow:hidden;"><div style="width:${pctBar}%;height:100%;background:${c};box-shadow:0 0 8px ${c};"></div></div>
       </div>`;
-    }).join("") || (rb.total ? '<div class="empty">暂无归类结果</div>' : "");
-  $("needMeta").textContent = needScopeLabel(p) + " · 机会点文本可用率 " + rb.curOpTextRate + "%";
+    }).join("") + (rb.total ? tailLine : "") || (rb.total ? '<div class="empty">暂无归类结果</div>' : "");
+  $("needMeta").textContent = needScopeLabel(p) + " · 机会点文本可用率 " + rb.curOpTextRate + "% · 帕累托 80/20 排定";
 }
 function renderNeedTrend(p){
   const rows = needMarketRows();
@@ -2270,21 +2344,86 @@ function renderNeedCompare(p){
   }
 }
 function renderNeedAdvice(p, rb){
-  const rows = rb.rank.filter(x => x.n > 0 && x.pct >= 5).slice(0, 6);
+  const rows = rb.rank.filter(x => x.n > 0 && x.pct >= 3).slice(0, 6);
   const prioColor = { "高":"#ff5c5c", "中":"#ff9f43", "低":"#8aa3c4" };
   $("needAdviceMeta").textContent = "覆盖 " + rows.length + " 类 · 当前筛选：" + needScopeLabel(p);
   $("needAdvice").innerHTML = rows.length ? rows.map(x => {
     const adv = NEED_ADVICE_MAP[x.cat] || NEED_ADVICE_MAP["其他"];
     const c = NEED_CAT_COLORS[x.cat] || "#8aa3c4";
+    const sevTop = Object.keys(x.sev).sort((a,b)=>x.sev[b]-x.sev[a])[0];
+    const sev = NEED_SEVERITY.find(s=>s.key===sevTop);
     return `<div class="detail-item" style="border-left:3px solid ${c};">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
         <b style="font-size:14px;color:${c};">${esc(x.cat)}</b>
-        <span><span class="badge" style="background:${prioColor[adv.prio]};">优先级：${adv.prio}</span> <span class="badge none">责任口：${adv.dept}</span></span>
+        <span><span class="badge" style="background:${prioColor[adv.prio]};">优先级：${adv.prio}</span> <span class="badge none">责任口：${esc(adv.dept)}</span> <span class="badge" style="background:${sev.color};">${sev.key} ${sev.name}</span></span>
       </div>
-      <div class="d-meta" style="margin-top:4px;">数据证据：${x.n} 条 · 占 ${x.pct}% · 较上期 ${x.delta}</div>
+      <div class="d-meta" style="margin-top:4px;">数据证据：${x.n} 条 · 占 ${x.pct}% · 累计 ${x.cumPct}% · 较上期 ${x.delta} · 严重度分布 S1 ${x.sev.S1} / S2 ${x.sev.S2} / S3 ${x.sev.S3} / S4 ${x.sev.S4}</div>
+      <div style="font-size:13px;margin-top:4px;color:var(--dim);">尾部（拖后腿）：${x.tail.regions.length?x.tail.regions.map(r=>r.name+"("+r.n+")").join("、"):"—"} 区域 / ${x.tail.stores.length?x.tail.stores.map(s=>s.name+"("+s.n+")").join("、"):"—"} 门店</div>
       <div style="font-size:13px;margin-top:6px;">建议动作：${esc(adv.action)}</div>
     </div>`;
-  }).join("") : '<div class="empty">当前范围样本不足（各类型占比 &lt; 5%），暂不生成整改建议</div>';
+  }).join("") : '<div class="empty">当前范围样本不足（各类型占比 &lt; 3%），暂不生成整改建议</div>';
+}
+function needIndustry(p, rb){
+  const cur = p.cur, total = cur.length;
+  const storeSet = new Set();
+  cur.forEach(r => { const st = storeOf(r); const nm = st ? st.store_name : (r.store_name || ""); if(nm) storeSet.add(nm); });
+  const storeCnt = storeSet.size;
+  const perThousand = storeCnt ? Math.round(total / storeCnt * 1000) / 10 : 0;
+  const keyed = {};
+  cur.forEach(r => { const st = storeOf(r); const nm = st ? st.store_name : (r.store_name || ""); const cat = classifyNeed(r.opportunity || ""); const d = String(r.date || ""); (keyed[nm + "|" + cat] = keyed[nm + "|" + cat] || []).push({ d }); });
+  let dupN = 0; const dupStores = {};
+  Object.keys(keyed).forEach(k => {
+    const arr = keyed[k].sort((a,b)=>a.d.localeCompare(b.d));
+    for(let i = 1; i < arr.length; i++){
+      const gap = (new Date(arr[i].d) - new Date(arr[i-1].d)) / 86400000;
+      if(!isNaN(gap) && gap >= 0 && gap <= 30){ dupN++; const nm = k.split("|")[0]; dupStores[nm] = (dupStores[nm] || 0) + 1; }
+    }
+  });
+  const dupRate = total ? Math.round(dupN / total * 1000) / 10 : 0;
+  const byStoreAll = {};
+  cur.forEach(r => { const st = storeOf(r); const nm = st ? st.store_name : (r.store_name || ""); if(nm) byStoreAll[nm] = (byStoreAll[nm] || 0) + 1; });
+  const highFreq = Object.keys(byStoreAll).filter(nm => byStoreAll[nm] >= 3).map(nm => ({ name: nm, n: byStoreAll[nm] })).sort((a,b)=>b.n-a.n);
+  const pending = cur.filter(r => { const res = String(r.responsible || "").trim(); return !res || res === "无责任人" || res === "已删除"; });
+  return { total, storeCnt, perThousand, dupN, dupRate, dupStores, highFreq, pending, prev: p.prev.length };
+}
+function renderNeedIndustry(p, rb){
+  const ind = needIndustry(p, rb);
+  const diff = ind.total - ind.prev;
+  const diffText = ind.prev === 0 ? (ind.total ? "上月无数据" : "持平") : (diff === 0 ? "持平" : (diff > 0 ? "↑" + diff + " 条" : "↓" + Math.abs(diff) + " 条"));
+  const diffCls = diff > 0 ? "score-bad" : (diff < 0 ? "score-good" : "");
+  const dupTop = Object.keys(ind.dupStores).sort((a,b)=>ind.dupStores[b]-ind.dupStores[a]).slice(0,5);
+  $("needIndMeta").textContent = "口径：" + needScopeLabel(p) + " · 千单投诉率为估算口径（订单数缺失）";
+  const metric = (v, label) => `<div style="flex:1;min-width:130px;padding:10px;border:1px solid rgba(255,255,255,.14);border-radius:10px;text-align:center;"><b style="font-size:22px;display:block;">${v}</b><span style="font-size:11px;color:var(--dim);">${label}</span></div>`;
+  $("needIndustry").innerHTML = `<div class="d-summary">当月投诉 <b>${ind.total}</b> 条 · 涉及门店 ${ind.storeCnt} 家 · 较上月 <span class="num ${diffCls}">${diffText}</span>（上月 ${ind.prev} 条）</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;">
+    ${metric(ind.perThousand.toFixed(1), "千单投诉率‰（估算）")}
+    ${metric(ind.dupRate.toFixed(1) + "%", "重复投诉率（30天内）")}
+    ${metric(String(ind.dupN), "重复投诉条数")}
+    ${metric(String(ind.pending.length), "待落实责任人")}
+  </div>
+  <div style="font-size:12px;color:var(--dim);">千单投诉率口径：订单数缺失，暂按「当月投诉数 / 当月有投诉门店数 × 1000」估算（非订单口径，仅供参考）。重复投诉=同店同类 30 天内再发；待落实责任人=responsible 为空/无责任人/已删除。</div>
+  ${dupTop.length ? `<div class="tip" style="margin-top:8px;">重复投诉高风险门店（30 天内同类再发）：${dupTop.map(n=>n+"("+ind.dupStores[n]+"次)").join("、")}</div>` : ""}
+  ${ind.highFreq.length ? `<div class="tip" style="margin-top:6px;">高频投诉门店（当月≥3条）：${ind.highFreq.map(h=>h.name+"("+h.n+")").join("、")}</div>` : ""}
+  ${ind.pending.length ? `<div style="margin-top:10px;"><b style="font-size:13px;">未处理/待落实责任人清单（当月前 10）：</b><div style="font-size:12px;margin-top:4px;max-height:190px;overflow:auto;">${ind.pending.slice(0,10).map(r=>{ const st=storeOf(r); const nm=st?st.store_name:(r.store_name||"未知"); const reg=st?normalizeRegion(st.region):normalizeRegion(r.region); const res=String(r.responsible||"").trim(); return '<div style="margin:2px 0;"><span style="color:#ff5c5c;">●</span> '+esc(nm)+'（'+esc(reg)+'） '+esc(r.date||"")+' · '+esc(classifyNeed(r.opportunity||""))+' · '+(res==="已删除"?"已删除":(res?"责任人:"+esc(res):"无责任人"))+'</div>'; }).join("")}</div></div>` : ""}`;
+}
+function renderNeedCatGuide(p, rb){
+  const cur = p.cur;
+  $("needCatGuideMeta").textContent = "当月样本 " + cur.length + " 条 · 七类口径说明";
+  $("needCatGuide").innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;">' + NEED_CATS.map(cat => {
+    const meta = NEED_CAT_META[cat];
+    const c = NEED_CAT_COLORS[cat] || "#8aa3c4";
+    const rows = cur.filter(r => classifyNeed(r.opportunity || "") === cat);
+    const rankItem = rb.rank.find(x => x.cat === cat);
+    const samples = rows.slice(0,2).map(r => (String(r.content || "").replace(/\s+/g," ").slice(0,48)) || (String(r.opportunity || "")));
+    const sevTop = rankItem ? Object.keys(rankItem.sev).sort((a,b)=>rankItem.sev[b]-rankItem.sev[a])[0] : "S4";
+    const sev = NEED_SEVERITY.find(s=>s.key===sevTop);
+    return `<div class="detail-item" style="border-left:3px solid ${c};">
+      <b style="color:${c};font-size:14px;">${esc(cat)} <span style="color:var(--dim);font-weight:normal;">（${rows.length} 条 · 占 ${rankItem ? rankItem.pct : 0}% · ${sev.key} ${sev.name}为主）</span></b>
+      <div style="font-size:12px;color:var(--dim);margin-top:3px;">含义：${esc(meta.mean)}</div>
+      <div style="font-size:12px;color:var(--dim);">口径：${esc(meta.scope)}</div>
+      ${samples.length ? `<div style="font-size:12px;color:#ffd166;margin-top:3px;">典型话术：${samples.map(s=>"「"+esc(s)+"…」").join("　")}</div>` : ""}
+    </div>`;
+  }).join("") + '</div>';
 }
 function renderNeed(){
   const p = needPeriods();
@@ -2297,6 +2436,8 @@ function renderNeed(){
   renderNeedTrend(p);
   renderNeedCompare(p);
   renderNeedAdvice(p, rb);
+  renderNeedIndustry(p, rb);
+  renderNeedCatGuide(p, rb);
 }
 function syncNeedFiltersUI(){
   const dim = state.needDim || "month";
@@ -2349,18 +2490,27 @@ function exportNeedRank(){
   const p = needPeriods();
   const rb = needRankBuild(p.cur, p.prev);
   const scope = needScopeLabel(p);
-  const rows = rb.rank.filter(x => x.n > 0).map(x => ({ 需求类型: x.cat, 数量: x.n, 占比: x.pct + "%", 较上期: x.delta, 筛选范围: scope }));
-  downloadCSV("顾客需求排行", ["需求类型","数量","占比","较上期","筛选范围"], rows);
+  const rows = rb.rank.filter(x => x.n > 0).map(x => ({
+    需求类型: x.cat, 数量: x.n, 占比: x.pct + "%", 累计占比: x.cumPct + "%",
+    帕累托重点: x.pareto ? "是" : "否",
+    严重度S1: x.sev.S1, 严重度S2: x.sev.S2, 严重度S3: x.sev.S3, 严重度S4: x.sev.S4,
+    较上期: x.delta,
+    尾部区域: x.tail.regions.map(r=>r.name+"("+r.n+")").join("、"),
+    尾部门店: x.tail.stores.map(s=>s.name+"("+s.n+")").join("、"),
+    筛选范围: scope
+  }));
+  downloadCSV("顾客需求排行", ["需求类型","数量","占比","累计占比","帕累托重点","严重度S1","严重度S2","严重度S3","严重度S4","较上期","尾部区域","尾部门店","筛选范围"], rows);
 }
 function exportNeedAdvice(){
   const p = needPeriods();
   const rb = needRankBuild(p.cur, p.prev);
   const scope = needScopeLabel(p);
-  const rows = rb.rank.filter(x => x.n > 0 && x.pct >= 5).slice(0, 6).map(x => {
+  const rows = rb.rank.filter(x => x.n > 0 && x.pct >= 3).slice(0, 6).map(x => {
     const adv = NEED_ADVICE_MAP[x.cat] || NEED_ADVICE_MAP["其他"];
-    return { 问题类别: x.cat, 数量: x.n, 占比: x.pct + "%", 较上期: x.delta, 建议动作: adv.action, 优先级: adv.prio, 责任口: adv.dept, 筛选范围: scope };
+    const sevTop = Object.keys(x.sev).sort((a,b)=>x.sev[b]-x.sev[a])[0];
+    return { 问题类别: x.cat, 数量: x.n, 占比: x.pct + "%", 累计占比: x.cumPct + "%", 主导严重度: sevTop, 较上期: x.delta, 尾部区域: x.tail.regions.map(r=>r.name+"("+r.n+")").join("、"), 尾部门店: x.tail.stores.map(s=>s.name+"("+s.n+")").join("、"), 建议动作: adv.action, 优先级: adv.prio, 责任口: adv.dept, 筛选范围: scope };
   });
-  downloadCSV("顾客需求决策建议", ["问题类别","数量","占比","较上期","建议动作","优先级","责任口","筛选范围"], rows);
+  downloadCSV("顾客需求决策建议", ["问题类别","数量","占比","累计占比","主导严重度","较上期","尾部区域","尾部门店","建议动作","优先级","责任口","筛选范围"], rows);
 }
 
 /* ===================== 区域月度/季度对比（固定归属：store_master 最新主档） ===================== */
