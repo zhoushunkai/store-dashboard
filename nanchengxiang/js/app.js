@@ -74,6 +74,57 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const GLOBAL_LOGIN_PASSCODE = '123456';
 
+/* ===== v113 模块开关 START =====
+   板块精简总开关（2026-11）：「到店稽核」「日报」「处罚」三个板块暂时隐藏。
+   ⚠️ 恢复方法：把对应开关改回 true，刷新页面即完整恢复（底部导航、页面、看板卡片、首页入口全部还原）。
+   ⚠️ 本开关只控制"是否可见"，业务逻辑 / 数据表 / 接口一行未删，历史数据完整保留。
+   inspection  : 到店稽核（稽核模板 / 录入 / 结果 / 问题工单 / 稽核看板 / 线下检查 / 本店整改 / 权限配置 / 稽核日报入口）
+   daily       : 日报（稽核日报页 + 日报看板）
+   penalty     : 处罚（处罚登记页 + 处罚看板）
+   complaint   : 门店差评（保留）
+   dashboard   : 看板中心（保留）
+   notice      : 通知（保留）
+   task        : 任务（保留）
+   supplyChain : 供应链（保留）
+   ===== v113 模块开关 END ===== */
+const FEATURES = {
+  inspection: false,
+  daily: false,
+  penalty: false,
+  complaint: true,
+  dashboard: true,
+  notice: true,
+  task: true,
+  supplyChain: true
+};
+
+/* 开关 -> 所辖页面 hash 清单（关闭时路由层直接拦回首页） */
+const FEATURE_PAGE_MAP = {
+  inspection: ['inspection', 'inspectionTemplates', 'inspectionFill', 'inspectionResults', 'inspectionIssues',
+               'inspectionWorkbench', 'inspectionDashboard', 'correction', 'permissionConfig', 'offline-inspect'],
+  daily: ['daily'],
+  penalty: ['penalty', 'penaltyBoard']
+};
+
+/* 底部导航 data-page -> 开关名 */
+const TAB_FEATURE_MAP = {
+  inspection: 'inspection',
+  daily: 'daily',
+  penalty: 'penalty',
+  complaint: 'complaint',
+  dashboard: 'dashboard',
+  template: 'notice',
+  task: 'task',
+  supplyChain: 'supplyChain'
+};
+
+/* 供 pages.js / 控制台调试使用 */
+window.FEATURES = FEATURES;
+window.FEATURE_PAGE_MAP = FEATURE_PAGE_MAP;
+window.TAB_FEATURE_MAP = TAB_FEATURE_MAP;
+
+
+
 /* 本设备口令校验通过标记（localStorage 持久化，清除即需重新输入口令） */
 
 const DEVICE_PASS_KEY = 'nanchengxiang_pass_device_ok';
@@ -6310,6 +6361,12 @@ const App = {
 
     this.currentHash = hash;
 
+    // ===== v113 模块开关守卫：被关闭板块的页面一律拦回首页（代码与数据完整保留） =====
+    if (this.isPageHidden(hash)) {
+      location.hash = '#home';
+      return;
+    }
+
     // v92: 页面级权限守卫——无对应模块权限时拦截并回首页，避免手动改 hash 越权访问
     if (this.currentUser) {
       var _guardRole = this.currentUser.role;
@@ -6822,6 +6879,9 @@ const App = {
 
     document.getElementById('header-back').style.display = (hash === 'login') ? 'none' : 'block';
 
+    // ===== v113 模块开关：本页渲染完成后统一应用（导航 / 页面 / 入口卡片） =====
+    this.applyFeatureFlags();
+
 
 
 
@@ -6843,6 +6903,63 @@ const App = {
 
 
 
+
+  /* ===== v113 模块开关：运行时统一应用 ===== */
+
+  /* 页面 hash 是否因所属板块开关关闭而隐藏 */
+  isPageHidden(hash) {
+    if (!hash) return false;
+    hash = String(hash).replace('#', '');
+    for (var f in FEATURE_PAGE_MAP) {
+      if (FEATURES[f] === false && FEATURE_PAGE_MAP[f].indexOf(hash) >= 0) return true;
+    }
+    return false;
+  },
+
+  /* 一段 onclick 代码是否指向被隐藏的板块（#hash 跳转 或 看板子页签切换） */
+  isHiddenEntryCode(code) {
+    if (!code) return false;
+    var m;
+    var reHash = /#([A-Za-z][A-Za-z0-9_-]*)/g;
+    while ((m = reHash.exec(code))) { if (this.isPageHidden(m[1])) return true; }
+    var reCall = /(?:navigate|_gotoBoardTab|_bdSetTab|_penaltySetTab|_dailySetTab|_complaintSetTab|switchDashboard)\s*\(\s*'([^'"]+)'/g;
+    while ((m = reCall.exec(code))) { if (this.isPageHidden(m[1])) return true; }
+    return false;
+  },
+
+  /* 统一应用模块开关：底部导航 / 页面容器 / 页面内入口与看板卡片（幂等，路由渲染后调用） */
+  applyFeatureFlags() {
+    var self = this;
+    // 1) 底部导航项
+    document.querySelectorAll('.tab-item').forEach(function(t) {
+      var flag = TAB_FEATURE_MAP[t.dataset.page];
+      if (!flag) return;
+      if (FEATURES[flag] === false) t.classList.add('feature-hidden');
+      else t.classList.remove('feature-hidden');
+    });
+    // 2) 页面容器（DOM 完整保留，仅不可见；路由层另有守卫拦截直达）
+    document.querySelectorAll('.page').forEach(function(p) {
+      var id = (p.id || '').indexOf('page-') === 0 ? p.id.slice(5) : (p.id || '');
+      if (self.isPageHidden(id)) p.classList.add('feature-hidden');
+      else p.classList.remove('feature-hidden');
+    });
+    // 3) 显式声明 data-feature 的区块（首页/看板中仅服务于某板块的非点击卡片）
+    document.querySelectorAll('[data-feature]').forEach(function(n) {
+      var f = n.getAttribute('data-feature');
+      if (FEATURES[f] === false) n.classList.add('feature-hidden');
+      else n.classList.remove('feature-hidden');
+    });
+    // 4) 页面内指向被隐藏板块的入口：首页快捷入口 / 统计卡 / 看板子页签 / 看板卡片 / 日报明细分组
+    document.querySelectorAll('[onclick]').forEach(function(n) {
+      if (n.closest && n.closest('.tab-item')) return;
+      if (self.isHiddenEntryCode(n.getAttribute('onclick'))) n.classList.add('feature-hidden');
+      else n.classList.remove('feature-hidden');
+    });
+    document.querySelectorAll('[data-entry-hash]').forEach(function(n) {
+      if (self.isPageHidden(n.getAttribute('data-entry-hash'))) n.classList.add('feature-hidden');
+      else n.classList.remove('feature-hidden');
+    });
+  },
 
   bindTabBar() {
 

@@ -2278,7 +2278,7 @@ Pages.home = function() {
 
 
 
-    html += '<div class="score-circle ' + cls + '">' + latestScore + '</div>';
+    html += '<div class="score-circle ' + cls + '" data-feature="inspection">' + latestScore + '</div>';
 
 
 
@@ -2294,7 +2294,7 @@ Pages.home = function() {
 
 
 
-    html += '<div style="text-align:center;color:var(--text-secondary);font-size:12px;">最新稽核得分</div>';
+    html += '<div data-feature="inspection" style="text-align:center;color:var(--text-secondary);font-size:12px;">最新稽核得分</div>';
 
 
 
@@ -3285,7 +3285,7 @@ Pages.home = function() {
 
 
 
-    html += '<div class="stat-card"><div class="stat-num">' + totalPenalties + '</div><div class="stat-label">处罚总数</div></div>';
+    html += '<div class="stat-card" data-feature="penalty"><div class="stat-num">' + totalPenalties + '</div><div class="stat-label">处罚总数</div></div>';
 
 
 
@@ -3349,7 +3349,7 @@ Pages.home = function() {
 
 
 
-    html += '<div class="stat-card"><div class="stat-num">' + donePenalties + '</div><div class="stat-label">已闭环处罚</div></div>';
+    html += '<div class="stat-card" data-feature="penalty"><div class="stat-num">' + donePenalties + '</div><div class="stat-label">已闭环处罚</div></div>';
 
 
 
@@ -3811,7 +3811,7 @@ Pages._homeYesterdaySection = function(user) {
     return name + ' · 往前' + offset + '天';
   };
   var group = function(hash, color, label, rows) {
-    var h = '<div class="yb-group"><div class="yb-group-head"><span class="yb-bar" style="background:' + color + '"></span>' + label + '<span class="yb-count">' + rows.length + '</span></div>';
+    var h = '<div class="yb-group" data-entry-hash="' + hash + '"><div class="yb-group-head"><span class="yb-bar" style="background:' + color + '"></span>' + label + '<span class="yb-count">' + rows.length + '</span></div>';
     if (rows.length === 0) { h += '<div class="yb-none">无</div>'; }
     else {
       var show = rows.slice(0, 6);

@@ -3431,3 +3431,6 @@ body {
 .rc-filter-chip-on { background: var(--primary); border-color: var(--primary); color: #fff; }
 .rc-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 26px 0; }
 .rc-sec-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 16px 0 6px; }
+
+/* ===== v113 模块开关：被关闭板块的隐藏样式（纯视觉隐藏，DOM / 数据 / 逻辑完整保留；改 FEATURES 即恢复） ===== */
+.feature-hidden { display: none !important; }
