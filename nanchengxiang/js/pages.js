@@ -1573,6 +1573,17 @@ Pages._doPhoneLoginCore = function(phone) {
 
 
 
+/* ===== v114 板块开关：页面模板（innerHTML）重建后统一再应用一次，避免首屏残留 ===== */
+Pages._applyFeatureFlags = function() {
+  try {
+    if (typeof App !== 'undefined' && App && typeof App.applyFeatureFlags === 'function') {
+      App.applyFeatureFlags();
+    }
+  } catch (e) {
+    if (window.console) console.warn('[FEATURES] applyFeatureFlags failed', e);
+  }
+};
+
 Pages.home = function() {
 
 
@@ -2630,11 +2641,11 @@ Pages.home = function() {
 
 
 
-    html += '<div class="quick-entry" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>检查结果</div>';
+    html += '<div class="quick-entry" data-feature="inspection" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>检查结果</div>';
 
 
     if (App.canSubmitCorrection(user)) {
-      html += '<div class="quick-entry" onclick="location.hash=\'#correction\'"><span class="qe-icon">\u{1F527}</span>本店整改</div>';
+      html += '<div class="quick-entry" data-feature="inspection" onclick="location.hash=\'#correction\'"><span class="qe-icon">\u{1F527}</span>本店整改</div>';
     }
 
 
@@ -2651,7 +2662,7 @@ Pages.home = function() {
 
 
 
-    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
+    html += '<div class="quick-entry" data-feature="penalty" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚登记</div>';
 
 
 
@@ -2975,7 +2986,7 @@ Pages.home = function() {
 
 
 
-      html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4DD}</span>线上检查录入</div>';
+      html += '<div class="quick-entry" data-feature="inspection" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4DD}</span>线上检查录入</div>';
 
 
 
@@ -3007,7 +3018,7 @@ Pages.home = function() {
 
 
 
-      html += '<div class="quick-entry" onclick="location.hash=\'#offline-inspect\'"><span class="qe-icon">\u{1F50D}</span>线下检查录入</div>';
+      html += '<div class="quick-entry" data-feature="inspection" onclick="location.hash=\'#offline-inspect\'"><span class="qe-icon">\u{1F50D}</span>线下检查录入</div>';
 
 
 
@@ -3135,7 +3146,7 @@ Pages.home = function() {
   } else if (user.role === '客服' || user.role === '营运') {
       /* v102: 职能端工作台——稽核结果 + SSC 提报 */
       html += '<div class="quick-entries">';
-      html += '<div class="quick-entry" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>稽核结果</div>';
+      html += '<div class="quick-entry" data-feature="inspection" onclick="location.hash=\'#inspectionResults\'"><span class="qe-icon">\u{1F4CB}</span>稽核结果</div>';
       html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F3E2}</span>SSC 申请</div>';
       if (Pages._sscCap().receive) {
         html += '<div class="quick-entry" onclick="location.hash=\'#ssc\'"><span class="qe-icon">\u{1F4E5}</span>SSC 接收分发</div>';
@@ -3557,7 +3568,7 @@ Pages.home = function() {
 
 
 
-    html += '<div class="quick-entry" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚管理</div>';
+    html += '<div class="quick-entry" data-feature="penalty" onclick="location.hash=\'#penalty\'"><span class="qe-icon">\u{26A0}</span>处罚管理</div>';
 
 
 
@@ -3605,7 +3616,7 @@ Pages.home = function() {
 
 
 
-      html += '<div class="quick-entry" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4CB}</span>检查记录</div>';
+      html += '<div class="quick-entry" data-feature="inspection" onclick="location.hash=\'#inspection\'"><span class="qe-icon">\u{1F4CB}</span>检查记录</div>';
 
 
 
@@ -3741,6 +3752,8 @@ Pages.home = function() {
   html += Pages._homeRegionConfirmCard(user);
   html += Pages._installCardHtml();
   el.innerHTML = html;
+  /* v114：首页模板重建后必定再应用一次板块开关（杜绝首屏残影） */
+  if (typeof Pages._applyFeatureFlags === 'function') Pages._applyFeatureFlags();
 
 
 

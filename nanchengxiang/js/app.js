@@ -3558,6 +3558,8 @@ const App = {
 
 
       if (Pages && Pages[hash]) Pages[hash]();
+    // v114：数据就绪后的二次渲染会重建内联模板，必须再应用一次板块开关
+    try { self.applyFeatureFlags(); } catch (e) {}
 
 
 
