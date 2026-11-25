@@ -64,6 +64,7 @@ tr:hover td { background: #f9fafb; }
 .grade.c { background: var(--c-bg); color: var(--c-color); }
 .grade.d { background: var(--d-bg); color: var(--d-color); }
 .grade.empty { background: #f3f4f6; color: #d1d5db; }
+.score-val { display:inline-block; min-width:26px; text-align:center; font-weight:700; font-size:13px; color:#111827; }
 
 /* Trend mini */
 .trend { display: flex; gap: 2px; justify-content: center; align-items: flex-end; height: 20px; }
@@ -305,12 +306,13 @@ function renderMonth() {
     return;
   }
 
-  // 表格：排名 + 姓名/门店 + 区域 + 评级
-  let html = '<div class="table-wrap"><table class="person-table"><thead><tr><th class="rank-col">排名</th><th>姓名</th><th>门店</th><th>区域</th><th>评级</th></tr></thead><tbody>';
+  // 表格：排名 + 姓名/门店 + 区域 + 评级 + 绩效得分（S=5/A=4/B=3/C=2/D=1）
+  let html = '<div class="table-wrap"><table class="person-table"><thead><tr><th class="rank-col">排名</th><th>姓名</th><th>门店</th><th>区域</th><th>评级</th><th>绩效得分</th></tr></thead><tbody>';
   rows.forEach((row, idx) => {
     const g = row.ratings[month];
     const cls = g && g[0] ? g[0].toLowerCase() : 'empty';
-    html += `<tr><td>${rankBadge(idx+1)}</td><td>${row.person}</td><td>#${row.store_num}</td><td>${regionTag(regionOf(row))}</td><td><span class="grade ${cls}">${g||'-'}</span></td></tr>`;
+    const sc = scoreOf(row, month);
+    html += `<tr><td>${rankBadge(idx+1)}</td><td>${row.person}</td><td>#${row.store_num}</td><td>${regionTag(regionOf(row))}</td><td><span class="grade ${cls}">${g||'-'}</span></td><td><span class="score-val">${sc||'-'}</span></td></tr>`;
   });
   html += '</tbody></table></div>';
   document.getElementById('content').innerHTML = html;
@@ -356,7 +358,7 @@ function renderYear() {
 
   let html = '<div class="table-wrap"><table class="person-table"><thead><tr><th class="rank-col">排名</th><th>门店</th><th>负责人</th><th>区域</th>';
   months.forEach(m => html += `<th>${m}</th>`);
-  html += '<th>均评级</th><th>趋势</th></tr></thead><tbody>';
+  html += '<th>均评级</th><th>平均得分</th><th>趋势</th></tr></thead><tbody>';
 
   filtered.forEach((row, idx) => {
     html += `<tr><td>${rankBadge(idx+1)}</td><td>${row.store_num}</td><td>${row.person}</td><td>${regionTag(regionOf(row))}</td>`;
@@ -367,6 +369,7 @@ function renderYear() {
     });
     const avg = avgGradeRange(row.ratings, months);
     html += `<td><span class="grade ${avg?avg.toLowerCase():'empty'}">${avg||'-'}</span></td>`;
+    html += `<td><span class="score-val">${row._score ? row._score.toFixed(2) : '-'}</span></td>`;
     html += '<td><div class="trend">';
     months.forEach(m => {
       const g = row.ratings[m];
