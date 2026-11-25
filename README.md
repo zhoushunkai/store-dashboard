@@ -100,3 +100,15 @@ python -m http.server 8080
 | data_perf.json | 1.13 MB | 绩效数据（7个月） |
 | data_punish.json | 140 KB | 处罚数据（327条） |
 *（内容由AI生成，仅供参考）*
+
+---
+
+## 维护交接说明（2026-11-25）
+
+> 上文为早期部署指南，仅作历史参考；实际架构以线上代码与交接文档为准。
+
+- **对外地址**：`https://store-dashboard-8vh.pages.dev/`（Cloudflare Pages，`main` 分支自动部署）。
+- **数据机制**：绩效 / 处罚 / 个人 / 管理组看板的数据内嵌在 HTML 的 `var EMBEDDED_*` / `var ALL_DATA` 常量中，JSON 为同步副本；更新数据须改内嵌常量并同步 JSON，不能只改 JSON。
+- **发布流程**：改本地 → GitHub Contents API（二次 GET 取 sha → PUT）推 `main` → 线上回读校验（带时间戳破缓存）。
+- **PWA 注意**：修改 `nanchengxiang/` 下 js/css 需递增 `sw.js` 的 `CACHE_NAME`。
+- **完整交接文档**：见同批次交接包 `00_接手文档/` 六份文档与 `04_运维脚本/` 四件套。
